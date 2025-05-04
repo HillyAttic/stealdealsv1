@@ -14,6 +14,13 @@
     margin: 0;
     padding: 0
   }
+  
+  /* Base HTML font size to prevent upscaling issues */
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
 }
 
 /* Header animations and effects */
@@ -105,4 +112,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Jost', sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
