@@ -4,14 +4,14 @@ import { getDatabase, ref, set, get, push, child, update, remove, DataSnapshot }
 
 // Your Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCVT3Fv_tWM8FuZ9hHnsdGmdfhp-uow_bg",
-  authDomain: "stealdeals-e89ab.firebaseapp.com",
-  databaseURL: "https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "stealdeals-e89ab",
-  storageBucket: "stealdeals-e89ab.firebasestorage.app",
-  messagingSenderId: "836598569233",
-  appId: "1:836598569233:web:a46668a6e140493d6f14b0",
-  measurementId: "G-71EPMH0ZW9"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "apiKey",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "stealdeals-e89ab.firebaseapp.com",
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL || "https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "stealdeals-e89ab",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "stealdeals-e89ab.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "836598569233",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:836598569233:web:a46668a6e140493d6f14b0",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-71EPMH0ZW9"
 };
 
 // Initialize Firebase
