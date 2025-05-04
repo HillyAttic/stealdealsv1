@@ -26,6 +26,13 @@ const nextConfig = {
         hostname: '**.cloudinary.com',
       }
     ],
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+  },
+  // Add experimental features to fix rendering issues
+  experimental: {
+    optimizeCss: true,
+    scrollRestoration: true,
   },
   // Add any other configuration options here
 };
