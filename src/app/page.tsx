@@ -120,11 +120,10 @@ export default function Home() {
               <Image 
                 src="https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
                 alt="Hero Background"
-                layout="fill"
-                objectFit="cover"
-                quality={100}
+                fill
+                sizes="100vw"
                 priority
-                className="brightness-75"
+                className="object-cover brightness-75"
               />
             </div>
           </div>
@@ -230,10 +229,9 @@ export default function Home() {
                     <Image 
                       src="https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
                       alt="About Steal Deals"
-                      layout="fill"
-                      objectFit="cover"
-                      quality={100}
-                      className="transition-transform duration-700 hover:scale-105"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover transition-transform duration-700 hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-900/70 to-transparent"></div>
                     
