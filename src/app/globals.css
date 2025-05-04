@@ -1,8 +1,73 @@
+/* Import Jost font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap');
+/* Import Montserrat font from Google Fonts for headers and navigation */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+/* Import Poppins font for improved typography */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
+
+@layer base {
+  *,::backdrop,:after,:before {
+    box-sizing: border-box;
+    border: 0 solid;
+    margin: 0;
+    padding: 0
+  }
+}
+
+/* Header animations and effects */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes linkHover {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.nav-item-animation {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.premium-header {
+  background: rgb(255, 255, 255);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.premium-button {
+  background-size: 200% auto;
+  transition: all 0.5s ease;
+}
+
+.premium-button:hover {
+  background-position: right center;
+  animation: linkHover 3s ease infinite;
+}
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #0369a1;
+  --primary-foreground: #f9fafb;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #334155;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #334155;
+  --destructive: #ef4444;
+  --destructive-foreground: #f9fafb;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0369a1;
+  --radius: 0.5rem;
 }
 
 @theme inline {
@@ -14,13 +79,30 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #ffffff;
+    --foreground: #f9fafb;
+    --card: #262626;
+    --card-foreground: #f9fafb;
+    --popover: #262626;
+    --popover-foreground: #f9fafb;
+    --primary: #38bdf8;
+    --primary-foreground: #171717;
+    --secondary: #334155;
+    --secondary-foreground: #f9fafb;
+    --muted: #334155;
+    --muted-foreground: #94a3b8;
+    --accent: #334155;
+    --accent-foreground: #f9fafb;
+    --destructive: #7f1d1d;
+    --destructive-foreground: #f9fafb;
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #38bdf8;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Jost', sans-serif;
 }

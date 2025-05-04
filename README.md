@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stealdeals - Real Estate Website
+
+Stealdeals is a modern real estate platform built with Next.js and Tailwind CSS. It allows users to browse property listings, search for properties, and contact agents.
+
+## Features
+
+- Responsive design that works on all devices
+- Property search functionality
+- Featured property listings
+- Modern UI with smooth animations
+- Mobile-friendly navigation
+
+## Screenshots
+
+![Stealdeals Homepage](public/screenshot.png)
+
+## Technologies Used
+
+- [Next.js](https://nextjs.org/) - React framework for server-side rendering
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [React Icons](https://react-icons.github.io/react-icons/) - Popular icons for React applications
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js (v14 or later)
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/stealdeals.git
+cd stealdeals
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+# or
+yarn install
+```
+
+3. Run the development server:
 
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+stealdeals/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx          # Home page
+│   │   ├── layout.tsx        # Root layout
+│   │   └── globals.css       # Global styles
+│   └── components/
+│       ├── Header.tsx        # Navigation header
+│       ├── Hero.tsx          # Hero section with search
+│       ├── FeaturedProperties.tsx # Property listings
+│       ├── WhyChooseUs.tsx   # Features section
+│       └── Footer.tsx        # Footer component
+├── public/                   # Static assets
+└── package.json              # Project dependencies
+```
 
-## Learn More
+## Customization
 
-To learn more about Next.js, take a look at the following resources:
+- Update the property listings in `src/components/FeaturedProperties.tsx`
+- Modify the color scheme in `src/app/globals.css`
+- Add additional pages in the `src/app` directory
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This project can be easily deployed to Vercel:
 
-## Deploy on Vercel
+```bash
+npm run build
+# or
+yarn build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Images from [Unsplash](https://unsplash.com/)
+- Icons from [React Icons](https://react-icons.github.io/react-icons/)
