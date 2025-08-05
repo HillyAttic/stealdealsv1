@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
+import BitdefenderCleaner from "@/components/BitdefenderCleaner";
+import ChatBotWrapper from "@/components/ChatBotWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,8 +25,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  minimumScale: 1,
+  userScalable: true,
+};
+
+// This variable helps silence React hydration warnings
+// It's used to indicate to React that hydration differences are expected
+const customData = {
+  'data-custom-lib': 'next-root',
 };
 
 export default function RootLayout({
@@ -32,17 +41,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-        <meta name="format-detection" content="telephone=no" />
-        <meta name="theme-color" content="#0369a1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        {/* Add Boxicons for icons used in the admin panel */}
+        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet' />
+        {/* Add BitdefenderCleaner to clean extension attributes early */}
+        <BitdefenderCleaner />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
+        {...customData}
       >
-        {children}
+        <Providers>{children}</Providers>
+        <ChatBotWrapper />
       </body>
     </html>
   );

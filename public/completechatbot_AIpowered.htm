@@ -1,0 +1,2630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Investment Assistant Chatbot with Spreadsheet Calculator</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    /* ---------- Global Styles ---------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      background: #f9fafc;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* ---------- CSS Variables ---------- */
+    :root {
+      --primary: #6a11cb;
+      --primary-light: #8e33ff;
+      --primary-dark: #5900cc;
+      --secondary: #2575fc;
+      --gradient-primary: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      --gradient-card: linear-gradient(135deg, rgba(106, 17, 203, 0.05) 0%, rgba(37, 117, 252, 0.05) 100%);
+      --bg-color: #f5f7fa;
+      --card-bg: #ffffff;
+      --text-dark: #1a202c;
+      --text-medium: #4a5568;
+      --text-light: #718096;
+      --border-color: #e2e8f0;
+      --success: #00c07f;
+      --error: #ff5b7f;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+      --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    
+    /* Add a rule for inputs when in error state */
+    input.input-error {
+      border-color: var(--error) !important;
+    }
+    
+    /* ---------- Chatbot Button ---------- */
+    .chat-button {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 1000;
+      transition: all 0.3s cubic-bezier(0.68,-0.55,0.27,1.55);
+      overflow: hidden;
+      mask-image: radial-gradient(circle, white 100%, transparent 100%);
+      -webkit-mask-image: radial-gradient(circle, white 100%, transparent 100%);
+    }
+    .chat-button:hover {
+      transform: scale(1.1);
+    }
+    .chat-button i {
+      font-size: 22px;
+      position: relative;
+      z-index: 2;
+      animation: pulseIcon 1.5s ease-in-out infinite;
+    }
+    
+    /* Add scanning light effect */
+    .chat-button i::after {
+      content: '';
+      position: absolute;
+      top: -70%;
+      left: -70%;
+      width: 240%;
+      height: 240%;
+      background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0) 35%,
+        rgba(255, 255, 255, 0.5) 48%,
+        rgba(255, 255, 255, 0.7) 50%,
+        rgba(255, 255, 255, 0.5) 52%,
+        rgba(255, 255, 255, 0) 65%,
+        rgba(255, 255, 255, 0) 100%);
+      transform: rotate(45deg) translateX(-50%);
+      animation: scanBar 3.5s ease-in-out infinite;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    
+    @keyframes scanBar {
+      0% { transform: rotate(45deg) translateX(-120%); }
+      100% { transform: rotate(45deg) translateX(120%); }
+    }
+    
+    @keyframes pulseIcon {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    
+    /* Animated gradient background for chat button */
+    .chat-button::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, 
+        rgba(106, 17, 203, 1) 0%, 
+        rgba(37, 117, 252, 1) 25%, 
+        rgba(106, 17, 203, 1) 50%, 
+        rgba(37, 117, 252, 1) 75%, 
+        rgba(106, 17, 203, 1) 100%);
+      opacity: 0.8;
+      z-index: 1;
+      animation: gradientShift 5s linear infinite;
+    }
+    
+    /* White scanning bar animation removed */
+    
+    @keyframes gradientShift {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* AI Badge removed */
+    
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+      40% {transform: translateY(-5px);}
+      60% {transform: translateY(-2px);}
+    }
+    
+    /* Chatbot tooltip/notification */
+    .chat-tooltip {
+      position: fixed;
+      bottom: 85px;
+      left: 20px;
+      background: white;
+      color: var(--text-dark);
+      padding: 10px 15px;
+      border-radius: 8px;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.2);
+      font-size: 0.9rem;
+      max-width: 220px;
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.5s ease;
+      pointer-events: none;
+    }
+    
+    /* Updated chat tooltip content */
+    .chat-tooltip::before {
+      content: '✨ AI-Powered';
+      display: block;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .chat-tooltip:after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 20px;
+      width: 0;
+      height: 0;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 8px solid white;
+    }
+    
+    .chat-tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    /* ---------- Chat Container & Tabs ---------- */
+    .chat-container {
+      position: fixed;
+      bottom: 90px;
+      left: 20px;
+      width: 350px;
+      height: 500px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+      z-index: 999;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+    .chat-container.active {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: all;
+      animation: popIn 0.5s cubic-bezier(0.68,-0.55,0.27,1.55);
+    }
+    
+    @keyframes popIn {
+      0% { transform: scale(0.9) translateY(20px); opacity: 0; }
+      70% { transform: scale(1.05) translateY(-5px); }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .chat-header {
+      background: var(--gradient-primary);
+      color: white;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chat-tabs {
+      display: flex;
+      gap: 6px;
+    }
+    .chat-tabs button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 14px;
+      padding: 5px 8px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: border-color 0.2s ease;
+    }
+    .chat-tabs button.active {
+      border-color: white;
+      font-weight: 600;
+    }
+    .chat-close {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 18px;
+      position: absolute;
+      right: 10px;
+      top: 10px;
+    }
+    .chat-content {
+      flex: 1;
+      overflow-y: auto;
+      background: #f9fafc;
+      padding: 8px;
+    }
+    /* Hide all views by default */
+    .view {
+      display: none;
+      height: 100%;
+    }
+    
+    /* ---------- Premium Calculator Styles (Common) ---------- */
+    .calculator-container {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 0;
+      transition: var(--transition);
+      transform: translateY(0);
+      animation: float 6s ease-in-out infinite;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+    }
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
+      100% { transform: translateY(0px); }
+    }
+    .calculator-header {
+      background: var(--gradient-primary);
+      padding: 1.25rem;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+    .calculator-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+      opacity: 0.6;
+      pointer-events: none;
+      transform: rotate(30deg);
+    }
+    .calculator-header h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.5px;
+    }
+    .calculator-header p {
+      opacity: 0.9;
+      font-size: 0.85rem;
+      font-weight: 300;
+    }
+    .calculator-body {
+      padding: 1rem;
+    }
+    .input-form {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .input-group {
+      position: relative;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--text-medium);
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+      transition: var(--transition);
+    }
+    .input-icon {
+      position: absolute;
+      top: 36px;
+      left: 10px;
+      color: var(--primary-light);
+      pointer-events: none;
+      font-size: 0.9rem;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 0.75rem 0.75rem 0.75rem 36px;
+      font-size: 0.9rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+      box-shadow: var(--shadow-inset);
+      background-color: var(--card-bg);
+      color: var(--text-dark);
+      -webkit-appearance: none;
+    }
+    input[type="number"]::placeholder {
+      color: var(--text-light);
+      font-size: 0.85rem;
+    }
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(142, 51, 255, 0.15);
+    }
+    button.calc-btn {
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: var(--gradient-primary);
+      color: #fff;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    button.calc-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .summary-section {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    .final-value-card {
+      background: var(--gradient-primary);
+      color: white;
+      padding: 1.25rem;
+      border-radius: var(--radius-md);
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-align: center;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    .final-value-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+      opacity: 0.6;
+      pointer-events: none;
+      animation: rotate 15s linear infinite;
+    }
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .final-value-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      opacity: 0.9;
+    }
+    .value-number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 0.5rem;
+      display: block;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    .table-section {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+    }
+    /* Removed the header block for the averser table here */
+    .table-container {
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary-light) var(--border-color);
+      -webkit-overflow-scrolling: touch;
+    }
+    .table-container::-webkit-scrollbar {
+      height: 4px;
+    }
+    .table-container::-webkit-scrollbar-track {
+      background: var(--border-color);
+      border-radius: 2px;
+    }
+    .table-container::-webkit-scrollbar-thumb {
+      background-color: var(--primary-light);
+      border-radius: 2px;
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 0;
+      min-width: 300px;
+    }
+    th, td {
+      padding: 0.6rem 0.4rem;
+      text-align: right;
+      white-space: nowrap;
+      font-size: 0.75rem;
+    }
+    th {
+      background-color: var(--gradient-card);
+      color: var(--text-dark);
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--border-color);
+    }
+    tr:nth-child(even) {
+      background-color: var(--gradient-card);
+    }
+    tr {
+      transition: var(--transition);
+    }
+    tr:hover {
+      background-color: rgba(106, 17, 203, 0.05);
+    }
+    td {
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+    }
+    
+    /* Stats Card */
+    .stats-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      box-shadow: var(--shadow-md);
+      margin-top: 1.5rem;
+    }
+    .stats-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      padding: 0.75rem;
+      background: var(--gradient-card);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-medium);
+      margin-bottom: 0.25rem;
+    }
+    .stat-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .stat-value.positive {
+      color: var(--success);
+    }
+    .stat-value.negative {
+      color: var(--error);
+    }
+    
+    /* Fade In Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .error-message {
+      color: var(--error);
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    
+    /* Chat View Styles */
+    #chatView {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    
+    /* Chat Messages Animation */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    #chatView .message.bot-message:first-child {
+      animation: fadeInUp 0.5s ease-out;
+      border-left: 3px solid #ff5b7f;
+    }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      background-image: linear-gradient(to bottom, rgba(106, 17, 203, 0.05), rgba(37, 117, 252, 0.05));
+    }
+    .message {
+      max-width: 85%;
+      padding: 0.6rem 0.8rem;
+      border-radius: 1rem;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .bot-message {
+      align-self: flex-start;
+      background: var(--gradient-primary);
+      color: white;
+      border-bottom-left-radius: 0.25rem;
+    }
+    .user-message {
+      align-self: flex-end;
+      background: #e2e8f0;
+      color: var(--text-dark);
+      border-bottom-right-radius: 0.25rem;
+    }
+    .chat-input {
+      display: flex;
+      padding: 0.75rem;
+      background: white;
+      border-top: 1px solid var(--border-color);
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--border-color);
+      border-radius: 1.5rem;
+      font-size: 0.85rem;
+      outline: none;
+      min-width: 0; /* Allows input to shrink below its content size */
+    }
+    .chat-input button {
+      width: 36px;
+      height: 36px;
+      min-width: 36px; /* Ensures minimum width */
+      flex-shrink: 0; /* Prevents button from shrinking */
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      color: white;
+      border: none;
+      margin-left: 0.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    .chat-input button:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Taker calculator specific styles */
+    .new-summary-section {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    .new-final-value-card {
+      background: var(--gradient-primary);
+      color: white;
+      padding: 1.25rem;
+      border-radius: var(--radius-md);
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-align: center;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    .new-final-value-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 70%);
+      opacity: 0.6;
+      pointer-events: none;
+      animation: rotate 15s linear infinite;
+    }
+    .new-final-value-card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      opacity: 0.9;
+    }
+    .new-value-number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 0.5rem;
+      display: block;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    .new-table-section {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+    }
+    .new-table-header {
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .new-table-header h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .new-table-container {
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary-light) var(--border-color);
+      -webkit-overflow-scrolling: touch;
+    }
+    .new-stats-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      box-shadow: var(--shadow-md);
+      margin-top: 1.5rem;
+    }
+    .new-stats-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .new-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+    .new-stat-item {
+      display: flex;
+      flex-direction: column;
+      padding: 0.75rem;
+      background: var(--gradient-card);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+    .new-stat-label {
+      font-size: 0.7rem;
+      color: var(--text-medium);
+      margin-bottom: 0.25rem;
+    }
+    .new-stat-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .new-stat-value.positive {
+      color: var(--success);
+    }
+    .new-stat-value.negative {
+      color: var(--error);
+    }
+    .new-gain {
+      color: var(--success);
+    }
+    .new-expense {
+      color: var(--error);
+    }
+    
+    /* Premium WhatsApp Button Styles */
+    .premium-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      margin-top: 1rem;
+      width: 100%;
+      text-align: center;
+      text-decoration: none;
+    }
+    
+    .premium-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+      text-decoration: none;
+    }
+    
+    .premium-text {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .premium-text i {
+      font-size: 1.2rem;
+    }
+    
+    /* Premium Email Input Styles */
+    .premium-input-group {
+      position: relative;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      border: 1px solid rgba(106, 17, 203, 0.2);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+    }
+    
+    .premium-input-group:hover {
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.12);
+      transform: translateY(-1px);
+    }
+    
+    .premium-input-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-dark);
+      font-size: 0.9rem;
+    }
+    
+    .premium-input-group .input-icon {
+      position: absolute;
+      left: 1.5rem;
+      top: 2.8rem;
+      color: var(--primary);
+      font-size: 1rem;
+    }
+    
+    .premium-input-group input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border: 1px solid rgba(106, 17, 203, 0.3);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      background-color: white;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .premium-input-group input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(106, 17, 203, 0.15);
+      outline: none;
+    }
+    
+    /* Chat footer styles */
+    .chat-footer {
+      padding: 8px 12px;
+      background: #f0f2f5;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-medium);
+      font-weight: 500;
+    }
+    
+    .chat-footer span {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    
+    .chat-footer strong {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    /* Responsive adjustments for mobile */
+    @media (max-width: 576px) {
+      .chat-container {
+        width: 90%;
+        height: 80%;
+        left: 5%;
+        bottom: 80px;
+      }
+      
+      .chat-button {
+        width: 50px;
+        height: 50px;
+        bottom: 15px;
+        left: 15px;
+      }
+      
+      .input-form {
+        gap: 0.75rem;
+      }
+      
+      th, td {
+        padding: 0.6rem 0.4rem;
+        font-size: 0.75rem;
+      }
+      
+      .chat-tabs button {
+        font-size: 13px;
+        padding: 4px 6px;
+      }
+      
+      .stats-grid, .new-stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .stat-item, .new-stat-item {
+        padding: 0.6rem;
+      }
+      
+      .calculator-header h2 {
+        font-size: 1.1rem;
+      }
+      
+      .calculator-header p {
+        font-size: 0.8rem;
+      }
+      
+      .premium-btn {
+        padding: 0.7rem 1rem;
+        font-size: 0.8rem;
+      }
+      
+      .chat-tooltip {
+        bottom: 75px;
+        left: 15px;
+        font-size: 0.8rem;
+        padding: 8px 12px;
+        max-width: 180px;
+      }
+    }
+    
+    /* Typing indicator for chat */
+    .typing span {
+      animation: typing 1s infinite;
+      opacity: 0;
+    }
+    .typing span:nth-child(1) { animation-delay: 0s; }
+    .typing span:nth-child(2) { animation-delay: 0.3s; }
+    .typing span:nth-child(3) { animation-delay: 0.6s; }
+
+    @keyframes typing {
+      0% { opacity: 0; }
+      50% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    
+    /* Chat Tab Highlight */
+    .chat-tabs button#chatTab {
+      position: relative;
+      animation: pulse-glow 2s infinite;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+    }
+    
+    .chat-tabs button#chatTab::after {
+      content: 'AI';
+      position: absolute;
+      top: -8px;
+      right: -5px;
+      background: #ff5b7f;
+      color: white;
+      font-size: 9px;
+      font-weight: bold;
+      padding: 2px 4px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+  </style>
+  
+  <!-- Global Common Functions -->
+  <script>
+    // Format number in Indian currency style.
+    function formatNumber(num) {
+      const roundedNum = Math.round(num);
+      let result = '';
+      let numStr = roundedNum.toString();
+      let lastThree = numStr.length > 3 ? numStr.substring(numStr.length - 3) : numStr;
+      let otherNumbers = numStr.length > 3 ? numStr.substring(0, numStr.length - 3) : '';
+      if (otherNumbers !== '') {
+        let i = otherNumbers.length;
+        while (i > 0) {
+          let chunk = otherNumbers.substring(Math.max(0, i-2), i);
+          result = chunk + (result ? ',' + result : result);
+          i -= 2;
+        }
+        result += ',' + lastThree;
+      } else {
+        result = lastThree;
+      }
+      return '₹ ' + result;
+    }
+    
+    // Display or hide error on the input element.
+    function displayError(input, errorElement, shouldShow) {
+      if (shouldShow) {
+        errorElement.style.display = 'block';
+        input.classList.add('input-error');
+      } else {
+        errorElement.style.display = 'none';
+        input.classList.remove('input-error');
+      }
+    }
+    
+    // Validation function for the Averser view.
+    function validateInputEx(input, errorId) {
+      const minValue = parseFloat(input.getAttribute('min'));
+      let value = parseFloat(input.value);
+      const errorElement = document.getElementById(errorId);
+      
+      // Only validate if the field has a value
+      if (input.value.trim() === "") {
+        displayError(input, errorElement, false);
+        return true;
+      }
+      
+      if (isNaN(value) || value < minValue) {
+        displayError(input, errorElement, true);
+        return false;
+      } else {
+        displayError(input, errorElement, false);
+        return true;
+      }
+    }
+    
+    // Generic validation function that uses element IDs.
+    function validateInputsByIds(salaryId, expensesId, selfFundingId, salaryErrorId, expensesErrorId, selfFundingErrorId, fundingMin) {
+      let isValid = true;
+      let salaryInput = document.getElementById(salaryId);
+      let expensesInput = document.getElementById(expensesId);
+      let selfFundingInput = document.getElementById(selfFundingId);
+      let salaryError = document.getElementById(salaryErrorId);
+      let expensesError = document.getElementById(expensesErrorId);
+      let selfFundingError = document.getElementById(selfFundingErrorId);
+      
+      const salaryMin = 1000; // Minimum salary value
+      const expensesMin = 1000; // Minimum expenses value
+    
+      // Only validate if the field has a value
+      if (salaryInput.value.trim() === "") {
+        displayError(salaryInput, salaryError, false);
+      } else {
+        const salaryVal = parseFloat(salaryInput.value);
+        if (isNaN(salaryVal) || salaryVal < salaryMin) {
+          displayError(salaryInput, salaryError, true);
+          isValid = false;
+        } else {
+          displayError(salaryInput, salaryError, false);
+        }
+      }
+      
+      // Only validate if the field has a value
+      if (expensesInput.value.trim() === "") {
+        displayError(expensesInput, expensesError, false);
+      } else {
+        const expensesVal = parseFloat(expensesInput.value);
+        if (isNaN(expensesVal) || expensesVal < expensesMin) {
+          displayError(expensesInput, expensesError, true);
+          isValid = false;
+        } else {
+          displayError(expensesInput, expensesError, false);
+        }
+      }
+      
+      // Only validate if the field has a value
+      if (selfFundingInput.value.trim() === "") {
+        displayError(selfFundingInput, selfFundingError, false);
+      } else {
+        const selfFundingVal = parseFloat(selfFundingInput.value);
+        if (isNaN(selfFundingVal) || selfFundingVal < fundingMin) {
+          displayError(selfFundingInput, selfFundingError, true);
+          isValid = false;
+        } else {
+          displayError(selfFundingInput, selfFundingError, false);
+        }
+      }
+      
+      return isValid;
+    }
+  </script>
+  
+</head>
+<body>
+  <!-- ---------- Chatbot Button ---------- -->
+  <div class="chat-button" id="chatButton">
+    <i class="fas fa-comments"></i>
+  </div>
+  
+  <!-- Chatbot tooltip -->
+  <div class="chat-tooltip" id="chatTooltip">
+    Click here to calculate your wealth potential now!
+  </div>
+  
+  <!-- ---------- Chat Container with Tabs ---------- -->
+  <div class="chat-container" id="chatContainer">
+ 
+    <div class="chat-header">
+      <h2 style="font-size: 1.1rem; font-weight: 700; margin: 0 0 10px; text-shadow: 0 1px 3px blue; display: block; text-align: center; color: white; padding: 5px; border-radius: 0; width: 100%;">
+        <i class="fas fa-chart-line" style="margin-right: 8px;"></i>
+        Wealth Calculator
+      </h2>
+      
+      <div class="chat-tabs">
+        <button id="calcTab" class="">Averser</button>
+        <button id="investTab" class="">Moderate</button>
+        <button id="investTab2" class="">Taker</button>
+        <button id="chatTab" class="">AI Chat</button>
+      </div>
+      <button class="chat-close" id="chatClose"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="chat-content">
+      <!-- Exact Spreadsheet Calculator View (Averser) -->
+      <div id="calcView" class="view">
+        <main class="calculator-container exact animate-fade-in" style="animation-delay: 0.1s;">
+          <div class="calculator-header exact">
+            <h2>Risk Perception Averser</h2>
+            <p>Calculate your investment's growth over a 5-year period</p>
+          </div>
+          <div class="calculator-body exact">
+            <div class="input-form exact">
+              <div class="input-group exact">
+                <label for="exSalary">Monthly Salary</label>
+                <i class="fas fa-money-bill-wave input-icon exact"></i>
+                <input type="number" id="exSalary" value="" placeholder="Enter your monthly salary" min="1000" required onchange="validateInputEx(this, 'exSalaryError')" class="exact-number" />
+                <div id="exSalaryError" class="error-message">Monthly salary must be at least 1000</div>
+              </div>
+              <div class="input-group exact">
+                <label for="exExpenses">Monthly Expenses</label>
+                <i class="fas fa-shopping-cart input-icon exact"></i>
+                <input type="number" id="exExpenses" value="" placeholder="Enter your monthly expenses" min="1000" required onchange="validateInputEx(this, 'exExpensesError')" class="exact-number" />
+                <div id="exExpensesError" class="error-message">Monthly expenses must be at least 1000</div>
+              </div>
+              <div class="input-group exact">
+                <label for="exSelfFunding">Funds in Hand as on Date</label>
+                <i class="fas fa-wallet input-icon exact"></i>
+                <input type="number" id="exSelfFunding" value="" placeholder="Enter your current funds" min="10000" required onchange="validateInputEx(this, 'exFundsError')" class="exact-number" />
+                <div id="exFundsError" class="error-message">Funds in hand must be at least 10000</div>
+              </div>
+              <button onclick="doExactCalcEx()" class="calc-btn">Calculate</button>
+            </div>
+            <div class="summary-section exact animate-fade-in" style="animation-delay: 0.3s;">
+              <div class="final-value-card exact">
+                <h3>Final Value</h3>
+                <span class="value-number exact" id="exFinalValueNumber">0</span>
+              </div>
+              <a href="https://wa.me/919318381275?text=Hello,%20I%20would%20like%20to%20know%20more%20about%20the%20Averser%20Calculator%20and%20request%20the%20PDF%20guide%20for%20understanding%20how%20it%20works.%20Thank%20you!" class="premium-btn whatsapp-pdf-btn" target="_blank">
+                <span class="premium-text"><i class="fab fa-whatsapp"></i> Request PDF Guide via WhatsApp</span>
+              </a>
+              <form id="emailForm" action="https://formsubmit.co/stealdeals.co.in@gmail.com" method="POST" class="email-form" style="margin-top: 10px;">
+                <input type="hidden" name="_subject" value="Request for Averser Calculator PDF Guide">
+                <input type="hidden" name="_template" value="table">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_next" value="#" />
+                <div class="premium-input-group">
+                  <label for="userEmail">Your Email Address</label>
+                  <i class="fas fa-envelope input-icon"></i>
+                  <input type="email" name="email" id="userEmail" placeholder="Enter your email address" required class="exact-number" />
+                  <div id="emailError" class="error-message">Please enter a valid email address</div>
+                </div>
+                <input type="hidden" name="message" id="emailMessage" value="Hello, I would like to request the PDF guide for the Averser Calculator. Please send me more information about how it works. Thank you!">
+                <button type="submit" class="premium-btn email-request-btn" style="background: linear-gradient(135deg, #4285F4 0%, #34A853 100%); width: 100%;" onclick="updateEmailMessage()">
+                  <span class="premium-icon"><i class="fas fa-envelope"></i></span>
+                  <span class="premium-text">Request PDF Guide via Email</span>
+                </button>
+                <script>
+                  function updateEmailMessage() {
+                    const userEmail = document.getElementById('userEmail').value;
+                    const messageField = document.getElementById('emailMessage');
+                    messageField.value = `Hello, I would like to request the PDF guide for the Averser Calculator. My email address is ${userEmail}. Please send me more information about how it works. Thank you!`;
+                  }
+                </script>
+              </form>
+            </div>
+            <div class="table-section exact animate-fade-in" style="animation-delay: 0.2s;">
+              <!-- Removed the table header block here
+              <div class="table-container exact">
+                <table class="exact">
+                  <thead>
+                    <tr>
+                      <th class="exact">Year</th>
+                      <th class="exact">Closing Value</th>
+                      <th class="exact">Total Value</th>
+                    </tr>
+                  </thead>
+                  <tbody id="exResultBody">
+                  </tbody>
+                </table>
+              </div>  -->
+            </div>
+          </div>
+        </main>
+  
+        <script>
+          function doExactCalcEx() {
+            const fundInput = document.getElementById('exSelfFunding');
+            const salaryInput = document.getElementById('exSalary');
+            const expenseInput = document.getElementById('exExpenses');
+            
+            // Don't validate empty fields on first calculation attempt
+            let isValid = true;
+            
+            // Only validate fields that contain values
+            if (salaryInput.value.trim() !== "") {
+              isValid = validateInputEx(salaryInput, 'exSalaryError') && isValid;
+            }
+            
+            if (expenseInput.value.trim() !== "") {
+              isValid = validateInputEx(expenseInput, 'exExpensesError') && isValid;
+            }
+            
+            if (fundInput.value.trim() !== "") {
+              isValid = validateInputEx(fundInput, 'exFundsError') && isValid;
+            }
+            
+            // If no values entered or validation failed, don't proceed
+            if (!isValid || (fundInput.value.trim() === "" && 
+                salaryInput.value.trim() === "" && 
+                expenseInput.value.trim() === "")) {
+              return;
+            }
+            
+            // Get values with defaults for empty fields
+            const fundValue = parseFloat(fundInput.value) || 0;
+            const monthlySalary = parseFloat(salaryInput.value) || 0;
+            const monthlyExpense = parseFloat(expenseInput.value) || 0;
+            
+            const monthlySaving = monthlySalary - monthlyExpense;
+            const annualSaving = monthlySaving * 12;
+            const annualInvest = annualSaving;
+            
+            const fundROIs = [22.31, 22.97, 22.98, 22.99, 25.91];
+            const roiFactors = fundROIs.map(roi => 1 + roi / 100);
+            const investGrowthFactor = 1.06;
+            
+            let tableData = [];
+            
+            let closingValue = fundValue * roiFactors[0];
+            let totalAfterYear = closingValue + annualInvest * investGrowthFactor;
+            tableData.push({ year: 1, closingValue, totalAfterYear });
+            
+            for (let i = 1; i < 5; i++) {
+              closingValue = totalAfterYear * roiFactors[i];
+              totalAfterYear = closingValue + annualInvest * investGrowthFactor;
+              tableData.push({ year: i + 1, closingValue, totalAfterYear });
+            }
+            
+            document.getElementById('exFinalValueNumber').textContent =
+              totalAfterYear.toLocaleString('en-IN', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+            
+            const tbody = document.getElementById('exResultBody');
+            tbody.innerHTML = '';
+            tableData.forEach(row => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td>${row.year}</td>
+                <td>${row.closingValue.toLocaleString('en-IN', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
+                <td>${row.totalAfterYear.toLocaleString('en-IN', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}</td>
+              `;
+              tbody.appendChild(tr);
+            });
+          }
+        </script>
+      </div>
+      
+      <!-- Investment Calculator View (Moderate) -->
+      <div id="investmentCalcView" class="view">
+        <main class="calculator-container animate-fade-in" style="animation-delay: 0.1s;">
+          <div class="calculator-header">
+            <h2>Risk Perception Moderate</h2>
+            <p>Calculate your investment's growth over a 5-year period including rentals and exit values</p>
+          </div>
+          <div class="calculator-body">
+            <div class="input-form">
+              <div class="input-group">
+                <label for="salary">Monthly Salary *</label>
+                <i class="fas fa-money-bill-wave input-icon"></i>
+                <input type="number" id="salary" value="" placeholder="Enter your monthly salary" min="1000" required />
+                <div id="salaryError" class="error-message">Monthly salary must be at least ₹1,000</div>
+              </div>
+              <div class="input-group">
+                <label for="expenses">Monthly Expenses *</label>
+                <i class="fas fa-shopping-cart input-icon"></i>
+                <input type="number" id="expenses" value="" placeholder="Enter your monthly expenses" min="1000" required />
+                <div id="expensesError" class="error-message">Monthly expenses must be at least ₹1,000</div>
+              </div>
+              <div class="input-group">
+                <label for="selfFunding">Funds in hand as on date *</label>
+                <i class="fas fa-wallet input-icon"></i>
+                <input type="number" id="selfFunding" value="" placeholder="Enter initial funding amount (min ₹50,000)" required />
+                <div id="selfFundingError" class="error-message">Funds must be at least ₹50,000</div>
+              </div>
+            </div>
+            <div class="summary-section animate-fade-in" style="animation-delay: 0.3s;">
+              <div class="final-value-card">
+                <h3>Final Investment Value</h3>
+                <span class="value-number" id="finalValueNumber">₹0</span>
+              </div>
+              <div class="table-section animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="table-container">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Year</th>
+                        <th>Self Funding</th>
+                        <th>Bank Funding</th>
+                        <th>Investment</th>
+                        <th>Rentals</th>
+                        <th>EMI</th>
+                        <th>Exit</th>
+                        <th>Gain</th>
+                        <th>Accumulated Value</th>
+                      </tr>
+                    </thead>
+                    <tbody id="resultBody">
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="stats-card">
+                <h3><i class="fas fa-chart-line"></i> Investment Summary</h3>
+                <div class="stats-grid" id="statsGrid">
+                </div>
+              </div>
+              <form id="emailForm" action="https://formsubmit.co/stealdeals.co.in@gmail.com" method="POST" class="email-form" style="margin-top: 10px;">
+                <input type="hidden" name="_subject" value="Request for Averser Calculator PDF Guide">
+                <input type="hidden" name="_template" value="table">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_next" value="#" />
+                <div class="premium-input-group">
+                  <label for="userEmail">Your Email Address</label>
+                  <i class="fas fa-envelope input-icon"></i>
+                  <input type="email" name="email" id="userEmail" placeholder="Enter your email address" required class="exact-number" />
+                  <div id="emailError" class="error-message">Please enter a valid email address</div>
+                </div>
+                <input type="hidden" name="message" id="emailMessage" value="Hello, I would like to request the PDF guide for the Averser Calculator. Please send me more information about how it works. Thank you!">
+                <button type="submit" class="premium-btn email-request-btn" style="background: linear-gradient(135deg, #4285F4 0%, #34A853 100%); width: 100%;" onclick="updateEmailMessage()">
+                  <span class="premium-icon"><i class="fas fa-envelope"></i></span>
+                  <span class="premium-text">Request PDF Guide via Email</span>
+                </button>
+                <script>
+                  function updateEmailMessage() {
+                    const userEmail = document.getElementById('userEmail').value;
+                    const messageField = document.getElementById('emailMessage');
+                    messageField.value = `Hello, I would like to request the PDF guide for the Averser Calculator. My email address is ${userEmail}. Please send me more information about how it works. Thank you!`;
+                  }
+                </script>
+              </form>
+            </div>
+          </div>
+        </main>
+  
+        <script>
+          // Use the shared validation function.
+          function validateInputs() {
+            return validateInputsByIds('salary', 'expenses', 'selfFunding', 'salaryError', 'expensesError', 'selfFundingError', 50000);
+          }
+  
+          function updateResults() {
+            // Don't validate on first load/when fields are empty
+            const selfFundingVal = document.getElementById('selfFunding').value;
+            const salaryVal = document.getElementById('salary').value;
+            const expensesVal = document.getElementById('expenses').value;
+            
+            // Only validate if user has entered data
+            if (selfFundingVal !== "" || salaryVal !== "" || expensesVal !== "") {
+              if (!validateInputs()) {
+                document.getElementById('resultBody').innerHTML = "";
+                document.getElementById('finalValueNumber').textContent = "₹0";
+                document.getElementById('statsGrid').innerHTML = "";
+                return;
+              }
+            }
+  
+            // If all fields are empty, just show initial state
+            if (selfFundingVal === "" && salaryVal === "" && expensesVal === "") {
+              document.getElementById('resultBody').innerHTML = "";
+              document.getElementById('finalValueNumber').textContent = "₹0";
+              document.getElementById('statsGrid').innerHTML = "";
+              return;
+            }
+            
+            // Continue with calculation if validation passed
+            const monthlySaving = parseFloat(salaryVal) - parseFloat(expensesVal) || 0;
+            const annualRecurring = monthlySaving * 1.06 * 12;
+            
+            const tbody = document.getElementById('resultBody');
+            tbody.innerHTML = "";
+            let selfFunding = parseFloat(selfFundingVal) || 0;
+            let finalAccumulatedValue = 0;
+  
+            let totalInvestment = 0;
+            let totalRentals = 0;
+            let totalEMI = 0;
+            let totalGain = 0;
+  
+            for (let year = 1; year <= 5; year++) {
+              const bankFunding = (selfFunding / 0.3) * 0.7;
+              const investment = selfFunding + bankFunding;
+              const rentals = investment * 0.08;
+              const emi = bankFunding * 0.09;
+              const exitValue = investment * 1.15;
+              const gain = exitValue + rentals - emi - bankFunding + (emi * 0.25) - selfFunding;
+              const accumulatedValue = gain + selfFunding;
+  
+              totalInvestment += investment;
+              totalRentals += rentals;
+              totalEMI += emi;
+              totalGain += gain;
+  
+              const tr = document.createElement('tr');
+              tr.style.animationDelay = `${0.1 * year}s`;
+              tr.innerHTML = `
+                <td>${year}</td>
+                <td>${formatNumber(selfFunding)}</td>
+                <td>${formatNumber(bankFunding)}</td>
+                <td>${formatNumber(investment)}</td>
+                <td class="stat-value positive">${formatNumber(rentals)}</td>
+                <td class="stat-value negative">${formatNumber(emi)}</td>
+                <td>${formatNumber(exitValue)}</td>
+                <td class="stat-value positive">${formatNumber(gain)}</td>
+                <td>${formatNumber(accumulatedValue)}</td>
+              `;
+              tbody.appendChild(tr);
+  
+              selfFunding = accumulatedValue + annualRecurring;
+              finalAccumulatedValue = accumulatedValue;
+            }
+  
+            const totalValue = finalAccumulatedValue + annualRecurring;
+            document.getElementById('finalValueNumber').textContent = formatNumber(totalValue);
+  
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+              <div class="stat-item">
+                <span class="stat-label">Monthly Savings</span>
+                <span class="stat-value positive">${formatNumber(monthlySaving)}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Annual Recurring</span>
+                <span class="stat-value">${formatNumber(annualRecurring)}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Total Rental Income</span>
+                <span class="stat-value positive">${formatNumber(totalRentals)}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Total EMI Paid</span>
+                <span class="stat-value negative">${formatNumber(totalEMI)}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Total Gain</span>
+                <span class="stat-value positive">${formatNumber(totalGain)}</span>
+              </div>
+            `;
+          }
+  
+          document.getElementById('selfFunding').addEventListener('input', updateResults);
+          document.getElementById('salary').addEventListener('input', updateResults);
+          document.getElementById('expenses').addEventListener('input', updateResults);
+          window.addEventListener('load', updateResults);
+        </script>
+      </div>
+      
+      <!-- Investment Calculator View (Taker) -->
+      <div id="investmentCalcView3" class="view">
+        <main class="calculator-container animate-fade-in" style="animation-delay: 0.1s;">
+          <div class="calculator-header">
+            <h2>Risk Perception Taker</h2>
+            <p>Calculate your investment's growth over a 5-year period including rentals and exit values</p>
+          </div>
+          <div class="calculator-body">
+            <div class="input-form">
+              <div class="input-group">
+                <label for="salary3">Monthly Salary *</label>
+                <i class="fas fa-money-bill-wave input-icon"></i>
+                <input type="number" id="salary3" value="" placeholder="Enter your monthly salary" min="1000" required />
+                <div id="salaryError3" class="error-message">Monthly salary must be at least ₹1,000</div>
+              </div>
+              <div class="input-group">
+                <label for="expenses3">Monthly Expenses *</label>
+                <i class="fas fa-shopping-cart input-icon"></i>
+                <input type="number" id="expenses3" value="" placeholder="Enter your monthly expenses" min="1000" required />
+                <div id="expensesError3" class="error-message">Monthly expenses must be at least ₹1,000</div>
+              </div>
+              <div class="input-group">
+                <label for="selfFunding3">Funds in hand as on date *</label>
+                <i class="fas fa-wallet input-icon"></i>
+                <input type="number" id="selfFunding3" value="" placeholder="Enter initial funding amount (min ₹50,000)" required />
+                <div id="selfFundingError3" class="error-message">Funds must be at least ₹50,000</div>
+              </div>
+            </div>
+            <div class="new-summary-section animate-fade-in" style="animation-delay: 0.3s;">
+              <div class="new-final-value-card">
+                <h3>Final Investment Value</h3>
+                <span class="new-value-number" id="finalValueNumber3">₹0</span>
+              </div>
+              <div class="new-table-section animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="new-table-header">
+                  <h3>Investment Growth Projection</h3>
+                </div>
+                <div class="new-table-container">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Year</th>
+                        <th>Self Funding</th>
+                        <th>Bank Funding</th>
+                        <th>Investment</th>
+                        <th>Rentals</th>
+                        <th>EMI</th>
+                        <th>Exit</th>
+                        <th>Gain</th>
+                        <th>Accumulated Value</th>
+                      </tr>
+                    </thead>
+                    <tbody id="resultBody3">
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="new-stats-card">
+                <h3><i class="fas fa-chart-line"></i> Investment Summary</h3>
+                <div class="new-stats-grid" id="statsGrid3">
+                </div>
+              </div>
+              <form id="emailForm3" action="https://formsubmit.co/stealdeals.co.in@gmail.com" method="POST" class="email-form" style="margin-top: 10px;">
+                <input type="hidden" name="_subject" value="Request for Taker Calculator PDF Guide">
+                <input type="hidden" name="_template" value="table">
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_next" value="#" />
+                <div class="premium-input-group">
+                  <label for="userEmail3">Your Email Address</label>
+                  <i class="fas fa-envelope input-icon"></i>
+                  <input type="email" name="email" id="userEmail3" placeholder="Enter your email address" required class="exact-number" />
+                  <div id="emailError3" class="error-message">Please enter a valid email address</div>
+                </div>
+                <input type="hidden" name="message" id="emailMessage3" value="Hello, I would like to request the PDF guide for the Taker Calculator. Please send me more information about how it works. Thank you!">
+                <button type="submit" class="premium-btn email-request-btn" style="background: linear-gradient(135deg, #4285F4 0%, #34A853 100%); width: 100%;" onclick="updateEmailMessage3()">
+                  <span class="premium-icon"><i class="fas fa-envelope"></i></span>
+                  <span class="premium-text">Request PDF Guide via Email</span>
+                </button>
+                <script>
+                  function updateEmailMessage3() {
+                    const userEmail = document.getElementById('userEmail3').value;
+                    const messageField = document.getElementById('emailMessage3');
+                    messageField.value = `Hello, I would like to request the PDF guide for the Taker Calculator. My email address is ${userEmail}. Please send me more information about how it works. Thank you!`;
+                  }
+                </script>
+              </form>
+            </div>
+          </div>
+        </main>
+  
+        <script>
+          // For the taker view, use the generic validation function with element IDs.
+          function validateInputs3() {
+            return validateInputsByIds('salary3', 'expenses3', 'selfFunding3', 'salaryError3', 'expensesError3', 'selfFundingError3', 50000);
+          }
+    
+          function updateResults3() {
+            // Don't validate on first load/when fields are empty
+            const selfFundingVal = document.getElementById('selfFunding3').value;
+            const salaryVal = document.getElementById('salary3').value;
+            const expensesVal = document.getElementById('expenses3').value;
+            
+            // Only validate if user has entered data
+            if (selfFundingVal !== "" || salaryVal !== "" || expensesVal !== "") {
+              if (!validateInputs3()) {
+                document.getElementById('resultBody3').innerHTML = "";
+                document.getElementById('finalValueNumber3').textContent = "₹0";
+                document.getElementById('statsGrid3').innerHTML = "";
+                return;
+              }
+            }
+    
+            // If all fields are empty, just show initial state
+            if (selfFundingVal === "" && salaryVal === "" && expensesVal === "") {
+              document.getElementById('resultBody3').innerHTML = "";
+              document.getElementById('finalValueNumber3').textContent = "₹0";
+              document.getElementById('statsGrid3').innerHTML = "";
+              return;
+            }
+    
+            // Continue with calculation if validation passed
+            const monthlySaving = parseFloat(salaryVal) - parseFloat(expensesVal) || 0;
+            const annualRecurring = monthlySaving * 1.06 * 12;
+    
+            const tbody = document.getElementById('resultBody3');
+            tbody.innerHTML = "";
+            let selfFunding = parseFloat(selfFundingVal) || 0;
+            let finalAccumulatedValue = 0;
+    
+            let totalInvestment = 0;
+            let totalRentals = 0;
+            let totalEMI = 0;
+            let totalGain = 0;
+    
+            for (let year = 1; year <= 5; year++) {
+              const bankFunding = (selfFunding / 0.3) * 0.7;
+              const investment = selfFunding + bankFunding;
+              const rentals = investment * 0.08;
+              const emi = bankFunding * 0.09;
+              const exitValue = investment * 1.15;
+              const gain = exitValue + rentals - emi - bankFunding + (emi * 0.25) - selfFunding;
+              const accumulatedValue = gain + selfFunding;
+    
+              totalInvestment += investment;
+              totalRentals += rentals;
+              totalEMI += emi;
+              totalGain += gain;
+    
+              const tr = document.createElement('tr');
+              tr.style.animationDelay = `${0.1 * year}s`;
+              tr.innerHTML = `
+                <td>${year}</td>
+                <td>${formatNumber(selfFunding)}</td>
+                <td>${formatNumber(bankFunding)}</td>
+                <td>${formatNumber(investment)}</td>
+                <td class="new-gain">${formatNumber(rentals)}</td>
+                <td class="new-expense">${formatNumber(emi)}</td>
+                <td>${formatNumber(exitValue)}</td>
+                <td class="new-gain">${formatNumber(gain)}</td>
+                <td>${formatNumber(accumulatedValue)}</td>
+              `;
+              tbody.appendChild(tr);
+    
+              selfFunding = accumulatedValue + annualRecurring;
+              finalAccumulatedValue = accumulatedValue;
+            }
+    
+            const totalValue = finalAccumulatedValue + annualRecurring;
+            document.getElementById('finalValueNumber3').textContent = formatNumber(totalValue * 1.5);
+    
+            const statsGrid = document.getElementById('statsGrid3');
+            statsGrid.innerHTML = `
+              <div class="new-stat-item">
+                <span class="new-stat-label">Monthly Savings</span>
+                <span class="new-stat-value positive">${formatNumber(monthlySaving)}</span>
+              </div>
+              <div class="new-stat-item">
+                <span class="new-stat-label">Annual Recurring</span>
+                <span class="new-stat-value">${formatNumber(annualRecurring)}</span>
+              </div>
+              <div class="new-stat-item">
+                <span class="new-stat-label">Total Rental Income</span>
+                <span class="new-stat-value positive">${formatNumber(totalRentals)}</span>
+              </div>
+              <div class="new-stat-item">
+                <span class="new-stat-label">Total EMI Paid</span>
+                <span class="new-stat-value negative">${formatNumber(totalEMI)}</span>
+              </div>
+              <div class="new-stat-item">
+                <span class="new-stat-label">Total Gain</span>
+                <span class="new-stat-value positive">${formatNumber(totalGain)}</span>
+              </div>
+            `;
+          }
+    
+          document.getElementById('selfFunding3').addEventListener('input', updateResults3);
+          document.getElementById('salary3').addEventListener('input', updateResults3);
+          document.getElementById('expenses3').addEventListener('input', updateResults3);
+          window.addEventListener('load', updateResults3);
+        </script>
+        
+      </div>
+      
+      <!-- Chat View -->
+      <div id="chatView" class="view">
+        <div class="chat-messages" id="chatMessages">
+          <div class="message bot-message">
+            <div style="font-weight: 600; margin-bottom: 8px; color: #fff; display: flex; align-items: center;">
+              <span style="background: #ff5b7f; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; margin-right: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">AI</span>
+              Investment Assistant
+            </div>
+            Hello! I'm your AI-powered investment assistant. I can help with:
+            - Property investment calculations
+            - Wealth growth projections 
+            - Investment strategy recommendations
+            
+            How can I assist you today?
+          </div>
+        </div>
+        <div class="chat-input">
+          <input type="text" id="chatInput" placeholder="Ask me about investments..." />
+          <button id="chatSend"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="chat-footer">
+      <span>Powered by <strong>Stealdeals</strong></span>
+    </div>
+  </div>
+  
+  <script>
+    // ---------- Tab Switching & Chat Functionality Script ----------
+    const chatButton = document.getElementById('chatButton');
+    const chatContainer = document.getElementById('chatContainer');
+    const chatClose = document.getElementById('chatClose');
+    const investTab = document.getElementById('investTab');
+    const investTab2 = document.getElementById('investTab2');
+    const calcTab = document.getElementById('calcTab');
+    const chatTab = document.getElementById('chatTab');
+    const chatTooltip = document.getElementById('chatTooltip');
+    
+    const investmentCalcView = document.getElementById('investmentCalcView');
+    const investmentCalcView3 = document.getElementById('investmentCalcView3');
+    const calcView = document.getElementById('calcView');
+    const chatView = document.getElementById('chatView');
+    
+    // Tooltip popups have been removed
+    
+    chatButton.addEventListener('click', () => {
+      // Hide tooltip when chatbot is clicked
+      chatTooltip.classList.remove('show');
+      
+      chatContainer.classList.toggle('active');
+      // Only initialize view if we're opening the container
+      if (chatContainer.classList.contains('active')) {
+        showView();
+        // Change to show chat view by default instead of calc view
+        chatView.style.display = "flex";
+        chatTab.classList.add('active');
+        
+        // Scroll to the bottom of the chat messages
+        setTimeout(() => {
+          const chatMessages = document.getElementById('chatMessages');
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 100);
+      }
+    });
+    
+    chatClose.addEventListener('click', () => {
+      chatContainer.classList.remove('active');
+    });
+    
+    function showView() {
+      investmentCalcView.style.display = "none";
+      investmentCalcView3.style.display = "none";
+      calcView.style.display = "none";
+      chatView.style.display = "none";
+      
+      investTab.classList.remove('active');
+      investTab2.classList.remove('active');
+      calcTab.classList.remove('active');
+      chatTab.classList.remove('active');
+    }
+    
+    investTab.addEventListener('click', () => {
+      showView();
+      investmentCalcView.style.display = "block";
+      investTab.classList.add('active');
+    });
+    investTab2.addEventListener('click', () => {
+      showView();
+      investmentCalcView3.style.display = "block";
+      investTab2.classList.add('active');
+    });
+    calcTab.addEventListener('click', () => {
+      showView();
+      calcView.style.display = "block";
+      calcTab.classList.add('active');
+    });
+    chatTab.addEventListener('click', () => {
+      showView();
+      chatView.style.display = "flex";
+      chatTab.classList.add('active');
+    });
+    
+    // Chat functionality script
+    const chatInput = document.getElementById('chatInput');
+    const chatSend = document.getElementById('chatSend');
+    const chatMessages = document.getElementById('chatMessages');
+    
+    // Context information about your properties and services
+    const CONTEXT_INFO = `
+    Context information about StealDeals:
+    - We are a premier property investment platform offering diverse investment opportunities with different risk profiles.
+    - We specialize in three investment approaches: Averser (low risk), Moderate (balanced), and Taker (high risk).
+    - Our Averser calculator provides conservative growth projections with average ROIs ranging from 22.31% to 25.91% over 5 years.
+    - Our Moderate investment strategy includes rental properties with an average 8% rental yield and 15% annual appreciation.
+    - The Taker strategy offers the highest potential returns with 1.5x the standard growth projections.
+    - Bank funding is typically available at 70% LTV for our investment properties.
+    - We provide detailed 5-year investment growth projections including funding, rental income, and exit values.
+    - All our investment options include self-funding combined with bank funding at 0.3:0.7 ratio.
+    - Users can request detailed PDF guides for each investment strategy via WhatsApp or email.
+    - We focus on helping investors calculate their wealth potential based on their monthly salary, expenses, and available funds.
+    - Our platform offers a user-friendly interface with interactive calculators that provide immediate financial projections.
+    `;
+    
+    // Global variable to store user financial information
+    let userFinancialInfo = {
+      monthlyIncome: null,
+      monthlyExpenses: null,
+      availableFunds: null
+    };
+    
+    // Keep track of guide requests
+    let guideRequested = false;
+    let lastRequestedGuide = '';
+    let pendingEmailRequest = false;
+    let pendingPhoneRequest = false;
+    let chatHistory = [];
+    
+    // Admin WhatsApp number
+    const ADMIN_WHATSAPP = '919318381275';
+    
+    // Store last detected contact info
+    let lastDetectedPhone = null;
+    let lastDetectedEmail = null;
+    
+    // Helper function to extract financial info from message
+    function extractFinancialInfo(message) {
+      const text = message.toLowerCase();
+      
+      // Look for income information
+      const incomeMatch = text.match(/income\s+(?:is\s+)?(?:rs\.?|₹)?\s*(\d+(?:[.,]\d+)?)\s*(?:k|thousand)?/i) || 
+                         text.match(/(?:rs\.?|₹)?\s*(\d+(?:[.,]\d+)?)\s*(?:k|thousand)?\s+income/i);
+      
+      // Look for expense information
+      const expenseMatch = text.match(/expense[s]?\s+(?:is\s+)?(?:rs\.?|₹)?\s*(\d+(?:[.,]\d+)?)\s*(?:k|thousand)?/i) || 
+                           text.match(/(?:rs\.?|₹)?\s*(\d+(?:[.,]\d+)?)\s*(?:k|thousand)?\s+expense[s]?/i);
+      
+      // Look for available funds/cash in hand
+      const fundsMatch = text.match(/(?:available\s+)?fund[s]?\s+(?:is\s+)?(?:rs\.?|₹)?\s*(\d+(?:[.,]\d+)?)\s*(?:k|thousand)?/i) || 
+                         text.match(/(?:rs\.?|₹)?\s*(\d+(?:[.,]\d+)?)\s*(?:k|thousand)?\s+fund[s]?/i) ||
+                         text.match(/(?:cash|money)(?:\s+in\s+hand)?\s+(?:is\s+)?(?:rs\.?|₹)?\s*(\d+(?:[.,]\d+)?)\s*(?:k|thousand)?/i) ||
+                         text.match(/(?:rs\.?|₹)?\s*(\d+(?:[.,]\d+)?)\s*(?:k|thousand)?\s+(?:cash|money)(?:\s+in\s+hand)?/i);
+      
+      // Process matches and convert to numbers
+      if (incomeMatch) {
+        let value = parseFloat(incomeMatch[1].replace(/,/g, ''));
+        if (incomeMatch[0].includes('k') || incomeMatch[0].includes('thousand')) {
+          value *= 1000;
+        }
+        userFinancialInfo.monthlyIncome = value;
+      }
+      
+      if (expenseMatch) {
+        let value = parseFloat(expenseMatch[1].replace(/,/g, ''));
+        if (expenseMatch[0].includes('k') || expenseMatch[0].includes('thousand')) {
+          value *= 1000;
+        }
+        userFinancialInfo.monthlyExpenses = value;
+      }
+      
+      if (fundsMatch) {
+        let value = parseFloat(fundsMatch[1].replace(/,/g, ''));
+        if (fundsMatch[0].includes('k') || fundsMatch[0].includes('thousand')) {
+          value *= 1000;
+        }
+        userFinancialInfo.availableFunds = value;
+      }
+      
+      return (userFinancialInfo.monthlyIncome !== null && 
+              userFinancialInfo.monthlyExpenses !== null && 
+              userFinancialInfo.availableFunds !== null);
+    }
+    
+    // Function to detect and extract email address from user message
+    function extractEmailAddress(message) {
+      const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
+      const match = message.match(emailRegex);
+      
+      if (match) {
+        const email = match[0];
+        lastDetectedEmail = email; // Store the detected email
+        return email;
+      }
+      
+      return null;
+    }
+    
+    // Function to send email to admin using FormSubmit
+    function sendEmailToAdmin(userEmail, guideType = "Investment") {
+      // Create a hidden form and submit it programmatically
+      const tempForm = document.createElement('form');
+      tempForm.method = 'POST';
+      tempForm.action = 'https://formsubmit.co/stealdeals.co.in@gmail.com';
+      tempForm.style.display = 'none';
+      
+      // Email subject
+      const subjectInput = document.createElement('input');
+      subjectInput.type = 'hidden';
+      subjectInput.name = '_subject';
+      subjectInput.value = `Chatbot Request: ${guideType} Guide for ${userEmail}`;
+      tempForm.appendChild(subjectInput);
+      
+      // Template and captcha settings
+      const templateInput = document.createElement('input');
+      templateInput.type = 'hidden';
+      templateInput.name = '_template';
+      templateInput.value = 'table';
+      tempForm.appendChild(templateInput);
+      
+      const captchaInput = document.createElement('input');
+      captchaInput.type = 'hidden';
+      captchaInput.name = '_captcha';
+      captchaInput.value = 'false';
+      tempForm.appendChild(captchaInput);
+      
+      // Prevent redirect to localhost
+      const nextInput = document.createElement('input');
+      nextInput.type = 'hidden';
+      nextInput.name = '_next';
+      nextInput.value = window.location.href;
+      tempForm.appendChild(nextInput);
+      
+      // User's email
+      const emailInput = document.createElement('input');
+      emailInput.type = 'hidden';
+      emailInput.name = 'email';
+      emailInput.value = userEmail;
+      tempForm.appendChild(emailInput);
+      
+      // Message with chat history
+      const messageInput = document.createElement('input');
+      messageInput.type = 'hidden';
+      messageInput.name = 'message';
+      
+      // Prepare chat history for the email
+      let chatHistoryText = '';
+      if (chatHistory.length > 0) {
+        chatHistoryText = '\n\nRecent chat history:\n';
+        chatHistory.slice(-5).forEach(entry => {
+          chatHistoryText += `${entry.sender}: ${entry.text}\n`;
+        });
+      }
+      
+      messageInput.value = `User requested the ${guideType} PDF guide via chatbot. 
+Email address: ${userEmail}
+Guide requested: ${guideType}
+${chatHistoryText}
+      
+Please send them the appropriate investment guide PDF.`;
+      tempForm.appendChild(messageInput);
+      
+      // Add user's financial info if available
+      if (userFinancialInfo.monthlyIncome) {
+        const incomeInput = document.createElement('input');
+        incomeInput.type = 'hidden';
+        incomeInput.name = 'monthly_income';
+        incomeInput.value = userFinancialInfo.monthlyIncome;
+        tempForm.appendChild(incomeInput);
+      }
+      
+      if (userFinancialInfo.monthlyExpenses) {
+        const expensesInput = document.createElement('input');
+        expensesInput.type = 'hidden';
+        expensesInput.name = 'monthly_expenses';
+        expensesInput.value = userFinancialInfo.monthlyExpenses;
+        tempForm.appendChild(expensesInput);
+      }
+      
+      if (userFinancialInfo.availableFunds) {
+        const fundsInput = document.createElement('input');
+        fundsInput.type = 'hidden';
+        fundsInput.name = 'available_funds';
+        fundsInput.value = userFinancialInfo.availableFunds;
+        tempForm.appendChild(fundsInput);
+      }
+      
+      // Add to document, submit, and remove
+      document.body.appendChild(tempForm);
+      tempForm.submit();
+      
+      // Log the action
+      console.log(`Email request sent to admin for ${userEmail} requesting ${guideType} guide`);
+      
+      // Reset the pending email request flag
+      pendingEmailRequest = false;
+      
+      return true;
+    }
+    
+    // Detect which guide type the user is interested in from their message
+    function detectGuideType(message) {
+      const text = message.toLowerCase();
+      
+      if (text.includes('averser') || text.includes('low risk') || text.includes('conservative')) {
+        return 'Averser';
+      } else if (text.includes('moderate') || text.includes('balanced') || text.includes('medium risk')) {
+        return 'Moderate';
+      } else if (text.includes('taker') || text.includes('high risk') || text.includes('aggressive')) {
+        return 'Taker';
+      } else {
+        return 'Investment'; // Default if we can't determine
+      }
+    }
+    
+    // Function to calculate investment projections
+    function calculateProjections() {
+      if (!userFinancialInfo.monthlyIncome || !userFinancialInfo.monthlyExpenses || !userFinancialInfo.availableFunds) {
+        return null;
+      }
+      
+      const monthlySaving = userFinancialInfo.monthlyIncome - userFinancialInfo.monthlyExpenses;
+      const annualSaving = monthlySaving * 12;
+      
+      // Calculate Averser strategy (conservative growth with specific ROIs)
+      let averserResult = userFinancialInfo.availableFunds;
+      const fundROIs = [22.31, 22.97, 22.98, 22.99, 25.91];
+      const roiFactors = fundROIs.map(roi => 1 + roi / 100);
+      const investGrowthFactor = 1.06;
+      
+      let totalAfterYear = averserResult * roiFactors[0] + annualSaving * investGrowthFactor;
+      
+      for (let i = 1; i < 5; i++) {
+        totalAfterYear = totalAfterYear * roiFactors[i] + annualSaving * investGrowthFactor;
+      }
+      
+      averserResult = totalAfterYear;
+      
+      // Calculate Moderate strategy (30:70 funding, 8% rental, 15% appreciation)
+      let moderateResult = userFinancialInfo.availableFunds;
+      let accumulatedValue = 0;
+      
+      for (let year = 1; year <= 5; year++) {
+        const bankFunding = (moderateResult / 0.3) * 0.7;
+        const investment = moderateResult + bankFunding;
+        const rentals = investment * 0.08;
+        const emi = bankFunding * 0.09;
+        const exitValue = investment * 1.15;
+        const gain = exitValue + rentals - emi - bankFunding + (emi * 0.25) - moderateResult;
+        accumulatedValue = gain + moderateResult;
+        
+        moderateResult = accumulatedValue + annualSaving * 1.06;
+      }
+      
+      moderateResult = accumulatedValue + annualSaving * 1.06;
+      
+      // Calculate Taker strategy (1.5x the Moderate result)
+      const takerResult = moderateResult * 1.5;
+      
+      return {
+        averser: Math.round(averserResult),
+        moderate: Math.round(moderateResult),
+        taker: Math.round(takerResult)
+      };
+    }
+    
+    // Function to detect and extract phone numbers from user message
+    function extractPhoneNumber(message) {
+      // Match Indian phone numbers (10 digits, with or without country code)
+      const phoneRegex = /(?:\+?91)?[6-9]\d{9}/g;
+      const match = message.match(phoneRegex);
+      
+      if (match) {
+        const phone = match[0].replace(/\+91/, '');
+        lastDetectedPhone = phone; // Store the detected phone
+        return phone;
+      }
+      
+      return null;
+    }
+    
+    // Function to open WhatsApp with the user's query
+    function sendWhatsAppToAdmin(phoneNumber, guideType = "Investment") {
+      // Format the phone number (ensure it doesn't have +91 prefix)
+      const formattedPhone = phoneNumber.replace(/\+91/, '');
+      
+      // Prepare message text with chat history
+      let chatHistoryText = '';
+      if (chatHistory.length > 0) {
+        chatHistoryText = '\n\nRecent chat history:\n';
+        const recentMessages = chatHistory.slice(-5);
+        recentMessages.forEach(entry => {
+          chatHistoryText += `${entry.sender}: ${entry.text.substring(0, 100)}\n`;
+        });
+      }
+      
+      // Prepare financial info if available
+      let financialInfo = '';
+      if (userFinancialInfo.monthlyIncome) {
+        financialInfo += `\nMonthly Income: ₹${userFinancialInfo.monthlyIncome}`;
+      }
+      if (userFinancialInfo.monthlyExpenses) {
+        financialInfo += `\nMonthly Expenses: ₹${userFinancialInfo.monthlyExpenses}`;
+      }
+      if (userFinancialInfo.availableFunds) {
+        financialInfo += `\nAvailable Funds: ₹${userFinancialInfo.availableFunds}`;
+      }
+      
+      // Create the message text
+      const messageText = `Hello, I'm interested in the ${guideType} investment guide. My phone number is ${formattedPhone}.${financialInfo}${chatHistoryText}`;
+      
+      // Create a WhatsApp URL with the admin's number and the message
+      const whatsappURL = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(messageText)}`;
+      
+      // Open WhatsApp in a new tab
+      window.open(whatsappURL, '_blank');
+      
+      // Reset the pending phone request flag
+      pendingPhoneRequest = false;
+      
+      // Log the action
+      console.log(`WhatsApp initiated for user phone: ${formattedPhone} requesting ${guideType} guide`);
+      
+      return true;
+    }
+    
+    // Detect if user is requesting a guide in their message
+    function isRequestingGuide(message) {
+      const text = message.toLowerCase();
+      const guideKeywords = [
+        'guide', 'pdf', 'document', 'information', 'details', 'send me', 
+        'email me', 'mail me', 'share', 'more info', 'contact', 'whatsapp', 'phone'
+      ];
+      
+      // Check if any guide keywords are in the message
+      const requestingInfo = guideKeywords.some(keyword => text.includes(keyword));
+      
+      if (requestingInfo) {
+        // Detect which guide they want
+        lastRequestedGuide = detectGuideType(message);
+        guideRequested = true;
+        
+        // Check if they want contact via WhatsApp/phone
+        if (text.includes('whatsapp') || text.includes('phone') || text.includes('call') || text.includes('contact')) {
+          pendingPhoneRequest = true;
+        } else {
+          pendingEmailRequest = true;
+        }
+        
+        return true;
+      }
+      
+      return false;
+    }
+    
+    // Check if the message is a reconnection request
+    function isReconnectionRequest(message) {
+      const text = message.toLowerCase();
+      const reconnectKeywords = [
+        'connect', 'redirect', 'whatsapp', 'call', 'phone', 'contact',
+        'advisor', 'talk', 'speak', 'chat', 'message', 'again'
+      ];
+      
+      return reconnectKeywords.some(keyword => text.includes(keyword));
+    }
+    
+    // Gemini API integration through secure server-side endpoint
+    async function getGeminiResponse(message) {
+      try {
+        console.log("Preparing to send request through secure server endpoint with message:", message);
+        
+        // Check if this is a thank you message
+        const isThankYou = message.toLowerCase().includes('thank');
+        
+        // Extract financial info from the message
+        const hasFinancialInfo = extractFinancialInfo(message);
+        
+        // Check if user is requesting a guide
+        const wantsGuide = isRequestingGuide(message);
+        
+        // Check if user wants to reconnect
+        const wantsReconnection = isReconnectionRequest(message);
+        
+        // Check if message contains an email
+        const hasEmail = extractEmailAddress(message) !== null;
+        
+        // Check if message contains a phone number
+        const hasPhone = extractPhoneNumber(message) !== null;
+        
+        // Check if we have stored contact info
+        const hasStoredPhone = lastDetectedPhone !== null;
+        const hasStoredEmail = lastDetectedEmail !== null;
+        
+        // Calculate projections if we have all the financial info
+        const projections = calculateProjections();
+        
+        // Create a context string with the financial info and projections
+        let financialContext = '';
+        if (userFinancialInfo.monthlyIncome !== null) {
+          financialContext += `The user has provided their monthly income: ₹${userFinancialInfo.monthlyIncome}. `;
+        }
+        if (userFinancialInfo.monthlyExpenses !== null) {
+          financialContext += `The user has provided their monthly expenses: ₹${userFinancialInfo.monthlyExpenses}. `;
+        }
+        if (userFinancialInfo.availableFunds !== null) {
+          financialContext += `The user has provided their available funds: ₹${userFinancialInfo.availableFunds}. `;
+        }
+        
+        if (projections) {
+          financialContext += `IMPORTANT: Based on the user's financial information, the projected values after 5 years are: 
+            - Averser strategy: ₹${projections.averser.toLocaleString('en-IN')}
+            - Moderate strategy: ₹${projections.moderate.toLocaleString('en-IN')}
+            - Taker strategy: ₹${projections.taker.toLocaleString('en-IN')}
+          `;
+        }
+        
+        // Add special instructions based on context
+        let specialInstructions = '';
+        
+        // If user wants a guide but hasn't provided contact info, ask for it
+        if ((wantsGuide || pendingEmailRequest) && !hasEmail && !hasPhone && !pendingPhoneRequest && !hasStoredPhone) {
+          specialInstructions = `
+          7. The user has requested a guide but hasn't provided their email address. 
+          VERY IMPORTANT: Ask them directly for their email address so we can send them the ${lastRequestedGuide || 'investment'} guide. 
+          Keep this request brief but make it the main focus of your response.
+          `;
+        } else if ((wantsGuide || pendingPhoneRequest || wantsReconnection) && !hasPhone && !hasEmail && !hasStoredPhone) {
+          specialInstructions = `
+          7. The user wants to connect via WhatsApp but hasn't provided their phone number.
+          VERY IMPORTANT: Ask them directly for their phone number so we can connect them with our advisor about the ${lastRequestedGuide || 'investment'} guide.
+          Keep this request brief but make it the main focus of your response.
+          `;
+        } else if (wantsReconnection && hasStoredPhone) {
+          specialInstructions = `
+          7. The user is requesting to reconnect with an advisor. 
+          IMPORTANT: Let them know you're redirecting them to WhatsApp to connect with an advisor.
+          `;
+        }
+        
+        // Send request to our secure server-side endpoint instead of directly to Gemini API
+        const response = await fetch('/api/chat/gemini', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: {
+              text: message,
+              contextInfo: CONTEXT_INFO
+            },
+            financialContext,
+            isThankYou,
+            projections,
+            specialInstructions
+          })
+        });
+        
+        console.log("Response status:", response.status);
+        
+        if (!response.ok) {
+          console.error("API error status:", response.status, response.statusText);
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log("Full API response:", data);
+        
+        if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+          const responseText = data.candidates[0].content.parts[0].text;
+          console.log("Using API response:", responseText.substring(0, 50) + "...");
+          return responseText;
+        } else {
+          console.error("Unexpected API response structure:", data);
+          throw new Error('Unexpected response structure');
+        }
+      } catch (error) {
+        console.error("API error details:", error);
+        const fallbackResponse = getSimpleResponse(message);
+        console.log("Using fallback response:", fallbackResponse.substring(0, 50) + "...");
+        return fallbackResponse;
+      }
+    }
+    
+    // Function to get a simple response when the API fails
+    function getSimpleResponse(message) {
+      message = message.toLowerCase();
+      
+      // Check if we have the user's financial information
+      const hasFinancialInfo = userFinancialInfo.monthlyIncome !== null && 
+                              userFinancialInfo.monthlyExpenses !== null && 
+                              userFinancialInfo.availableFunds !== null;
+      
+      // Extract financial info from the message if not already available
+      if (!hasFinancialInfo) {
+        extractFinancialInfo(message);
+      }
+      
+      // Calculate projections if we have all the financial info
+      const projections = calculateProjections();
+      
+      // If user is asking about figures/calculations and we have their financial info
+      if (hasFinancialInfo && (message.includes("figure") || message.includes("calculation") || 
+          message.includes("amount") || message.includes("projection") || message.includes("after 5 year"))) {
+        return `Based on your income of ₹${userFinancialInfo.monthlyIncome.toLocaleString('en-IN')}, expenses of ₹${userFinancialInfo.monthlyExpenses.toLocaleString('en-IN')}, and funds of ₹${userFinancialInfo.availableFunds.toLocaleString('en-IN')}, your 5-year projections are: Averser: ₹${projections.averser.toLocaleString('en-IN')}, Moderate: ₹${projections.moderate.toLocaleString('en-IN')}, Taker: ₹${projections.taker.toLocaleString('en-IN')}.`;
+      }
+      
+      if (message.includes("hello") || message.includes("hi") || message.includes("hey")) {
+        if (hasFinancialInfo) {
+          return `Hi! Based on your financial details, your 5-year projections are: Averser: ₹${projections.averser.toLocaleString('en-IN')}, Moderate: ₹${projections.moderate.toLocaleString('en-IN')}, Taker: ₹${projections.taker.toLocaleString('en-IN')}.`;
+        } else {
+          return "Hi! To help with your investment planning, what's your monthly income, expenses, and cash in hand?";
+        }
+      } else if (message.includes("roi") || message.includes("return")) {
+        if (hasFinancialInfo) {
+          return `With your financial details, your 5-year returns would be: Averser: ₹${projections.averser.toLocaleString('en-IN')}, Moderate: ₹${projections.moderate.toLocaleString('en-IN')}, Taker: ₹${projections.taker.toLocaleString('en-IN')}.`;
+        } else {
+          return "Our investments offer: Averser (22-26% ROI), Moderate (8% rental yield, 15% appreciation), and Taker (1.5x higher returns). What's your monthly income, expenses, and cash in hand?";
+        }
+      } else if (message.includes("invest") || message.includes("start")) {
+        if (hasFinancialInfo) {
+          return `Ready to invest! With your details, your 5-year projections are: Averser: ₹${projections.averser.toLocaleString('en-IN')}, Moderate: ₹${projections.moderate.toLocaleString('en-IN')}, Taker: ₹${projections.taker.toLocaleString('en-IN')}.`;
+        } else {
+          return "To get started, please share your monthly income, expenses, and cash in hand. I'll show how our three strategies would work for your situation.";
+        }
+      } else if (message.includes("save") || message.includes("saving")) {
+        if (hasFinancialInfo) {
+          return `With your monthly savings of ₹${(userFinancialInfo.monthlyIncome - userFinancialInfo.monthlyExpenses).toLocaleString('en-IN')}, your 5-year projections are: Averser: ₹${projections.averser.toLocaleString('en-IN')}, Moderate: ₹${projections.moderate.toLocaleString('en-IN')}, Taker: ₹${projections.taker.toLocaleString('en-IN')}.`;
+        } else {
+          return "To see how your savings can grow, please share your monthly income, expenses, and cash in hand. Our three strategies offer different risk-return profiles.";
+        }
+      } else if (message.includes("thank")) {
+        return "You're welcome! We offer three calculators: Averser (low-risk), Moderate (balanced), and Taker (high-risk). Try each calculator tab to see which fits your goals best.";
+      } else if (message.includes("calculator") || message.includes("calc")) {
+        if (hasFinancialInfo) {
+          return `Our calculators would show these 5-year projections for you: Averser: ₹${projections.averser.toLocaleString('en-IN')}, Moderate: ₹${projections.moderate.toLocaleString('en-IN')}, Taker: ₹${projections.taker.toLocaleString('en-IN')}.`;
+        } else {
+          return "We have three calculators with different risk profiles. What's your monthly income, expenses, and cash in hand? I'll help you choose between Averser, Moderate, and Taker.";
+        }
+      } else if (message.includes("property") || message.includes("real estate")) {
+        if (hasFinancialInfo) {
+          return `For property investments with your financial profile, your 5-year projections are: Averser: ₹${projections.averser.toLocaleString('en-IN')}, Moderate: ₹${projections.moderate.toLocaleString('en-IN')}, Taker: ₹${projections.taker.toLocaleString('en-IN')}.`;
+        } else {
+          return "Our property investments offer excellent returns. What's your monthly income, expenses, and cash in hand? I'll show projections for our three investment strategies.";
+        }
+      } else {
+        if (hasFinancialInfo) {
+          return `Based on your financial details, your 5-year investment projections are: Averser: ₹${projections.averser.toLocaleString('en-IN')}, Moderate: ₹${projections.moderate.toLocaleString('en-IN')}, Taker: ₹${projections.taker.toLocaleString('en-IN')}.`;
+        } else {
+          return "To understand your investment potential, I need your monthly income, expenses, and cash in hand. I'll then provide projections for our investment strategies.";
+        }
+      }
+    }
+    
+    // Helper function to show typing indicator
+    function showTypingIndicator() {
+      const typingIndicator = document.createElement('div');
+      typingIndicator.id = 'typingIndicator';
+      typingIndicator.classList.add('message', 'bot-message', 'typing');
+      typingIndicator.innerHTML = '<span>.</span><span>.</span><span>.</span>';
+      chatMessages.appendChild(typingIndicator);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Helper function to hide typing indicator
+    function hideTypingIndicator() {
+      const typingIndicator = document.getElementById('typingIndicator');
+      if (typingIndicator) {
+        typingIndicator.remove();
+      }
+    }
+    
+    // Function to add a message to the chat
+    function addMessage(text, sender, isApi = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message');
+      
+      if (sender === 'bot') {
+        messageDiv.classList.add('bot-message');
+        if (isApi) {
+          messageDiv.classList.add('api-response');
+        } else {
+          messageDiv.classList.add('fallback-response');
+        }
+      } else {
+        messageDiv.classList.add('user-message');
+      }
+      
+      messageDiv.textContent = text;
+      
+      if (sender === 'bot') {
+        // Add indicator for bot messages
+        const indicator = document.createElement('div');
+        indicator.style.fontSize = '0.7rem';
+        indicator.style.marginTop = '5px';
+        indicator.style.opacity = '0.7';
+        indicator.style.fontStyle = 'italic';
+        
+        if (isApi) {
+          // API response
+          indicator.style.color = '#00c07f';
+          indicator.textContent = '✓ AI-powered response';
+        } else {
+          // Fallback response
+          indicator.style.color = '#ff5b7f';
+          indicator.textContent = 'ⓘ Basic response (AI unavailable)';
+        }
+        
+        messageDiv.appendChild(indicator);
+      }
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      
+      // Add to chat history
+      chatHistory.push({
+        sender: sender === 'bot' ? 'Bot' : 'User',
+        text: text
+      });
+      
+      // Keep chat history limited to last 20 messages
+      if (chatHistory.length > 20) {
+        chatHistory.shift();
+      }
+    }
+    
+    // Main function to send a message
+    async function sendMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+      
+      // Add the user message to the chat
+      addMessage(message, 'user');
+      chatInput.value = '';
+      
+      // Check if message contains an email address
+      const userEmail = extractEmailAddress(message);
+      // Check if message contains a phone number
+      const userPhone = extractPhoneNumber(message);
+      
+      let emailSent = false;
+      let whatsappSent = false;
+      
+      // Check if user is requesting a guide or reconnection
+      const wantsGuide = isRequestingGuide(message) || pendingEmailRequest || pendingPhoneRequest;
+      const wantsReconnection = isReconnectionRequest(message);
+      
+      // If an email is found, trigger the admin notification
+      if (userEmail) {
+        // Determine guide type - use last requested type if one was recently requested
+        const guideType = guideRequested ? lastRequestedGuide : detectGuideType(message);
+        emailSent = sendEmailToAdmin(userEmail, guideType);
+        console.log(`Email detected: ${userEmail} - Guide type: ${guideType}`);
+        
+        // Reset guide request flags after sending
+        guideRequested = false;
+        pendingEmailRequest = false;
+        pendingPhoneRequest = false;
+      } 
+      // If a phone number is found, trigger WhatsApp
+      else if (userPhone) {
+        // Determine guide type - use last requested type if one was recently requested
+        const guideType = guideRequested ? lastRequestedGuide : detectGuideType(message);
+        whatsappSent = sendWhatsAppToAdmin(userPhone, guideType);
+        console.log(`Phone detected: ${userPhone} - Guide type: ${guideType}`);
+        
+        // Reset guide request flags after sending
+        guideRequested = false;
+        pendingEmailRequest = false;
+        pendingPhoneRequest = false;
+      }
+      // Handle reconnection requests using stored phone number
+      else if (wantsReconnection && lastDetectedPhone) {
+        const guideType = guideRequested ? lastRequestedGuide : detectGuideType(message);
+        whatsappSent = sendWhatsAppToAdmin(lastDetectedPhone, guideType);
+        console.log(`Reconnection requested - using stored phone: ${lastDetectedPhone} - Guide type: ${guideType}`);
+        
+        // Reset flags
+        pendingPhoneRequest = false;
+        pendingEmailRequest = false;
+      }
+      // Set pending flags if contact info is requested but not provided
+      else if ((wantsGuide || wantsReconnection) && !userEmail && !userPhone) {
+        if (message.toLowerCase().includes('whatsapp') || 
+            message.toLowerCase().includes('phone') || 
+            message.toLowerCase().includes('call') ||
+            pendingPhoneRequest ||
+            wantsReconnection) {
+          // If user mentions WhatsApp or phone, set pending phone request
+          pendingPhoneRequest = true;
+          pendingEmailRequest = false;
+        } else {
+          // Otherwise default to email
+          pendingEmailRequest = true;
+        }
+      }
+      
+      // Show typing indicator
+      showTypingIndicator();
+      
+      try {
+        // Get response from API
+        const response = await getGeminiResponse(message);
+        
+        // Hide typing indicator
+        hideTypingIndicator();
+        
+        // Check if this is a fallback response (from getSimpleResponse)
+        const isFallback = response === getSimpleResponse(message);
+        
+        // If we sent an email notification, add confirmation to the response
+        let finalResponse = response;
+        if (emailSent) {
+          finalResponse = `Your guide request has been sent to our team. We'll email you shortly with more information.\n\n${response}`;
+        } else if (whatsappSent) {
+          finalResponse = `Opening WhatsApp to connect you with our investment advisor. You'll be able to discuss your investment options directly.\n\n${response}`;
+        }
+        
+        // Add the response to the chat with appropriate indicator
+        addMessage(finalResponse, 'bot', !isFallback);
+      } catch (error) {
+        console.error("Error sending message:", error);
+        
+        // Hide typing indicator
+        hideTypingIndicator();
+        
+        // If we sent an email notification, still confirm that to the user
+        if (emailSent) {
+          addMessage("Your guide request has been sent to our team. We'll email you shortly with more information.", 'bot', true);
+        } else if (whatsappSent) {
+          addMessage("Opening WhatsApp to connect you with our investment advisor. You'll be able to discuss your investment options directly.", 'bot', true);
+        } else {
+          // Add error message
+          addMessage("Sorry, I'm having trouble right now. Please try again later.", 'bot', false);
+        }
+      }
+    }
+    
+    // Add event listeners for chat
+    chatInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+    chatSend.addEventListener('click', sendMessage);
+    
+    // Add CSS styles for the chat
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add CSS for styling
+      const style = document.createElement('style');
+      style.textContent = `
+        .api-response {
+          border-left: 3px solid #00c07f;
+        }
+        .typing span {
+          animation: typing 1s infinite;
+          opacity: 0;
+        }
+        .typing span:nth-child(1) { animation-delay: 0s; }
+        .typing span:nth-child(2) { animation-delay: 0.3s; }
+        .typing span:nth-child(3) { animation-delay: 0.6s; }
+        
+        @keyframes typing {
+          0% { opacity: 0; }
+          50% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Debug buttons removed
+    });
+  </script>
+  
+  <!-- API test button removed -->
+  
+  <!-- CSS for response indicators -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const style = document.createElement('style');
+      style.textContent = `
+        .api-response {
+          border-left: 3px solid #00c07f;
+        }
+        .fallback-response {
+          border-left: 3px solid #ff5b7f;
+        }
+        .typing span {
+          animation: typing 1s infinite;
+          opacity: 0;
+        }
+        .typing span:nth-child(1) { animation-delay: 0s; }
+        .typing span:nth-child(2) { animation-delay: 0.3s; }
+        .typing span:nth-child(3) { animation-delay: 0.6s; }
+        
+        @keyframes typing {
+          0% { opacity: 0; }
+          50% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    });
+  </script>
+  
+  <!-- Communication with parent window -->
+  <script>
+    // Make body background transparent
+    document.body.style.background = 'transparent';
+    
+    // Send message to parent when chatbot is opened/closed
+    document.getElementById('chatButton').addEventListener('click', function() {
+      if (document.getElementById('chatContainer').classList.contains('active')) {
+        window.parent.postMessage('chatbot-opened', '*');
+      } else {
+        window.parent.postMessage('chatbot-closed', '*');
+      }
+    });
+    
+    document.getElementById('chatClose').addEventListener('click', function() {
+      window.parent.postMessage('chatbot-closed', '*');
+    });
+  </script>
+</body>
+</html>

@@ -9,6 +9,7 @@ Stealdeals is a modern real estate platform built with Next.js and Tailwind CSS.
 - Featured property listings
 - Modern UI with smooth animations
 - Mobile-friendly navigation
+- Secure admin panel for property management
 
 ## Screenshots
 
@@ -19,6 +20,8 @@ Stealdeals is a modern real estate platform built with Next.js and Tailwind CSS.
 - [Next.js](https://nextjs.org/) - React framework for server-side rendering
 - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
 - [React Icons](https://react-icons.github.io/react-icons/) - Popular icons for React applications
+- [JWT](https://jwt.io/) - JSON Web Tokens for secure authentication
+- [bcryptjs](https://github.com/dcodeIO/bcrypt.js) - Password hashing
 
 ## Getting Started
 
@@ -44,7 +47,24 @@ npm install
 yarn install
 ```
 
-3. Run the development server:
+3. Set up environment variables:
+   Create a `.env.local` file in the root directory with the following variables:
+
+```
+# Admin Credentials
+ADMIN_EMAIL="your_admin_email@example.com"
+ADMIN_PASSWORD="your_secure_password"
+
+# Security
+JWT_SECRET="your_random_secure_string"
+```
+
+You can generate a secure JWT secret with:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
@@ -52,7 +72,21 @@ npm run dev
 yarn dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+## Admin Panel Setup
+
+The admin panel is protected with secure authentication using JWT tokens and HTTP-only cookies. To access the admin panel:
+
+1. Navigate to `/admin/login` in your browser
+2. Log in with your admin credentials (set in `.env.local`)
+3. Admin sessions expire after 24 hours for security
+
+For production deployment:
+- Use strong, unique passwords
+- Enable HTTPS
+- Consider implementing additional security measures like rate limiting
+- Regularly rotate your JWT_SECRET
 
 ## Project Structure
 
@@ -62,7 +96,9 @@ stealdeals/
 │   ├── app/
 │   │   ├── page.tsx          # Home page
 │   │   ├── layout.tsx        # Root layout
-│   │   └── globals.css       # Global styles
+│   │   ├── globals.css       # Global styles
+│   │   ├── admin/            # Admin panel pages
+│   │   └── api/              # API routes
 │   └── components/
 │       ├── Header.tsx        # Navigation header
 │       ├── Hero.tsx          # Hero section with search

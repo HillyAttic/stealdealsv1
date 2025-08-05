@@ -14,15 +14,33 @@ const Header = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
+  // Add custom scrollbar styles
+  React.useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   // Navigation items
   const navItems = [
     { name: "HOME", path: "/", icon: <FaHome className="mr-1" /> },
     { name: "ABOUT US", path: "/about", icon: <FaInfoCircle className="mr-1" /> },
     { name: "PRELEASED INVENTORY", path: "/inventory", icon: <FaWarehouse className="mr-1" /> },
+    { name: "VACANT", path: "/vacant", icon: <FaImages className="mr-1" /> },
     { name: "PLOTS", path: "/plots", icon: <FaLandmark className="mr-1" /> },
     { name: "BE A FRANCHISE", path: "/franchise", icon: <FaHandshake className="mr-1" /> },
     { name: "HORECA", path: "/horeca", icon: <FaUtensils className="mr-1" /> },
-    { name: "GALLARY", path: "/gallery", icon: <FaImages className="mr-1" /> },
     { name: "CONTACT", path: "/contact", icon: <FaPhoneAlt className="mr-1" /> }
   ];
 
@@ -95,8 +113,8 @@ const Header = () => {
             </button>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:block mx-auto">
-              <ul className="flex flex-wrap items-center text-center">
+            <nav className="hidden md:block mx-auto overflow-x-auto no-scrollbar">
+              <ul className="flex items-center text-center whitespace-nowrap min-w-max">
                 {navItems.map((item, index) => {
                   return (
                     <React.Fragment key={index}>
@@ -120,17 +138,6 @@ const Header = () => {
                 })}
               </ul>
             </nav>
-            
-            {/* Add Listing Button - Right aligned */}
-            <div className="hidden md:block ml-auto">
-              <Link 
-                href="/add-property" 
-                className="premium-button group relative overflow-hidden flex items-center bg-gradient-to-r from-blue-800 to-blue-900 hover:from-blue-700 hover:to-blue-800 text-white px-3 py-2 rounded-md text-base font-medium transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                <span className="relative z-10">Add Listing</span>
-                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-              </Link>
-            </div>
           </div>
         </div>
       </header>
@@ -175,16 +182,6 @@ const Header = () => {
                   </Link>
                 </li>
               ))}
-              <li className="pt-4 mt-4 border-t border-blue-700/50">
-                <Link 
-                  href="/add-property" 
-                  className="flex items-center justify-center py-3 px-4 bg-white text-blue-900 rounded-md font-medium shadow-md hover:bg-blue-50 transition-colors duration-200"
-                  onClick={toggleMobileMenu}
-                >
-                  <FaPlus className="mr-2" />
-                  <span>Add Listing</span>
-                </Link>
-              </li>
             </ul>
           </nav>
         </div>

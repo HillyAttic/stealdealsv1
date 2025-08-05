@@ -1,11 +1,37 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { FaKey, FaEnvelope, FaExclamationTriangle } from 'react-icons/fa';
+import Cookies from 'js-cookie';
+import ClientOnly from '@/components/ClientOnly';
+
+// Add global type declaration for our window extension
+declare global {
+  interface Window {
+    __cleanBitdefenderAttributes?: () => void;
+  }
+}
 
 export default function AdminLogin() {
+  return (
+    <ClientOnly
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center p-8">
+            <div className="inline-block animate-spin h-8 w-8 border-4 border-blue-900 border-t-transparent rounded-full mb-4"></div>
+            <p>Loading admin login...</p>
+          </div>
+        </div>
+      }
+    >
+      <AdminLoginContent />
+    </ClientOnly>
+  );
+}
+
+function AdminLoginContent() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
@@ -13,6 +39,35 @@ export default function AdminLogin() {
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if already logged in - using both cookie methods
+  useEffect(() => {
+    // Clean any Bitdefender attributes if the global cleaner function exists
+    if (typeof window !== 'undefined' && window.__cleanBitdefenderAttributes) {
+      window.__cleanBitdefenderAttributes();
+    }
+    
+    // Check if we're already logged in
+    const checkLoginStatus = async () => {
+      try {
+        // Try to access a protected endpoint to check if we're logged in
+        const response = await fetch('/api/auth/check', {
+          method: 'GET',
+          credentials: 'include', // Important: include cookies
+        });
+        
+        if (response.ok) {
+          // Already logged in, redirect to dashboard
+          router.push('/admin/dashboard');
+        }
+      } catch (err) {
+        // Not logged in, stay on login page
+        console.log('Not logged in yet');
+      }
+    };
+    
+    checkLoginStatus();
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -22,17 +77,23 @@ export default function AdminLogin() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
+      console.log('Submitting login with:', { 
+        email: formData.email,
+        passwordLength: formData.password.length 
+      });
+
       const response = await fetch('/api/auth', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Important: include cookies in the request
         body: JSON.stringify({
           ...formData,
           adminLogin: true // Flag to indicate this is an admin login
@@ -40,18 +101,32 @@ export default function AdminLogin() {
       });
 
       const data = await response.json();
+      console.log('Login response status:', response.status);
 
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
       }
 
-      // Save token to localStorage
-      localStorage.setItem('adminToken', data.token);
-      localStorage.setItem('adminUser', JSON.stringify(data.user));
+      console.log('Login successful');
       
-      // Redirect to admin dashboard
-      router.push('/admin/dashboard');
+      // Note: The HTTP-only cookies are set by the server
+      // We only need to set the non-HTTP-only ones for client access
+      if (data.user) {
+        Cookies.set('adminUser', JSON.stringify(data.user), {
+          expires: 1,
+          path: '/',
+          sameSite: 'lax', // Changed from strict to lax for better compatibility
+          secure: process.env.NODE_ENV === 'production'
+        });
+      }
+      
+      // Wait a moment to ensure cookies are processed
+      setTimeout(() => {
+        // Redirect to admin dashboard
+        router.push('/admin/dashboard');
+      }, 500);
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.message || 'Authentication failed');
     } finally {
       setIsLoading(false);
@@ -66,15 +141,6 @@ export default function AdminLogin() {
           <p className="mt-2 text-center text-sm text-gray-600">
             Enter your credentials to access the admin panel
           </p>
-          
-          {/* Instructions for demo */}
-          <div className="mt-4 bg-blue-50 border border-blue-200 text-blue-800 rounded-md p-4">
-            <p className="text-sm">
-              <strong>Demo Credentials:</strong><br />
-              Email: admin@example.com<br />
-              Password: admin123
-            </p>
-          </div>
         </div>
         
         {error && (
@@ -84,7 +150,7 @@ export default function AdminLogin() {
           </div>
         )}
         
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="rounded-md shadow-sm -space-y-px">
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
@@ -93,7 +159,7 @@ export default function AdminLogin() {
               <input
                 id="email"
                 name="email"
-                type="email"
+                type="text"
                 autoComplete="email"
                 required
                 value={formData.email}

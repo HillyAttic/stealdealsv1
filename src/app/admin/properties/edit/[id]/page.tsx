@@ -4,10 +4,12 @@ import EditPropertyForm from './EditPropertyForm';
 export const dynamic = 'force-static';
 export const dynamicParams = true;
 
-export default function EditPropertyPage({ params }: { params: { id: string } }) {
+export default async function EditPropertyPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  
   return (
     <AdminLayout>
-      <EditPropertyForm id={params.id} />
+      <EditPropertyForm id={resolvedParams.id} />
     </AdminLayout>
   );
 } 

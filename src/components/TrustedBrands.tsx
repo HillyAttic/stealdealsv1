@@ -77,17 +77,18 @@ const TrustedBrands = () => {
           <div className="w-32 h-1.5 bg-blue-600 mx-auto rounded-full"></div>
         </div>
         
+        {/* Marquee for all screen sizes */}
         <div className="w-full overflow-hidden">
           <div className="marquee">
             <div className="marquee-content">
               {brandLogos.map((brand) => (
-                <div key={brand.id} className="mx-8 transform hover:scale-110 transition-all duration-300">
+                <div key={brand.id} className="mx-3 sm:mx-4 md:mx-8 transform hover:scale-110 transition-all duration-300">
                   <Image 
                     src={brand.logoUrl}
                     alt={brand.name}
                     width={280}
                     height={160}
-                    className="h-36 w-auto object-contain filter hover:drop-shadow-lg"
+                    className="h-16 sm:h-20 md:h-28 lg:h-36 w-auto object-contain filter hover:drop-shadow-lg"
                     priority
                   />
                 </div>
@@ -95,13 +96,13 @@ const TrustedBrands = () => {
             </div>
             <div className="marquee-content">
               {brandLogos.map((brand) => (
-                <div key={`duplicate-${brand.id}`} className="mx-8 transform hover:scale-110 transition-all duration-300">
+                <div key={`duplicate-${brand.id}`} className="mx-3 sm:mx-4 md:mx-8 transform hover:scale-110 transition-all duration-300">
                   <Image 
                     src={brand.logoUrl}
                     alt={brand.name}
                     width={280}
                     height={160}
-                    className="h-36 w-auto object-contain filter hover:drop-shadow-lg"
+                    className="h-16 sm:h-20 md:h-28 lg:h-36 w-auto object-contain filter hover:drop-shadow-lg"
                     priority
                   />
                 </div>
@@ -116,12 +117,30 @@ const TrustedBrands = () => {
           display: flex;
           width: 100%;
           overflow: hidden;
+          position: relative;
         }
         
         .marquee-content {
           display: flex;
           animation: marquee 35s linear infinite;
-          min-width: 180%;
+          min-width: 200%;
+          flex-shrink: 0;
+          align-items: center;
+          will-change: transform;
+        }
+        
+        @media (max-width: 768px) {
+          .marquee-content {
+            animation: marquee 20s linear infinite;
+            min-width: 300%;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .marquee-content {
+            animation: marquee 15s linear infinite;
+            min-width: 400%;
+          }
         }
         
         @keyframes marquee {
@@ -130,6 +149,13 @@ const TrustedBrands = () => {
           }
           100% {
             transform: translateX(-50%);
+          }
+        }
+        
+        /* Pause animation when reduced motion is preferred */
+        @media (prefers-reduced-motion: reduce) {
+          .marquee-content {
+            animation-play-state: paused;
           }
         }
       `}</style>

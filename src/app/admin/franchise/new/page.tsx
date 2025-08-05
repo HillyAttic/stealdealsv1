@@ -1,51 +1,37 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '../../components/AdminLayout';
-import { FaSave } from 'react-icons/fa';
-import { BsMenuUp } from 'react-icons/bs';
+import Link from 'next/link';
+import { FaArrowLeft, FaSave, FaList } from 'react-icons/fa';
+import { BsListUl } from 'react-icons/bs';
+import ClientOnly from '@/components/ClientOnly';
 
-// Industries options
-const INDUSTRIES = [
-  'Food & Beverage',
-  'Health & Beauty',
-  'Retail',
-  'Education',
-  'Hospitality',
-  'Entertainment',
-  'Apparel',
-  'Technology',
-  'Home Services'
-];
+export default function NewFranchisePage() {
+  return (
+    <AdminLayout>
+      <ClientOnly
+        fallback={
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+            <p className="ml-2">Loading franchise form...</p>
+          </div>
+        }
+      >
+        <FranchiseForm />
+      </ClientOnly>
+    </AdminLayout>
+  );
+}
 
-// Segments options
-const SEGMENTS = [
-  'Quick Service Restaurant',
-  'Fine Dining',
-  'Coffee Shop',
-  'Bakery',
-  'Pizza',
-  'Ice Cream',
-  'Salon',
-  'Spa',
-  'Convenience Store',
-  'Fashion',
-  'Electronics',
-  'Fitness',
-  'Education'
-];
-
-export default function NewFranchise() {
+function FranchiseForm() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [success, setSuccess] = useState('');
   
-  // Form data state
-  const [formData, setFormData] = useState({
+  const [franchise, setFranchise] = useState({
     industry: '',
     segment: '',
     brand: '',
@@ -57,543 +43,480 @@ export default function NewFranchise() {
     royalty: '',
     establishmentYear: '',
     franchiseStartedYear: '',
-    numberOfOutlets: '',
+    numberOutlets: '',
     minPaybackPeriod: '',
     maxPaybackPeriod: '',
     headquarter: '',
     remarks: '',
+    image: '',
     brandDeck: '',
     productList: '',
     roiSheet: ''
   });
   
-  // Form validation errors
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  
-  // Check authentication
-  useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      router.push('/admin/login');
-    }
-  }, [router]);
-  
-  // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear validation error when field is edited
-    if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
+    setFranchise(prev => ({ ...prev, [name]: value }));
   };
   
-  // Handle file input changes
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files);
-      setSelectedFiles(files);
-      
-      // Create preview URLs
-      const previews = files.map(file => URL.createObjectURL(file));
-      setPreviewImages(previews);
-    }
-  };
-  
-  // Clean up object URLs on unmount
-  useEffect(() => {
-    return () => {
-      previewImages.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [previewImages]);
-  
-  // Validate form data
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.industry) {
-      newErrors.industry = 'Industry is required';
-    }
-    
-    if (!formData.segment) {
-      newErrors.segment = 'Segment is required';
-    }
-    
-    if (!formData.brand.trim()) {
-      newErrors.brand = 'Brand is required';
-    }
-    
-    if (!formData.model.trim()) {
-      newErrors.model = 'Model is required';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-  
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    setIsLoading(true);
+    setIsSubmitting(true);
     setError('');
     
     try {
-      // In a real app, you would upload files and make API call to save the franchise
-      const token = localStorage.getItem('adminToken');
+      // Validate form - match API requirements
+      if (!franchise.industry || !franchise.brand) {
+        throw new Error('Please fill all required fields: Brand and Industry');
+      }
+      
+      // Format data for API - keep original string format for investment fields
+      const franchiseData = {
+        ...franchise,
+        // Make sure these required fields are explicitly set
+        brand: franchise.brand,
+        industry: franchise.industry,
+        // Don't force parsing to float - keep as strings if they contain text like "20 LACS"
+        minInvestment: franchise.minInvestment || "0",
+        maxInvestment: franchise.maxInvestment || "0",
+        image: franchise.image || 'https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Default franchise image
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        // Set default values for required fields
+        status: "Active",
+        location: franchise.headquarter || "Multiple Locations",
+        roi: franchise.royalty || "Varies",
+        // Add investment field for backward compatibility
+        investment: franchise.minInvestment || "0"
+      };
+      
+      // Debug what's being sent
+      console.log('Submitting franchise data:', franchiseData);
+      
+      // Send data to API
       const response = await fetch('/api/franchises', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        credentials: 'include', // Include cookies for auth
+        body: JSON.stringify(franchiseData)
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create franchise');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API error response:', errorData);
+        throw new Error(errorData.error || `Error: ${response.status}`);
       }
       
-      router.push('/admin/franchise');
+      const result = await response.json();
+      console.log('Franchise added successfully:', result);
+      setSuccess('Franchise added successfully! It will now appear on the franchise listings page.');
+      
+      // Redirect after successful submission
+      setTimeout(() => {
+        router.push('/admin/franchise');
+      }, 2000);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+      console.error('Error adding franchise:', err);
+      setError(err.message || 'Failed to add franchise. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
   
   return (
-    <AdminLayout>
-      <div className="card border-top border-0 border-4 border-blue-900 rounded-lg shadow-md">
-        <div className="border p-4 rounded">
-          <div className="card-title d-flex align-items-center flex justify-between mb-4">
-            <div className="flex items-center">
-              <h5 className="mb-0 text-xl font-bold text-blue-900">Franchise Inventory</h5>
-            </div>
-            <div>
-              <button 
-                type="button" 
-                onClick={() => router.push('/admin/franchise')}
-                className="btn btn-outline-danger px-3 py-2 border border-red-500 text-red-500 rounded hover:bg-red-50"
+    <div className="card border-top border-0 border-4 border-blue-900 rounded-lg shadow-md">
+      <div className="border p-4 rounded bg-white">
+        <div className="card-title flex items-center">
+          <div>
+            <i className="bx bxs-user me-1 text-2xl text-blue-500"></i>
+          </div>
+          <h5 className="mb-0 text-xl font-bold text-blue-900 ml-2">Franchise Inventory</h5>
+          <div className="ml-auto">
+            <button 
+              id="btnList" 
+              type="button" 
+              className="btn border border-red-500 text-red-500 px-3 py-2 rounded flex items-center hover:bg-red-50"
+              onClick={() => router.push('/admin/franchise')}
+            >
+              <BsListUl className="mr-1" /> List
+            </button>
+          </div>
+        </div>
+        
+        <hr className="mb-4 border-gray-300" />
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
+            {error}
+          </div>
+        )}
+        
+        {success && (
+          <div className="bg-green-50 border border-green-200 text-green-800 rounded-md p-4 mb-6">
+            {success}
+          </div>
+        )}
+        
+        <form id="myForm" className="needs-validation" noValidate onSubmit={handleSubmit}>
+          <div className="row mb-3 flex">
+            <label htmlFor="inputIndustry" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Industry</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <select 
+                id="inputIndustry" 
+                required 
+                className="form-select w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white"
+                name="industry"
+                value={franchise.industry}
+                onChange={handleChange}
               >
-                <BsMenuUp className="inline mr-1" /> List
-              </button>
+                <option disabled value="">Choose...</option>
+                <option value="Food">Food</option>
+                <option value="Retail">Retail</option>
+                <option value="Education">Education</option>
+                <option value="Sports, Fitness & Entertainments">Sports, Fitness & Entertainments</option>
+              </select>
+              <div className="invalid-tooltip">Select Industry</div>
+            </div>
+            
+            <label htmlFor="inputSegment" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Segment</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <select 
+                id="inputSegment" 
+                required 
+                className="form-select w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white"
+                name="segment"
+                value={franchise.segment}
+                onChange={handleChange}
+              >
+                <option disabled value="">Choose...</option>
+                <option value="Fast Food">Fast Food</option>
+                <option value="Coffee Shop">Coffee Shop</option>
+                <option value="Restaurant">Restaurant</option>
+              </select>
+              <div className="invalid-tooltip">Select Segment</div>
             </div>
           </div>
-          <hr className="mb-4" />
           
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
-              {error}
+          <div className="row mb-3 flex">
+            <label htmlFor="inputProduct" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Brand</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputProduct"
+                name="brand"
+                value={franchise.brand}
+                onChange={handleChange}  
+                placeholder="Product"
+              />
+              <input id="hfId" type="hidden" />
+              <div className="invalid-tooltip">Product</div>
             </div>
-          )}
+            
+            <label htmlFor="inputModel" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Model</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputModel"
+                name="model"
+                value={franchise.model}
+                onChange={handleChange} 
+                placeholder="Model"
+              />
+              <div className="invalid-tooltip">Model</div>
+            </div>
+          </div>
           
-          <form id="myForm" className="needs-validation" onSubmit={handleSubmit}>
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
-              <label htmlFor="industry" className="text-gray-700">Industry</label>
-              <div className="position-relative">
-                <select 
-                  id="industry"
-                  name="industry"
-                  value={formData.industry}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                >
-                  <option value="" disabled>Choose...</option>
-                  {INDUSTRIES.map(industry => (
-                    <option key={industry} value={industry}>{industry}</option>
-                  ))}
-                </select>
-                {errors.industry && (
-                  <div className="text-red-500 text-sm mt-1">{errors.industry}</div>
-                )}
-              </div>
-              
-              <label htmlFor="segment" className="text-gray-700 ml-2">Segment</label>
-              <div className="position-relative">
-                <select 
-                  id="segment"
-                  name="segment"
-                  value={formData.segment}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                >
-                  <option value="" disabled>Choose...</option>
-                  {SEGMENTS.map(segment => (
-                    <option key={segment} value={segment}>{segment}</option>
-                  ))}
-                </select>
-                {errors.segment && (
-                  <div className="text-red-500 text-sm mt-1">{errors.segment}</div>
-                )}
-              </div>
+          <div className="row mb-3 flex">
+            <label htmlFor="inputMinArea" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Minimum Area</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputMinArea"
+                name="minArea"
+                value={franchise.minArea}
+                onChange={handleChange} 
+                placeholder="Minimum Area Req. (sq.ft.)"
+              />
+              <div className="invalid-tooltip">Minimum Area Req. (sq.ft.)</div>
             </div>
             
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
-              <label htmlFor="brand" className="text-gray-700">Brand</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="brand"
-                  name="brand"
-                  value={formData.brand}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Brand"
-                />
-                {errors.brand && (
-                  <div className="text-red-500 text-sm mt-1">{errors.brand}</div>
-                )}
-              </div>
-              
-              <label htmlFor="model" className="text-gray-700 ml-2">Model</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="model"
-                  name="model"
-                  value={formData.model}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Model"
-                />
-                {errors.model && (
-                  <div className="text-red-500 text-sm mt-1">{errors.model}</div>
-                )}
-              </div>
+            <label htmlFor="inputMaxArea" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Maximum Area</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputMaxArea"
+                name="maxArea"
+                value={franchise.maxArea}
+                onChange={handleChange} 
+                placeholder="Max Area Req. (sq.ft.)"
+              />
+              <div className="invalid-tooltip">Max Area Req. (sq.ft.)</div>
+            </div>
+          </div>
+          
+          <div className="row mb-3 flex">
+            <label htmlFor="inputMinInvst" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Investment (Min)</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputMinInvst"
+                name="minInvestment"
+                value={franchise.minInvestment}
+                onChange={handleChange} 
+                placeholder="Investment (Minimum)"
+              />
+              <div className="invalid-tooltip">Investment(Minimum)</div>
             </div>
             
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
-              <label htmlFor="minArea" className="text-gray-700">Minimum Area</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="minArea"
-                  name="minArea"
-                  value={formData.minArea}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Minimum Area Req. (sq.ft.)"
-                />
-                {errors.minArea && (
-                  <div className="text-red-500 text-sm mt-1">{errors.minArea}</div>
-                )}
-              </div>
-              
-              <label htmlFor="maxArea" className="text-gray-700 ml-2">Maximum Area</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="maxArea"
-                  name="maxArea"
-                  value={formData.maxArea}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Max Area Req. (sq.ft.)"
-                />
-                {errors.maxArea && (
-                  <div className="text-red-500 text-sm mt-1">{errors.maxArea}</div>
-                )}
-              </div>
+            <label htmlFor="inputMaxInvst" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Investment (Max)</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputMaxInvst"
+                name="maxInvestment"
+                value={franchise.maxInvestment}
+                onChange={handleChange} 
+                placeholder="Investment (Maximum)"
+              />
+              <div className="invalid-tooltip">Investment (Max)</div>
+            </div>
+          </div>
+          
+          <div className="row mb-3 flex">
+            <label htmlFor="inputRoyalty" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Royalty</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputRoyalty"
+                name="royalty"
+                value={franchise.royalty}
+                onChange={handleChange} 
+                placeholder="Royalty"
+              />
+              <div className="invalid-tooltip">Royalty</div>
             </div>
             
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
-              <label htmlFor="minInvestment" className="text-gray-700">Investment (Min)</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="minInvestment"
-                  name="minInvestment"
-                  value={formData.minInvestment}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Investment (Minimum)"
-                />
-                {errors.minInvestment && (
-                  <div className="text-red-500 text-sm mt-1">{errors.minInvestment}</div>
-                )}
-              </div>
-              
-              <label htmlFor="maxInvestment" className="text-gray-700 ml-2">Investment (Max)</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="maxInvestment"
-                  name="maxInvestment"
-                  value={formData.maxInvestment}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Investment (Maximum)"
-                />
-                {errors.maxInvestment && (
-                  <div className="text-red-500 text-sm mt-1">{errors.maxInvestment}</div>
-                )}
-              </div>
+            <label htmlFor="inputEstYr" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Establishment Year</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputEstYr"
+                name="establishmentYear"
+                value={franchise.establishmentYear}
+                onChange={handleChange} 
+                placeholder="Establishment Year"
+              />
+              <div className="invalid-tooltip">Establishment Year</div>
+            </div>
+          </div>
+          
+          <div className="row mb-3 flex">
+            <label htmlFor="inputFsy" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Franchise Started Year</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputFsy"
+                name="franchiseStartedYear"
+                value={franchise.franchiseStartedYear}
+                onChange={handleChange} 
+                placeholder="Franchise Started Year"
+              />
+              <div className="invalid-tooltip">Franchise Started Year</div>
             </div>
             
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
-              <label htmlFor="royalty" className="text-gray-700">Royalty</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="royalty"
-                  name="royalty"
-                  value={formData.royalty}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Royalty"
-                />
-                {errors.royalty && (
-                  <div className="text-red-500 text-sm mt-1">{errors.royalty}</div>
-                )}
-              </div>
-              
-              <label htmlFor="establishmentYear" className="text-gray-700 ml-2">Establishment Year</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="establishmentYear"
-                  name="establishmentYear"
-                  value={formData.establishmentYear}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Establishment Year"
-                />
-                {errors.establishmentYear && (
-                  <div className="text-red-500 text-sm mt-1">{errors.establishmentYear}</div>
-                )}
-              </div>
+            <label htmlFor="inputNoo" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Number of Outlets</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputNoo"
+                name="numberOutlets"
+                value={franchise.numberOutlets}
+                onChange={handleChange} 
+                placeholder="Number of Outlets"
+              />
+              <div className="invalid-tooltip">Number of Outlets</div>
+            </div>
+          </div>
+          
+          <div className="row mb-3 flex">
+            <label htmlFor="inputMinpp" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Min Payback Period</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputMinpp"
+                name="minPaybackPeriod"
+                value={franchise.minPaybackPeriod}
+                onChange={handleChange} 
+                placeholder="Minimum Payback Period"
+              />
+              <div className="invalid-tooltip">Minimum Payback Period</div>
             </div>
             
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
-              <label htmlFor="franchiseStartedYear" className="text-gray-700">Franchise Started Year</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="franchiseStartedYear"
-                  name="franchiseStartedYear"
-                  value={formData.franchiseStartedYear}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Franchise Started Year"
-                />
-                {errors.franchiseStartedYear && (
-                  <div className="text-red-500 text-sm mt-1">{errors.franchiseStartedYear}</div>
-                )}
-              </div>
-              
-              <label htmlFor="numberOfOutlets" className="text-gray-700 ml-2">Number of Outlets</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="numberOfOutlets"
-                  name="numberOfOutlets"
-                  value={formData.numberOfOutlets}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Number of Outlets"
-                />
-                {errors.numberOfOutlets && (
-                  <div className="text-red-500 text-sm mt-1">{errors.numberOfOutlets}</div>
-                )}
-              </div>
+            <label htmlFor="inputMaxpp" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Max Payback Period</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputMaxpp"
+                name="maxPaybackPeriod"
+                value={franchise.maxPaybackPeriod}
+                onChange={handleChange} 
+                placeholder="Maximum Payback Period"
+              />
+              <div className="invalid-tooltip">Maximum Payback Period</div>
+            </div>
+          </div>
+          
+          <div className="row mb-3 flex">
+            <label htmlFor="inputHeadquarter" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Headquarter</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputHeadquarter"
+                name="headquarter"
+                value={franchise.headquarter}
+                onChange={handleChange} 
+                placeholder="Headquarter"
+              />
+              <div className="invalid-tooltip">Headquarter</div>
             </div>
             
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
-              <label htmlFor="minPaybackPeriod" className="text-gray-700">Min Payback Period</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="minPaybackPeriod"
-                  name="minPaybackPeriod"
-                  value={formData.minPaybackPeriod}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Minimum Payback Period"
-                />
-                {errors.minPaybackPeriod && (
-                  <div className="text-red-500 text-sm mt-1">{errors.minPaybackPeriod}</div>
-                )}
-              </div>
-              
-              <label htmlFor="maxPaybackPeriod" className="text-gray-700 ml-2">Max Payback Period</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="maxPaybackPeriod"
-                  name="maxPaybackPeriod"
-                  value={formData.maxPaybackPeriod}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Maximum Payback Period"
-                />
-                {errors.maxPaybackPeriod && (
-                  <div className="text-red-500 text-sm mt-1">{errors.maxPaybackPeriod}</div>
-                )}
-              </div>
+            <label htmlFor="inputRemarks" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Remarks</label>
+            <div className="col-sm-4 position-relative w-1/3">
+              <input 
+                type="text" 
+                required 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputRemarks"
+                name="remarks"
+                value={franchise.remarks}
+                onChange={handleChange} 
+                placeholder="Remarks"
+              />
+              <div className="invalid-tooltip">Remarks</div>
             </div>
-            
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
-              <label htmlFor="headquarter" className="text-gray-700">Headquarter</label>
-              <div className="position-relative">
+          </div>
+
+          <div className="row mb-3 flex">
+            <label htmlFor="inputImage" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Image URL</label>
+            <div className="col-sm-10 position-relative w-5/6">
+              <div className="flex">
                 <input 
-                  type="text"
-                  id="headquarter"
-                  name="headquarter"
-                  value={formData.headquarter}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Headquarter"
+                  type="text" 
+                  className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                  id="inputImage"
+                  name="image"
+                  value={franchise.image}
+                  onChange={handleChange} 
+                  placeholder="https://example.com/image.jpg"
                 />
-                {errors.headquarter && (
-                  <div className="text-red-500 text-sm mt-1">{errors.headquarter}</div>
-                )}
-              </div>
-              
-              <label htmlFor="remarks" className="text-gray-700 ml-2">Remarks</label>
-              <div className="position-relative">
-                <input 
-                  type="text"
-                  id="remarks"
-                  name="remarks"
-                  value={formData.remarks}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="Remarks"
-                />
-                {errors.remarks && (
-                  <div className="text-red-500 text-sm mt-1">{errors.remarks}</div>
-                )}
-              </div>
-            </div>
-            
-            <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <div className="position-relative">
-                <div className="input-group flex">
-                  <span className="bg-gray-100 px-3 py-2 border border-gray-300 rounded-l text-gray-800">Brand Deck</span>
-                  <input 
-                    type="text"
-                    id="brandDeck"
-                    name="brandDeck"
-                    value={formData.brandDeck}
-                    onChange={handleChange}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-r focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="Brand Deck"
-                  />
-                </div>
-              </div>
-              
-              <div className="position-relative">
-                <div className="input-group flex">
-                  <span className="bg-gray-100 px-3 py-2 border border-gray-300 rounded-l text-gray-800">Product List/Menu</span>
-                  <input 
-                    type="text"
-                    id="productList"
-                    name="productList"
-                    value={formData.productList}
-                    onChange={handleChange}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-r focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="Product List/Menu"
-                  />
-                </div>
-              </div>
-              
-              <div className="position-relative">
-                <div className="input-group flex">
-                  <span className="bg-gray-100 px-3 py-2 border border-gray-300 rounded-l text-gray-800">ROI Sheet</span>
-                  <input 
-                    type="text"
-                    id="roiSheet"
-                    name="roiSheet"
-                    value={formData.roiSheet}
-                    onChange={handleChange}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-r focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="ROI Sheet"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            {/* File Upload Section */}
-            <div className="mt-6 mb-6">
-              <div className="list-group list-group-item border border-gray-200 rounded p-4">
-                <div className="mt-2 mb-4">
-                  <label 
-                    htmlFor="attachment" 
-                    className="btn px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer"
-                  >
-                    SELECT FILE
-                  </label>
-                  <input 
-                    type="file" 
-                    id="attachment" 
-                    name="attachment" 
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    multiple
-                    accept=".xlsx,.xls,image/*,.doc,audio/*,.docx,video/*,.ppt,.pptx,.txt,.pdf" 
-                    className="hidden"
-                  />
-                </div>
-                
-                {previewImages.length > 0 && (
-                  <div id="dvPreview" className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {previewImages.map((src, index) => (
-                      <div key={index} className="relative">
-                        <img src={src} alt={`Preview ${index}`} className="w-full h-32 object-cover rounded" />
-                      </div>
-                    ))}
+                {franchise.image && (
+                  <div className="ml-2">
+                    <img 
+                      src={franchise.image} 
+                      alt="Franchise Preview" 
+                      className="h-10 w-10 object-cover border border-gray-300 rounded"
+                      onError={(e) => {
+                        // If image fails to load, show placeholder
+                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=Error';
+                      }}
+                    />
                   </div>
                 )}
               </div>
+              <div className="text-xs text-gray-500 mt-1">Enter a URL for the franchise image (shows in listings)</div>
             </div>
-            
-            {/* Form Actions */}
-            <div className="mt-6">
-              <div className="flex justify-center">
-                <button 
-                  type="submit" 
-                  disabled={isLoading}
-                  className="px-8 py-3 bg-blue-900 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center w-full"
-                >
-                  <FaSave className="mr-2" />
-                  {isLoading ? 'Saving...' : 'Save Franchise'}
-                </button>
+          </div>
+
+          <div className="row mb-3 flex">
+            <div className="col-sm-4 position-relative w-1/3">
+              <div className="input-group flex">
+                <span className="input-group-text px-2 py-1 bg-gray-200 border border-r-0 border-gray-400 rounded-l text-gray-700">Brand Deck</span>
+                <input 
+                  type="text" 
+                  className="form-control w-full px-2 py-1 border border-gray-400 rounded-r text-gray-800 bg-white" 
+                  id="inputBrandDeck"
+                  name="brandDeck"
+                  value={franchise.brandDeck}
+                  onChange={handleChange} 
+                  placeholder="Brand Deck"
+                />
+                <div className="invalid-tooltip">Brand Deck</div>
               </div>
             </div>
-          </form>
-        </div>
+            
+            <div className="col-sm-4 position-relative w-1/3 ml-4">
+              <div className="input-group flex">
+                <span className="input-group-text px-2 py-1 bg-gray-200 border border-r-0 border-gray-400 rounded-l text-gray-700">Product List/Menu</span>
+                <input 
+                  type="text" 
+                  className="form-control w-full px-2 py-1 border border-gray-400 rounded-r text-gray-800 bg-white" 
+                  id="inputProductList"
+                  name="productList"
+                  value={franchise.productList}
+                  onChange={handleChange} 
+                  placeholder="Product List/Menu"
+                />
+                <div className="invalid-tooltip">Product List/Menu</div>
+              </div>
+            </div>
+            
+            <div className="col-sm-4 position-relative w-1/3 ml-4">
+              <div className="input-group flex">
+                <span className="input-group-text px-2 py-1 bg-gray-200 border border-r-0 border-gray-400 rounded-l text-gray-700">ROI Sheet</span>
+                <input 
+                  type="text" 
+                  className="form-control w-full px-2 py-1 border border-gray-400 rounded-r text-gray-800 bg-white" 
+                  id="inputRoi"
+                  name="roiSheet"
+                  value={franchise.roiSheet}
+                  onChange={handleChange} 
+                  placeholder="ROI Sheet"
+                />
+                <div className="invalid-tooltip">ROI Sheet</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-8 flex justify-end">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-6 py-3 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center disabled:opacity-50"
+            >
+              <FaSave className="mr-2" />
+              {isSubmitting ? 'Saving...' : 'Save Franchise'}
+            </button>
+          </div>
+        </form>
       </div>
-    </AdminLayout>
+    </div>
   );
-} 
+}

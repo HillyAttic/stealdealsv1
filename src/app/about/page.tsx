@@ -8,45 +8,30 @@ import ClientOnly from '../../components/ClientOnly';
 import Link from 'next/link';
 
 export default function AboutPage() {
-  const teamMembers = [
-    {
-      name: 'Rajiv Sharma',
-      position: 'Founder & CEO',
-      bio: 'Over 12 years of experience in commercial real estate and investment advisory.',
-      image: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    },
-    {
-      name: 'Priya Verma',
-      position: 'Director, Leasing',
-      bio: 'Specialist in commercial leasing with 8 years of experience across NCR.',
-      image: 'https://images.pexels.com/photos/3760514/pexels-photo-3760514.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    },
-    {
-      name: 'Amit Kapoor',
-      position: 'Head of Investment Advisory',
-      bio: 'Financial analyst with expertise in pre-leased property investments.',
-      image: 'https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    },
-    {
-      name: 'Neha Singh',
-      position: 'Project Development Manager',
-      bio: 'Manages turnkey construction projects and builder floor developments.',
-      image: 'https://images.pexels.com/photos/3756679/pexels-photo-3756679.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-    }
-  ];
-  
   const offices = [
     {
-      location: 'Laxmi Nagar Office',
-      address: 'C-15, Laxmi Nagar Commercial Complex, Delhi - 110092',
-      phone: '+91 9876543210',
-      email: 'laxminagar@stealdeals.co.in'
+      location: 'Delhi',
+      address: '821, Laxmi Deep Tower, Nirman Vihar, Delhi-110092',
+      phone: '',
+      email: ''
     },
     {
-      location: 'Vivek Vihar Office',
-      address: 'B-2, Block B, Vivek Vihar Phase 1, Delhi - 110095',
-      phone: '+91 9630403080',
-      email: 'hello@stealdeals.co.in'
+      location: 'Noida',
+      address: '2nd Floor, Block A, Ofis Square, The Iconic Corenthum, Noida Sector - 62, Uttar Pradesh - 201301',
+      phone: '',
+      email: ''
+    },
+    {
+      location: 'Gurugram',
+      address: '401, Suncity Trade Tower, Gurugram Sector - 21, Haryana-122016',
+      phone: '',
+      email: ''
+    },
+    {
+      location: 'UAE',
+      address: 'Aspin Commercial Tower, Sheikh Zayed Road, Dubai-500001',
+      phone: '',
+      email: ''
     }
   ];
 
@@ -73,22 +58,38 @@ export default function AboutPage() {
               <div>
                 <h2 className="text-3xl font-bold text-gray-800 mb-6">STEAL DEALS</h2>
                 <div className="w-20 h-1 bg-blue-900 mb-6"></div>
+                <h3 className="text-xl font-bold text-blue-900 mb-4">Empowering Investments. Enabling Growth.</h3>
                 <p className="text-gray-600 mb-6 text-lg leading-relaxed">
-                  Founded by experienced Real Estate Professionals having over 20 years of combined industry 
-                  exposure across RE verticals primarily in Wealth Creation, Leasing and Investments. 
-                  We have our offices in Laxmi Nagar and Vivek Vihar, East Delhi.
+                  Founded in December 2022, Steal Deals is a modern-day commercial real estate and franchise
+                  consulting firm that bridges the gap between aspiration and execution. With a sharp focus on
+                  franchise expansion and leasing solutions, we empower individuals and businesses to unlock
+                  long-term income opportunities through strategic investments and partnerships.
+                </p>
+                <p className="text-gray-600 mb-4 text-lg leading-relaxed">
+                  At our core, we specialize in:
+                </p>
+                <ul className="text-gray-600 mb-6 text-lg leading-relaxed list-disc pl-6">
+                  <li className="mb-2">
+                    <span className="font-semibold">Franchise Consulting</span> - Helping you invest in and grow top-performing franchises across India,
+                    whether in retail, food & beverage, or emerging sectors.
+                  </li>
+                  <li className="mb-2">
+                    <span className="font-semibold">Leasing Solutions</span> - Curating the perfect spaces for national and regional brands, ensuring
+                    high-visibility, high-footfall locations across urban markets.
+                  </li>
+                  <li className="mb-2">
+                    <span className="font-semibold">Real Estate Investments</span> - Offering handpicked pre-leased commercial assets and plots
+                    (residential, commercial, industrial) in Delhi NCR that ensure stable, long-term returns.
+                  </li>
+                </ul>
+                <p className="text-gray-600 mb-6 text-lg leading-relaxed">
+                  Whether you're a first-time investor exploring alternative income streams or an established
+                  entrepreneur looking to diversify your portfolio, Steal Deals is your trusted partner in navigating the
+                  world of commercial growth.
                 </p>
                 <p className="text-gray-600 mb-6 text-lg leading-relaxed">
-                  We provide advisory services in the following corridors: Pre-Leased/Rented Properties 
-                  across Delhi, Noida, Ghaziabad and Gurgaon: Banks / Insurance Cos. / Independent Buildings / 
-                  Offices / Retail showrooms etc.
-                </p>
-                <p className="text-gray-600 mb-6 text-lg leading-relaxed">
-                  Commercial and Industrial Plots: Udyog Vihar/Golf Course Road/Infocity/Manesar – Gurgaon, 
-                  Sahibabad Industrial Area, Jhilmil/Friends Colony, Patparganj, Faridabad and Noida. Hotel and 
-                  Banquet Transactions: Land Acquisition, Project Feasibility, Joint Ventures, Existing Property 
-                  leasing etc. Construction and Turnkey Development: Residential Builder floor Construction in 
-                  Rajgarh Colony, Krishna Nagar, Project Investment at land stage and floor bookings.
+                  We don't just close transactions - we build ecosystems where brands thrive, landlords profit, and
+                  investors flourish.
                 </p>
                 <div className="mt-8">
                   <Link 
@@ -102,8 +103,8 @@ export default function AboutPage() {
               <div className="relative">
                 <div className="bg-blue-900 absolute top-0 left-0 w-64 h-64 rounded-lg opacity-20 -z-10 transform -translate-x-4 -translate-y-4"></div>
                 <img 
-                  src="https://images.pexels.com/photos/3184338/pexels-photo-3184338.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" 
-                  alt="Steal Deals Team" 
+                  src="/images/about_us/ishank kohli (1).png" 
+                  alt="Ishank Kohli - Thought Leader" 
                   className="rounded-lg shadow-xl w-full h-auto object-cover z-10"
                 />
                 <div className="bg-yellow-500 absolute bottom-0 right-0 w-64 h-64 rounded-lg opacity-20 -z-10 transform translate-x-4 translate-y-4"></div>
@@ -115,22 +116,84 @@ export default function AboutPage() {
         {/* Stats Section */}
         <section className="py-12 bg-gray-50">
           <div className="container mx-auto px-4">
+            <div className="text-center max-w-3xl mx-auto mb-10">
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Remarkable Achievements</h2>
+              <div className="w-20 h-1 bg-blue-900 mx-auto mb-6"></div>
+              <p className="text-gray-600">
+                Our track record of success in the commercial real estate sector
+              </p>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div className="bg-white rounded-lg p-6 shadow-md">
-                <div className="text-4xl font-bold text-blue-900 mb-2">20+</div>
-                <div className="text-gray-600">Years Experience</div>
-              </div>
-              <div className="bg-white rounded-lg p-6 shadow-md">
-                <div className="text-4xl font-bold text-blue-900 mb-2">300+</div>
-                <div className="text-gray-600">Deals Closed</div>
-              </div>
-              <div className="bg-white rounded-lg p-6 shadow-md">
-                <div className="text-4xl font-bold text-blue-900 mb-2">₹500Cr+</div>
+              <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-4xl font-bold text-blue-900 mb-2">₹1000Cr+</div>
                 <div className="text-gray-600">Transaction Value</div>
               </div>
-              <div className="bg-white rounded-lg p-6 shadow-md">
+              <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-4xl font-bold text-blue-900 mb-2">5M+</div>
+                <div className="text-gray-600">Sq Ft Sold</div>
+              </div>
+              <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-4xl font-bold text-blue-900 mb-2">15M+</div>
+                <div className="text-gray-600">Sq Ft Leased</div>
+              </div>
+              <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
                 <div className="text-4xl font-bold text-blue-900 mb-2">95%</div>
                 <div className="text-gray-600">Client Satisfaction</div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        {/* Recognition Section */}
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Industry Recognition</h2>
+              <div className="w-20 h-1 bg-blue-900 mx-auto mb-6"></div>
+              <p className="text-gray-600">
+                Steal Deals has been honored as one of the Top Consultants for leading developers across India
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-all">
+                <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
+                  <FaBuilding className="text-blue-900 text-2xl" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Hero Homes</h3>
+                <p className="text-gray-600 text-center">
+                  Recognized as a trusted consultant partner for premium residential projects
+                </p>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-all">
+                <div className="bg-green-50 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
+                  <FaLeaf className="text-green-600 text-2xl" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Hero Earth</h3>
+                <p className="text-gray-600 text-center">
+                  Top consultant for sustainable and eco-friendly development projects
+                </p>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-all">
+                <div className="bg-purple-50 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
+                  <FaBuilding className="text-purple-600 text-2xl" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Spaze Group</h3>
+                <p className="text-gray-600 text-center">
+                  Preferred partner for commercial and mixed-use developments in the NCR region
+                </p>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-all">
+                <div className="bg-yellow-50 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
+                  <FaBuilding className="text-yellow-600 text-2xl" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Omaxe Group</h3>
+                <p className="text-gray-600 text-center">
+                  Trusted consultant for residential and commercial projects across multiple cities
+                </p>
               </div>
             </div>
           </div>
@@ -236,69 +299,103 @@ export default function AboutPage() {
           </div>
         </section>
         
-        {/* Team Section */}
+        {/* Leadership Section */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">Our Leadership Team</h2>
-              <div className="w-20 h-1 bg-blue-900 mx-auto mb-6"></div>
-              <p className="text-gray-600">
-                Meet the experienced professionals who lead our company
-              </p>
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div className="relative">
+                <div className="bg-blue-900 absolute top-0 left-0 w-64 h-64 rounded-lg opacity-20 -z-10 transform -translate-x-4 -translate-y-4"></div>
+                <img 
+                  src="/images/about_us/image 2.png" 
+                  alt="Ishank Kohli - Thought Leader" 
+                  className="rounded-lg shadow-xl w-full h-auto object-cover z-10"
+                />
+                <div className="bg-yellow-500 absolute bottom-0 right-0 w-64 h-64 rounded-lg opacity-20 -z-10 transform translate-x-4 translate-y-4"></div>
+              </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {teamMembers.map((member, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden group">
-                  <div className="h-64 overflow-hidden">
-                    <img 
-                      src={member.image} 
-                      alt={member.name} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-800 mb-1">{member.name}</h3>
-                    <p className="text-blue-600 font-medium mb-3">{member.position}</p>
-                    <p className="text-gray-600">{member.bio}</p>
-                  </div>
+              <div>
+                <h2 className="text-3xl font-bold text-gray-800 mb-6">A Thought Leader in Franchising and Business Expansion</h2>
+                <div className="w-20 h-1 bg-blue-900 mb-6"></div>
+                <p className="text-gray-600 mb-6 text-lg leading-relaxed">
+                  Beyond real estate, Ishank Kohli has emerged as a thought leader in the franchising space. With a keen interest in educating entrepreneurs, he is set to launch engaging Hindi reels that demystify the franchising business model in an entertaining yet informative manner.
+                </p>
+                <p className="text-gray-600 mb-6 text-lg leading-relaxed">
+                  His content aims to make franchise investments more accessible to aspiring business owners while showcasing lucrative opportunities in the market.
+                </p>
+                <h3 className="text-xl font-bold text-blue-900 mb-4">A Vision for the Future</h3>
+                <p className="text-gray-600 mb-6 text-lg leading-relaxed">
+                  With a relentless commitment to growth and innovation, Ishank Kohli continues to expand his influence in the commercial real estate domain. His future plans include scaling Steal Deals' reach to newer geographies and driving awareness around high-return investment opportunities in real estate.
+                </p>
                 </div>
-              ))}
             </div>
           </div>
         </section>
         
         {/* Office Locations */}
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
+        <section className="py-20 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+          {/* Decorative elements */}
+          <div className="absolute top-0 left-0 w-64 h-64 bg-blue-100 rounded-full opacity-30 -ml-32 -mt-16 z-0"></div>
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-indigo-100 rounded-full opacity-30 -mr-40 -mb-20 z-0"></div>
+          
+          <div className="container mx-auto px-4 relative z-10">
             <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">Our Offices</h2>
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-12 h-1 bg-gray-200"></div>
+                <div className="mx-4 text-blue-900">
+                  <FaMapMarkerAlt size={24} />
+                </div>
+                <div className="w-12 h-1 bg-gray-200"></div>
+              </div>
+              <h2 className="text-4xl font-bold text-gray-800 mb-4">Our Offices</h2>
               <div className="w-20 h-1 bg-blue-900 mx-auto mb-6"></div>
-              <p className="text-gray-600">
-                Visit us at our convenient locations in East Delhi
+              <p className="text-gray-600 text-lg">
+                Visit us at our strategic locations across India and UAE
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {offices.map((office, index) => (
-                <div key={index} className="bg-white p-8 rounded-lg shadow-md">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">{office.location}</h3>
-                  <div className="space-y-3 text-gray-600">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {offices.map((office, index) => {
+                // Assign different accent colors to each office
+                const colors = [
+                  { bg: "bg-blue-50", border: "border-blue-200", accent: "bg-blue-900", text: "text-blue-900" },
+                  { bg: "bg-indigo-50", border: "border-indigo-200", accent: "bg-indigo-900", text: "text-indigo-900" },
+                  { bg: "bg-purple-50", border: "border-purple-200", accent: "bg-purple-900", text: "text-purple-900" },
+                  { bg: "bg-teal-50", border: "border-teal-200", accent: "bg-teal-900", text: "text-teal-900" },
+                ];
+                const color = colors[index % colors.length];
+                
+                return (
+                  <div 
+                    key={index} 
+                    className={`${color.bg} p-8 rounded-xl shadow-lg border ${color.border} hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 relative overflow-hidden`}
+                  >
+                    {/* Decorative corner */}
+                    <div className={`absolute top-0 right-0 w-16 h-16 ${color.accent} opacity-10 rounded-bl-3xl`}></div>
+                    
+                    <div className="relative">
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-white/30 rounded-full -mt-10 -mr-10 z-0"></div>
+                      <div className="absolute bottom-0 left-0 w-12 h-12 bg-white/20 rounded-full -mb-8 -ml-6 z-0"></div>
+                      
+                      <div className="flex flex-col h-full relative z-10">
+                        <div className="mb-5">
+                          <div className="text-2xl font-bold mb-2 flex items-center text-gray-800">
+                            <FaMapMarkerAlt className={`${color.text} mr-3 flex-shrink-0`} size={24} />
+                            {office.location}
+                          </div>
+                          <div className={`w-12 h-0.5 ${color.accent} my-3 opacity-70`}></div>
+                        </div>
+                        
+                        <div className="space-y-4 text-gray-700">
                     <p className="flex items-start">
-                      <FaMapMarkerAlt className="text-blue-900 mr-3 mt-1" />
+                            <FaMapMarkerAlt className={`${color.text} mr-3 mt-1 flex-shrink-0`} />
                       <span>{office.address}</span>
                     </p>
-                    <p className="flex items-start">
-                      <FaPhone className="text-blue-900 mr-3 mt-1" />
-                      <span>{office.phone}</span>
-                    </p>
-                    <p className="flex items-start">
-                      <FaEnvelope className="text-blue-900 mr-3 mt-1" />
-                      <span>{office.email}</span>
-                    </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>

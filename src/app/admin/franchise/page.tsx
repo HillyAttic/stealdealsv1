@@ -5,108 +5,203 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaPencilAlt, FaTrash, FaSearch, FaFilter } from 'react-icons/fa';
+import ClientOnly from '@/components/ClientOnly';
 
-// Temporary interface for Franchise
+// Franchise interface
 interface Franchise {
-  id: number;
+  id?: string | null;
   name: string;
   industry: string;
-  investment: number;
-  location: string;
+  segment?: string;
+  product?: string;
+  model?: string;
+  minArea?: string;
+  maxArea?: string;
+  minInvestment?: number;
+  maxInvestment?: number;
+  royalty?: string;
+  establishmentYear?: string;
+  franchiseStartedYear?: string;
+  numberOutlets?: string;
+  minPaybackPeriod?: string;
+  maxPaybackPeriod?: string;
+  headquarter?: string;
+  remarks?: string;
+  brandDeck?: string;
+  productList?: string;
+  roiSheet?: string;
+  investment: number;  // Legacy field
+  location: string;    // Legacy field
   status: string;
-  roi: string;
+  roi: string;         // Legacy field
+  addUser?: string;
+  addDate?: string;
+  modUser?: string;
+  modDate?: string;
+  description?: string; // Legacy field
+  requirements?: string;
+  image?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export default function FranchisePage() {
+  return (
+    <AdminLayout>
+      <ClientOnly
+        fallback={
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+            <p className="ml-2">Loading franchise listings...</p>
+          </div>
+        }
+      >
+        <FranchiseContent />
+      </ClientOnly>
+    </AdminLayout>
+  );
+}
+
+function FranchiseContent() {
   const router = useRouter();
   const [franchises, setFranchises] = useState<Franchise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedIndustry, setSelectedIndustry] = useState('');
 
-  // Sample data for franchises
-  const sampleFranchises: Franchise[] = [
-    {
-      id: 1,
-      name: 'Burger King',
-      industry: 'Food & Beverage',
-      investment: 5000000,
-      location: 'Pan India',
-      status: 'Available',
-      roi: '15-20%'
-    },
-    {
-      id: 2,
-      name: 'Domino\'s Pizza',
-      industry: 'Food & Beverage',
-      investment: 3000000,
-      location: 'Metropolitan Cities',
-      status: 'Available',
-      roi: '18-22%'
-    },
-    {
-      id: 3,
-      name: 'Kaya Skin Clinic',
-      industry: 'Health & Beauty',
-      investment: 7500000,
-      location: 'Tier 1 Cities',
-      status: 'Limited',
-      roi: '20-25%'
-    },
-    {
-      id: 4,
-      name: 'Baskin Robbins',
-      industry: 'Food & Beverage',
-      investment: 2000000,
-      location: 'Pan India',
-      status: 'Available',
-      roi: '15-18%'
-    }
-  ];
-
-  // Check authentication and load franchises
+  // Load franchises from API
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      router.push('/admin/login');
-    } else {
-      // In a real app, you would fetch from API
-      // For now, use sample data
-      setFranchises(sampleFranchises);
-      setIsLoading(false);
-    }
+    // Check authentication via API call
+    const checkAuthAndLoadData = async () => {
+      try {
+        // Verify authentication
+        const authResponse = await fetch('/api/auth/check', {
+          method: 'GET',
+          credentials: 'include' // Include cookies
+        });
+
+        if (!authResponse.ok) {
+          throw new Error('Authentication failed');
+        }
+
+        // Fetch franchises
+        setIsLoading(true);
+        const response = await fetch('/api/franchises', {
+          credentials: 'include' // Include cookies
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch franchises: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setFranchises(data.franchises || []);
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Error loading franchises:", err);
+        setError('Failed to load franchises. Please try again later.');
+        setIsLoading(false);
+      }
+    };
+    
+    checkAuthAndLoadData();
   }, [router]);
 
-  // Filter franchises based on search term
+  // Filter franchises based on search term and industry
   const filteredFranchises = franchises.filter(franchise => {
     const searchStr = searchTerm.toLowerCase();
-    return (
-      franchise.name.toLowerCase().includes(searchStr) ||
-      franchise.industry.toLowerCase().includes(searchStr) ||
-      franchise.location.toLowerCase().includes(searchStr)
-    );
+    const matchesSearch = 
+      (franchise.name?.toLowerCase() || '').includes(searchStr) ||
+      (franchise.location?.toLowerCase() || '').includes(searchStr) ||
+      (franchise.industry?.toLowerCase() || '').includes(searchStr) ||
+      (franchise.product?.toLowerCase() || '').includes(searchStr);
+    
+    // Apply industry filter if selected
+    const matchesIndustry = selectedIndustry ? 
+      franchise.industry?.toString() === selectedIndustry : true;
+    
+    return matchesSearch && matchesIndustry;
   });
 
   // Handle franchise deletion
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: string | null | undefined) => {
+    if (!id) return;
+    
     if (window.confirm('Are you sure you want to delete this franchise?')) {
-      // In a real app, you would make an API call
-      setFranchises(franchises.filter(f => f.id !== id));
+      try {
+        setIsLoading(true);
+        const response = await fetch(`/api/franchises/${id}`, {
+          method: 'DELETE',
+          credentials: 'include' // Include cookies
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to delete: ${response.status}`);
+        }
+        
+        // Filter out deleted franchise
+        setFranchises(franchises.filter(franchise => franchise.id !== id));
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error deleting franchise:', err);
+        setError('Failed to delete franchise. Please try again later.');
+        setIsLoading(false);
+      }
+    }
+  };
+
+  // Get unique industries from franchises
+  const uniqueIndustries = Array.from(
+    new Set(franchises.map(franchise => franchise.industry || '').filter(Boolean))
+  );
+
+  // Formats a string value or returns a dash if undefined
+  const formatString = (value: string | undefined): string => {
+    if (!value) return '-';
+    return value;
+  };
+
+  // Format for displaying dates
+  const formatDate = (dateStr?: string | number) => {
+    if (!dateStr) return '-';
+    
+    try {
+      let date: Date;
+      if (typeof dateStr === 'number') {
+        date = new Date(dateStr);
+      } else {
+        date = new Date(dateStr);
+      }
+      
+      if (isNaN(date.getTime())) return '-';
+      
+      return date.toLocaleDateString('en-IN');
+    } catch (err) {
+      return '-';
     }
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Franchise Opportunities</h1>
-        <Link
-          href="/admin/franchise/new"
-          className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center"
-        >
-          <FaPlus className="mr-2" />
-          Add New Franchise
-        </Link>
+        <h1 className="text-2xl font-bold text-gray-800">Franchise Inventory List</h1>
+        <div className="flex gap-2">
+          <Link
+            href="/admin/franchise/new"
+            className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center"
+          >
+            <FaPlus className="mr-2" />
+            Add New Franchise
+          </Link>
+        </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
+          {error}
+        </div>
+      )}
 
       {/* Search and Filter */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -121,22 +216,19 @@ export default function FranchisePage() {
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
         <div className="relative w-full sm:w-1/4">
-          <select className="w-full px-4 py-2 border rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select 
+            className="w-full px-4 py-2 border rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={selectedIndustry}
+            onChange={(e) => setSelectedIndustry(e.target.value)}
+          >
             <option value="">All Industries</option>
-            <option value="Food & Beverage">Food & Beverage</option>
-            <option value="Health & Beauty">Health & Beauty</option>
-            <option value="Retail">Retail</option>
-            <option value="Education">Education</option>
+            {uniqueIndustries.map((industry) => (
+              <option key={industry} value={industry}>{industry}</option>
+            ))}
           </select>
           <FaFilter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
       </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
-          {error}
-        </div>
-      )}
 
       {isLoading ? (
         <div className="flex justify-center items-center py-12">
@@ -145,77 +237,80 @@ export default function FranchisePage() {
       ) : (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 table-sm">
+              <thead className="table-light">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Franchise
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Industry
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Investment (₹)
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Location
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ROI
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FID</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INDUSTRY</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SEGMENT</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRODUCT</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MODEL</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MIN AREA</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MAX AREA</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MIN INVESTMENT</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MAX INVESTMENT</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROYALITY</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESTABLISHMENT YEAR</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FRANCHISE STARTED YEAR</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NUMBER OF OUTLETS</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MIN PAYBACK PERIOD</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MAX PAYBACK PERIOD</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HEADQUATER</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REMARKS</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BRAND DECK</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRODUCT LIST/MENU</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROI SHEET</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ADDDATE</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MODDATE</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredFranchises.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-4 whitespace-nowrap text-center text-gray-500">
+                    <td colSpan={23} className="px-4 py-2 whitespace-nowrap text-center text-gray-500">
                       No franchises found
                     </td>
                   </tr>
                 ) : (
-                  filteredFranchises.map((franchise) => (
-                    <tr key={franchise.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{franchise.name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{franchise.industry}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">₹{franchise.investment.toLocaleString()}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{franchise.location}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-blue-900">{franchise.roi}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          franchise.status === 'Available' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {franchise.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  filteredFranchises.map((franchise, index) => (
+                    <tr key={franchise.id || index} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{franchise.id || (index + 1)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.industry)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.segment)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.product || franchise.name)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.model)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.minArea)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.maxArea)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.minInvestment?.toString())}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString((franchise.maxInvestment || franchise.investment)?.toString())}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.royalty)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.establishmentYear)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.franchiseStartedYear)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.numberOutlets)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.minPaybackPeriod)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.maxPaybackPeriod)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.headquarter || franchise.location)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.remarks)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.brandDeck)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.productList)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.roiSheet)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatDate(franchise.addDate || franchise.createdAt)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatDate(franchise.modDate || franchise.updatedAt)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          <button 
-                            onClick={() => router.push(`/admin/franchise/edit/${franchise.id}`)}
-                            className="text-blue-600 hover:text-blue-900"
+                          <Link 
+                            href={`/admin/franchise/edit/${franchise.id}`}
+                            className="text-blue-600 hover:text-blue-900 cursor-pointer px-2 py-1 rounded hover:bg-blue-100 inline-block"
+                            title="Edit"
                           >
                             <FaPencilAlt />
-                          </button>
+                          </Link>
                           <button 
                             onClick={() => handleDelete(franchise.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 cursor-pointer px-2 py-1 rounded hover:bg-red-100"
+                            title="Delete"
+                            type="button"
                           >
                             <FaTrash />
                           </button>
@@ -229,6 +324,6 @@ export default function FranchisePage() {
           </div>
         </div>
       )}
-    </AdminLayout>
+    </>
   );
 } 

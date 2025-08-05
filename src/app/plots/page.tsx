@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
@@ -8,96 +8,7 @@ import { FaBed, FaBath, FaRulerCombined, FaHeart, FaMapMarkerAlt, FaSearch, FaFi
 import ClientOnly from '../../components/ClientOnly';
 
 // Sample plot property data
-const plotProperties = [
-  {
-    id: 1,
-    title: 'Premium Residential Plot',
-    price: '₹75,00,000',
-    location: 'Noida, Uttar Pradesh',
-    area: '1,200 sq ft',
-    type: 'For Sale',
-    isNew: true,
-    category: 'Residential',
-    image: 'https://images.pexels.com/photos/7031404/pexels-photo-7031404.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 2,
-    title: 'Commercial Plot in Business District',
-    price: '₹1,25,00,000',
-    location: 'Gurgaon, Haryana',
-    area: '2,500 sq ft',
-    type: 'For Sale',
-    isNew: false,
-    category: 'Commercial',
-    image: 'https://images.pexels.com/photos/3998394/pexels-photo-3998394.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 3,
-    title: 'Industrial Plot with Highway Access',
-    price: '₹1,50,00,000',
-    location: 'Greater Noida, Uttar Pradesh',
-    area: '5,000 sq ft',
-    type: 'For Sale',
-    isNew: true,
-    category: 'Industrial',
-    image: 'https://images.pexels.com/photos/1108101/pexels-photo-1108101.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 4,
-    title: 'Residential Corner Plot',
-    price: '₹60,00,000',
-    location: 'Delhi NCR',
-    area: '900 sq ft',
-    type: 'For Sale',
-    isNew: false,
-    category: 'Residential',
-    image: 'https://images.pexels.com/photos/7031607/pexels-photo-7031607.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 5,
-    title: 'Mixed-Use Development Plot',
-    price: '₹2,75,00,000',
-    location: 'Ghaziabad, Uttar Pradesh',
-    area: '3,200 sq ft',
-    type: 'For Sale',
-    isNew: true,
-    category: 'Mixed-Use',
-    image: 'https://images.pexels.com/photos/7031406/pexels-photo-7031406.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 6,
-    title: 'Premium Society Plot',
-    price: '₹95,00,000',
-    location: 'Faridabad, Haryana',
-    area: '1,500 sq ft',
-    type: 'For Sale',
-    isNew: false,
-    category: 'Residential',
-    image: 'https://images.pexels.com/photos/1105766/pexels-photo-1105766.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 7,
-    title: 'Shopping Mall Plot',
-    price: '₹3,25,00,000',
-    location: 'Noida Extension, Uttar Pradesh',
-    area: '8,000 sq ft',
-    type: 'For Sale',
-    isNew: true,
-    category: 'Commercial',
-    image: 'https://images.pexels.com/photos/3970330/pexels-photo-3970330.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 8,
-    title: 'Warehouse Plot with Connectivity',
-    price: '₹1,80,00,000',
-    location: 'Manesar, Haryana',
-    area: '6,500 sq ft',
-    type: 'For Sale',
-    isNew: false,
-    category: 'Industrial',
-    image: 'https://images.pexels.com/photos/1238865/pexels-photo-1238865.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-];
+const plotProperties = [];
 
 const PropertyCard = ({ property }: { property: any }) => {
   return (
@@ -149,6 +60,15 @@ const PropertyCard = ({ property }: { property: any }) => {
 
 export default function PlotsPage() {
   const [filterOpen, setFilterOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading then show empty state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -270,32 +190,34 @@ export default function PlotsPage() {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {plotProperties.map(property => (
-                <PropertyCard key={property.id} property={property} />
-              ))}
-            </div>
-            
-            {/* Pagination */}
-            <div className="mt-12 flex justify-center">
-              <div className="flex space-x-1">
-                <button className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50">
-                  Previous
-                </button>
-                <button className="px-4 py-2 border border-gray-300 rounded-md bg-blue-900 text-white">
-                  1
-                </button>
-                <button className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50">
-                  2
-                </button>
-                <button className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50">
-                  3
-                </button>
-                <button className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50">
-                  Next
-                </button>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+                <p className="ml-3 text-gray-600">Loading plots...</p>
               </div>
-            </div>
+            ) : plotProperties.length === 0 ? (
+              <div className="text-center py-20">
+                <img 
+                  src="https://images.pexels.com/photos/7031404/pexels-photo-7031404.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" 
+                  alt="No plots available" 
+                  className="w-32 h-32 object-cover rounded-full mx-auto mb-6 opacity-50"
+                />
+                <p className="text-gray-600 text-lg font-medium mb-2">No plot listings available at the moment</p>
+                <p className="text-gray-500 max-w-md mx-auto mb-8">Our team is currently preparing premium plot opportunities for you. Please check back soon or contact us for early information.</p>
+                <Link 
+                  href="#contact-form"
+                  className="px-6 py-3 bg-blue-900 text-white rounded-md hover:bg-blue-800 transition-colors"
+                >
+                  Get Notified About New Plot Listings
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {plotProperties.map(property => (
+                  <PropertyCard key={property.id} property={property} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
         

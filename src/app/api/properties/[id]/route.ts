@@ -1,20 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { properties, Property } from '../data';
+import { resolveNumericIdParam, RouteParams } from '../../../../lib/params-utils';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: RouteParams<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
-    
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { error: 'Invalid property ID' },
-        { status: 400 }
-      );
-    }
+    const id = await resolveNumericIdParam(params);
     
     // Find property by ID
     const property = properties.find((p: Property) => p.id === id);
@@ -38,17 +32,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: RouteParams<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
-    
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { error: 'Invalid property ID' },
-        { status: 400 }
-      );
-    }
+    const id = await resolveNumericIdParam(params);
     
     // Find property index by ID
     const propertyIndex = properties.findIndex((p: Property) => p.id === id);
@@ -102,17 +89,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: RouteParams<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
-    
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { error: 'Invalid property ID' },
-        { status: 400 }
-      );
-    }
+    const id = await resolveNumericIdParam(params);
     
     // Find property index by ID
     const propertyIndex = properties.findIndex((p: Property) => p.id === id);

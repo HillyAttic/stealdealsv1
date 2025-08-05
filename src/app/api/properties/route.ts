@@ -27,6 +27,18 @@ export async function GET(request: NextRequest) {
       properties = properties.filter(p => p.featured);
     }
     
+    // Filter by propertyType if specified
+    const propertyType = searchParams.get('propertyType');
+    if (propertyType) {
+      properties = properties.filter(p => {
+        console.log(`Checking property: ${p.id}, type: ${p.propertyType}, tenant: ${p.tenant || 'none'}`);
+        return p.propertyType === propertyType || 
+               // For Pre-Leased, also include properties with tenants
+               (propertyType === 'Pre-Leased' && p.tenant && p.tenant.trim() !== '');
+      });
+      console.log(`After filtering by propertyType=${propertyType}: ${properties.length} properties`);
+    }
+    
     // Apply limit
     const paginatedProperties = properties.slice(0, limit);
     
@@ -58,8 +70,9 @@ export async function POST(request: NextRequest) {
     // Log the incoming request body for debugging
     console.log('Received property data:', body);
     
-    // Check if this is a pre-leased property or regular property submission
+    // Check if this is a pre-leased property or vacant property submission
     const isPreLeased = body.tenant || body.buildingName || body.propertyType === 'Pre-Leased';
+    const isVacant = body.propertyType === 'Vacant';
     
     // Validate required fields based on property type
     if (isPreLeased) {
@@ -67,6 +80,14 @@ export async function POST(request: NextRequest) {
       if (!body.tenant || !body.category || !body.location) {
         return NextResponse.json(
           { error: 'Tenant, category, and location are required for pre-leased properties' },
+          { status: 400 }
+        );
+      }
+    } else if (isVacant) {
+      // Vacant property validation
+      if (!body.category || !body.location) {
+        return NextResponse.json(
+          { error: 'Category and location are required for vacant properties' },
           { status: 400 }
         );
       }
@@ -82,16 +103,23 @@ export async function POST(request: NextRequest) {
     
     // Prepare property data
     const propertyData: Property = {
-      title: body.title || (body.tenant ? `${body.tenant} - ${body.buildingName || 'Property'}` : `${body.category} Property`),
+      title: body.title || 
+             (body.tenant ? `${body.tenant} - ${body.buildingName || 'Property'}` : 
+             (body.propertyType === 'Vacant' ? `Vacant ${body.category} in ${body.location}` : 
+             `${body.category} Property`)),
       tenant: body.tenant || '',
       category: body.category,
       buildingName: body.buildingName || '',
       location: body.location,
+      state: body.state || '',
+      city: body.city || '',
       district: body.district || '',
       subDistrict: body.subDistrict || '',
       floor: body.floor || '',
       area: body.area ? Number(body.area) : 0,
       totalArea: body.totalArea || '',
+      superArea: body.superArea || '',
+      carpetArea: body.carpetArea || '',
       areaOnSale: body.areaOnSale || '',
       propertyStatus: body.propertyStatus || '',
       description: body.description || '',
@@ -105,12 +133,20 @@ export async function POST(request: NextRequest) {
       askingPrice: body.askingPrice ? Number(body.askingPrice) : 0,
       securityDeposit: body.securityDeposit || '',
       roi: body.roi || '',
-      advance: body.advance ? String(body.advance) : '',
+      advance: body.advance || '',
       reference: body.reference || '',
       channel: body.channel || '',
       propertyType: body.propertyType || 'Regular',
       featured: body.featured || false,
-      image: body.image || ''
+      image: body.image || '',
+      
+      // Additional vacant property fields
+      facing: body.facing || '',
+      length: body.length || '',
+      width: body.width || '',
+      height: body.height || '',
+      contactName: body.contactName || body.contactRef || '', // Map contactRef to contactName
+      contactNumber: body.contactNumber || ''
     };
     
     try {

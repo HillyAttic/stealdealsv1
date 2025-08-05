@@ -1,185 +1,190 @@
 "use client";
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { FaMapMarkerAlt, FaSearch, FaFilter, FaChevronDown, FaBuilding, FaMoneyBillWave, FaUsers, FaHandshake, FaStar, FaBriefcase, FaChartLine } from 'react-icons/fa';
 import ClientOnly from '../../components/ClientOnly';
+import Image from 'next/image';
 
-// Sample franchise data
-const franchiseOptions = [
-  {
-    id: 1,
-    title: 'Premium Coffee Shop',
-    investment: '₹15-20 Lakhs',
-    location: 'Pan India',
-    category: 'Food & Beverage',
-    returns: '25-30% ROI',
-    area: '800-1200 sq ft',
-    established: 2015,
-    outlets: 45,
-    rating: 4.8,
-    featured: true,
-    image: 'https://images.pexels.com/photos/1855214/pexels-photo-1855214.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 2,
-    title: 'Wellness & Fitness Center',
-    investment: '₹30-40 Lakhs',
-    location: 'Tier 1 & 2 Cities',
-    category: 'Health & Fitness',
-    returns: '22-28% ROI',
-    area: '2000-3000 sq ft',
-    established: 2012,
-    outlets: 75,
-    rating: 4.7,
-    featured: true,
-    image: 'https://images.pexels.com/photos/4164761/pexels-photo-4164761.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 3,
-    title: 'Premium Preschool',
-    investment: '₹25-35 Lakhs',
-    location: 'Metro Cities',
-    category: 'Education',
-    returns: '20-25% ROI',
-    area: '3000-5000 sq ft',
-    established: 2010,
-    outlets: 120,
-    rating: 4.9,
-    featured: true,
-    image: 'https://images.pexels.com/photos/8613089/pexels-photo-8613089.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 4,
-    title: 'Fast Food Restaurant',
-    investment: '₹20-30 Lakhs',
-    location: 'Pan India',
-    category: 'Food & Beverage',
-    returns: '30-35% ROI',
-    area: '1000-1500 sq ft',
-    established: 2016,
-    outlets: 85,
-    rating: 4.5,
-    featured: false,
-    image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 5,
-    title: 'Fashion Retail Chain',
-    investment: '₹40-50 Lakhs',
-    location: 'Metro Cities',
-    category: 'Retail',
-    returns: '18-24% ROI',
-    area: '1500-2500 sq ft',
-    established: 2009,
-    outlets: 150,
-    rating: 4.6,
-    featured: false,
-    image: 'https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 6,
-    title: 'Beauty & Spa Salon',
-    investment: '₹10-15 Lakhs',
-    location: 'Pan India',
-    category: 'Beauty & Wellness',
-    returns: '25-30% ROI',
-    area: '600-1000 sq ft',
-    established: 2014,
-    outlets: 95,
-    rating: 4.7,
-    featured: false,
-    image: 'https://images.pexels.com/photos/705255/pexels-photo-705255.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 7,
-    title: 'Home Services & Repairs',
-    investment: '₹5-10 Lakhs',
-    location: 'Pan India',
-    category: 'Services',
-    returns: '35-40% ROI',
-    area: '300-500 sq ft',
-    established: 2018,
-    outlets: 60,
-    rating: 4.3,
-    featured: false,
-    image: 'https://images.pexels.com/photos/8486972/pexels-photo-8486972.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-  {
-    id: 8,
-    title: 'Digital Marketing Agency',
-    investment: '₹8-12 Lakhs',
-    location: 'Metro Cities',
-    category: 'Services',
-    returns: '30-35% ROI',
-    area: '500-800 sq ft',
-    established: 2017,
-    outlets: 30,
-    rating: 4.4,
-    featured: true,
-    image: 'https://images.pexels.com/photos/1447418/pexels-photo-1447418.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
-  },
-];
+// Define the Franchise interface to match the database
+interface Franchise {
+  id?: string | null;
+  name: string;
+  industry: string;
+  segment?: string;
+  product?: string;
+  model?: string;
+  minArea?: string;
+  maxArea?: string;
+  minInvestment?: number | string;
+  maxInvestment?: number | string;
+  royalty?: string;
+  establishmentYear?: string;
+  franchiseStartedYear?: string;
+  numberOutlets?: string;
+  minPaybackPeriod?: string;
+  maxPaybackPeriod?: string;
+  headquarter?: string;
+  remarks?: string;
+  brandDeck?: string;
+  productList?: string;
+  roiSheet?: string;
+  investment: number | string;
+  location: string;
+  status: string;
+  roi: string;
+  description?: string;
+  requirements?: string;
+  image?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
 
-const FranchiseCard = ({ franchise }: { franchise: any }) => {
+const FranchiseCard = ({ franchise }: { franchise: Franchise }) => {
+  // Format the investment amount to show as lakhs or crores
+  const formatInvestment = (amount: number | string | undefined) => {
+    if (amount === undefined || amount === null) {
+      return "₹0";
+    }
+    
+    // If it's already a string with text (like "20 LACS"), return as is
+    if (typeof amount === 'string' && isNaN(Number(amount))) {
+      return amount;
+    }
+    
+    // Convert to number for formatting
+    const numAmount = typeof amount === 'string' ? Number(amount) : amount;
+    
+    if (isNaN(numAmount)) {
+      return "₹0";
+    }
+    
+    if (numAmount >= 10000000) {
+      return `₹${(numAmount / 10000000).toFixed(1)} Cr`;
+    } else if (numAmount >= 100000) {
+      return `₹${(numAmount / 100000).toFixed(1)} Lakhs`;
+    } else {
+      return `₹${numAmount.toLocaleString()}`;
+    }
+  };
+
+  // Default image if none provided
+  const defaultImage = 'https://images.pexels.com/photos/3962294/pexels-photo-3962294.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 group">
       <div className="relative">
         <div className="h-56 relative overflow-hidden">
           <img 
-            src={franchise.image} 
-            alt={franchise.title}
+            src={franchise.image || defaultImage}
+            alt={franchise.name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
-          {franchise.featured && (
+          {franchise.status === 'Limited' && (
             <div className="absolute top-4 left-4 bg-yellow-500 text-white px-3 py-1 rounded-md text-sm font-medium">
-              Featured
+              Limited
             </div>
           )}
-          <div className="absolute bottom-4 right-4 bg-white text-yellow-500 px-2 py-1 rounded-md text-sm font-bold flex items-center">
-            <FaStar className="mr-1" />
-            {franchise.rating}
-          </div>
         </div>
       </div>
       
       <div className="p-5">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-xl font-bold text-gray-800 group-hover:text-blue-900 transition-colors">
-            {franchise.title}
-          </h3>
-          <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-            {franchise.category}
-          </span>
+        {/* Header with badges only (removed title) */}
+        <div className="flex justify-end items-start mb-2">
+          <div className="flex flex-row flex-wrap gap-1 items-center justify-end">
+            <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+              {franchise.industry}
+            </span>
+            {franchise.segment && (
+              <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                {franchise.segment}
+              </span>
+            )}
+            {franchise.model && (
+              <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                {franchise.model}
+              </span>
+            )}
+          </div>
         </div>
         
-        <p className="text-gray-600 mb-4 flex items-center text-sm">
+        {/* Location */}
+        <p className="text-gray-600 mb-2 flex items-center text-sm">
           <FaMapMarkerAlt className="mr-2 text-blue-900" />
-          {franchise.location}
+          {franchise.headquarter || franchise.location}
         </p>
-        
-        <div className="grid grid-cols-2 gap-3 mb-4">
+
+        {/* Product Display - HIGH PRIORITY */}
+        <div className="bg-indigo-100 border-l-4 border-indigo-500 p-3 rounded-md mb-4 shadow-sm">
+          <h4 className="text-sm font-bold text-indigo-800 mb-1 uppercase">Product</h4>
+          <p className="text-md font-bold text-gray-900">
+            {franchise.product || franchise.name || 'Product Available'}
+          </p>
+        </div>
+
+        {/* Investment and ROI */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <div className="flex items-center text-sm text-gray-700">
             <FaMoneyBillWave className="mr-2 text-green-600" />
-            <span>{franchise.investment}</span>
+            <span>
+              {franchise.maxInvestment && franchise.maxInvestment !== "" 
+                ? `${formatInvestment(franchise.minInvestment)} - ${formatInvestment(franchise.maxInvestment)}`
+                : formatInvestment(franchise.minInvestment || franchise.investment)}
+            </span>
           </div>
           <div className="flex items-center text-sm text-gray-700">
             <FaChartLine className="mr-2 text-green-600" />
-            <span>{franchise.returns}</span>
-          </div>
-          <div className="flex items-center text-sm text-gray-700">
-            <FaBuilding className="mr-2 text-blue-600" />
-            <span>{franchise.area}</span>
-          </div>
-          <div className="flex items-center text-sm text-gray-700">
-            <FaUsers className="mr-2 text-blue-600" />
-            <span>{franchise.outlets} Outlets</span>
+            <span>{franchise.royalty || franchise.roi}</span>
           </div>
         </div>
         
-        <div className="border-t pt-4">
+        {/* Area Requirements */}
+        {((franchise.minArea && franchise.minArea !== "NA") || (franchise.maxArea && franchise.maxArea !== "NA")) && (
+          <div className="bg-blue-50 p-2 rounded-md mb-3">
+            <h4 className="text-xs font-medium text-blue-800 mb-1">Area Requirements</h4>
+            <p className="text-xs text-gray-700">
+              {(franchise.minArea && franchise.minArea !== "NA") && 
+               (franchise.maxArea && franchise.maxArea !== "NA")
+                ? `${franchise.minArea} - ${franchise.maxArea} sq.ft.`
+                : `${franchise.minArea !== "NA" ? franchise.minArea : franchise.maxArea} sq.ft.`}
+            </p>
+          </div>
+        )}
+        
+        {/* Key Details Grid */}
+        <div className="grid grid-cols-2 gap-2 mb-3 bg-gray-50 p-2 rounded-md text-xs">
+          {/* Establishment Year */}
+          <div>
+            <span className="text-gray-500">Est. Year:</span>
+            <span className="ml-1 text-gray-700 font-medium">{franchise.establishmentYear || 'N/A'}</span>
+          </div>
+          
+          {/* Franchise Started */}
+          <div>
+            <span className="text-gray-500">Started:</span>
+            <span className="ml-1 text-gray-700 font-medium">{franchise.franchiseStartedYear || 'N/A'}</span>
+          </div>
+          
+          {/* Outlets */}
+          <div>
+            <span className="text-gray-500">Outlets:</span>
+            <span className="ml-1 text-gray-700 font-medium">{franchise.numberOutlets || 'N/A'}</span>
+          </div>
+          
+          {/* Payback Period */}
+          <div>
+            <span className="text-gray-500">Payback:</span>
+            <span className="ml-1 text-gray-700 font-medium">
+              {franchise.minPaybackPeriod && franchise.maxPaybackPeriod 
+                ? `${franchise.minPaybackPeriod}-${franchise.maxPaybackPeriod} months`
+                : franchise.minPaybackPeriod || franchise.maxPaybackPeriod || 'N/A'}
+            </span>
+          </div>
+        </div>
+        
+        <div className="border-t pt-3">
           <Link 
             href={`/franchise/${franchise.id}`} 
             className="w-full flex justify-center items-center bg-blue-900 hover:bg-blue-800 text-white py-2 px-4 rounded transition-colors"
@@ -194,12 +199,77 @@ const FranchiseCard = ({ franchise }: { franchise: any }) => {
 };
 
 export default function FranchisePage() {
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [franchises, setFranchises] = useState<Franchise[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Check for success message from FormSubmit
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      setShowSuccessMessage(true);
+      // Remove the success parameter from URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setShowSuccessMessage(false), 5000);
+    }
+  }, []);
+
+  // Fetch franchises from the API
+  useEffect(() => {
+    const fetchFranchises = async () => {
+      try {
+        // Set loading state initially
+        setIsLoading(true);
+        
+        // Make API call to fetch franchises
+        const response = await fetch('/api/franchises');
+        if (!response.ok) {
+          throw new Error('Failed to fetch franchises');
+        }
+        
+        const data = await response.json();
+        setFranchises(data.franchises || []);
+        
+        // Set loading to false after data is loaded
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error fetching franchises:', err);
+        setError('No franchise opportunities available at the moment.');
+        setIsLoading(false);
+      }
+    };
+    
+    fetchFranchises();
+  }, []);
 
   return (
     <main className="min-h-screen flex flex-col">
       <ClientOnly>
         <Header />
+        
+        {/* Success Message Modal */}
+        {showSuccessMessage && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Franchise Request Sent!</h3>
+              <p className="text-gray-600 mb-6">Thank you for your franchise listing request. We'll review it and get back to you soon.</p>
+              <button
+                onClick={() => setShowSuccessMessage(false)}
+                className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+              >
+                Great, Thanks!
+              </button>
+            </div>
+          </div>
+        )}
         
         {/* Hero Section */}
         <div className="bg-gradient-to-r from-blue-900 to-indigo-800 py-20 px-4">
@@ -249,244 +319,143 @@ export default function FranchisePage() {
           </div>
         </div>
         
-        {/* Filters and Search */}
-        <div className="bg-white shadow-md py-6" id="browse-franchises">
+        {/* Franchise Listings */}
+        <div id="browse-franchises" className="py-12 bg-gray-50">
           <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="relative w-full md:w-1/3">
-                <input
-                  type="text"
-                  placeholder="Search franchises..."
-                  className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
-                />
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-700" />
-              </div>
-              
-              <button 
-                className="flex items-center justify-between px-4 py-3 bg-gray-100 rounded-md w-full md:w-auto"
-                onClick={() => setFilterOpen(!filterOpen)}
-              >
-                <FaFilter className="mr-2 text-gray-800" />
-                <span className="text-gray-800">Filters</span>
-                <FaChevronDown className={`ml-2 transition-transform ${filterOpen ? 'rotate-180' : ''} text-gray-800`} />
-              </button>
-              
-              {/* Category Selector */}
-              <div className="relative w-full md:w-1/4">
-                <select className="w-full px-4 py-3 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800">
-                  <option value="">All Categories</option>
-                  <option value="food">Food & Beverage</option>
-                  <option value="retail">Retail</option>
-                  <option value="education">Education</option>
-                  <option value="health">Health & Fitness</option>
-                  <option value="beauty">Beauty & Wellness</option>
-                  <option value="services">Services</option>
-                </select>
-                <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-700 pointer-events-none" />
-              </div>
-              
-              {/* Investment Range Selector */}
-              <div className="relative w-full md:w-1/4">
-                <select className="w-full px-4 py-3 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800">
-                  <option value="">Any Investment</option>
-                  <option value="0-10">Up to ₹10 Lakhs</option>
-                  <option value="10-25">₹10 - ₹25 Lakhs</option>
-                  <option value="25-50">₹25 - ₹50 Lakhs</option>
-                  <option value="50+">Above ₹50 Lakhs</option>
-                </select>
-                <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-700 pointer-events-none" />
-              </div>
-            </div>
+            <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+              Available Franchise Opportunities
+            </h2>
             
-            {/* Advanced Filters - Shown when expanded */}
-            {filterOpen && (
-              <div className="mt-6 pt-6 border-t grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800">
-                    <option value="">Any Location</option>
-                    <option value="pan-india">Pan India</option>
-                    <option value="metro">Metro Cities</option>
-                    <option value="tier1">Tier 1 Cities</option>
-                    <option value="tier2">Tier 2 Cities</option>
-                  </select>
-                  <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-700 pointer-events-none" />
-                </div>
-                
-                <div className="relative">
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800">
-                    <option value="">Any Space Requirement</option>
-                    <option value="0-500">Up to 500 sq ft</option>
-                    <option value="500-1000">500 - 1000 sq ft</option>
-                    <option value="1000-2000">1000 - 2000 sq ft</option>
-                    <option value="2000+">Above 2000 sq ft</option>
-                  </select>
-                  <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-700 pointer-events-none" />
-                </div>
-                
-                <div className="relative">
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800">
-                    <option value="">Any ROI</option>
-                    <option value="15-20">15% - 20%</option>
-                    <option value="20-30">20% - 30%</option>
-                    <option value="30+">Above 30%</option>
-                  </select>
-                  <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-700 pointer-events-none" />
-                </div>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+                <p className="ml-3 text-gray-600">Loading franchises...</p>
               </div>
+            ) : error ? (
+              <div className="text-center py-20">
+                <p className="text-red-600">{error}</p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="mt-4 px-6 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : franchises.length === 0 ? (
+              <div className="text-center py-20">
+                <img 
+                  src="https://images.pexels.com/photos/3962294/pexels-photo-3962294.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" 
+                  alt="No franchises available" 
+                  className="w-32 h-32 object-cover rounded-full mx-auto mb-6 opacity-50"
+                />
+                <p className="text-gray-600 text-lg font-medium mb-2">No franchise opportunities available at the moment</p>
+                <p className="text-gray-500 max-w-md mx-auto mb-8">Our team is currently preparing exciting franchise opportunities for you. Please check back soon or contact us for early information.</p>
+                <Link 
+                  href="#contact-form"
+                  className="px-6 py-3 bg-blue-900 text-white rounded-md hover:bg-blue-800 transition-colors"
+                >
+                  Get Notified About New Franchises
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="mb-8">
+                  <h3 className="text-2xl font-bold text-gray-800">
+                    <span className="text-blue-900">{franchises.length}</span> {franchises.length === 1 ? 'Franchise' : 'Franchises'} Available
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {franchises.map((franchise) => (
+                    <FranchiseCard key={franchise.id} franchise={franchise} />
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>
         
-        {/* Franchise Listings */}
-        <section className="py-16 bg-gray-50">
+        {/* Contact Form Section */}
+        <div id="contact-form" className="py-12 bg-white">
           <div className="container mx-auto px-4">
-            <div className="mb-8 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-800">
-                <span className="text-blue-900">{franchiseOptions.length}</span> Franchise Opportunities
+            <div className="max-w-2xl mx-auto">
+              <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+                List Your Franchise Opportunity
               </h2>
               
-              <div className="relative">
-                <select className="px-4 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none text-gray-800">
-                  <option value="featured">Featured First</option>
-                  <option value="investment-asc">Investment: Low to High</option>
-                  <option value="investment-desc">Investment: High to Low</option>
-                  <option value="rating-desc">Highest Rated</option>
-                </select>
-                <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-700 pointer-events-none" />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {franchiseOptions.map((franchise) => (
-                <FranchiseCard key={franchise.id} franchise={franchise} />
-              ))}
-            </div>
-          </div>
-        </section>
-        
-        {/* Contact Form */}
-        <section className="py-16 bg-white" id="contact-form">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto bg-blue-50 p-8 rounded-lg shadow-md">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">List Your Brand With Us</h2>
-                <p className="text-gray-600">
-                  Want to expand your business through franchising? Fill out the form below and our team will get in touch with you.
-                </p>
-              </div>
-              
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <form 
+                action="https://formsubmit.co/stealdeals.co.in@gmail.com" 
+                method="POST"
+                className="bg-gray-50 p-8 rounded-lg shadow-md"
+              >
+                {/* Hidden fields for FormSubmit configuration */}
+                <input type="hidden" name="_subject" value="New Franchise Listing Request" />
+                <input type="hidden" name="_next" value={`${typeof window !== 'undefined' ? window.location.origin : ''}/franchise?success=true`} />
+                <input type="hidden" name="_captcha" value="false" />
+                <input type="hidden" name="form_type" value="Franchise Listing Request" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
-                    <label className="block text-gray-700 mb-2" htmlFor="name">Brand Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Brand Name *</label>
                     <input 
                       type="text" 
-                      id="name" 
-                      className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      placeholder="Your brand name"
+                      name="brand_name"
+                      required
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 mb-2" htmlFor="industry">Industry</label>
-                    <select 
-                      id="industry" 
-                      className="w-full px-4 py-3 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select industry</option>
-                      <option value="food">Food & Beverage</option>
-                      <option value="retail">Retail</option>
-                      <option value="education">Education</option>
-                      <option value="health">Health & Fitness</option>
-                      <option value="beauty">Beauty & Wellness</option>
-                      <option value="services">Services</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-gray-700 mb-2" htmlFor="email">Email</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Industry *</label>
                     <input 
-                      type="email" 
-                      id="email" 
-                      className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      placeholder="Your email address"
+                      type="text" 
+                      name="industry"
+                      required
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 mb-2" htmlFor="phone">Phone</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Name *</label>
+                    <input 
+                      type="text" 
+                      name="name"
+                      required
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number *</label>
                     <input 
                       type="tel" 
-                      id="phone" 
-                      className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                      placeholder="Your phone number"
+                      name="phone"
+                      required
+                      className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                     />
                   </div>
                 </div>
-                
-                <div>
-                  <label className="block text-gray-700 mb-2" htmlFor="message">Message</label>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                  <input 
+                    type="email" 
+                    name="email"
+                    required
+                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                  />
+                </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tell us about your franchise</label>
                   <textarea 
-                    id="message" 
+                    name="franchise_description"
                     rows={4} 
-                    className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                    placeholder="Tell us about your franchise opportunity"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Describe your franchise opportunity, investment requirements, etc."
                   ></textarea>
                 </div>
-                
-                <div className="text-center">
-                  <button 
-                    type="submit" 
-                    className="bg-blue-900 hover:bg-blue-800 text-white py-3 px-8 rounded-md font-semibold transition-colors"
-                  >
-                    Submit Franchise Request
-                  </button>
-                </div>
+                <button type="submit" className="w-full bg-blue-900 hover:bg-blue-800 text-white py-3 px-4 rounded-md transition-colors">
+                  Submit Franchise
+                </button>
               </form>
             </div>
           </div>
-        </section>
-        
-        {/* Why Choose Us */}
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">Why Partner With Us?</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                We provide end-to-end support to ensure your franchise business is successful
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div className="bg-white p-6 rounded-lg shadow-md text-center">
-                <div className="bg-blue-100 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
-                  <FaBriefcase className="text-blue-900 text-2xl" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Business Expertise</h3>
-                <p className="text-gray-600">
-                  Get guidance from experienced franchise professionals who understand your industry
-                </p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-md text-center">
-                <div className="bg-blue-100 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
-                  <FaUsers className="text-blue-900 text-2xl" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Operational Support</h3>
-                <p className="text-gray-600">
-                  Receive ongoing operational support, training, and resources to run your business
-                </p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-md text-center">
-                <div className="bg-blue-100 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
-                  <FaChartLine className="text-blue-900 text-2xl" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Marketing Assistance</h3>
-                <p className="text-gray-600">
-                  Benefit from established brand recognition and marketing strategies
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        </div>
         
         <Footer />
       </ClientOnly>

@@ -29,35 +29,39 @@ export default function Home() {
   const categories = [
     {
       id: 1,
-      title: 'Banks',
-      count: 5,
+      title: 'Pre-Leased Inventory',
+      count: 20,
       icon: <FaBuilding className="text-3xl text-blue-900" />,
-      image: 'https://images.pexels.com/photos/2988232/pexels-photo-2988232.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      link: '/banks'
+      image: 'https://images.pexels.com/photos/1668928/pexels-photo-1668928.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+      link: '/inventory',
+      description: 'Premium commercial properties with long-term tenants and stable rental income'
     },
     {
       id: 2,
-      title: 'Residential',
-      count: 5,
-      icon: <FaHome className="text-3xl text-blue-900" />,
-      image: 'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      link: '/residential'
+      title: 'Vacant',
+      count: 15,
+      icon: <FaStore className="text-3xl text-blue-900" />,
+      image: 'https://images.pexels.com/photos/264507/pexels-photo-264507.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+      link: '/vacant',
+      description: 'Ready-to-occupy commercial spaces for your business or investment'
     },
     {
       id: 3,
-      title: 'Banquet',
-      count: 3,
-      icon: <FaHotel className="text-3xl text-blue-900" />,
-      image: 'https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      link: '/banquet'
+      title: 'Plots',
+      count: 10,
+      icon: <FaMapMarkerAlt className="text-3xl text-blue-900" />,
+      image: 'https://images.pexels.com/photos/462331/pexels-photo-462331.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+      link: '/plots',
+      description: 'Premium land plots for commercial and industrial development'
     },
     {
       id: 4,
-      title: 'Retail Stores',
-      count: 5,
-      icon: <FaStore className="text-3xl text-blue-900" />,
-      image: 'https://images.pexels.com/photos/1249610/pexels-photo-1249610.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      link: '/retail-stores'
+      title: 'Be a Franchise',
+      count: 25,
+      icon: <FaHandshake className="text-3xl text-blue-900" />,
+      image: 'https://images.pexels.com/photos/3962294/pexels-photo-3962294.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+      link: '/franchise',
+      description: 'Top franchise opportunities across various industries and investment levels'
     }
   ];
   
@@ -120,10 +124,11 @@ export default function Home() {
               <Image 
                 src="https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
                 alt="Hero Background"
-                fill
-                sizes="100vw"
+                layout="fill"
+                objectFit="cover"
+                quality={100}
                 priority
-                className="object-cover brightness-75"
+                className="brightness-75"
               />
             </div>
           </div>
@@ -229,9 +234,10 @@ export default function Home() {
                     <Image 
                       src="https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
                       alt="About Steal Deals"
-                      fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      className="object-cover transition-transform duration-700 hover:scale-105"
+                      layout="fill"
+                      objectFit="cover"
+                      quality={100}
+                      className="transition-transform duration-700 hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-900/70 to-transparent"></div>
                     
@@ -452,42 +458,17 @@ export default function Home() {
         {/* Trust Badges Section - New premium section */}
         <TrustedBrands />
         
-        {/* Featured In */}
-        <section className="py-12 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-8">
-              <h6 className="text-gray-500 text-sm uppercase font-medium tracking-wider">Featured In:</h6>
-            </div>
-            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
-              <div className="w-32 h-12 bg-white shadow-sm rounded flex items-center justify-center">
-                <div className="text-gray-400 font-medium">Communities</div>
-              </div>
-              {/* Add more featured logos/companies as needed */}
-            </div>
-          </div>
-        </section>
-        
-        {/* Explore Section */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-14">
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">Explore the neighborhood</h2>
-            </div>
-          </div>
-        </section>
-        
         {/* Categories Section - Enhanced with premium styling */}
         <section className="py-20 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
-              <h6 className="text-blue-900 font-semibold mb-3 uppercase tracking-wider">Diverse Options</h6>
+              <h6 className="text-blue-900 font-semibold mb-3 uppercase tracking-wider">Explore Our Services</h6>
               <h2 className="text-4xl font-bold text-gray-800 mb-6 relative inline-block">
                 Our Categories
                 <span className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-blue-900"></span>
               </h2>
               <p className="text-gray-600 max-w-3xl mx-auto mt-8 text-lg">
-                Steal Deal is a revolutionary online platform that has transformed the way businesses 
-                approach commercial leasing and pre-leasing
+                Discover our comprehensive range of commercial real estate and franchise services
               </p>
             </div>
             
@@ -508,13 +489,14 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="p-6 text-center">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">{category.count} Properties</h3>
-                    <p className="text-blue-900 font-semibold mb-4 text-lg">{category.title}</p>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">{category.count}+ Listings</h3>
+                    <p className="text-blue-900 font-semibold mb-3 text-lg">{category.title}</p>
+                    <p className="text-gray-600 mb-4 text-sm">{category.description}</p>
                     <Link 
                       href={category.link} 
                       className="inline-flex items-center text-blue-900 font-medium hover:text-blue-700 transition-colors group"
                     >
-                      More Details
+                      Explore
                       <FaArrowRight className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
                     </Link>
                   </div>

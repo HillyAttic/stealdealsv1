@@ -5,89 +5,176 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaPencilAlt, FaTrash, FaSearch, FaFilter } from 'react-icons/fa';
-
-// Temporary interface for Vacant Property
-interface VacantProperty {
-  id: number;
-  title: string;
-  location: string;
-  area: number;
-  price: number;
-  category: string;
-  status: string;
-}
+import { database, Property, vacantPropertiesRef, deleteProperty } from '@/lib/firebase';
+import { ref, onValue, remove } from 'firebase/database';
+import ClientOnly from '@/components/ClientOnly';
 
 export default function VacantPropertiesPage() {
+  return (
+    <AdminLayout>
+      <ClientOnly
+        fallback={
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+            <p className="ml-2">Loading vacant properties...</p>
+          </div>
+        }
+      >
+        <VacantPropertiesContent />
+      </ClientOnly>
+    </AdminLayout>
+  );
+}
+
+function VacantPropertiesContent() {
   const router = useRouter();
-  const [properties, setProperties] = useState<VacantProperty[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
 
-  // Sample data for vacant properties
-  const sampleVacantProperties: VacantProperty[] = [
-    {
-      id: 1,
-      title: 'Prime Office Space',
-      location: 'South Delhi',
-      area: 1500,
-      price: 150000,
-      category: 'Office Space',
-      status: 'Available'
-    },
-    {
-      id: 2,
-      title: 'Retail Shop in Mall',
-      location: 'Noida',
-      area: 800,
-      price: 95000,
-      category: 'Retail Space',
-      status: 'Available'
-    },
-    {
-      id: 3,
-      title: 'Commercial Building',
-      location: 'Gurgaon',
-      area: 3000,
-      price: 350000,
-      category: 'Commercial',
-      status: 'Available Soon'
-    }
-  ];
-
-  // Check authentication and load properties
+  // Load properties from Firebase
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      router.push('/admin/login');
-    } else {
-      // In a real app, you would fetch from API
-      // For now, use sample data
-      setProperties(sampleVacantProperties);
-      setIsLoading(false);
-    }
+    // Check authentication via API call
+    const checkAuthAndLoadData = async () => {
+      try {
+        // Verify authentication
+        const authResponse = await fetch('/api/auth/check', {
+          method: 'GET',
+          credentials: 'include' // Include cookies
+        });
+
+        if (!authResponse.ok) {
+          throw new Error('Authentication failed');
+        }
+        
+        // Set up real-time listener
+        setIsLoading(true);
+        
+        // Reference to vacant properties in Realtime Database
+        const propertiesRef = vacantPropertiesRef;
+        const legacyPropertiesRef = ref(database, 'properties');
+        
+        // Set up listener for real-time updates
+        const vacantListener = onValue(propertiesRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const propertiesList: Property[] = [];
+            snapshot.forEach((childSnapshot) => {
+              const property = { 
+                id: childSnapshot.key, 
+                ...childSnapshot.val() 
+              };
+              propertiesList.push(property as Property);
+            });
+            setProperties(propertiesList);
+          } else {
+            setProperties([]);
+          }
+          setIsLoading(false);
+        }, (error) => {
+          console.error("Error fetching properties:", error);
+          setError('Failed to load properties. Please try again later.');
+          setIsLoading(false);
+        });
+        
+        // Check legacy properties as well for backward compatibility
+        // Only set up this listener after the first one completes
+        const legacyListener = onValue(legacyPropertiesRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const legacyProperties: Property[] = [];
+            snapshot.forEach((childSnapshot) => {
+              const property = childSnapshot.val();
+              if (property.propertyType === 'Vacant') {
+                legacyProperties.push({
+                  id: childSnapshot.key,
+                  ...property
+                } as Property);
+              }
+            });
+            
+            // Combine with existing properties, avoiding duplicates
+            if (legacyProperties.length > 0) {
+              setProperties(prev => {
+                const existingIds = new Set(prev.map(p => p.id));
+                const newProperties = legacyProperties.filter(p => !existingIds.has(p.id));
+                return [...prev, ...newProperties];
+              });
+            }
+          }
+        });
+        
+        // Return a cleanup function
+        return () => {
+          // Properly unsubscribe from the Firebase listeners
+          vacantListener();
+          legacyListener();
+        };
+      } catch (err) {
+        console.error("Auth check failed:", err);
+        router.push('/admin/login');
+        return () => {}; // Return empty cleanup function for this case
+      }
+    };
+    
+    // Setup listeners and store cleanup function
+    let cleanup: (() => void) | undefined;
+    
+    checkAuthAndLoadData().then(cleanupFn => {
+      cleanup = cleanupFn;
+    });
+    
+    // Return a cleanup function for useEffect
+    return () => {
+      if (cleanup) cleanup();
+    };
   }, [router]);
 
-  // Filter properties based on search term
+  // Get unique categories for filter dropdown
+  const categories = Array.from(new Set(properties.map(p => p.category))).filter(Boolean);
+
+  // Filter properties based on search term and category
   const filteredProperties = properties.filter(property => {
     const searchStr = searchTerm.toLowerCase();
-    return (
-      property.title.toLowerCase().includes(searchStr) ||
-      property.location.toLowerCase().includes(searchStr) ||
-      property.category.toLowerCase().includes(searchStr)
-    );
+    const matchesSearch = 
+      (property.location?.toLowerCase().includes(searchStr) || '') ||
+      (property.category?.toLowerCase().includes(searchStr) || '') ||
+      (property.city?.toLowerCase().includes(searchStr) || '');
+      
+    const matchesCategory = selectedCategory ? property.category === selectedCategory : true;
+    
+    return matchesSearch && matchesCategory;
   });
 
   // Handle property deletion
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: string | null | undefined) => {
+    if (!id) return;
+    
     if (window.confirm('Are you sure you want to delete this property?')) {
-      // In a real app, you would make an API call
-      setProperties(properties.filter(p => p.id !== id));
+      try {
+        // Delete from Firebase using the deleteProperty helper function
+        await deleteProperty(id, 'Vacant');
+      } catch (err) {
+        console.error("Error deleting property:", err);
+        setError('Failed to delete property');
+      }
     }
+  };
+  
+  // Format string values
+  const formatString = (value: string | undefined): string => {
+    if (!value) return '-';
+    return value;
+  };
+  
+  // Format number values
+  const formatNumber = (value: number | undefined): string => {
+    if (value === undefined || value === null) return '-';
+    return value.toLocaleString('en-IN');
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">Vacant Properties</h1>
         <Link
@@ -112,11 +199,15 @@ export default function VacantPropertiesPage() {
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
         <div className="relative w-full sm:w-1/4">
-          <select className="w-full px-4 py-2 border rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select 
+            className="w-full px-4 py-2 border rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
             <option value="">All Categories</option>
-            <option value="Retail Space">Retail Space</option>
-            <option value="Office Space">Office Space</option>
-            <option value="Commercial">Commercial</option>
+            {categories.map(category => (
+              <option key={category} value={category}>{category}</option>
+            ))}
           </select>
           <FaFilter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
@@ -135,79 +226,72 @@ export default function VacantPropertiesPage() {
       ) : (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 table-sm">
+              <thead className="table-light">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Property
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Location
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Area (sq ft)
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price (₹)
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LOCATION</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STATE</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CITY</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DISTRICT NAME</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SUB DISTRICT NAME</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CATEGORY</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FLOOR</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FACING</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SUPER AREA</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CARPET AREA</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PROPERTY TYPE</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LENGTH</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WIDTH</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HEIGHT</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RENT</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REFERENCE</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NAME & CONTACT</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredProperties.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-4 whitespace-nowrap text-center text-gray-500">
+                    <td colSpan={18} className="px-4 py-2 whitespace-nowrap text-center text-gray-500">
                       No properties found
                     </td>
                   </tr>
                 ) : (
                   filteredProperties.map((property) => (
                     <tr key={property.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{property.title}</div>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{formatString(property.location)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.state)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.city)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.district)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.subDistrict)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.category)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.floor)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.facing)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.superArea)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.carpetArea)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.propertyType)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.length)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.width)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.height)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                        {property.rent ? `₹${formatNumber(Number(property.rent))}` : '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{property.location}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{property.area.toLocaleString()}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">₹{property.price.toLocaleString()}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                          {property.category}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          property.status === 'Available' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {property.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.reference)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(property.contactName)}</td>
+                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
-                          <button 
-                            onClick={() => router.push(`/admin/vacant/edit/${property.id}`)}
-                            className="text-blue-600 hover:text-blue-900"
+                          <Link
+                            href={`/admin/vacant/edit/${property.id}`}
+                            className="text-blue-600 hover:text-blue-900 cursor-pointer px-2 py-1 rounded hover:bg-blue-100 inline-block"
+                            title="Edit"
                           >
                             <FaPencilAlt />
-                          </button>
-                          <button 
+                          </Link>
+                          <button
                             onClick={() => handleDelete(property.id)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 hover:text-red-900 cursor-pointer px-2 py-1 rounded hover:bg-red-100"
+                            title="Delete"
+                            type="button"
                           >
                             <FaTrash />
                           </button>
@@ -221,6 +305,6 @@ export default function VacantPropertiesPage() {
           </div>
         </div>
       )}
-    </AdminLayout>
+    </>
   );
 } 

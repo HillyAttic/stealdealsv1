@@ -9,7 +9,8 @@ import ClientOnly from '../../components/ClientOnly';
 
 // Property interface reflecting the structure from API
 interface Property {
-  id: number;
+  id: string | number;
+  originalId?: string | number;
   title?: string;
   tenant?: string;
   category: string;
@@ -74,14 +75,29 @@ const sampleProperties = [
 ];
 
 const PropertyCard = ({ property }: { property: any }) => {
+  // Helper function to format numbers in Indian number system
+  const formatToIndianSystem = (num: number) => {
+    const result = num.toString().split('.');
+    let lastThree = result[0].substring(result[0].length - 3);
+    const otherNumbers = result[0].substring(0, result[0].length - 3);
+    if (otherNumbers !== '') {
+      lastThree = ',' + lastThree;
+    }
+    let formatted = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThree;
+    if (result.length > 1) {
+      formatted += '.' + result[1];
+    }
+    return formatted;
+  };
+
   // Format price based on what's available (askingPrice, rent, or price)
   const formatPrice = (property: any) => {
     if (property.askingPrice) {
-      return `₹${property.askingPrice.toLocaleString('en-IN')}`;
+      return `₹${formatToIndianSystem(property.askingPrice)}`;
     } else if (property.rent) {
-      return `₹${property.rent.toLocaleString('en-IN')}/month`;
+      return `₹${formatToIndianSystem(property.rent)}/month`;
     } else if (property.price) {
-      return `₹${property.price.toLocaleString('en-IN')}`;
+      return `₹${formatToIndianSystem(property.price)}`;
     } else {
       return 'Price on Request';
     }
@@ -126,6 +142,8 @@ const PropertyCard = ({ property }: { property: any }) => {
   const getPropertyType = (property: any) => {
     if (property.propertyType === 'Pre-Leased') {
       return 'Pre-Leased';
+    } else if (property.propertyType) {
+      return property.propertyType;
     } else if (property.type) {
       return property.type;
     } else if (property.rent) {
@@ -164,9 +182,14 @@ const PropertyCard = ({ property }: { property: any }) => {
         </h3>
         <p className="text-gray-600 mb-3 flex items-center text-sm">
           <FaMapMarkerAlt className="mr-2 text-blue-900" />
-          {getPropertyLocation(property)}
+          {property.location}{property.district ? `, ${property.district}` : ''}
         </p>
-        <p className="text-blue-900 font-bold text-xl mb-4">{formatPrice(property)}</p>
+        <div className="mb-4 p-2 bg-blue-50 border border-blue-100 rounded-md">
+          <p className="text-gray-600 text-sm mb-1">Investment Amount</p>
+          <p className="text-blue-900 font-bold text-xl">
+            {property.askingPrice ? formatPrice({ askingPrice: property.askingPrice }) : formatPrice(property)}
+          </p>
+        </div>
         
         <div className="flex justify-between text-gray-600 border-t pt-4">
           <div className="flex items-center text-sm">
@@ -174,41 +197,70 @@ const PropertyCard = ({ property }: { property: any }) => {
           </div>
           <div className="flex items-center text-sm">
             <FaRulerCombined className="mr-1 text-blue-900" />
-            <span>{getPropertyArea(property)}</span>
+            <span>{property.totalArea ? 
+              ((/sq\.?ft\.?/i).test(property.totalArea) ? property.totalArea : `${property.totalArea} SQ.FT.`) 
+              : ''}</span>
           </div>
         </div>
-
-        {/* Additional labels for Pre-Leased properties */}
-        {property.tenant && (
-          <div className="mt-3 pt-2 border-t border-gray-100">
-            <div className="flex items-center text-sm mb-2">
-              <span className="text-blue-900 font-medium mr-1">Tenant:</span>
-              <span className="font-semibold">{property.tenant}</span>
-            </div>
-            
-            {property.leaseTerm && (
-              <div className="flex items-center text-sm mb-2">
-                <span className="text-blue-900 font-medium mr-1">Lease Term:</span>
-                <span>{property.leaseTerm}</span>
+        
+        <div className="mt-3 pt-2 border-t border-gray-100">
+          <p className="text-blue-900 font-semibold mb-2">Financial Highlights</p>
+          <div className="grid grid-cols-1 gap-2">
+            {property.rent && (
+              <div className="flex items-center p-2 bg-green-50 border border-green-100 rounded-md">
+                <div>
+                  <p className="text-gray-600 text-xs">Monthly Rental</p>
+                  <p className="font-bold text-green-700 text-lg">{formatPrice({ rent: property.rent })}</p>
+                </div>
               </div>
             )}
             
             {property.roi && (
-              <div className="flex items-center text-sm">
-                <span className="text-blue-900 font-medium mr-1">ROI:</span>
-                <span className="font-bold text-green-600">{property.roi}%</span>
-              </div>
-            )}
-            
-            {(property.propertyType === 'Pre-Leased' || property.tenant) && (
-              <div className="mt-3 pt-2 border-t border-gray-100 text-center">
-                <span className="inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                  Pre-Leased Property
-                </span>
+              <div className="flex items-center p-2 bg-amber-50 border border-amber-100 rounded-md">
+                <div>
+                  <p className="text-gray-600 text-xs">Return on Investment</p>
+                  <p className="font-bold text-amber-600 text-lg">{property.roi}% <span className="text-xs font-normal">per annum</span></p>
+                </div>
               </div>
             )}
           </div>
-        )}
+
+          <p className="text-blue-900 font-semibold mt-4 mb-2">Property Details</p>
+          <div className="flex items-center text-sm mb-2">
+            <span className="text-blue-900 font-medium mr-1">Tenant:</span>
+            <span className="font-semibold text-gray-800">{property.tenant || ''}</span>
+          </div>
+          
+          {property.leaseTerm && (
+            <div className="flex items-center text-sm mb-2">
+              <span className="text-blue-900 font-medium mr-1">Lease Term:</span>
+              <span className="text-gray-800">{property.leaseTerm}</span>
+            </div>
+          )}
+          
+          {property.floor && (
+            <div className="flex items-center text-sm mb-2">
+              <span className="text-blue-900 font-medium mr-1">Floor:</span>
+              <span className="text-gray-800">{property.floor}</span>
+            </div>
+          )}
+          
+          {property.areaOnSale && (
+            <div className="flex items-center text-sm mb-2">
+              <span className="text-blue-900 font-medium mr-1">Area on Sale:</span>
+              <span className="text-gray-800">
+                {(/sq\.?ft\.?/i).test(property.areaOnSale) ? property.areaOnSale : `${property.areaOnSale} SQ.FT.`}
+              </span>
+            </div>
+          )}
+          
+          {property.propertyStatus && (
+            <div className="flex items-center text-sm mb-2">
+              <span className="text-blue-900 font-medium mr-1">Status:</span>
+              <span className="text-gray-800">{property.propertyStatus}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -221,7 +273,6 @@ export default function InventoryPage() {
   const [error, setError] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showPreLeased, setShowPreLeased] = useState(true); // Show Pre-Leased properties by default
 
   // Fetch properties from API - handle both Firebase and local data structures
   useEffect(() => {
@@ -233,6 +284,9 @@ export default function InventoryPage() {
         if (selectedCategory) {
           queryParams.append('category', selectedCategory);
         }
+        
+        // Always add propertyType=Pre-Leased since this is the inventory page
+        queryParams.append('propertyType', 'Pre-Leased');
         
         const url = `/api/properties${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
         console.log('Fetching from:', url);
@@ -273,8 +327,9 @@ export default function InventoryPage() {
           // For 401 errors, handle them specially
           if (response.status === 401) {
             console.error('Authentication error, using sample data instead');
-            setProperties(sampleProperties.map(p => ({ 
-              id: p.id, 
+            setProperties(sampleProperties.map((p, index: number) => ({ 
+              originalId: p.id,
+              id: `sample-${p.id}-${index}`,
               category: p.category, 
               location: p.location,
               title: p.title,
@@ -290,21 +345,27 @@ export default function InventoryPage() {
         
         const data = await response.json();
         console.log('Received properties data:', data);
+        console.log('Total properties from API:', data.properties ? data.properties.length : 0);
+        console.log('Property types received:', data.properties ? [...new Set(data.properties.map((p: any) => p.propertyType))] : []);
         
-        // Apply filters
+        // Log some sample properties to debug
+        if (data.properties && data.properties.length > 0) {
+          console.log('Sample properties (first 3):', 
+            data.properties.slice(0, 3).map((p: any) => ({
+              id: p.id,
+              title: p.title || p.tenant,
+              propertyType: p.propertyType,
+              tenant: p.tenant,
+              category: p.category
+            }))
+          );
+        }
+        
+        // Apply filters - but we're already getting Pre-Leased properties from the API
         let filteredProperties = data.properties || [];
         
-        // Filter Pre-Leased properties if toggle is enabled
-        if (showPreLeased) {
-          // Include properties with Pre-Leased in propertyType OR properties with tenant field
-          filteredProperties = filteredProperties.filter((property: any) => {
-            const isPreLeased = 
-              (property.propertyType === 'Pre-Leased') || 
-              (property.tenant && property.tenant.trim() !== '');
-            
-            return isPreLeased;
-          });
-        }
+        // Log the properties we've received
+        console.log(`Received ${filteredProperties.length} pre-leased properties from API`);
         
         // Further filter by search term if present
         if (searchTerm) {
@@ -326,13 +387,15 @@ export default function InventoryPage() {
         console.log('Filtered properties count:', filteredProperties.length);
         
         // Map properties to a standard format that works with the PropertyCard component
-        const formattedProperties = filteredProperties.map((property: any) => {
-          // For properties from Firebase, ensure we have a numeric ID
-          const id = typeof property.id === 'string' ? parseInt(property.id.replace(/\D/g, '')) || Math.floor(Math.random() * 10000) : property.id;
+        const formattedProperties = filteredProperties.map((property: any, index: number) => {
+          // Create a unique ID by combining original ID with index
+          // We use the original ID (string or number) and append the index to ensure uniqueness
+          const uniqueId = `${property.id || ''}-${index}`;
           
           return {
             ...property,
-            id
+            originalId: property.id, // preserve the original ID
+            id: uniqueId // use the unique generated ID for React keys
           };
         });
         
@@ -341,8 +404,9 @@ export default function InventoryPage() {
         console.error('Error fetching properties:', error);
         setError('Failed to load properties. Please try again later.');
         // Use sample data as fallback by converting to match Property interface
-        setProperties(sampleProperties.map(p => ({ 
-          id: p.id, 
+        setProperties(sampleProperties.map((p, index: number) => ({ 
+          originalId: p.id,
+          id: `sample-${p.id}-${index}`,
           category: p.category, 
           location: p.location,
           title: p.title,
@@ -355,7 +419,7 @@ export default function InventoryPage() {
     };
     
     fetchProperties();
-  }, [selectedCategory, searchTerm, showPreLeased]);
+  }, [selectedCategory, searchTerm]);
 
   // Get all unique categories from properties
   const categories = [...new Set(properties.map(p => p.category))];
@@ -414,18 +478,7 @@ export default function InventoryPage() {
                 <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-700 pointer-events-none" />
               </div>
               
-              {/* Pre-Leased Toggle Switch */}
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-800">Pre-Leased Only</span>
-                <button 
-                  onClick={() => setShowPreLeased(!showPreLeased)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${showPreLeased ? 'bg-blue-900' : 'bg-gray-300'}`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showPreLeased ? 'translate-x-6' : 'translate-x-1'}`}
-                  />
-                </button>
-              </div>
+              {/* Removed Pre-Leased Toggle as it's always showing Pre-Leased properties */}
               
               {/* Price Range Selector */}
               <div className="relative w-full md:w-1/4">
