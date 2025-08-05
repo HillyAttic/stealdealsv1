@@ -20,6 +20,24 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Stealdeals - Discover Unbeatable Property Deals",
   description: "Find the best real estate deals on Stealdeals. Browse properties for sale and rent across the country.",
+  icons: {
+    icon: [
+      {
+        url: '/favicon.png',
+        sizes: 'any',
+      },
+      {
+        url: '/development.png',
+        sizes: 'any',
+      }
+    ],
+    apple: [
+      {
+        url: '/favicon.png',
+        sizes: '180x180',
+      }
+    ],
+  },
 };
 
 export const viewport: Viewport = {
@@ -44,6 +62,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        {/* Favicon links */}
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
         {/* Add Boxicons for icons used in the admin panel */}
         <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet' />
         {/* Add BitdefenderCleaner to clean extension attributes early */}
