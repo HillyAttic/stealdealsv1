@@ -1,6 +1,11 @@
 'use client';
 
 import React, { ReactNode, useEffect } from 'react';
+import { AuthProvider } from '@/components/auth/AuthProvider';
+import { WishlistProvider } from '@/contexts/WishlistContext';
+import { ToastProvider } from '@/contexts/ToastContext';
+import { AuthErrorBoundary } from '@/components/error-boundaries/AuthErrorBoundary';
+import { AuthDebug } from '@/components/debug/AuthDebug';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -85,6 +90,19 @@ export function Providers({ children }: ProvidersProps) {
     };
   }, []);
   
-  // Return children wrapped in a div with suppressHydrationWarning
-  return <div suppressHydrationWarning>{children}</div>;
+  // Return children wrapped in providers with suppressHydrationWarning
+  return (
+    <div suppressHydrationWarning>
+      <ToastProvider>
+        <AuthErrorBoundary>
+          <AuthProvider>
+            <WishlistProvider>
+              {children}
+              <AuthDebug />
+            </WishlistProvider>
+          </AuthProvider>
+        </AuthErrorBoundary>
+      </ToastProvider>
+    </div>
+  );
 } 

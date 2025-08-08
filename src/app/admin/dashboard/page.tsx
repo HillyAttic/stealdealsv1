@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
-import { FaChartBar, FaChartPie, FaChartLine, FaStore, FaBuilding, FaHome } from 'react-icons/fa';
-import Script from 'next/script';
-import Cookies from 'js-cookie';
+import { FaChartBar, FaStore, FaBuilding, FaHome } from 'react-icons/fa';
 import ClientOnly from '@/components/ClientOnly';
-import { database, preleasedPropertiesRef, vacantPropertiesRef, franchisePropertiesRef } from '@/lib/firebase';
-import { ref, onValue, get } from 'firebase/database';
+import { preleasedPropertiesRef, vacantPropertiesRef, franchisePropertiesRef } from '@/lib/firebase';
+import { get } from 'firebase/database';
 
 // Add global type declaration for the window extension
 declare global {
@@ -482,6 +481,33 @@ function AdminDashboardContent() {
                   No franchise data available
                 </div>
               )}
+            </div>
+          </div>
+          
+          {/* User Analytics Section */}
+          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold">User Management Overview</h2>
+              <Link 
+                href="/admin/users"
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                View All Users
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">0</div>
+                <div className="text-sm text-blue-700">Total Users</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">0</div>
+                <div className="text-sm text-green-700">Active Users</div>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">0</div>
+                <div className="text-sm text-purple-700">New This Month</div>
+              </div>
             </div>
           </div>
           

@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(taskkill:*)",
+      "Bash(curl:*)",
+      "Bash(rm:*)",
+      "Bash(npm test)",
+      "Bash(npx vitest:*)",
+      "Bash(node:*)",
+      "Bash(BASE_URL=http://localhost:3002 node test-auth-comprehensive.js)",
+      "Bash(grep:*)",
+      "Bash(powershell:*)",
+      "Bash(npx:*)",
+      "Bash(npm run lint)",
+      "Bash(npm install:*)",
+      "Bash(vercel:*)",
+      "Bash(npm px:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}

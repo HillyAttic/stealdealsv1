@@ -1,9 +1,4 @@
-/* Import Jost font from Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap');
-/* Import Montserrat font from Google Fonts for headers and navigation */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
-/* Import Poppins font for improved typography */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+/* Fonts are now imported via Next.js font optimization */
 
 @import "tailwindcss";
 
@@ -91,8 +86,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-jost);
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -122,7 +117,7 @@
 body {
   background: var(--background);
   color:black;
-  font-family: 'Jost', sans-serif;
+  font-family: var(--font-jost), sans-serif;
   font-size: 1rem;
   line-height: 1.5;
   text-rendering: optimizeLegibility;

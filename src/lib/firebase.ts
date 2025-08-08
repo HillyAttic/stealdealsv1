@@ -1,6 +1,7 @@
 // Firebase configuration for StealDeals app
 import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, set, get, push, child, update, remove, DataSnapshot } from 'firebase/database';
+import { getAuth } from 'firebase/auth';
 
 // Your Firebase configuration
 const firebaseConfig = {
@@ -22,6 +23,7 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.datab
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const database = getDatabase(app);
+const auth = getAuth(app);
 
 // Properties collection references - separate for vacant and preleased
 const propertiesRef = ref(database, 'properties'); // Legacy reference for backward compatibility
@@ -31,7 +33,9 @@ const franchisePropertiesRef = ref(database, 'franchiseProperties');
 
 // Export references
 export { 
+  app,
   database, 
+  auth,
   propertiesRef, 
   vacantPropertiesRef, 
   preleasedPropertiesRef,
@@ -40,7 +44,7 @@ export {
 
 // Property interface matching our application's property structure
 export interface Property {
-  id?: string | null;
+  id: string;
   title?: string;
   tenant?: string;
   category: string;

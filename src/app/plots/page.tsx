@@ -4,59 +4,14 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import { FaBed, FaBath, FaRulerCombined, FaHeart, FaMapMarkerAlt, FaSearch, FaFilter, FaChevronDown } from 'react-icons/fa';
+import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaSearch, FaFilter, FaChevronDown } from 'react-icons/fa';
+import { WishlistButton } from '@/components/wishlist';
+import { AuthPrompt } from '@/components/auth';
+import { PropertyCard } from '@/components/property';
 import ClientOnly from '../../components/ClientOnly';
 
 // Sample plot property data
-const plotProperties = [];
-
-const PropertyCard = ({ property }: { property: any }) => {
-  return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 group">
-      <div className="relative">
-        <div className="h-64 relative overflow-hidden">
-          <img 
-            src={property.image} 
-            alt={property.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
-          {property.isNew && (
-            <div className="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-md text-sm font-medium">
-              New
-            </div>
-          )}
-          <div className="absolute top-4 right-4 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors cursor-pointer">
-            <FaHeart className="text-gray-400 hover:text-red-500 transition-colors" />
-          </div>
-          <div className="absolute bottom-4 left-4 bg-blue-900 text-white px-3 py-1 rounded-md text-sm font-medium">
-            {property.type}
-          </div>
-        </div>
-      </div>
-      
-      <div className="p-5">
-        <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-900 transition-colors">
-          {property.title}
-        </h3>
-        <p className="text-gray-600 mb-3 flex items-center text-sm">
-          <FaMapMarkerAlt className="mr-2 text-blue-900" />
-          {property.location}
-        </p>
-        <p className="text-blue-900 font-bold text-xl mb-4">{property.price}</p>
-        
-        <div className="flex justify-between text-gray-600 border-t pt-4">
-          <div className="flex items-center text-sm">
-            <span className="px-2 py-1 bg-blue-100 text-blue-900 rounded-md">{property.category}</span>
-          </div>
-          <div className="flex items-center text-sm">
-            <FaRulerCombined className="mr-1 text-blue-900" />
-            <span>{property.area}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+const plotProperties: never[] = [];
 
 export default function PlotsPage() {
   const [filterOpen, setFilterOpen] = useState(false);

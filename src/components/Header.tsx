@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { FaPhone, FaUserAlt, FaHeart, FaSearch, FaBars, FaTimes, FaEnvelope, FaMapMarkerAlt, FaHome, FaInfoCircle, FaWarehouse, FaLandmark, FaHandshake, FaUtensils, FaImages, FaPhoneAlt, FaPlus, FaStore, FaMoneyBillWave, FaBuilding, FaAd, FaFileContract, FaChevronDown } from 'react-icons/fa';
+import { FaBars, FaTimes, FaHome, FaInfoCircle, FaWarehouse, FaLandmark, FaHandshake, FaUtensils, FaImages, FaPhoneAlt } from 'react-icons/fa';
 import { usePathname } from 'next/navigation';
+import { AuthButton } from './auth';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -79,21 +80,22 @@ const Header = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Main Navigation - Independent sticky header */}
-      <header className="sticky top-0 z-[1000] premium-header w-full border-b border-gray-100" style={{position: 'sticky', top: 0}}>
+      <header className="sticky top-0 z-[1000] premium-header w-full border-b border-gray-100" style={{ position: 'sticky', top: 0 }}>
         <div className="container mx-auto px-6 w-full">
           <div className="flex items-center py-3">
             {/* Logo - Left aligned */}
             <div className="flex-shrink-0 mr-auto">
               <Link href="/" className="text-xl sm:text-2xl font-bold text-blue-900 transition-all duration-300 flex items-start hover:opacity-80">
                 <div className="overflow-hidden transition-all duration-500 transform hover:scale-105 flex items-center justify-start">
-                  <Image 
-                    src="/logo.svg" 
-                    alt="Stealdeals Logo" 
-                    width={280} 
+                  <Image
+                    src="/logo.svg"
+                    alt="Stealdeals Logo"
+                    width={280}
                     height={60}
                     className="object-contain"
+                    /* style={{ height: '', width: '' }} */
                     priority
                   />
                 </div>
@@ -101,13 +103,13 @@ const Header = () => {
             </div>
 
             {/* Mobile Menu Button */}
-            <button 
+            <button
               className="md:hidden text-3xl focus:outline-none"
               onClick={toggleMobileMenu}
               aria-label="Toggle mobile menu"
             >
-              {mobileMenuOpen ? 
-                <FaTimes className="text-blue-900 transition-colors duration-300" /> : 
+              {mobileMenuOpen ?
+                <FaTimes className="text-blue-900 transition-colors duration-300" /> :
                 <FaBars className="text-blue-900 transition-colors duration-300" />
               }
             </button>
@@ -124,8 +126,8 @@ const Header = () => {
                         </li>
                       )}
                       <li className="nav-item-animation" style={{ animationDelay: `${index * 0.05}s` }}>
-                        <Link 
-                          href={item.path} 
+                        <Link
+                          href={item.path}
                           className={`relative font-medium text-lg px-2 py-1 flex items-center justify-center whitespace-nowrap
                             text-blue-900 hover:text-blue-700 font-['cooper black'] tracking-wide
                             transition-all duration-300 ${pathname === item.path ? 'text-blue-700 font-semibold after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-100 after:transition-transform after:duration-300' : 'after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-0 after:transition-transform after:duration-300 hover:after:scale-x-100'}`}
@@ -138,25 +140,28 @@ const Header = () => {
                 })}
               </ul>
             </nav>
+
+            {/* Right side buttons - Authentication only */}
+            <div className="hidden md:flex items-center space-x-3 flex-shrink-0 ml-4">
+              <AuthButton />
+            </div>
           </div>
         </div>
       </header>
 
       {/* Mobile Menu - Separate from both navigations */}
-      <div 
-        className={`md:hidden fixed inset-0 z-[1001] bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${
-          mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+      <div
+        className={`md:hidden fixed inset-0 z-[1001] bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         onClick={toggleMobileMenu}
       >
-        <div 
-          className={`fixed inset-y-0 right-0 max-w-xs w-full bg-gradient-to-b from-blue-900 to-blue-800 shadow-xl transform transition-transform duration-300 ease-in-out ${
-            mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
+        <div
+          className={`fixed inset-y-0 right-0 max-w-xs w-full bg-gradient-to-b from-blue-900 to-blue-800 shadow-xl transform transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex justify-end p-4">
-            <button 
+            <button
               className="text-white text-2xl focus:outline-none"
               onClick={toggleMobileMenu}
               aria-label="Close menu"
@@ -168,13 +173,12 @@ const Header = () => {
             <ul className="space-y-3">
               {navItems.map((item, index) => (
                 <li key={index}>
-                  <Link 
-                    href={item.path} 
-                    className={`flex items-center py-2 px-4 rounded-md ${
-                      item.path === pathname
-                        ? 'bg-blue-700/50 text-white font-medium' 
-                        : 'text-blue-100 hover:bg-blue-700/30'
-                    } transition-colors duration-200`}
+                  <Link
+                    href={item.path}
+                    className={`flex items-center py-2 px-4 rounded-md ${item.path === pathname
+                      ? 'bg-blue-700/50 text-white font-medium'
+                      : 'text-blue-100 hover:bg-blue-700/30'
+                      } transition-colors duration-200`}
                     onClick={toggleMobileMenu}
                   >
                     <span className="mr-3 text-lg">{item.icon}</span>
@@ -183,6 +187,11 @@ const Header = () => {
                 </li>
               ))}
             </ul>
+
+            {/* Mobile Authentication */}
+            <div className="px-4 py-4 border-t border-blue-700/30 mt-4 space-y-3">
+              <AuthButton />
+            </div>
           </nav>
         </div>
       </div>

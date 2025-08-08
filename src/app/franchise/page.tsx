@@ -5,8 +5,13 @@ import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { FaMapMarkerAlt, FaSearch, FaFilter, FaChevronDown, FaBuilding, FaMoneyBillWave, FaUsers, FaHandshake, FaStar, FaBriefcase, FaChartLine } from 'react-icons/fa';
+import { WishlistButton } from '@/components/wishlist';
+import { AuthPrompt } from '@/components/auth';
 import ClientOnly from '../../components/ClientOnly';
 import Image from 'next/image';
+
+// Counter for generating consistent IDs
+let franchiseIdCounter = 0;
 
 // Define the Franchise interface to match the database
 interface Franchise {
@@ -43,6 +48,11 @@ interface Franchise {
 }
 
 const FranchiseCard = ({ franchise }: { franchise: Franchise }) => {
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  
+  // Generate a consistent ID for this franchise
+  const franchiseId = franchise.id || `franchise-${++franchiseIdCounter}`;
+
   // Format the investment amount to show as lakhs or crores
   const formatInvestment = (amount: number | string | undefined) => {
     if (amount === undefined || amount === null) {
@@ -87,9 +97,16 @@ const FranchiseCard = ({ franchise }: { franchise: Franchise }) => {
               Limited
             </div>
           )}
+          <div className="absolute top-4 right-4">
+            <WishlistButton
+              propertyId={franchiseId}
+              size="md"
+              onAuthRequired={() => setShowAuthPrompt(true)}
+            />
+          </div>
         </div>
       </div>
-      
+    
       <div className="p-5">
         {/* Header with badges only (removed title) */}
         <div className="flex justify-end items-start mb-2">
@@ -194,6 +211,14 @@ const FranchiseCard = ({ franchise }: { franchise: Franchise }) => {
           </Link>
         </div>
       </div>
+
+      {/* Auth Prompt Modal */}
+      <AuthPrompt
+        isOpen={showAuthPrompt}
+        onClose={() => setShowAuthPrompt(false)}
+        title="Sign in to save franchises"
+        feature="wishlist"
+      />
     </div>
   );
 };

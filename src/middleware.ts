@@ -16,10 +16,21 @@ const PROTECTED_PATHS = [
   '/admin/pre-leased/edit'
 ];
 
+// User-specific protected paths (API routes only - client-side routes handle their own protection)
+const USER_PROTECTED_PATHS = [
+  '/api/user',
+  '/api/wishlist',
+  '/api/activity'
+];
+
 // Paths that should skip middleware processing
 const PUBLIC_PATHS = [
   '/api/auth',
   '/api/auth/check', // Allow auth check endpoint
+  '/api/auth/user/login', // Allow user login
+  '/api/auth/user/register', // Allow user registration
+  '/api/auth/user/session', // Allow session check
+  '/api/auth/user/logout', // Allow user logout
   '/api/contact',
   '/api/properties', // Allow all requests to properties API
   '/api/franchises', // Allow franchise API for public pages
@@ -77,10 +88,11 @@ export async function middleware(request: NextRequest) {
   }
   
   // Check if path requires protection
-  const isProtectedPath = PROTECTED_PATHS.some(path => pathname.startsWith(path)) || 
-                         pathname.startsWith('/admin/');
+  const isAdminProtectedPath = PROTECTED_PATHS.some(path => pathname.startsWith(path)) || 
+                              pathname.startsWith('/admin/');
+  const isUserProtectedPath = USER_PROTECTED_PATHS.some(path => pathname.startsWith(path));
   
-  if (isProtectedPath) {
+  if (isAdminProtectedPath) {
     console.log(`[Middleware] Protected path accessed: ${pathname}`);
     
     // For API routes, check Authorization header
@@ -147,6 +159,117 @@ export async function middleware(request: NextRequest) {
       }
       
       console.log('[Middleware] Token found in cookies for admin route');
+    }
+  }
+  // Handle user-protected paths
+  else if (isUserProtectedPath) {
+    console.log(`[Middleware] User protected path accessed: ${pathname}`);
+    
+    // For API routes, check Authorization header or session cookie
+    if (pathname.startsWith('/api/')) {
+      const authHeader = request.headers.get('authorization');
+      const sessionCookie = request.cookies.get('auth_session')?.value;
+      
+      let token = null;
+      
+      // Try Authorization header first
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      }
+      // Fallback to session cookie
+      else if (sessionCookie) {
+        token = sessionCookie;
+      }
+      
+      // Check for mock authentication headers (allows development testing)
+      if (!token) {
+        const mockUserId = request.headers.get('x-mock-user-id');
+        const mockUserEmail = request.headers.get('x-mock-user-email');
+        
+        if (mockUserId && mockUserEmail) {
+          return NextResponse.next();
+        }
+      }
+      
+      // No token provided
+      if (!token) {
+        console.log('[Middleware] Missing auth token for user API route');
+        return NextResponse.json(
+          { error: 'Unauthorized - Missing authentication' }, 
+          { status: 401 }
+        );
+      }
+      
+      try {
+        // Verify JWT token
+        const secret = new TextEncoder().encode(
+          process.env.JWT_SECRET || 'fallback_jwt_secret_for_development'
+        );
+        
+        const { payload } = await jwtVerify(token, secret);
+        
+        // Ensure this is a user (not admin-only route)
+        if (payload.role !== 'user' && payload.role !== 'admin') {
+          console.log('[Middleware] Invalid role for user API route');
+          return NextResponse.json(
+            { error: 'Unauthorized - Invalid role' }, 
+            { status: 403 }
+          );
+        }
+        
+        console.log('[Middleware] User API token verified successfully');
+        // Token is valid, continue
+      } catch (error) {
+        // Token verification failed
+        console.log('[Middleware] User API token verification failed:', error);
+        return NextResponse.json(
+          { error: 'Unauthorized - Invalid token' }, 
+          { status: 401 }
+        );
+      }
+    } 
+    // For frontend user routes, redirect to login if no token in cookie
+    else {
+      // Check for token in cookies
+      const token = request.cookies.get('auth_session')?.value;
+      
+      if (!token) {
+        console.log(`[Middleware] No token in cookies for user route: ${pathname}`);
+        // Redirect to home page with login prompt
+        const url = new URL('/', request.url);
+        url.searchParams.set('login', 'required');
+        url.searchParams.set('from', pathname);
+        return NextResponse.redirect(url);
+      }
+      
+      try {
+        // Verify JWT token
+        const secret = new TextEncoder().encode(
+          process.env.JWT_SECRET || 'fallback_jwt_secret_for_development'
+        );
+        
+        const { payload } = await jwtVerify(token, secret);
+        
+        // Ensure this is a user
+        if (payload.role !== 'user' && payload.role !== 'admin') {
+          console.log('[Middleware] Invalid role for user route');
+          const url = new URL('/', request.url);
+          url.searchParams.set('login', 'required');
+          return NextResponse.redirect(url);
+        }
+        
+        console.log('[Middleware] User cookie token verified successfully');
+        // Token is valid, continue to the user page
+      } catch (error) {
+        // Token verification failed
+        console.log('[Middleware] User cookie token verification failed:', error);
+        // Redirect to home page with login prompt
+        const url = new URL('/', request.url);
+        url.searchParams.set('login', 'required');
+        return NextResponse.redirect(url);
+      }
+      
+      console.log('[Middleware] Token found in cookies for user route');
     }
   }
   

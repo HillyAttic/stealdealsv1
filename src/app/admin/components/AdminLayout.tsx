@@ -126,6 +126,11 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       icon: <FaTachometerAlt />
     },
     {
+      name: 'Users',
+      href: '/admin/users',
+      icon: <FaUser />
+    },
+    {
       name: 'Pre-leased',
       href: '/admin/Pre-Leased',
       icon: <FaBuilding />

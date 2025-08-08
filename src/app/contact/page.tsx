@@ -6,9 +6,12 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock, FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn, FaYoutube, FaCheckCircle } from 'react-icons/fa';
 import ClientOnly from '../../components/ClientOnly';
+import { useAuthPrompt } from '@/hooks/useAuthPrompt';
+import { AuthPrompt } from '@/components/auth';
 
 export default function ContactPage() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const { showAuthPrompt, promptOptions, requireAuth, closePrompt, handleAuthSuccess } = useAuthPrompt();
 
   // Check for success message from FormSubmit
   React.useEffect(() => {
@@ -120,6 +123,32 @@ export default function ContactPage() {
               <div className="lg:col-span-2">
                 <div className="bg-white p-8 rounded-lg shadow-md">
                   <h2 className="text-2xl font-bold text-gray-800 mb-6">Send Us a Message</h2>
+                  
+                  {/* Authentication Suggestion */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="text-blue-600 mr-3">
+                          <FaEnvelope className="text-lg" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-blue-800">Get personalized responses</p>
+                          <p className="text-xs text-blue-600">Sign in to track your inquiries and get faster responses</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => requireAuth(() => {}, {
+                          feature: 'contact',
+                          title: 'Sign in for better support',
+                          message: 'Sign in to track your inquiries and get personalized responses from our team.'
+                        })}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                      >
+                        Sign In
+                      </button>
+                    </div>
+                  </div>
 
                   {showSuccessMessage && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -241,6 +270,17 @@ export default function ContactPage() {
 
         <Footer />
       </ClientOnly>
+
+      {/* Auth Prompt Modal */}
+      <AuthPrompt
+        isOpen={showAuthPrompt}
+        onClose={closePrompt}
+        title={promptOptions.title}
+        message={promptOptions.message}
+        feature={promptOptions.feature}
+        redirectPath={promptOptions.redirectPath}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </main>
   );
 } 

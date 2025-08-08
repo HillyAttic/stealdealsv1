@@ -9,8 +9,11 @@ import Footer from '@/components/Footer';
 import ClientOnly from '@/components/ClientOnly';
 import PropertyImage from '@/components/PropertyImage';
 import { FaArrowLeft, FaMapMarkerAlt, FaBuilding, FaRulerCombined, FaRupeeSign, FaRegClock, FaEnvelope, FaPhone } from 'react-icons/fa';
+import { WishlistButton } from '@/components/wishlist';
+import { AuthPrompt } from '@/components/auth';
 import { database, Property, vacantPropertiesRef } from '@/lib/firebase';
 import { ref, get, child } from 'firebase/database';
+import { trackPropertyView, trackContactInquiry } from '@/lib/activity-tracker';
 
 // Default fallback image
 const DEFAULT_IMAGE = 'https://images.pexels.com/photos/260931/pexels-photo-260931.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
@@ -31,6 +34,8 @@ export default function VacantPropertyDetails() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [imageError, setImageError] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [viewStartTime] = useState(Date.now());
   
   // Load property data
   useEffect(() => {
@@ -56,9 +61,18 @@ export default function VacantPropertyDetails() {
           const propertyData = snapshot.val();
           // Verify this is a vacant property
           if (propertyData.propertyType === 'Vacant') {
-            setProperty({ 
+            const propertyWithId = { 
               id: snapshot.key, 
               ...propertyData 
+            };
+            setProperty(propertyWithId);
+            
+            // Track property view automatically
+            trackPropertyView(propertyId, {
+              source: getTrafficSource(),
+              propertyType: propertyData.propertyType,
+              category: propertyData.category,
+              location: propertyData.location
             });
           } else {
             setError('Property not found');
@@ -77,10 +91,80 @@ export default function VacantPropertyDetails() {
     fetchProperty();
   }, [propertyId]);
 
+  // Get traffic source from referrer
+  const getTrafficSource = (): string => {
+    if (typeof window === 'undefined') return 'direct';
+
+    const referrer = document.referrer;
+    if (!referrer) return 'direct';
+
+    try {
+      const referrerUrl = new URL(referrer);
+      const currentUrl = new URL(window.location.href);
+
+      // Same domain = internal navigation
+      if (referrerUrl.hostname === currentUrl.hostname) {
+        // Check if coming from search page
+        if (referrer.includes('/search') || referrer.includes('?search')) {
+          return 'search';
+        }
+        // Check if coming from wishlist
+        if (referrer.includes('/wishlist')) {
+          return 'wishlist';
+        }
+        return 'internal';
+      }
+
+      // External referrer
+      if (referrerUrl.hostname.includes('google')) return 'google';
+      if (referrerUrl.hostname.includes('facebook')) return 'facebook';
+      if (referrerUrl.hostname.includes('twitter')) return 'twitter';
+      
+      return 'external';
+    } catch {
+      return 'direct';
+    }
+  };
+
+  // Track contact inquiry
+  const handleContactClick = () => {
+    trackContactInquiry(propertyId, {
+      contactType: 'email',
+      propertyTitle: property?.location || 'Unknown Property'
+    });
+  };
+
+  const handlePhoneClick = () => {
+    trackContactInquiry(propertyId, {
+      contactType: 'phone',
+      propertyTitle: property?.location || 'Unknown Property'
+    });
+  };
+
   // Handle image error
   const handleImageError = () => {
     setImageError(true);
   };
+
+  // Track page exit with duration
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (property) {
+        const duration = Date.now() - viewStartTime;
+        trackPropertyView(propertyId, {
+          source: getTrafficSource(),
+          duration,
+          propertyType: property.propertyType,
+          category: property.category,
+          location: property.location,
+          exitTracking: true
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [property, propertyId, viewStartTime]);
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -122,6 +206,13 @@ export default function VacantPropertyDetails() {
                       className="brightness-95"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div className="absolute top-4 right-4">
+                      <WishlistButton
+                        propertyId={propertyId}
+                        size="lg"
+                        onAuthRequired={() => setShowAuthPrompt(true)}
+                      />
+                    </div>
                     <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                       <div className="inline-block bg-blue-900 text-white py-1 px-3 text-sm font-medium rounded mb-3">
                         {property.category}
@@ -251,11 +342,19 @@ export default function VacantPropertyDetails() {
                   <p className="mb-6">Contact us today to schedule a viewing or learn more about this vacant property.</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Link href="/contact" className="flex items-center justify-center gap-2 bg-white text-blue-900 hover:bg-blue-50 transition-colors py-3 px-6 rounded-md font-medium">
+                    <Link 
+                      href="/contact" 
+                      onClick={handleContactClick}
+                      className="flex items-center justify-center gap-2 bg-white text-blue-900 hover:bg-blue-50 transition-colors py-3 px-6 rounded-md font-medium"
+                    >
                       <FaEnvelope />
                       Contact Us
                     </Link>
-                    <Link href="tel:+919999999999" className="flex items-center justify-center gap-2 border border-white text-white hover:bg-white/10 transition-colors py-3 px-6 rounded-md font-medium">
+                    <Link 
+                      href="tel:+919999999999" 
+                      onClick={handlePhoneClick}
+                      className="flex items-center justify-center gap-2 border border-white text-white hover:bg-white/10 transition-colors py-3 px-6 rounded-md font-medium"
+                    >
                       <FaPhone />
                       Call Now
                     </Link>
@@ -267,6 +366,14 @@ export default function VacantPropertyDetails() {
         </section>
         
         <Footer />
+
+        {/* Auth Prompt Modal */}
+        <AuthPrompt
+          isOpen={showAuthPrompt}
+          onClose={() => setShowAuthPrompt(false)}
+          title="Sign in to save properties"
+          feature="wishlist"
+        />
       </ClientOnly>
     </main>
   );

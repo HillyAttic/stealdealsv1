@@ -7,9 +7,11 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ClientOnly from '@/components/ClientOnly';
 import PropertyImage from '@/components/PropertyImage';
+import { PropertyCard } from '@/components/property';
 import { FaSearch, FaFilter, FaBuilding, FaMapMarkerAlt, FaRulerCombined, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { database, Property, vacantPropertiesRef } from '@/lib/firebase';
 import { ref, onValue } from 'firebase/database';
+import { trackSearch } from '@/lib/activity-tracker';
 
 // Default fallback image
 const DEFAULT_IMAGE = 'https://images.pexels.com/photos/260931/pexels-photo-260931.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
@@ -29,6 +31,7 @@ export default function VacantPropertiesPage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Load properties from Firebase
   useEffect(() => {
@@ -96,6 +99,61 @@ export default function VacantPropertiesPage() {
     return matchesSearch && matchesCategory && matchesCity;
   });
 
+  // Track search activity with debouncing
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Set new timeout to track search after user stops typing
+    const timeout = setTimeout(() => {
+      if (value.trim()) {
+        trackSearch(value, {
+          category: selectedCategory,
+          city: selectedCity,
+          propertyType: 'Vacant'
+        }, filteredProperties.length);
+      }
+    }, 1000); // Wait 1 second after user stops typing
+    
+    setSearchTimeout(timeout);
+  };
+
+  // Track filter changes
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    if (category || searchTerm.trim()) {
+      trackSearch(searchTerm, {
+        category,
+        city: selectedCity,
+        propertyType: 'Vacant'
+      }, filteredProperties.length);
+    }
+  };
+
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
+    if (city || searchTerm.trim()) {
+      trackSearch(searchTerm, {
+        category: selectedCategory,
+        city,
+        propertyType: 'Vacant'
+      }, filteredProperties.length);
+    }
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
+
   return (
     <main className="min-h-screen flex flex-col">
       <ClientOnly>
@@ -139,7 +197,7 @@ export default function VacantPropertiesPage() {
                   type="text"
                   placeholder="Search properties..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="w-full px-4 py-3 pl-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
                 />
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -149,7 +207,7 @@ export default function VacantPropertiesPage() {
                 <select 
                   className="w-full px-4 py-3 border rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
                 >
                   <option value="">All Categories</option>
                   {categories.map(category => (
@@ -163,7 +221,7 @@ export default function VacantPropertiesPage() {
                 <select 
                   className="w-full px-4 py-3 border rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
                   value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
+                  onChange={(e) => handleCityChange(e.target.value)}
                 >
                   <option value="">All Cities</option>
                   {cities.map(city => (
@@ -206,121 +264,12 @@ export default function VacantPropertiesPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredProperties.map((property) => (
-                      <Link href={`/vacant/${property.id}`} key={property.id}>
-                        <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 group border border-gray-200 h-full">
-                          <div className="relative">
-                            <div className="h-64 relative overflow-hidden">
-                              <PropertyImage 
-                                src={property.image} 
-                                alt={property.location || 'Property'}
-                                className="transition-transform duration-700 group-hover:scale-110"
-                              />
-                              
-                              {property.reference === 'Ready to Move-In' && (
-                                <div className="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-md text-sm font-medium">
-                                  Ready
-                                </div>
-                              )}
-                              
-                              <div className="absolute bottom-4 left-4 bg-blue-900 text-white px-3 py-1 rounded-md text-sm font-medium">
-                                For Rent
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="p-5">
-                            <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-900 transition-colors">
-                              {property.location || 'Vacant Property'}
-                            </h3>
-                            
-                            <div className="bg-blue-50 p-3 rounded-md mb-3">
-                              <h4 className="font-semibold text-blue-900 mb-2 border-b border-blue-200 pb-1">Location Details</h4>
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="flex items-center text-sm">
-                                  <span className="text-blue-900 font-medium mr-1">State:</span>
-                                  <span className="text-gray-800">{property.state || 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-blue-900 font-medium mr-1">City:</span>
-                                  <span className="text-gray-800">{property.city || 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-blue-900 font-medium mr-1">District:</span>
-                                  <span className="text-gray-800">{property.district || 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-blue-900 font-medium mr-1">Sub-District:</span>
-                                  <span className="text-gray-800">{property.subDistrict || 'N/A'}</span>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="bg-yellow-50 p-3 rounded-md mb-3">
-                              <h4 className="font-semibold text-yellow-800 mb-2 border-b border-yellow-200 pb-1">Unit Details</h4>
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="flex items-center text-sm">
-                                  <span className="text-yellow-800 font-medium mr-1">Category:</span>
-                                  <span className="text-gray-800">{property.category || 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-yellow-800 font-medium mr-1">Floor:</span>
-                                  <span className="text-gray-800">{property.floor || 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-yellow-800 font-medium mr-1">Facing:</span>
-                                  <span className="text-gray-800">{property.facing || 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-yellow-800 font-medium mr-1">Property Type:</span>
-                                  <span className="text-gray-800">{property.propertyType || 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-yellow-800 font-medium mr-1">Ref:</span>
-                                  <span className="text-gray-800">{property.reference || 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-yellow-800 font-medium mr-1">Contact:</span>
-                                  <span className="text-gray-800">{property.contactName || 'N/A'}</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="bg-green-50 p-3 rounded-md mb-3">
-                              <h4 className="font-semibold text-green-800 mb-2 border-b border-green-200 pb-1">Area Details</h4>
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="flex items-center text-sm">
-                                  <span className="text-green-800 font-medium mr-1">Super Area:</span>
-                                  <span className="text-gray-800">{property.superArea ? `${property.superArea} sq.ft.` : 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-green-800 font-medium mr-1">Carpet Area:</span>
-                                  <span className="text-gray-800">{property.carpetArea ? `${property.carpetArea} sq.ft.` : 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-green-800 font-medium mr-1">Length:</span>
-                                  <span className="text-gray-800">{property.length ? `${property.length} ft` : 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-green-800 font-medium mr-1">Width:</span>
-                                  <span className="text-gray-800">{property.width ? `${property.width} ft` : 'N/A'}</span>
-                                </div>
-                                <div className="flex items-center text-sm">
-                                  <span className="text-green-800 font-medium mr-1">Height:</span>
-                                  <span className="text-gray-800">{property.height ? `${property.height} ft` : 'N/A'}</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="bg-red-50 p-3 rounded-md">
-                              <h4 className="font-semibold text-red-800 mb-2 border-b border-red-200 pb-1">Financial Details</h4>
-                              <div className="flex items-center text-lg font-bold">
-                                <span className="text-red-800 mr-2">Rent:</span>
-                                <span className="text-gray-800">{property.rent ? `${formatCurrency(property.rent)}/month` : 'Not available'}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        linkPath={`/vacant/${property.id}`}
+                        showWishlist={true}
+                      />
                     ))}
                   </div>
                 )}

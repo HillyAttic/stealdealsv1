@@ -7,6 +7,11 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'sans': ['var(--font-jost)', 'system-ui', 'sans-serif'],
+        'serif': ['ui-serif', 'Georgia', 'Cambria', 'Times New Roman', 'Times', 'serif'],
+        'jost': ['var(--font-jost)', 'sans-serif'],
+      },
       animation: {
         'carousel': 'carousel 30s linear infinite',
       },

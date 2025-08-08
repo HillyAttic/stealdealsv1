@@ -6,6 +6,8 @@ import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
 import { FaMapMarkerAlt, FaMoneyBillWave, FaChartLine, FaBuilding, FaDollarSign, FaCalendarAlt, FaStoreAlt, FaShoppingBag, FaFileAlt, FaClock, FaGraduationCap, FaHeadset, FaBullhorn, FaCog, FaChevronRight, FaPhone, FaEnvelope, FaGlobe, FaShare, FaTrophy, FaHandshake, FaRocket, FaShieldAlt, FaTimes } from 'react-icons/fa';
 import ClientOnly from '../../../components/ClientOnly';
+import { WishlistButton } from '@/components/wishlist';
+import { AuthPrompt } from '@/components/auth';
 
 // Define the Franchise interface that includes all fields
 interface Franchise {
@@ -48,6 +50,7 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
   const [error, setError] = useState('');
   const [showContactModal, setShowContactModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   // Format the investment amount to show as lakhs or crores
   const formatInvestment = (amount: number | undefined) => {
@@ -189,9 +192,18 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
                         )}
                       </div>
                       
-                      <h1 className="text-5xl md:text-6xl font-bold mb-4 leading-tight">
-                        {franchise.name}
-                      </h1>
+                      <div className="flex items-start justify-between mb-4">
+                        <h1 className="text-5xl md:text-6xl font-bold leading-tight flex-1">
+                          {franchise.name}
+                        </h1>
+                        <div className="ml-4 mt-2">
+                          <WishlistButton
+                            propertyId={`franchise-${resolvedParams.id}`}
+                            size="lg"
+                            onAuthRequired={() => setShowAuthPrompt(true)}
+                          />
+                        </div>
+                      </div>
                       
                       <p className="text-xl text-blue-100 mb-6 leading-relaxed">
                         {franchise.description || franchise.remarks || `Discover the ${franchise.name} franchise opportunity in the ${franchise.industry} industry.`}
@@ -992,6 +1004,15 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
         
         <Footer />
       </ClientOnly>
+
+      {/* Auth Prompt Modal */}
+      <AuthPrompt
+        isOpen={showAuthPrompt}
+        onClose={() => setShowAuthPrompt(false)}
+        title="Sign in to save franchises"
+        message="Sign in to save franchise opportunities to your wishlist and access them anytime."
+        feature="wishlist"
+      />
     </main>
   );
 }

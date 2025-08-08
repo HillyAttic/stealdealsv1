@@ -1,16 +1,29 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ClientOnly from '../components/ClientOnly';
+import AuthModal from '../components/auth/AuthModal';
 import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaBuilding, FaUsers, FaStar, FaCheck, FaClipboardList, FaSearch, FaListUl, FaHome } from 'react-icons/fa';
 import { FaUtensils, FaHotel, FaStore, FaArrowRight, FaQuoteLeft, FaChevronRight, FaHandshake, FaPhone, FaEnvelope, FaChartLine } from 'react-icons/fa';
 import TrustedBrands from '@/components/TrustedBrands';
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  // Check if user needs to login (redirected from protected route)
+  useEffect(() => {
+    const loginRequired = searchParams.get('login') === 'required';
+    if (loginRequired) {
+      setShowAuthModal(true);
+    }
+  }, [searchParams]);
+
   // Add custom styles
   React.useEffect(() => {
     const style = document.createElement('style');
@@ -120,15 +133,16 @@ export default function Home() {
         <section className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-blue-900/50 z-10"></div>
           <div className="absolute inset-0">
-            <div className="w-full h-full">
+            <div className="relative w-full h-full">
               <Image 
                 src="https://images.pexels.com/photos/323705/pexels-photo-323705.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
                 alt="Hero Background"
-                layout="fill"
-                objectFit="cover"
+                fill
+                style={{ objectFit: 'cover' }}
                 quality={100}
                 priority
                 className="brightness-75"
+                sizes="100vw"
               />
             </div>
           </div>
@@ -230,14 +244,15 @@ export default function Home() {
               {/* Image column with overlays */}
               <div className="lg:w-2/5">
                 <div className="relative h-full">
-                  <div className="bg-white rounded-2xl shadow-xl overflow-hidden h-[300px] md:h-[400px] lg:h-full">
+                  <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden h-[300px] md:h-[400px] lg:h-full">
                     <Image 
                       src="https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
                       alt="About Steal Deals"
-                      layout="fill"
-                      objectFit="cover"
+                      fill
+                      style={{ objectFit: 'cover' }}
                       quality={100}
                       className="transition-transform duration-700 hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 40vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-900/70 to-transparent"></div>
                     
@@ -750,6 +765,13 @@ export default function Home() {
         </section>
         
         <Footer />
+        
+        {/* Auth Modal for login redirects */}
+        <AuthModal 
+          isOpen={showAuthModal} 
+          onClose={() => setShowAuthModal(false)}
+          redirectPath={searchParams.get('from') || '/dashboard'}
+        />
       </ClientOnly>
     </main>
   );

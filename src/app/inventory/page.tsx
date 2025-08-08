@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { FaBed, FaBath, FaRulerCombined, FaHeart, FaMapMarkerAlt, FaSearch, FaFilter, FaChevronDown } from 'react-icons/fa';
+import { WishlistButton } from '@/components/wishlist';
+import { AuthPrompt } from '@/components/auth';
 import ClientOnly from '../../components/ClientOnly';
 
 // Property interface reflecting the structure from API
@@ -74,7 +76,7 @@ const sampleProperties = [
   // ... existing sample properties
 ];
 
-const PropertyCard = ({ property }: { property: any }) => {
+const PropertyCard = ({ property, onAuthRequired }: { property: any; onAuthRequired?: () => void }) => {
   // Helper function to format numbers in Indian number system
   const formatToIndianSystem = (num: number) => {
     const result = num.toString().split('.');
@@ -167,8 +169,12 @@ const PropertyCard = ({ property }: { property: any }) => {
               Ready
             </div>
           )}
-          <div className="absolute top-4 right-4 bg-white p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors cursor-pointer">
-            <FaHeart className="text-gray-400 hover:text-red-500 transition-colors" />
+          <div className="absolute top-4 right-4">
+            <WishlistButton
+              propertyId={property.id?.toString() || property.originalId?.toString() || ''}
+              size="md"
+              onAuthRequired={onAuthRequired}
+            />
           </div>
           <div className="absolute bottom-4 left-4 bg-blue-900 text-white px-3 py-1 rounded-md text-sm font-medium">
             {getPropertyType(property)}
@@ -269,6 +275,7 @@ const PropertyCard = ({ property }: { property: any }) => {
 export default function InventoryPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -566,7 +573,11 @@ export default function InventoryPage() {
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {properties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+                <PropertyCard 
+                  key={property.id} 
+                  property={property} 
+                  onAuthRequired={() => setShowAuthPrompt(true)}
+                />
               ))}
             </div>
             )}
@@ -574,6 +585,14 @@ export default function InventoryPage() {
         </section>
         
         <Footer />
+
+        {/* Auth Prompt Modal */}
+        <AuthPrompt
+          isOpen={showAuthPrompt}
+          onClose={() => setShowAuthPrompt(false)}
+          title="Sign in to save properties"
+          feature="wishlist"
+        />
       </ClientOnly>
     </main>
   );

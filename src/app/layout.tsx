@@ -1,18 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Jost } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import BitdefenderCleaner from "@/components/BitdefenderCleaner";
 import ChatBotWrapper from "@/components/ChatBotWrapper";
+import ErrorSuppressor from "@/components/ErrorSuppressor";
+import TestCredentials from "@/components/dev/TestCredentials";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jost = Jost({
+  variable: "--font-jost",
   subsets: ["latin"],
   display: "swap",
 });
@@ -27,13 +23,13 @@ export const metadata: Metadata = {
         sizes: 'any',
       },
       {
-        url: '/development.png',
+        url: '/favicon.ico',
         sizes: 'any',
       }
     ],
     apple: [
       {
-        url: '/favicon.png',
+        url: '/apple-touch-icon.png',
         sizes: '180x180',
       }
     ],
@@ -70,14 +66,38 @@ export default function RootLayout({
         <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet' />
         {/* Add BitdefenderCleaner to clean extension attributes early */}
         <BitdefenderCleaner />
+        {/* Handle browser extension errors */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Suppress browser extension errors
+              window.addEventListener('error', function(e) {
+                if (e.message && e.message.includes('message channel closed')) {
+                  e.preventDefault();
+                  return false;
+                }
+              });
+              
+              window.addEventListener('unhandledrejection', function(e) {
+                if (e.reason && e.reason.message && 
+                    e.reason.message.includes('message channel closed')) {
+                  e.preventDefault();
+                  return false;
+                }
+              });
+            `
+          }}
+        />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${jost.variable} antialiased`}
         suppressHydrationWarning
         {...customData}
       >
+        <ErrorSuppressor />
         <Providers>{children}</Providers>
         <ChatBotWrapper />
+        <TestCredentials />
       </body>
     </html>
   );
