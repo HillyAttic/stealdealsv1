@@ -5,6 +5,7 @@ import { Providers } from "./providers";
 import BitdefenderCleaner from "@/components/BitdefenderCleaner";
 import ChatBotWrapper from "@/components/ChatBotWrapper";
 import ErrorSuppressor from "@/components/ErrorSuppressor";
+import DevErrorSuppressor from "@/components/error-boundaries/DevErrorSuppressor";
 import TestCredentials from "@/components/dev/TestCredentials";
 
 const jost = Jost({
@@ -95,6 +96,7 @@ export default function RootLayout({
         {...customData}
       >
         <ErrorSuppressor />
+        <DevErrorSuppressor />
         <Providers>{children}</Providers>
         <ChatBotWrapper />
         <TestCredentials />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaMapMarkerAlt, FaBuilding, FaRulerCombined } from 'react-icons/fa';
@@ -47,6 +47,11 @@ export function PropertyCard({
   showWishlist = true
 }: PropertyCardProps) {
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+
+  // Memoized callback to prevent unnecessary re-renders
+  const handleAuthRequired = useCallback(() => {
+    setShowAuthPrompt(true);
+  }, []);
 
   // Format currency using Indian format
   const formatCurrency = (value: number | string | undefined): string => {
@@ -107,7 +112,7 @@ export function PropertyCard({
               <WishlistButton
                 propertyId={property.id}
                 size="md"
-                onAuthRequired={() => setShowAuthPrompt(true)}
+                onAuthRequired={handleAuthRequired}
               />
             </div>
           )}

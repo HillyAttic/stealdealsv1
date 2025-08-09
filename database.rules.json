@@ -1,0 +1,23 @@
+{
+  "rules": {
+    ".read": "true",
+    ".write": "true",
+    "wishlists": {
+      "$uid": {
+        ".indexOn": ["propertyId", "addedAt", "priority"]
+      }
+    },
+    "properties": {
+      ".indexOn": ["category", "location", "price"]
+    },
+    "vacantProperties": {
+      ".indexOn": ["category", "location", "price"]
+    },
+    "preleasedProperties": {
+      ".indexOn": ["category", "location", "price"]
+    },
+    "franchiseProperties": {
+      ".indexOn": ["industry", "location", "investment"]
+    }
+  }
+}

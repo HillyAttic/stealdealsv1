@@ -138,6 +138,46 @@ export const resetPasswordSchema = z.object({
   path: ['confirmPassword']
 });
 
+// Response type schemas
+export const loginResponseSchema = z.object({
+  success: z.boolean(),
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+    role: z.enum(['user', 'admin']),
+    avatar: z.string().optional()
+  }).optional(),
+  token: z.string().optional(),
+  error: z.string().optional()
+});
+
+export const registerResponseSchema = z.object({
+  success: z.boolean(),
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+    role: z.enum(['user', 'admin']),
+    avatar: z.string().optional()
+  }).optional(),
+  token: z.string().optional(),
+  error: z.string().optional()
+});
+
+export const googleAuthResponseSchema = z.object({
+  success: z.boolean(),
+  user: z.object({
+    id: z.string(),
+    email: z.string(),
+    name: z.string(),
+    role: z.enum(['user', 'admin']),
+    avatar: z.string().optional()
+  }).optional(),
+  token: z.string().optional(),
+  error: z.string().optional()
+});
+
 // Type exports for use in components
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type LoginFormData = z.infer<typeof loginSchema>;
@@ -153,3 +193,8 @@ export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 export type EmailVerificationData = z.infer<typeof emailVerificationSchema>;
 export type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
+
+// Response type exports
+export type LoginResponse = z.infer<typeof loginResponseSchema>;
+export type RegisterResponse = z.infer<typeof registerResponseSchema>;
+export type GoogleAuthResponse = z.infer<typeof googleAuthResponseSchema>;

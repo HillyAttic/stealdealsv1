@@ -50,8 +50,10 @@ export function WishlistButton({
 
   // Notify parent component when wishlist state changes
   useEffect(() => {
-    onWishlistChange?.(inWishlist);
-  }, [inWishlist, onWishlistChange]);
+    if (onWishlistChange) {
+      onWishlistChange(inWishlist);
+    }
+  }, [inWishlist]);
 
   // Handle wishlist toggle
   const handleToggle = async (e: React.MouseEvent) => {
@@ -90,7 +92,7 @@ export function WishlistButton({
   return (
     <button
       onClick={handleToggle}
-      disabled={isLoading || isToggling}
+      disabled={isToggling}
       className={`
         inline-flex items-center justify-center
         ${config.button}
@@ -100,7 +102,7 @@ export function WishlistButton({
           ? 'bg-red-500 text-white hover:bg-red-600 shadow-md' 
           : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200 hover:border-gray-300'
         }
-        ${isLoading || isToggling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}
+        ${isToggling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}
         ${className}
       `}
       title={
@@ -111,7 +113,7 @@ export function WishlistButton({
             : 'Add to wishlist'
       }
     >
-      {isLoading || isToggling ? (
+      {isToggling ? (
         <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${config.icon}`}>
           <div className="w-4 h-4"></div>
         </div>

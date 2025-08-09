@@ -6,12 +6,13 @@ import Image from 'next/image';
 import { FaHeart, FaMapMarkerAlt, FaTrash, FaEdit, FaEye, FaArrowLeft, FaFilter, FaSort } from 'react-icons/fa';
 import { WishlistProperty } from '@/types/auth';
 import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useWishlistContext } from '@/contexts/WishlistContext';
 
 export default function WishlistPage() {
   const { isAuthenticated, user } = useAuthContext();
+  const { wishlistItems, wishlistCount, isLoading, removeFromWishlist } = useWishlistContext();
   const [wishlistProperties, setWishlistProperties] = useState<WishlistProperty[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<WishlistProperty[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState('');
@@ -23,25 +24,31 @@ export default function WishlistPage() {
   const [sortBy, setSortBy] = useState<'date' | 'price' | 'priority'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Fetch wishlist data
+  // Fetch detailed wishlist data based on wishlist items from context
   useEffect(() => {
-    const fetchWishlist = async () => {
-      if (!isAuthenticated || !user) {
-        setIsLoading(false);
+    const fetchDetailedWishlist = async () => {
+      if (wishlistItems.size === 0) {
+        setWishlistProperties([]);
         return;
       }
 
       try {
         setError(null);
-        // Prepare headers with mock auth if in development
+        console.log(`[WishlistPage] Fetching details for ${wishlistItems.size} items: [${Array.from(wishlistItems).join(', ')}]`);
+        
+        // Prepare headers for API call
         const headers: Record<string, string> = {
           'Content-Type': 'application/json'
         };
         
-        // Add mock auth headers for development
+        // Add mock auth headers for development (for consistency with API)
         if (typeof window !== 'undefined' && user) {
           headers['x-mock-user-id'] = user.id;
           headers['x-mock-user-email'] = user.email;
+        } else if (typeof window !== 'undefined') {
+          // Use fallback user for development/guest mode
+          headers['x-mock-user-id'] = 'user-1';
+          headers['x-mock-user-email'] = 'guest@stealdeals.com';
         }
         
         const response = await fetch('/api/user/wishlist', {
@@ -51,22 +58,22 @@ export default function WishlistPage() {
         });
 
         const data = await response.json();
+        console.log(`[WishlistPage] API response:`, data);
 
         if (!response.ok || !data.success) {
-          throw new Error(data.error || 'Failed to fetch wishlist');
+          throw new Error(data.error || 'Failed to fetch wishlist details');
         }
 
         setWishlistProperties(data.properties || []);
+        console.log(`[WishlistPage] ✅ Loaded ${data.properties?.length || 0} detailed properties`);
       } catch (err) {
-        console.error('Error fetching wishlist:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load wishlist');
-      } finally {
-        setIsLoading(false);
+        console.error('Error fetching wishlist details:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load wishlist details');
       }
     };
 
-    fetchWishlist();
-  }, [isAuthenticated, user]);
+    fetchDetailedWishlist();
+  }, [wishlistItems, user]);
 
   // Filter and sort properties
   useEffect(() => {
@@ -105,40 +112,19 @@ export default function WishlistPage() {
     setFilteredProperties(filtered);
   }, [wishlistProperties, priorityFilter, typeFilter, sortBy, sortOrder]);
 
-  // Remove property from wishlist
+  // Remove property from wishlist using context
   const handleRemove = async (propertyId: string) => {
     try {
-      // Prepare headers with mock auth if in development
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      
-      // Add mock auth headers for development
-      if (typeof window !== 'undefined' && user) {
-        headers['x-mock-user-id'] = user.id;
-        headers['x-mock-user-email'] = user.email;
+      const success = await removeFromWishlist(propertyId);
+      if (success) {
+        // Remove from local display state
+        setWishlistProperties(prev => prev.filter(p => p.id !== propertyId));
+        console.log(`[WishlistPage] ✅ Removed property ${propertyId} from wishlist`);
+      } else {
+        console.warn(`[WishlistPage] ⚠️ Failed to remove property ${propertyId} from wishlist`);
       }
-      
-      const response = await fetch('/api/user/wishlist', {
-        method: 'POST',
-        headers,
-        credentials: 'include',
-        body: JSON.stringify({
-          propertyId,
-          action: 'remove'
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to remove from wishlist');
-      }
-
-      // Remove from local state
-      setWishlistProperties(prev => prev.filter(p => p.id !== propertyId));
     } catch (error) {
-      console.error('Error removing from wishlist:', error);
+      console.error(`[WishlistPage] ❌ Error removing property ${propertyId}:`, error);
     }
   };
 
@@ -209,27 +195,8 @@ export default function WishlistPage() {
   // Get unique property types for filter
   const propertyTypes = Array.from(new Set(wishlistProperties.map(p => p.type))).filter(Boolean);
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="bg-white rounded-lg shadow-sm border p-8">
-            <div className="text-center">
-              <FaHeart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in to view your wishlist</h1>
-              <p className="text-gray-600 mb-6">Save properties you're interested in and access them anytime</p>
-              <Link 
-                href="/dashboard"
-                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Go to Dashboard
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Don't block unauthenticated users - they may have localStorage wishlist items
+  // Let the WishlistContext handle both authenticated and guest users
 
   if (isLoading) {
     return (
@@ -283,13 +250,13 @@ export default function WishlistPage() {
                 My Wishlist
               </h1>
               <p className="text-gray-600 mt-1">
-                {wishlistProperties.length} {wishlistProperties.length === 1 ? 'property' : 'properties'} saved
+                {wishlistCount} {wishlistCount === 1 ? 'property' : 'properties'} saved
               </p>
             </div>
           </div>
         </div>
 
-        {wishlistProperties.length === 0 ? (
+        {wishlistCount === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border p-12">
             <div className="text-center">
               <FaHeart className="w-20 h-20 mx-auto mb-6 text-gray-300" />
@@ -373,11 +340,25 @@ export default function WishlistPage() {
                   {/* Property Image */}
                   <div className="relative h-48">
                     <Image
-                      src={property.images[0] || '/placeholder-property.jpg'}
+                      src={property.images[0] || '/homepage-image.jpg'}
                       alt={property.title}
                       fill
                       className="object-cover"
+                      onError={(e) => {
+                        // Fallback to a colored background if image fails
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
                     />
+                    {(!property.images[0]) && (
+                      <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                        <div className="text-center text-gray-600">
+                          <svg className="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          </svg>
+                          <p className="text-sm">Property Image</p>
+                        </div>
+                      </div>
+                    )}
                     <div className="absolute top-3 right-3">
                       <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(property.priority)}`}>
                         {property.priority}
@@ -420,9 +401,16 @@ export default function WishlistPage() {
                     </div>
 
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-xl font-bold text-blue-600">
-                        {formatCurrency(property.price)}
-                      </span>
+                      <div>
+                        <span className="text-xl font-bold text-blue-600">
+                          {property.price > 0 ? formatCurrency(property.price) : 'Price on Request'}
+                        </span>
+                        {property.price > 0 && (
+                          <span className="text-sm text-gray-500 ml-1">
+                            /month
+                          </span>
+                        )}
+                      </div>
                       <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
                         {property.type}
                       </span>

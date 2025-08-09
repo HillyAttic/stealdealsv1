@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { FaHeart, FaMapMarkerAlt, FaRulerCombined, FaTrash, FaEdit, FaStar, FaEye } from 'react-icons/fa';
 import { WishlistProperty } from '@/types/auth';
 import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useWishlistContext } from '@/contexts/WishlistContext';
 
 interface WishlistSectionProps {
   className?: string;
@@ -13,70 +14,97 @@ interface WishlistSectionProps {
 
 export function WishlistSection({ className = '' }: WishlistSectionProps) {
   const { isAuthenticated, user } = useAuthContext();
+  const { wishlistItems, wishlistCount, isLoading, refreshWishlist, removeFromWishlist } = useWishlistContext();
   const [wishlistProperties, setWishlistProperties] = useState<WishlistProperty[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState('');
   const [editPriority, setEditPriority] = useState<'low' | 'medium' | 'high'>('medium');
 
-  // Fetch wishlist data
+  // Fetch detailed wishlist data when wishlist items change
   useEffect(() => {
-    const fetchWishlist = async () => {
-      if (!isAuthenticated || !user) {
-        setIsLoading(false);
-        return;
-      }
-
+    const fetchDetailedWishlist = async () => {
       try {
         setError(null);
+        console.log(`[WishlistSection] Fetching details for ${wishlistItems.size} items: [${Array.from(wishlistItems).join(', ')}]`);
+        
+        if (wishlistItems.size === 0) {
+          console.log(`[WishlistSection] No items in wishlist, clearing display`);
+          setWishlistProperties([]);
+          return;
+        }
+
+        // Use the same API endpoint as the context for consistency
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json'
+        };
+        
+        // Add mock auth headers for development consistency
+        if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' && user) {
+          headers['x-mock-user-id'] = user.id;
+          headers['x-mock-user-email'] = user.email;
+        }
+
         const response = await fetch('/api/user/wishlist', {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          headers,
+          credentials: 'include'
         });
 
         const data = await response.json();
 
+        console.log(`[WishlistSection] Server response:`, {
+          ok: response.ok,
+          status: response.status,
+          success: data.success,
+          propertiesCount: data.properties?.length || 0,
+          contextCount: wishlistItems.size
+        });
+
         if (!response.ok || !data.success) {
-          throw new Error(data.error || 'Failed to fetch wishlist');
+          console.warn('Failed to fetch detailed wishlist:', data.error);
+          setError(`Failed to load wishlist: ${data.error || 'Server error'}`);
+          // Don't show mock data - show the error state instead
+          setWishlistProperties([]);
+          return;
         }
 
-        setWishlistProperties(data.properties || []);
+        const properties = data.properties || [];
+        setWishlistProperties(properties);
+        console.log(`[WishlistSection] ✅ Loaded ${properties.length} detailed properties`);
+        
+        // Verify context sync
+        const serverIds = new Set(properties.map((p: any) => p.id));
+        const contextIds = wishlistItems;
+        const inContextNotServer = Array.from(contextIds).filter(id => !serverIds.has(id));
+        const inServerNotContext = Array.from(serverIds).filter(id => !contextIds.has(id));
+        
+        if (inContextNotServer.length > 0 || inServerNotContext.length > 0) {
+          console.warn(`[WishlistSection] ⚠️ Context/Server mismatch:`, {
+            inContextNotServer,
+            inServerNotContext,
+            contextIds: Array.from(contextIds),
+            serverIds: Array.from(serverIds)
+          });
+          // Trigger context refresh to fix the mismatch
+          setTimeout(() => refreshWishlist(), 500);
+        }
       } catch (err) {
-        console.error('Error fetching wishlist:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load wishlist');
-      } finally {
-        setIsLoading(false);
+        console.error('Error fetching detailed wishlist:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load wishlist details');
+        setWishlistProperties([]);
       }
     };
 
-    fetchWishlist();
-  }, [isAuthenticated, user]);
+    fetchDetailedWishlist();
+  }, [wishlistItems, user, refreshWishlist]);
 
   // Remove property from wishlist
   const handleRemove = async (propertyId: string) => {
     try {
-      const response = await fetch('/api/user/wishlist', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          propertyId,
-          action: 'remove'
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to remove from wishlist');
-      }
-
-      // Remove from local state
-      setWishlistProperties(prev => prev.filter(p => p.id !== propertyId));
+      await removeFromWishlist(propertyId);
+      // The context will handle the API call and state updates
+      // The useEffect will refresh the detailed properties
     } catch (error) {
       console.error('Error removing from wishlist:', error);
     }
@@ -146,17 +174,7 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className={`bg-white rounded-lg shadow-sm border p-6 ${className}`}>
-        <div className="text-center py-8">
-          <FaHeart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Sign in to view your wishlist</h3>
-          <p className="text-gray-600 mb-4">Save properties you're interested in and access them anytime</p>
-        </div>
-      </div>
-    );
-  }
+  // Remove the authentication check since we now support guest wishlist via localStorage
 
   if (isLoading) {
     return (
@@ -203,7 +221,7 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
           <FaHeart className="mr-2 text-red-500" />
           My Wishlist
           <span className="ml-2 px-2 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
-            {wishlistProperties.length}
+            {wishlistCount}
           </span>
         </h2>
         {wishlistProperties.length > 0 && (
@@ -216,7 +234,7 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
         )}
       </div>
 
-      {wishlistProperties.length === 0 ? (
+      {wishlistCount === 0 ? (
         <div className="text-center py-12">
           <FaHeart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Your wishlist is empty</h3>

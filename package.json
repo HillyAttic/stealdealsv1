@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:turbo": "next dev --turbopack",
+    "dev:clean": "node scripts/clean-restart.js && npm run dev",
     "build": "next build --no-lint",
     "vercel-build": "next build --no-lint",
     "start": "next start",
@@ -15,7 +16,8 @@
     "test": "vitest --run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "clean": "node scripts/clean-restart.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

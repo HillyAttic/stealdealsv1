@@ -1,77 +1,61 @@
 import { WishlistItem, WishlistProperty } from '@/types/auth';
-import { getPropertyById } from '@/lib/firebase';
+import { getPropertyById, getAllProperties, database } from '@/lib/firebase';
+import { ref, push, set, get, remove, query, orderByChild, equalTo, update, DataSnapshot } from 'firebase/database';
 
-// In-memory wishlist storage for testing (replace with real database in production)
-const wishlists: Map<string, WishlistItem[]> = new Map();
-let nextWishlistId = 1;
-
-// Initialize with test data
-function initializeTestWishlistData() {
-  const testWishlistItems: WishlistItem[] = [
-    // John Doe's wishlist (user ID: 2)
-    {
-      id: '1',
-      userId: '2',
-      propertyId: 'prop-1',
-      addedAt: new Date(Date.now() - 1.5 * 60 * 60 * 1000), // 1.5 hours ago
-      notes: 'Great location, need to check parking availability',
-      priority: 'high'
-    },
-    {
-      id: '2',
-      userId: '2',
-      propertyId: 'prop-5',
-      addedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-      notes: 'Backup option if first choice doesn\'t work out',
-      priority: 'medium'
-    },
-    
-    // Jane Smith's wishlist (user ID: 3)
-    {
-      id: '3',
-      userId: '3',
-      propertyId: 'prop-4',
-      addedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-      notes: 'Perfect for retail business, good foot traffic',
-      priority: 'high'
-    },
-    {
-      id: '4',
-      userId: '3',
-      propertyId: 'prop-3',
-      addedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-      priority: 'low'
-    }
-  ];
-  
-  // Group wishlist items by user
-  testWishlistItems.forEach(item => {
-    const userWishlist = wishlists.get(item.userId) || [];
-    userWishlist.push(item);
-    wishlists.set(item.userId, userWishlist);
-  });
-  
-  nextWishlistId = 5;
-}
-
-// Initialize test data
-initializeTestWishlistData();
+// Firebase references
+const wishlistsRef = ref(database, 'wishlists');
 
 /**
- * Add property to user's wishlist
+ * Get Firebase reference for user's wishlist
  */
-export async function addToWishlist(userId: string, propertyId: string, notes?: string, priority: 'low' | 'medium' | 'high' = 'medium'): Promise<WishlistItem> {
+function getUserWishlistRef(userId: string) {
+  return ref(database, `wishlists/${userId}`);
+}
+
+/**
+ * Get Firebase reference for a specific wishlist item
+ */
+function getWishlistItemRef(userId: string, itemId: string) {
+  return ref(database, `wishlists/${userId}/${itemId}`);
+}
+
+/**
+ * Add property to user's wishlist in Firebase
+ */
+export async function addToWishlist(
+  userId: string, 
+  propertyId: string, 
+  notes?: string, 
+  priority: 'low' | 'medium' | 'high' = 'medium'
+): Promise<WishlistItem> {
   try {
-    const userWishlist = wishlists.get(userId) || [];
+    console.log(`[Firebase Wishlist] Adding property ${propertyId} to user ${userId}'s wishlist`);
     
-    // Check if property is already in wishlist
-    const existingItem = userWishlist.find(item => item.propertyId === propertyId);
-    if (existingItem) {
-      throw new Error('Property already in wishlist');
+    const userWishlistRef = getUserWishlistRef(userId);
+    
+    // Check if property already exists by scanning all items
+    const existingSnapshot = await get(userWishlistRef);
+    if (existingSnapshot.exists()) {
+      let propertyExists = false;
+      existingSnapshot.forEach((childSnapshot) => {
+        const data = childSnapshot.val();
+        if (data && data.propertyId === propertyId) {
+          propertyExists = true;
+        }
+      });
+      
+      if (propertyExists) {
+        console.log(`[Firebase Wishlist] Property ${propertyId} already in wishlist`);
+        throw new Error('Property already in wishlist');
+      }
     }
     
+    // Create new wishlist item
+    const newItemRef = push(userWishlistRef);
+    const itemId = newItemRef.key!;
+    
     const wishlistItem: WishlistItem = {
-      id: nextWishlistId.toString(),
+      id: itemId,
       userId,
       propertyId,
       addedAt: new Date(),
@@ -79,53 +63,162 @@ export async function addToWishlist(userId: string, propertyId: string, notes?: 
       priority
     };
     
-    nextWishlistId++;
-    userWishlist.push(wishlistItem);
-    wishlists.set(userId, userWishlist);
+    // Convert to Firebase format (dates as ISO strings)
+    const firebaseItem = {
+      id: itemId,
+      userId,
+      propertyId,
+      addedAt: wishlistItem.addedAt.toISOString(),
+      notes: notes || null,
+      priority
+    };
     
+    await set(newItemRef, firebaseItem);
+    
+    console.log(`[Firebase Wishlist] ✅ Successfully added property ${propertyId} with item ID ${itemId}`);
     return wishlistItem;
+    
   } catch (error) {
-    console.error('Error adding to wishlist:', error);
+    console.error(`[Firebase Wishlist] ❌ Error adding property ${propertyId}:`, error);
     throw error;
   }
 }
 
 /**
- * Remove property from user's wishlist
+ * Remove property from user's wishlist in Firebase
  */
 export async function removeFromWishlist(userId: string, propertyId: string): Promise<boolean> {
   try {
-    const userWishlist = wishlists.get(userId) || [];
-    const initialLength = userWishlist.length;
+    console.log(`[Firebase Wishlist] Removing property ${propertyId} from user ${userId}'s wishlist`);
     
-    const updatedWishlist = userWishlist.filter(item => item.propertyId !== propertyId);
-    wishlists.set(userId, updatedWishlist);
+    const userWishlistRef = getUserWishlistRef(userId);
     
-    return updatedWishlist.length < initialLength;
+    // Find the item by scanning all items
+    const snapshot = await get(userWishlistRef);
+    
+    if (!snapshot.exists()) {
+      console.log(`[Firebase Wishlist] ❌ Property ${propertyId} not found in wishlist (no wishlist exists)`);
+      return false;
+    }
+    
+    // Find and remove matching items
+    const updates: Record<string, null> = {};
+    let found = false;
+    
+    snapshot.forEach((childSnapshot) => {
+      const data = childSnapshot.val();
+      if (data && data.propertyId === propertyId) {
+        updates[`wishlists/${userId}/${childSnapshot.key}`] = null;
+        found = true;
+      }
+    });
+    
+    if (!found) {
+      console.log(`[Firebase Wishlist] ❌ Property ${propertyId} not found in wishlist`);
+      return false;
+    }
+    
+    await update(ref(database), updates);
+    
+    console.log(`[Firebase Wishlist] ✅ Successfully removed property ${propertyId}`);
+    return true;
+    
   } catch (error) {
-    console.error('Error removing from wishlist:', error);
+    console.error(`[Firebase Wishlist] ❌ Error removing property ${propertyId}:`, error);
     throw error;
   }
 }
 
 /**
- * Get user's wishlist with property details
+ * Get user's wishlist with property details from Firebase
  */
 export async function getUserWishlist(userId: string): Promise<WishlistProperty[]> {
   try {
-    const userWishlist = wishlists.get(userId) || [];
+    console.log(`[Firebase Wishlist] Getting wishlist for user ${userId}`);
+    
+    const userWishlistRef = getUserWishlistRef(userId);
+    const snapshot = await get(userWishlistRef);
+    
+    if (!snapshot.exists()) {
+      console.log(`[Firebase Wishlist] No wishlist found for user ${userId}`);
+      return [];
+    }
+    
+    const wishlistItems: WishlistItem[] = [];
+    
+    // Convert Firebase data back to WishlistItem objects
+    snapshot.forEach((childSnapshot: DataSnapshot) => {
+      const data = childSnapshot.val();
+      if (data) {
+        wishlistItems.push({
+          id: childSnapshot.key!,
+          userId: data.userId,
+          propertyId: data.propertyId,
+          addedAt: new Date(data.addedAt),
+          notes: data.notes || undefined,
+          priority: data.priority || 'medium'
+        });
+      }
+    });
+    
+    console.log(`[Firebase Wishlist] Found ${wishlistItems.length} items in wishlist`);
+    
+    // Get ALL properties first (more efficient than individual lookups)
+    const allProperties = await getAllProperties();
+    console.log(`[Firebase Wishlist] Loaded ${allProperties.length} total properties for lookup`);
+    
+    // Create a map for faster lookups
+    const propertyMap = new Map();
+    allProperties.forEach(prop => {
+      propertyMap.set(prop.id, prop);
+    });
+    
+    // Build wishlist properties with enriched data
     const wishlistProperties: WishlistProperty[] = [];
     
-    for (const item of userWishlist) {
-      const property = await getPropertyById(item.propertyId);
+    for (const item of wishlistItems) {
+      console.log(`[Firebase Wishlist] Looking up property details for ${item.propertyId}`);
+      const property = propertyMap.get(item.propertyId);
+      
       if (property) {
+        console.log(`[Firebase Wishlist] ✅ Found property: ${property.title || property.category || 'Property'} at ${property.location}`);
+        
+        // Create proper property title
+        const propertyTitle = property.title || 
+          `${property.category || 'Property'} in ${property.city || property.location || 'Unknown Location'}`;
+        
+        // Get property price (try different price fields)
+        const propertyPrice = property.price || property.rent || property.askingPrice || 0;
+        
+        // Create image array (handle different image field formats)
+        let propertyImages: string[] = [];
+        if (property.image) {
+          propertyImages = [property.image];
+        } else if (property.images && Array.isArray(property.images)) {
+          propertyImages = property.images;
+        }
+        
         wishlistProperties.push({
           id: property.id || item.propertyId,
-          title: property.title || 'Untitled Property',
-          price: property.price || property.askingPrice || 0,
-          location: property.location,
-          images: property.image ? [property.image] : [],
-          type: property.category,
+          title: propertyTitle,
+          price: propertyPrice,
+          location: property.location || 'Unknown Location',
+          images: propertyImages,
+          type: property.category || property.propertyType || 'Property',
+          addedAt: item.addedAt,
+          notes: item.notes,
+          priority: item.priority
+        });
+      } else {
+        console.warn(`[Firebase Wishlist] ⚠️ Property not found in ${allProperties.length} properties: ${item.propertyId}`);
+        // Keep the wishlist item but mark as not found
+        wishlistProperties.push({
+          id: item.propertyId,
+          title: `Property ${item.propertyId} (Not Found)`,
+          price: 0,
+          location: 'Property not found',
+          images: [],
+          type: 'Unknown',
           addedAt: item.addedAt,
           notes: item.notes,
           priority: item.priority
@@ -134,9 +227,13 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
     }
     
     // Sort by most recently added
-    return wishlistProperties.sort((a, b) => b.addedAt.getTime() - a.addedAt.getTime());
+    wishlistProperties.sort((a, b) => b.addedAt.getTime() - a.addedAt.getTime());
+    
+    console.log(`[Firebase Wishlist] ✅ Returning ${wishlistProperties.length} wishlist properties`);
+    return wishlistProperties;
+    
   } catch (error) {
-    console.error('Error getting user wishlist:', error);
+    console.error(`[Firebase Wishlist] ❌ Error getting user wishlist:`, error);
     throw error;
   }
 }
@@ -146,10 +243,26 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
  */
 export async function isInWishlist(userId: string, propertyId: string): Promise<boolean> {
   try {
-    const userWishlist = wishlists.get(userId) || [];
-    return userWishlist.some(item => item.propertyId === propertyId);
+    const userWishlistRef = getUserWishlistRef(userId);
+    const snapshot = await get(userWishlistRef);
+    
+    if (!snapshot.exists()) {
+      console.log(`[Firebase Wishlist] Property ${propertyId} NOT in user ${userId}'s wishlist (no wishlist)`);
+      return false;
+    }
+    
+    let exists = false;
+    snapshot.forEach((childSnapshot) => {
+      const data = childSnapshot.val();
+      if (data && data.propertyId === propertyId) {
+        exists = true;
+      }
+    });
+    
+    console.log(`[Firebase Wishlist] Property ${propertyId} ${exists ? 'IS' : 'NOT'} in user ${userId}'s wishlist`);
+    return exists;
   } catch (error) {
-    console.error('Error checking wishlist:', error);
+    console.error(`[Firebase Wishlist] ❌ Error checking wishlist:`, error);
     return false;
   }
 }
@@ -157,26 +270,60 @@ export async function isInWishlist(userId: string, propertyId: string): Promise<
 /**
  * Update wishlist item notes and priority
  */
-export async function updateWishlistItem(userId: string, propertyId: string, updates: { notes?: string; priority?: 'low' | 'medium' | 'high' }): Promise<WishlistItem | null> {
+export async function updateWishlistItem(
+  userId: string, 
+  propertyId: string, 
+  updates: { notes?: string; priority?: 'low' | 'medium' | 'high' }
+): Promise<WishlistItem | null> {
   try {
-    const userWishlist = wishlists.get(userId) || [];
-    const itemIndex = userWishlist.findIndex(item => item.propertyId === propertyId);
+    console.log(`[Firebase Wishlist] Updating wishlist item ${propertyId} for user ${userId}`);
     
-    if (itemIndex === -1) {
+    const userWishlistRef = getUserWishlistRef(userId);
+    const snapshot = await get(userWishlistRef);
+    
+    if (!snapshot.exists()) {
+      console.log(`[Firebase Wishlist] ❌ Wishlist item not found: ${propertyId} (no wishlist)`);
       return null;
     }
     
-    const updatedItem = {
-      ...userWishlist[itemIndex],
-      ...updates
-    };
+    let updatedItem: WishlistItem | null = null;
+    let found = false;
     
-    userWishlist[itemIndex] = updatedItem;
-    wishlists.set(userId, userWishlist);
+    snapshot.forEach((childSnapshot) => {
+      const currentData = childSnapshot.val();
+      if (currentData && currentData.propertyId === propertyId) {
+        found = true;
+        const itemRef = getWishlistItemRef(userId, childSnapshot.key!);
+        
+        const updatedData = {
+          ...currentData,
+          notes: updates.notes !== undefined ? updates.notes : currentData.notes,
+          priority: updates.priority || currentData.priority
+        };
+        
+        set(itemRef, updatedData);
+        
+        updatedItem = {
+          id: childSnapshot.key!,
+          userId: currentData.userId,
+          propertyId: currentData.propertyId,
+          addedAt: new Date(currentData.addedAt),
+          notes: updatedData.notes || undefined,
+          priority: updatedData.priority
+        };
+      }
+    });
     
+    if (!found) {
+      console.log(`[Firebase Wishlist] ❌ Wishlist item not found: ${propertyId}`);
+      return null;
+    }
+    
+    console.log(`[Firebase Wishlist] ✅ Successfully updated wishlist item ${propertyId}`);
     return updatedItem;
+    
   } catch (error) {
-    console.error('Error updating wishlist item:', error);
+    console.error(`[Firebase Wishlist] ❌ Error updating wishlist item:`, error);
     throw error;
   }
 }
@@ -184,29 +331,65 @@ export async function updateWishlistItem(userId: string, propertyId: string, upd
 /**
  * Get wishlist statistics for a user
  */
-export async function getWishlistStats(userId: string): Promise<{ total: number; byPriority: Record<string, number>; byType: Record<string, number> }> {
+export async function getWishlistStats(userId: string): Promise<{ 
+  total: number; 
+  byPriority: Record<string, number>; 
+  byType: Record<string, number> 
+}> {
   try {
-    const userWishlist = wishlists.get(userId) || [];
+    console.log(`[Firebase Wishlist] Getting stats for user ${userId}`);
+    
+    const userWishlistRef = getUserWishlistRef(userId);
+    const snapshot = await get(userWishlistRef);
+    
     const stats = {
-      total: userWishlist.length,
+      total: 0,
       byPriority: { low: 0, medium: 0, high: 0 },
       byType: {} as Record<string, number>
     };
     
-    for (const item of userWishlist) {
-      // Count by priority
+    if (!snapshot.exists()) {
+      console.log(`[Firebase Wishlist] No wishlist found for stats`);
+      return stats;
+    }
+    
+    const wishlistItems: WishlistItem[] = [];
+    snapshot.forEach((childSnapshot) => {
+      const data = childSnapshot.val();
+      if (data) {
+        wishlistItems.push({
+          id: childSnapshot.key!,
+          userId: data.userId,
+          propertyId: data.propertyId,
+          addedAt: new Date(data.addedAt),
+          notes: data.notes || undefined,
+          priority: data.priority || 'medium'
+        });
+      }
+    });
+    
+    stats.total = wishlistItems.length;
+    
+    // Count by priority
+    for (const item of wishlistItems) {
       stats.byPriority[item.priority]++;
       
-      // Count by property type
-      const property = await getPropertyById(item.propertyId);
-      if (property && property.category) {
-        stats.byType[property.category] = (stats.byType[property.category] || 0) + 1;
+      // Get property type for counting
+      try {
+        const property = await getPropertyById(item.propertyId);
+        if (property && property.category) {
+          stats.byType[property.category] = (stats.byType[property.category] || 0) + 1;
+        }
+      } catch (error) {
+        console.warn(`[Firebase Wishlist] Could not get property type for stats: ${item.propertyId}`);
       }
     }
     
+    console.log(`[Firebase Wishlist] ✅ Stats:`, stats);
     return stats;
+    
   } catch (error) {
-    console.error('Error getting wishlist stats:', error);
+    console.error(`[Firebase Wishlist] ❌ Error getting wishlist stats:`, error);
     throw error;
   }
 }
@@ -216,10 +399,54 @@ export async function getWishlistStats(userId: string): Promise<{ total: number;
  */
 export async function clearWishlist(userId: string): Promise<boolean> {
   try {
-    wishlists.set(userId, []);
+    console.log(`[Firebase Wishlist] Clearing wishlist for user ${userId}`);
+    
+    const userWishlistRef = getUserWishlistRef(userId);
+    await remove(userWishlistRef);
+    
+    console.log(`[Firebase Wishlist] ✅ Successfully cleared wishlist for user ${userId}`);
     return true;
   } catch (error) {
-    console.error('Error clearing wishlist:', error);
+    console.error(`[Firebase Wishlist] ❌ Error clearing wishlist:`, error);
     return false;
   }
 }
+
+/**
+ * Get raw wishlist items (without property details) - useful for real-time listeners
+ */
+export async function getRawWishlistItems(userId: string): Promise<WishlistItem[]> {
+  try {
+    const userWishlistRef = getUserWishlistRef(userId);
+    const snapshot = await get(userWishlistRef);
+    
+    if (!snapshot.exists()) {
+      return [];
+    }
+    
+    const items: WishlistItem[] = [];
+    snapshot.forEach((childSnapshot) => {
+      const data = childSnapshot.val();
+      if (data) {
+        items.push({
+          id: childSnapshot.key!,
+          userId: data.userId,
+          propertyId: data.propertyId,
+          addedAt: new Date(data.addedAt),
+          notes: data.notes || undefined,
+          priority: data.priority || 'medium'
+        });
+      }
+    });
+    
+    return items;
+  } catch (error) {
+    console.error(`[Firebase Wishlist] ❌ Error getting raw wishlist items:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Export Firebase references for use in real-time listeners
+ */
+export { getUserWishlistRef, wishlistsRef };

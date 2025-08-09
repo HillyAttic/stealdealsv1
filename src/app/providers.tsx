@@ -6,6 +6,7 @@ import { WishlistProvider } from '@/contexts/WishlistContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { AuthErrorBoundary } from '@/components/error-boundaries/AuthErrorBoundary';
 import { AuthDebug } from '@/components/debug/AuthDebug';
+import WishlistDebug from '@/components/debug/WishlistDebug';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -99,6 +100,7 @@ export function Providers({ children }: ProvidersProps) {
             <WishlistProvider>
               {children}
               <AuthDebug />
+              <WishlistDebug />
             </WishlistProvider>
           </AuthProvider>
         </AuthErrorBoundary>

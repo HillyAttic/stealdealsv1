@@ -103,6 +103,7 @@ export async function POST(request: NextRequest) {
     
     // Prepare property data
     const propertyData: Property = {
+      id: '', // Will be set by Firebase
       title: body.title || 
              (body.tenant ? `${body.tenant} - ${body.buildingName || 'Property'}` : 
              (body.propertyType === 'Vacant' ? `Vacant ${body.category} in ${body.location}` : 

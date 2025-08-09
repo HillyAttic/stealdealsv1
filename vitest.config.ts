@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vitest/config'
 import { resolve } from 'path'
 
@@ -18,7 +19,16 @@ export default defineConfig({
         '**/*.config.*',
         '**/coverage/**'
       ]
-    }
+    },
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+        isolate: false
+      }
+    },
+    maxWorkers: 1,
+    minWorkers: 1
   },
   resolve: {
     alias: {
@@ -26,5 +36,12 @@ export default defineConfig({
     },
   },
   // Disable PostCSS for tests
-  css: false,
+  css: {
+    modules: {
+      classNameStrategy: 'non-scoped'
+    }
+  },
+  esbuild: {
+    target: 'node18'
+  }
 })

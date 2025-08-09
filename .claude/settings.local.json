@@ -18,7 +18,12 @@
       "Bash(npm install:*)",
       "Bash(vercel:*)",
       "Bash(npm px:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(move \"src\\middleware.ts\" \"src\\middleware.ts.backup\")",
+      "Bash(mv:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run clean:*)"
     ],
     "deny": []
   }
