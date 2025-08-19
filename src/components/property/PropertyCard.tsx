@@ -26,11 +26,11 @@ interface Property {
   propertyType?: string;
   reference?: string;
   contactName?: string;
-  superArea?: number;
-  carpetArea?: number;
-  length?: number;
-  width?: number;
-  height?: number;
+  superArea?: string;
+  carpetArea?: string;
+  length?: string;
+  width?: string;
+  height?: string;
 }
 
 interface PropertyCardProps {

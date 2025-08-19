@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/components/auth/AuthProvider';
 import { DashboardNavigation } from './DashboardNavigation';
@@ -31,10 +32,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {/* Logo and Home Link */}
             <div className="flex items-center">
               <Link href="/" className="flex items-center space-x-2">
-                <img 
+                <Image 
                   src="/logo.svg" 
                   alt="Stealdeals" 
-                  className="h-8 w-auto object-contain"
+                  width={112}
+                  height={32}
+                  className="object-contain"
+                  priority
                 />
                 <span className="text-xl font-bold text-gray-900">Stealdeals</span>
               </Link>

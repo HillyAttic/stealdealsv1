@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { optionalAuth } from '@/lib/auth/middleware';
-import { getUserAnalytics } from '@/lib/database/activity';
+import { getUserAnalyticsFromFirebase } from '@/lib/database/user-activity';
 
 // GET /api/user/analytics - Get user analytics data
 export async function GET(request: NextRequest) {
@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
       const { searchParams } = new URL(request.url);
       const timeframe = searchParams.get('timeframe') || '30d';
       
-      // Get comprehensive analytics for the user
-      const analytics = await getUserAnalytics(userId);
+      // Get comprehensive analytics for the user from Firebase
+      const analytics = await getUserAnalyticsFromFirebase(userId);
       
       return NextResponse.json({
         success: true,

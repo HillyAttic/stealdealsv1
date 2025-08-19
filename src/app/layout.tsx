@@ -65,8 +65,8 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/favicon.ico" />
         {/* Add Boxicons for icons used in the admin panel */}
         <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet' />
-        {/* Add BitdefenderCleaner to clean extension attributes early */}
-        <BitdefenderCleaner />
+        {/* Temporarily disabled for performance */}
+        {/* <BitdefenderCleaner /> */}
         {/* Handle browser extension errors */}
         <script
           dangerouslySetInnerHTML={{
@@ -95,11 +95,12 @@ export default function RootLayout({
         suppressHydrationWarning
         {...customData}
       >
-        <ErrorSuppressor />
-        <DevErrorSuppressor />
+        {/* Temporarily disabled for performance */}
+        {/* <ErrorSuppressor />
+        <DevErrorSuppressor /> */}
         <Providers>{children}</Providers>
         <ChatBotWrapper />
-        <TestCredentials />
+        {/* <TestCredentials /> */}
       </body>
     </html>
   );

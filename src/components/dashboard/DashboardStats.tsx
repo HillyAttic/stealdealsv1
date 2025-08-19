@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuthContext } from '@/components/auth/AuthProvider';
 
 interface DashboardStatsData {
   wishlistCount: number;
@@ -10,6 +11,7 @@ interface DashboardStatsData {
 }
 
 export function DashboardStats() {
+  const { user } = useAuthContext();
   const [stats, setStats] = useState<DashboardStatsData>({
     wishlistCount: 0,
     viewedProperties: 0,
@@ -19,28 +21,109 @@ export function DashboardStats() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch actual stats from API
-    // For now, showing placeholder data
     const fetchStats = async () => {
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        setIsLoading(true);
         
+        // Fetch comprehensive dashboard metrics
+        const metricsResponse = await fetch('/api/dashboard/metrics', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (metricsResponse.ok) {
+          const metricsData = await metricsResponse.json();
+          if (metricsData.success && metricsData.data.user) {
+            const userMetrics = metricsData.data.user;
+            
+            // Count recent activity (last 7 days)
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const recentActivity = userMetrics.activityTrends
+              .filter((day: any) => new Date(day.date) >= sevenDaysAgo)
+              .reduce((sum: number, day: any) => 
+                sum + (day.views || 0) + (day.searches || 0) + (day.actions || 0), 0);
+
+            // Count total searches from trends
+            const savedSearches = userMetrics.activityTrends
+              .reduce((sum: number, day: any) => sum + (day.searches || 0), 0);
+            
+            setStats({
+              wishlistCount: userMetrics.wishlistCount,
+              viewedProperties: userMetrics.totalViews,
+              savedSearches,
+              recentActivity
+            });
+          }
+        } else {
+          // Fallback to individual API calls if the comprehensive endpoint fails
+          const [wishlistResponse, analyticsResponse] = await Promise.all([
+            fetch('/api/user/wishlist', {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' }
+            }),
+            fetch('/api/user/analytics', {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' }
+            })
+          ]);
+
+          let wishlistCount = 0;
+          if (wishlistResponse.ok) {
+            const wishlistData = await wishlistResponse.json();
+            wishlistCount = wishlistData.wishlist?.length || 0;
+          }
+
+          let viewedProperties = 0;
+          let savedSearches = 0;
+          let recentActivity = 0;
+
+          if (analyticsResponse.ok) {
+            const analyticsData = await analyticsResponse.json();
+            if (analyticsData.success && analyticsData.analytics) {
+              const analytics = analyticsData.analytics;
+              viewedProperties = analytics.totalViews || 0;
+              
+              if (analytics.activityByDay) {
+                savedSearches = analytics.activityByDay.reduce((sum: number, day: any) => 
+                  sum + (day.searches || 0), 0);
+                  
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                recentActivity = analytics.activityByDay
+                  .filter((day: any) => new Date(day.date) >= sevenDaysAgo)
+                  .reduce((sum: number, day: any) => 
+                    sum + (day.views || 0) + (day.searches || 0) + (day.wishlistActions || 0), 0);
+              }
+            }
+          }
+
+          setStats({
+            wishlistCount,
+            viewedProperties,
+            savedSearches,
+            recentActivity
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
         setStats({
           wishlistCount: 0,
           viewedProperties: 0,
           savedSearches: 0,
           recentActivity: 0
         });
-      } catch (error) {
-        console.error('Error fetching stats:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchStats();
-  }, []);
+    if (user) {
+      fetchStats();
+    } else {
+      setIsLoading(false);
+    }
+  }, [user]);
 
   const statItems = [
     {

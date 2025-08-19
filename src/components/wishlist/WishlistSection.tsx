@@ -77,7 +77,7 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
         const serverIds = new Set(properties.map((p: any) => p.id));
         const contextIds = wishlistItems;
         const inContextNotServer = Array.from(contextIds).filter(id => !serverIds.has(id));
-        const inServerNotContext = Array.from(serverIds).filter(id => !contextIds.has(id));
+        const inServerNotContext = Array.from(serverIds).filter(id => !contextIds.has(id as string));
         
         if (inContextNotServer.length > 0 || inServerNotContext.length > 0) {
           console.warn(`[WishlistSection] ⚠️ Context/Server mismatch:`, {

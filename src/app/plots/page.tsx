@@ -10,8 +10,18 @@ import { AuthPrompt } from '@/components/auth';
 import { PropertyCard } from '@/components/property';
 import ClientOnly from '../../components/ClientOnly';
 
-// Sample plot property data
-const plotProperties: never[] = [];
+// Sample plot property data (empty for now)
+interface PlotProperty {
+  id: string;
+  title?: string;
+  location: string;
+  price?: number;
+  area?: number;
+  category: string;
+  description?: string;
+}
+
+const plotProperties: PlotProperty[] = [];
 
 export default function PlotsPage() {
   const [filterOpen, setFilterOpen] = useState(false);

@@ -102,8 +102,8 @@ export function AccountDeletion() {
         <h3 className="text-sm font-medium text-gray-900 mb-2">Account Information</h3>
         <div className="text-sm text-gray-600 space-y-1">
           <p><span className="font-medium">Email:</span> {user?.email}</p>
-          <p><span className="font-medium">Account Type:</span> {user?.provider === 'google' ? 'Google Account' : 'Email Account'}</p>
-          <p><span className="font-medium">Member Since:</span> {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}</p>
+          <p><span className="font-medium">Account Type:</span> {(user as any)?.provider === 'google' ? 'Google Account' : 'Email Account'}</p>
+          <p><span className="font-medium">Member Since:</span> {(user as any)?.createdAt ? new Date((user as any).createdAt).toLocaleDateString() : 'Unknown'}</p>
         </div>
       </div>
 
@@ -151,7 +151,7 @@ export function AccountDeletion() {
                 </p>
 
                 {/* Password Field (only for email accounts) */}
-                {user?.provider === 'email' && (
+                {(user as any)?.provider === 'email' && (
                   <div>
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                       Enter your password to confirm

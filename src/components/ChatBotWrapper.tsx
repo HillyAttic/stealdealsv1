@@ -29,9 +29,9 @@ export default function ChatBotWrapper() {
     window.addEventListener('message', function(event) {
       if (event.data === 'chatbot-opened') {
         chatbotWrapper.style.width = '350px';
-        chatbotWrapper.style.height = '590px';
+        chatbotWrapper.style.height = '660px';
         chatbotFrame.style.width = '350px';
-        chatbotFrame.style.height = '590px';
+        chatbotFrame.style.height = '660px';
       } else if (event.data === 'chatbot-closed') {
         chatbotWrapper.style.width = '75px';
         chatbotWrapper.style.height = '75px';

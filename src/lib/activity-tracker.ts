@@ -197,6 +197,10 @@ export function getActivityTracker(): ActivityTracker {
   if (typeof window === 'undefined') {
     // Return a mock tracker for SSR
     return {
+      sessionId: 'ssr-session',
+      isTracking: false,
+      viewStartTime: null,
+      currentPropertyId: null,
       trackPropertyView: () => {},
       trackSearch: () => {},
       trackWishlistAdd: () => {},
@@ -204,7 +208,7 @@ export function getActivityTracker(): ActivityTracker {
       trackContactInquiry: () => {},
       setTracking: () => {},
       getSessionId: () => 'ssr-session'
-    } as ActivityTracker;
+    } as any;
   }
 
   if (!activityTracker) {

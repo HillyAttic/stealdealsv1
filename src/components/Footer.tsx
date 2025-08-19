@@ -25,16 +25,16 @@ const Footer = () => {
               Discover your dream property with Stealdeals. We make the process of finding and purchasing real estate simple and enjoyable.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="bg-blue-900 text-white p-2 rounded-full hover:bg-blue-800 transition-colors">
+              <a href="https://www.facebook.com/stealdeals.co.in/" className="bg-blue-900 text-white p-2 rounded-full hover:bg-blue-800 transition-colors">
                 <FaFacebook size={16} />
               </a>
               <a href="#" className="bg-blue-900 text-white p-2 rounded-full hover:bg-blue-800 transition-colors">
                 <FaTwitter size={16} />
               </a>
-              <a href="#" className="bg-blue-900 text-white p-2 rounded-full hover:bg-blue-800 transition-colors">
+              <a href="http://instagram.com/stealdeals.co.in/" className="bg-blue-900 text-white p-2 rounded-full hover:bg-blue-800 transition-colors">
                 <FaInstagram size={16} />
               </a>
-              <a href="#" className="bg-blue-900 text-white p-2 rounded-full hover:bg-blue-800 transition-colors">
+              <a href="https://www.linkedin.com/company/steal-deals/posts/?feedView=all" className="bg-blue-900 text-white p-2 rounded-full hover:bg-blue-800 transition-colors">
                 <FaLinkedin size={16} />
               </a>
             </div>
@@ -70,10 +70,10 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/admin/login" className="flex items-center text-gray-600 hover:text-blue-900 transition-colors">
+                {/* <Link href="/admin/login" className="flex items-center text-gray-600 hover:text-blue-900 transition-colors">
                   <FaLock className="mr-2" size={14} />
                   Admin Portal
-                </Link>
+                </Link> */}
               </li>
             </ul>
           </div>
@@ -85,19 +85,21 @@ const Footer = () => {
               <li className="flex items-start">
                 <FaMapMarkerAlt className="mt-1 mr-3 text-blue-900" />
                 <span className="text-gray-600">
-                  Nirman Vihar, New Delhi
+                2nd Floor, Block A, Ofis Square, <br/>
+                The Iconic Corenthum, Noida Sector - 62, <br/>
+                Uttar Pradesh - 201301
                 </span>
               </li>
               <li className="flex items-center">
                 <FaPhone className="mr-3 text-blue-900" />
-                <a href="tel:+919876543210" className="text-gray-600 hover:text-blue-900 transition-colors">
-                  +91 98 7654 3210
+                <a href="tel:+919630403080" className="text-gray-600 hover:text-blue-900 transition-colors">
+                  +91 96 3040 3080
                 </a>
               </li>
               <li className="flex items-center">
                 <FaEnvelope className="mr-3 text-blue-900" />
-                <a href="mailto:info@stealdeals.com" className="text-gray-600 hover:text-blue-900 transition-colors">
-                  info@stealdeals.com
+                <a href="mailto:hello@stealdeals.com" className="text-gray-600 hover:text-blue-900 transition-colors">
+                  hello@stealdeals.com
                 </a>
               </li>
               <li className="flex items-center">
@@ -157,9 +159,9 @@ const Footer = () => {
                   </a>
                 </li>
                 <li>
-                  <Link href="/admin/login" className="text-gray-600 hover:text-blue-900 transition-colors">
-                    Admin
-                  </Link>
+                {/* <Link href="/admin/login" className="text-gray-600 hover:text-blue-900 transition-colors">
+                      Admin
+                    </Link> */}
                 </li>
               </ul>
             </div>

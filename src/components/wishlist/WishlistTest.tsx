@@ -7,7 +7,7 @@ import { WishlistButton } from './WishlistButton';
 
 export function WishlistTest() {
   const { isAuthenticated } = useAuth();
-  const { properties, isLoading, error, addToWishlist, removeFromWishlist } = useWishlist();
+  const { items, isLoading, error, addToWishlist, removeFromWishlist } = useWishlist();
   const [testPropertyId] = useState('test-property-123');
 
   if (!isAuthenticated) {
@@ -35,7 +35,7 @@ export function WishlistTest() {
         <div>
           <h4 className="font-medium mb-2">Wishlist Stats:</h4>
           <div className="text-sm text-gray-600">
-            <p>Total properties: {properties.length}</p>
+            <p>Total properties: {items.length}</p>
             <p>Loading: {isLoading ? 'Yes' : 'No'}</p>
             {error && <p className="text-red-600">Error: {error}</p>}
           </div>
@@ -45,7 +45,7 @@ export function WishlistTest() {
           <h4 className="font-medium mb-2">Manual Actions:</h4>
           <div className="space-x-2">
             <button
-              onClick={() => addToWishlist(testPropertyId, 'Test property note', 'high')}
+              onClick={() => addToWishlist(testPropertyId)}
               className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
             >
               Add Test Property
@@ -59,11 +59,11 @@ export function WishlistTest() {
           </div>
         </div>
 
-        {properties.length > 0 && (
+        {items.length > 0 && (
           <div>
             <h4 className="font-medium mb-2">Current Wishlist:</h4>
             <div className="space-y-2">
-              {properties.map((property) => (
+              {items.map((property: any) => (
                 <div key={property.id} className="p-2 bg-gray-50 rounded text-sm">
                   <p className="font-medium">{property.title}</p>
                   <p className="text-gray-600">{property.location} - {property.priority} priority</p>

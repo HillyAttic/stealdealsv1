@@ -23,7 +23,10 @@
       "Bash(move \"src\\middleware.ts\" \"src\\middleware.ts.backup\")",
       "Bash(mv:*)",
       "Bash(npm test:*)",
-      "Bash(npm run clean:*)"
+      "Bash(npm run clean:*)",
+      "Bash(if exist \".next\" rmdir /s /q \".next\")",
+      "Bash(if exist \"node_modules\\.cache\" rmdir /s /q \"node_modules\\.cache\")",
+      "Bash(git config:*)"
     ],
     "deny": []
   }

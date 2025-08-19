@@ -57,11 +57,8 @@ export function useFormValidation<T extends Record<string, any>>(
 
   const validateField = useCallback(async (field: keyof T): Promise<boolean> => {
     try {
-      // Validate just this field using schema.pick()
-      const fieldSchema = schema.pick({ [field]: true } as any);
-      const fieldValue = { [field]: values[field] };
-      
-      await fieldSchema.parseAsync(fieldValue);
+      // Validate the entire object but only show error for this field
+      await schema.parseAsync(values);
       
       // Clear error if validation passes
       setErrorsState(prev => {

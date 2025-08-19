@@ -345,7 +345,7 @@ export async function addProperty(property: Property): Promise<Property> {
     console.log(`Property saved successfully with ID: ${sequentialId}`);
     
     // Return the property with the new sequential ID
-    return { id: sequentialId, ...completeProperty };
+    return { ...completeProperty, id: sequentialId };
   } catch (error) {
     console.error('Error adding property to Firebase:', error);
     throw error;
@@ -411,7 +411,7 @@ export async function updateProperty(id: string, property: Property): Promise<Pr
       console.log(`New property ${id} created successfully in ${appropriate_ref.key}`);
     }
     
-    return { id, ...property };
+    return { ...property, id };
   } catch (error) {
     console.error('Error updating property in Firebase:', error);
     throw error;

@@ -9,13 +9,27 @@ console.log('====================================');
 console.log('1. Stopping existing Next.js processes...');
 try {
   if (process.platform === 'win32') {
-    execSync('taskkill /f /im node.exe', { stdio: 'ignore' });
-    execSync('netstat -ano | findstr :3000', { stdio: 'pipe' });
+    // More targeted approach: kill only processes on port 3000
+    const netstatOutput = execSync('netstat -ano | findstr :3000', { stdio: 'pipe' }).toString();
+    const lines = netstatOutput.split('\n').filter(line => line.trim());
+    for (const line of lines) {
+      const parts = line.trim().split(/\s+/);
+      const pid = parts[parts.length - 1];
+      if (pid && pid !== '0') {
+        try {
+          execSync(`taskkill /f /pid ${pid}`, { stdio: 'ignore' });
+          console.log(`   ✅ Killed process ${pid} on port 3000`);
+        } catch (e) {
+          // Process might already be dead
+        }
+      }
+    }
   } else {
     execSync('pkill -f "next dev"', { stdio: 'ignore' });
   }
 } catch (error) {
   // Process might not be running, that's ok
+  console.log('   ℹ️ No processes found on port 3000');
 }
 
 // Clear Next.js cache

@@ -2,32 +2,42 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { properties, Property } from '../data';
 import { resolveNumericIdParam, RouteParams } from '../../../../lib/params-utils';
+import { trackingService, extractTrackingData } from '@/lib/analytics/tracking-middleware';
+import { optionalAuth } from '@/lib/auth/middleware';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: RouteParams<{ id: string }> }
 ) {
-  try {
-    const id = await resolveNumericIdParam(params);
-    
-    // Find property by ID
-    const property = properties.find((p: Property) => p.id === id);
-    
-    if (!property) {
+  return optionalAuth(request, async (requestWithUser) => {
+    try {
+      const id = await resolveNumericIdParam(params);
+      
+      // Find property by ID
+      const property = properties.find((p: Property) => p.id === id);
+      
+      if (!property) {
+        return NextResponse.json(
+          { error: 'Property not found' },
+          { status: 404 }
+        );
+      }
+
+      // Track property view if user is authenticated
+      if (requestWithUser.user) {
+        const trackingData = extractTrackingData(request, requestWithUser.user.id);
+        await trackingService.trackPageView(trackingData);
+      }
+      
+      return NextResponse.json({ property });
+    } catch (error) {
+      console.error('Error fetching property:', error);
       return NextResponse.json(
-        { error: 'Property not found' },
-        { status: 404 }
+        { error: 'Failed to fetch property' },
+        { status: 500 }
       );
     }
-    
-    return NextResponse.json({ property });
-  } catch (error) {
-    console.error('Error fetching property:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch property' },
-      { status: 500 }
-    );
-  }
+  });
 }
 
 export async function PUT(

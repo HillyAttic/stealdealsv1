@@ -275,13 +275,13 @@ export default function ActivityHistory({ className = '' }: ActivityHistoryProps
                       </div>
                       {Object.keys(search.filters).length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {Object.entries(search.filters).map(([key, value]) => (
-                            value && (
+                          {Object.entries(search.filters).map(([key, value]) => 
+                            value ? (
                               <span key={key} className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs">
                                 {key}: {String(value)}
                               </span>
-                            )
-                          ))}
+                            ) : null
+                          ).filter(Boolean)}
                         </div>
                       )}
                     </div>

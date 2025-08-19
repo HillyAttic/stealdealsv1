@@ -11,7 +11,7 @@ export default function AboutPage() {
   const offices = [
     {
       location: 'Delhi',
-      address: '821, Laxmi Deep Tower, Nirman Vihar, Delhi-110092',
+      address: '406, Roots Tower, Nirman Vihar, Delhi-110092',
       phone: '',
       email: ''
     },
@@ -60,7 +60,7 @@ export default function AboutPage() {
                 <div className="w-20 h-1 bg-blue-900 mb-6"></div>
                 <h3 className="text-xl font-bold text-blue-900 mb-4">Empowering Investments. Enabling Growth.</h3>
                 <p className="text-gray-600 mb-6 text-lg leading-relaxed">
-                  Founded in December 2022, Steal Deals is a modern-day commercial real estate and franchise
+                  Steal Deals is a modern-day commercial real estate and franchise
                   consulting firm that bridges the gap between aspiration and execution. With a sharp focus on
                   franchise expansion and leasing solutions, we empower individuals and businesses to unlock
                   long-term income opportunities through strategic investments and partnerships.
@@ -123,22 +123,22 @@ export default function AboutPage() {
                 Our track record of success in the commercial real estate sector
               </p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
-                <div className="text-4xl font-bold text-blue-900 mb-2">₹1000Cr+</div>
-                <div className="text-gray-600">Transaction Value</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 text-center">
+              <div className="bg-white rounded-lg p-3 md:p-6 shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-2xl md:text-4xl font-bold text-blue-900 mb-1 md:mb-2 break-all">₹1000Cr+</div>
+                <div className="text-gray-600 text-xs md:text-base">Transaction Value</div>
               </div>
-              <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
-                <div className="text-4xl font-bold text-blue-900 mb-2">5M+</div>
-                <div className="text-gray-600">Sq Ft Sold</div>
+              <div className="bg-white rounded-lg p-3 md:p-6 shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-2xl md:text-4xl font-bold text-blue-900 mb-1 md:mb-2">5M+</div>
+                <div className="text-gray-600 text-xs md:text-base">Sq Ft Sold</div>
               </div>
-              <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
-                <div className="text-4xl font-bold text-blue-900 mb-2">15M+</div>
-                <div className="text-gray-600">Sq Ft Leased</div>
+              <div className="bg-white rounded-lg p-3 md:p-6 shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-2xl md:text-4xl font-bold text-blue-900 mb-1 md:mb-2">15M+</div>
+                <div className="text-gray-600 text-xs md:text-base">Sq Ft Leased</div>
               </div>
-              <div className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
-                <div className="text-4xl font-bold text-blue-900 mb-2">95%</div>
-                <div className="text-gray-600">Client Satisfaction</div>
+              <div className="bg-white rounded-lg p-3 md:p-6 shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-2xl md:text-4xl font-bold text-blue-900 mb-1 md:mb-2">95%</div>
+                <div className="text-gray-600 text-xs md:text-base">Client Satisfaction</div>
               </div>
             </div>
           </div>

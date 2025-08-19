@@ -37,11 +37,11 @@ const Header = () => {
   const navItems = [
     { name: "HOME", path: "/", icon: <FaHome className="mr-1" /> },
     { name: "ABOUT US", path: "/about", icon: <FaInfoCircle className="mr-1" /> },
-    { name: "PRELEASED INVENTORY", path: "/inventory", icon: <FaWarehouse className="mr-1" /> },
+    // { name: "PRELEASED INVENTORY", path: "/inventory", icon: <FaWarehouse className="mr-1" /> },
     { name: "VACANT", path: "/vacant", icon: <FaImages className="mr-1" /> },
     { name: "PLOTS", path: "/plots", icon: <FaLandmark className="mr-1" /> },
     { name: "BE A FRANCHISE", path: "/franchise", icon: <FaHandshake className="mr-1" /> },
-    { name: "HORECA", path: "/horeca", icon: <FaUtensils className="mr-1" /> },
+    // { name: "HORECA", path: "/horeca", icon: <FaUtensils className="mr-1" /> },
     { name: "CONTACT", path: "/contact", icon: <FaPhoneAlt className="mr-1" /> }
   ];
 
@@ -95,7 +95,6 @@ const Header = () => {
                     width={280}
                     height={60}
                     className="object-contain"
-                    /* style={{ height: '', width: '' }} */
                     priority
                   />
                 </div>

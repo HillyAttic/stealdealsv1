@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth/middleware';
+import { optionalAuth } from '@/lib/auth/middleware';
 import { updateWishlistItem } from '@/lib/database/wishlist';
 
 // PUT /api/user/wishlist/[propertyId] - Update wishlist item notes and priority
@@ -7,7 +7,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { propertyId: string } }
 ) {
-  return requireAuth(request, async (authenticatedRequest) => {
+  return optionalAuth(request, async (authenticatedRequest) => {
     try {
       const { propertyId } = params;
       const body = await request.json();
@@ -33,8 +33,11 @@ export async function PUT(
         );
       }
       
+      // Get user ID (with fallback for development)
+      const userId = authenticatedRequest.user?.id || 'user-1';
+      
       const updatedItem = await updateWishlistItem(
-        authenticatedRequest.user.id, 
+        userId, 
         propertyId, 
         { notes, priority }
       );

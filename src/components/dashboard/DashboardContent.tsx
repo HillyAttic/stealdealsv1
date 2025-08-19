@@ -7,6 +7,7 @@ import { EmptyDashboard } from './EmptyDashboard';
 import { WishlistSection } from '@/components/wishlist';
 import ActivityHistory from './ActivityHistory';
 import { AnalyticsPreview } from './AnalyticsPreview';
+import { RealTimeAnalytics } from './RealTimeAnalytics';
 
 interface DashboardContentProps {
   userProfile: {
@@ -34,11 +35,11 @@ export function DashboardContent({ userProfile }: DashboardContentProps) {
       {/* Wishlist Section */}
       <WishlistSection />
 
-      {/* Analytics Preview Section */}
+      {/* Real-Time Analytics Section */}
       <div className="bg-white rounded-lg shadow-sm border">
         <div className="p-6 border-b">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Your Analytics</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Real-Time Analytics & Insights</h2>
             <Link 
               href="/dashboard/analytics"
               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
@@ -48,7 +49,7 @@ export function DashboardContent({ userProfile }: DashboardContentProps) {
           </div>
         </div>
         <div className="p-6">
-          <AnalyticsPreview />
+          <RealTimeAnalytics />
         </div>
       </div>
 
