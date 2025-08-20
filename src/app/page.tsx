@@ -86,19 +86,19 @@ export default function Home() {
   const bestServices = [
     {
       id: 1,
-      title: 'Food & Beverages',
-      count: 5,
-      icon: <FaUtensils className="text-3xl text-blue-900" />,
-      image: 'https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      link: '/food-beverages'
+      title: 'Plots',
+      count: 0,
+      icon: <FaMapMarkerAlt className="text-3xl text-blue-900" />,
+      image: 'https://images.pexels.com/photos/462331/pexels-photo-462331.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+      link: '/plots'
     },
     {
       id: 2,
-      title: 'Hotel',
-      count: 3,
-      icon: <FaHotel className="text-3xl text-blue-900" />,
-      image: 'https://images.pexels.com/photos/1838554/pexels-photo-1838554.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      link: '/hotel'
+      title: 'Be a Franchise',
+      count: 110,
+      icon: <FaHandshake className="text-3xl text-blue-900" />,
+      image: 'https://images.pexels.com/photos/3962294/pexels-photo-3962294.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+      link: '/franchise'
     }
   ];
   
@@ -233,20 +233,17 @@ export default function Home() {
           </div>
         </section>
         
-        {/* About Section - Completely redesigned with card-based layout */}
+        {/* About Section - Updated with new styling structure */}
         <section className="py-16 md:py-24 bg-gradient-to-b from-white to-blue-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h6 className="text-blue-900 font-semibold mb-3 uppercase tracking-wider">Who We Are</h6>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">About <span className="text-blue-900">Steal Deals</span></h2>
               <div className="w-24 h-1 bg-blue-900 mx-auto"></div>
-              <p className="mt-6 text-gray-600 max-w-3xl mx-auto text-base md:text-lg">
-                Real Estate Investments. Leasing.
-              </p>
+              <p className="mt-6 text-gray-600 max-w-3xl mx-auto text-base md:text-lg">Real Estate Investments. Leasing.</p>
             </div>
             
             <div className="flex flex-col lg:flex-row items-stretch gap-8 md:gap-10">
-              {/* Image column with overlays */}
               <div className="lg:w-2/5">
                 <div className="relative h-full">
                   <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden h-[300px] md:h-[400px] lg:h-full">
@@ -255,19 +252,13 @@ export default function Home() {
                       alt="About Steal Deals"
                       fill
                       style={{ objectFit: 'cover' }}
-                      quality={100}
                       className="transition-transform duration-700 hover:scale-105"
                       sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 40vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-blue-900/70 to-transparent"></div>
-                    
-                    {/* Company overview card */}
                     <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                       <h3 className="text-xl md:text-2xl font-bold mb-2">Steal Deals</h3>
-                      <p className="text-sm md:text-base mb-3">
-                        Founded by experienced Real Estate Professionals having over 20 years of combined industry 
-                        exposure across RE verticals primarily in Wealth Creation, Leasing and Investments.
-                      </p>
+                      <p className="text-sm md:text-base mb-3">Founded by experienced Real Estate Professionals having over 20 years of combined industry exposure across RE verticals primarily in Wealth Creation, Leasing and Investments.</p>
                       <div className="flex items-center gap-4 text-sm">
                         <div className="flex items-center">
                           <FaMapMarkerAlt className="mr-1 text-yellow-400" />
@@ -280,8 +271,6 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Experience badge */}
                   <div className="absolute -top-5 -right-5 bg-blue-900 text-white rounded-full w-24 h-24 flex flex-col items-center justify-center shadow-lg transform rotate-12">
                     <p className="text-xl font-bold">20+</p>
                     <p className="text-xs">Years Exp</p>
@@ -289,56 +278,40 @@ export default function Home() {
                 </div>
               </div>
               
-              {/* Content column with services */}
               <div className="lg:w-3/5">
                 <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 h-full">
-                  <p className="text-gray-700 mb-6 text-base md:text-lg">
-                    We have our offices in Laxmi Nagar and Vivek Vihar, East Delhi. We provide advisory services 
-                    in the following corridors:
-                  </p>
-                  
+                  <p className="text-gray-700 mb-6 text-base md:text-lg">We have our offices in Delhi, Noida, Gurugram and Dubai. We provide advisory services in the following corridors:</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 transition-transform duration-300 hover:scale-105 hover:shadow-md">
                       <div className="text-blue-900 mb-3 text-xl">
                         <FaBuilding className="inline-block mr-2" />
-                        <span className="font-bold">Pre-Leased Properties</span>
+                        <span className="font-bold">Frachise Expansion</span>
                       </div>
-                      <p className="text-sm text-gray-700">
-                        Across Delhi, Noida, Ghaziabad and Gurgaon: Banks / Insurance Cos. / Independent Buildings / 
-                        Offices / Retail showrooms etc.
-                      </p>
+                      <p className="text-sm text-gray-700">Scalable franchise opportunities across sectors, connecting investors with profitable, growth-ready brands.</p>
                     </div>
                     
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 transition-transform duration-300 hover:scale-105 hover:shadow-md">
                       <div className="text-blue-900 mb-3 text-xl">
                         <FaHome className="inline-block mr-2" />
-                        <span className="font-bold">Commercial Plots</span>
+                        <span className="font-bold">Investment in Plots</span>
                       </div>
-                      <p className="text-sm text-gray-700">
-                        Udyog Vihar/Golf Course Road/Infocity/Manesar – Gurgaon, Sahibabad Industrial Area, 
-                        Jhilmil/Friends Colony, Patparganj and Noida.
-                      </p>
+                      <p className="text-sm text-gray-700">Prime plots for development with strong potential for appreciation and versatile use.x`</p>
                     </div>
                     
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 transition-transform duration-300 hover:scale-105 hover:shadow-md">
                       <div className="text-blue-900 mb-3 text-xl">
                         <FaHotel className="inline-block mr-2" />
-                        <span className="font-bold">Hotel Transactions</span>
+                        <span className="font-bold">Vacant Land</span>
                       </div>
-                      <p className="text-sm text-gray-700">
-                        Land Acquisition, Project Feasibility, Joint Ventures, Existing Property leasing etc.
-                      </p>
+                      <p className="text-sm text-gray-700">Strategic land parcels ideal for new projects, joint ventures, or long-term investments.</p>
                     </div>
                     
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 transition-transform duration-300 hover:scale-105 hover:shadow-md">
                       <div className="text-blue-900 mb-3 text-xl">
                         <FaStore className="inline-block mr-2" />
-                        <span className="font-bold">Turnkey Development</span>
+                        <span className="font-bold">Pre-Leased Properties</span>
                       </div>
-                      <p className="text-sm text-gray-700">
-                        Residential Builder floor Construction in Rajgarh Colony, Krishna Nagar, Project 
-                        Investment at land stage and floor bookings.
-                      </p>
+                      <p className="text-sm text-gray-700">Assets with established tenants ensuring stable rental income and lower investment risk.</p>
                     </div>
                   </div>
                   
@@ -348,7 +321,7 @@ export default function Home() {
                       className="inline-flex items-center bg-blue-900 hover:bg-blue-800 text-white px-6 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-blue-900/20"
                     >
                       Learn More About Us
-                      <FaChevronRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                      <FaArrowRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
                     </Link>
                   </div>
                 </div>
@@ -479,7 +452,7 @@ export default function Home() {
         <TrustedBrands />
         
         {/* Categories Section - Enhanced with premium styling */}
-        <section className="py-20 bg-gray-50">
+        {/* <section className="py-20 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
               <h6 className="text-blue-900 font-semibold mb-3 uppercase tracking-wider">Explore Our Services</h6>
@@ -524,7 +497,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
         
         {/* Best Services Section - Enhanced with premium styling */}
         <section className="py-20 bg-white relative">
