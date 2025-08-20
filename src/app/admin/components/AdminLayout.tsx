@@ -146,6 +146,11 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       icon: <FaBuilding />
     },
     {
+      name: 'Plots',
+      href: '/admin/plots',
+      icon: <FaBuilding />
+    },
+    {
       name: 'Migration',
       href: '/admin/migrate',
       icon: <FaUser />

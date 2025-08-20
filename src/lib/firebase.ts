@@ -30,6 +30,7 @@ const propertiesRef = ref(database, 'properties'); // Legacy reference for backw
 const vacantPropertiesRef = ref(database, 'vacantProperties');
 const preleasedPropertiesRef = ref(database, 'preleasedProperties');
 const franchisePropertiesRef = ref(database, 'franchiseProperties');
+const plotsRef = ref(database, 'plots');
 
 // Export references
 export { 
@@ -39,7 +40,8 @@ export {
   propertiesRef, 
   vacantPropertiesRef, 
   preleasedPropertiesRef,
-  franchisePropertiesRef
+  franchisePropertiesRef,
+  plotsRef
 };
 
 // Property interface matching our application's property structure
@@ -122,6 +124,33 @@ export interface Franchise {
   description?: string; // Legacy field
   requirements?: string;
   image?: string;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+// Plot interface for plots collection
+export interface Plot {
+  id?: string | null;
+  developerName: string;
+  project: string;
+  description: string;
+  status: string; // "Ready to Move In" or "Future Delivery"
+  plotSize: {
+    min: number;
+    max: number;
+    unit: string; // "sq.yds", "sq.mt", "sq.ft"
+  };
+  location: string;
+  investmentStartsFrom: {
+    amount: number;
+    unit: string; // "sq.yds", "sq.mt", "sq.ft"
+  };
+  investorDiscoveryKit: {
+    title: string;
+    url: string;
+    description: string;
+  };
+  images: string[]; // Array of image URLs
   createdAt?: number;
   updatedAt?: number;
 }
@@ -475,4 +504,130 @@ export async function getAllFranchises(): Promise<Franchise[]> {
   }
 }
 
-// Function to get all franchises - removed 
+// Function to get all franchises - removed
+
+// ====================== PLOTS FUNCTIONS ======================
+
+// Function to get all plots
+export async function getAllPlots(): Promise<Plot[]> {
+  try {
+    const plots: Plot[] = [];
+    console.log("Getting reference to plots...");
+    const snapshot = await get(plotsRef);
+    
+    console.log("Snapshot exists:", snapshot.exists());
+    if (snapshot.exists()) {
+      snapshot.forEach((childSnapshot: DataSnapshot) => {
+        console.log("Processing plot item with key:", childSnapshot.key);
+        const data = childSnapshot.val();
+        // Validate that this is a valid plot object before adding
+        if (data && 
+            typeof data === 'object' && 
+            'project' in data && 
+            'developerName' in data) {
+          const plotData = {
+            ...data,
+            id: childSnapshot.key  // Ensure key overrides any id in data
+          };
+          plots.push(plotData);
+        }
+      });
+    } else {
+      console.log("No plots found in database");
+    }
+    
+    console.log("Returning", plots.length, "plots");
+    return plots;
+  } catch (error) {
+    console.error('Error fetching plots from Firebase:', error);
+    throw error;
+  }
+}
+
+// Function to get a plot by ID
+export async function getPlotById(id: string): Promise<Plot | null> {
+  try {
+    const snapshot = await get(child(plotsRef, id));
+    if (snapshot.exists()) {
+      return { ...snapshot.val(), id: snapshot.key };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching plot from Firebase:', error);
+    throw error;
+  }
+}
+
+// Function to add a new plot
+export async function addPlot(plot: Plot): Promise<Plot> {
+  try {
+    console.log('Adding plot with the following data:', JSON.stringify(plot));
+    
+    // Get all existing plots to find the highest ID
+    const snapshot = await get(plotsRef);
+    let highestId = 0;
+    
+    if (snapshot.exists()) {
+      // Find the highest existing numeric ID
+      snapshot.forEach((childSnapshot: DataSnapshot) => {
+        const idStr = childSnapshot.key;
+        if (idStr) {
+          const idNum = parseInt(idStr);
+          if (!isNaN(idNum) && idNum > highestId) {
+            highestId = idNum;
+          }
+        }
+      });
+    }
+    
+    // Next ID should be one higher than the highest existing ID
+    const nextId = highestId + 1;
+    const sequentialId = nextId.toString();
+    
+    // Ensure all fields are included
+    const completePlot = {
+      ...plot,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    
+    // Use the sequential ID
+    await set(child(plotsRef, sequentialId), completePlot);
+    console.log(`Plot saved successfully with ID: ${sequentialId}`);
+    
+    // Return the plot with the new sequential ID
+    return { ...completePlot, id: sequentialId };
+  } catch (error) {
+    console.error('Error adding plot to Firebase:', error);
+    throw error;
+  }
+}
+
+// Function to update a plot
+export async function updatePlot(id: string, plot: Plot): Promise<Plot> {
+  try {
+    console.log(`Updating plot ${id}`);
+    
+    await update(child(plotsRef, id), {
+      ...plot,
+      updatedAt: Date.now()
+    });
+    
+    console.log(`Plot ${id} updated successfully`);
+    return { ...plot, id };
+  } catch (error) {
+    console.error('Error updating plot in Firebase:', error);
+    throw error;
+  }
+}
+
+// Function to delete a plot
+export async function deletePlot(id: string): Promise<boolean> {
+  try {
+    await remove(child(plotsRef, id));
+    return true;
+  } catch (error) {
+    console.error('Error deleting plot from Firebase:', error);
+    throw error;
+  }
+} 
