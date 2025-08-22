@@ -18,7 +18,7 @@
       font-family: 'Poppins', sans-serif;
     }
     body {
-      background: #f9fafc;
+      background: transparent;
       min-height: 100vh;
       position: relative;
       overflow-x: hidden;
@@ -2610,9 +2610,6 @@ Please send them the appropriate investment guide PDF.`;
   
   <!-- Communication with parent window -->
   <script>
-    // Make body background transparent
-    document.body.style.background = 'transparent';
-    
     // Send message to parent when chatbot is opened/closed
     document.getElementById('chatButton').addEventListener('click', function() {
       if (document.getElementById('chatContainer').classList.contains('active')) {
