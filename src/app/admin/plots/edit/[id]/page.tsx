@@ -2,13 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useParams } from 'next/navigation';
 import AdminLayout from '../../../components/AdminLayout';
 import { FaSave } from 'react-icons/fa';
 import { BsMenuUp } from 'react-icons/bs';
-import ClientOnly from '@/components/ClientOnly';
-import ReactQuill from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';
+import dynamic from 'next/dynamic';
+
+// Import ReactQuill dynamically to avoid SSR issues
+const ReactQuill = dynamic(
+  () => import('react-quill-new').then((mod) => {
+    // Import CSS dynamically when component loads
+    if (typeof window !== 'undefined') {
+      import('react-quill-new/dist/quill.snow.css');
+    }
+    return mod;
+  }), 
+  { 
+    ssr: false,
+    loading: () => <p>Loading editor...</p>
+  }
+);
 
 // Status options
 const STATUS_OPTIONS = [
@@ -23,27 +35,47 @@ const UNIT_OPTIONS = [
   'sq.ft'
 ];
 
-export default function EditPlot() {
+// Main component that receives params as props
+export default function EditPlot({ params }: { params: Promise<{ id: string }> }) {
+  const [plotId, setPlotId] = useState<string>('');
+  const [mounted, setMounted] = useState(false);
+
+  // Extract params in Next.js 15 compatible way
+  useEffect(() => {
+    const extractParams = async () => {
+      try {
+        const resolvedParams = await params;
+        setPlotId(resolvedParams.id);
+        setMounted(true);
+      } catch (error) {
+        console.error('Error extracting params:', error);
+        setMounted(true);
+      }
+    };
+    extractParams();
+  }, [params]);
+
+  // Show loading while extracting params
+  if (!mounted) {
+    return (
+      <AdminLayout>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+          <p className="ml-2">Loading plot form...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
-      <ClientOnly
-        fallback={
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
-            <p className="ml-2">Loading plot form...</p>
-          </div>
-        }
-      >
-        <EditPlotContent />
-      </ClientOnly>
+      <EditPlotContent plotId={plotId} />
     </AdminLayout>
   );
 }
 
-function EditPlotContent() {
+function EditPlotContent({ plotId }: { plotId: string }) {
   const router = useRouter();
-  const params = useParams();
-  const plotId = params.id as string;
   
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -73,6 +105,13 @@ function EditPlotContent() {
   useEffect(() => {
     const checkAuthAndLoadData = async () => {
       try {
+        // Validate plotId
+        if (!plotId) {
+          setError('Plot ID is required');
+          setIsLoadingData(false);
+          return;
+        }
+
         // Check authentication
         const authResponse = await fetch('/api/auth/check', {
           method: 'GET',
@@ -90,10 +129,16 @@ function EditPlotContent() {
         });
         
         if (!plotResponse.ok) {
-          throw new Error('Failed to load plot data');
+          const errorData = await plotResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || `Failed to load plot data (${plotResponse.status})`);
         }
         
-        const { plot } = await plotResponse.json();
+        const responseData = await plotResponse.json();
+        const { plot } = responseData;
+        
+        if (!plot) {
+          throw new Error('Plot data not found');
+        }
         
         // Populate form with existing data
         setFormData({
@@ -290,6 +335,34 @@ function EditPlotContent() {
       <div className="flex justify-center items-center py-20">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-900"></div>
         <p className="ml-4">Loading plot data...</p>
+      </div>
+    );
+  }
+
+  // Show error state if data failed to load
+  if (error && !isLoadingData) {
+    return (
+      <div className="p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-6 text-center">
+            <h2 className="text-xl font-bold mb-2">Error Loading Plot Data</h2>
+            <p className="mb-4">{error}</p>
+            <div className="space-x-4">
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Retry
+              </button>
+              <button
+                onClick={() => router.push('/admin/plots')}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              >
+                Back to Plots
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

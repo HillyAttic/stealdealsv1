@@ -6,8 +6,22 @@ import AdminLayout from '../../components/AdminLayout';
 import { FaSave } from 'react-icons/fa';
 import { BsMenuUp } from 'react-icons/bs';
 import ClientOnly from '@/components/ClientOnly';
-import ReactQuill from 'react-quill-new';
-import 'react-quill-new/dist/quill.snow.css';
+import dynamic from 'next/dynamic';
+
+// Import ReactQuill dynamically to avoid SSR issues
+const ReactQuill = dynamic(
+  () => import('react-quill-new').then((mod) => {
+    // Import CSS dynamically when component loads
+    if (typeof window !== 'undefined') {
+      import('react-quill-new/dist/quill.snow.css');
+    }
+    return mod;
+  }), 
+  { 
+    ssr: false,
+    loading: () => <p>Loading editor...</p>
+  }
+);
 
 // Status options
 const STATUS_OPTIONS = [
