@@ -157,89 +157,96 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - Basic Information */}
-            <div>
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Project Details</h3>
-              
-              {/* Developer */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Developer</label>
-                <p className="text-lg text-gray-800">{plot.developerName}</p>
-              </div>
-              
-              {/* Location */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Location</label>
-                <div className="flex items-center text-gray-800">
-                  <FaMapMarkerAlt className="mr-2 text-blue-900" />
-                  <span>{plot.location}</span>
+            {/* Left Column - Basic Information + Investment Details */}
+            <div className="flex flex-col">
+              <div className="flex-grow">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Project Details</h3>
+                
+                {/* Developer */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Developer</label>
+                  <p className="text-lg text-gray-800">{plot.developerName}</p>
+                </div>
+                
+                {/* Location */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Location</label>
+                  <div className="flex items-center text-gray-800">
+                    <FaMapMarkerAlt className="mr-2 text-blue-900" />
+                    <span>{plot.location}</span>
+                  </div>
+                </div>
+                
+                {/* Status */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Status</label>
+                  <span className={`inline-block px-3 py-1 rounded-md text-sm font-medium ${
+                    plot.status === 'Ready to Move In' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {plot.status}
+                  </span>
+                </div>
+                
+                {/* Plot Size */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Plot Size Range</label>
+                  <div className="flex items-center text-gray-800">
+                    <FaRulerCombined className="mr-2 text-blue-900" />
+                    <span>{getPlotSizeDisplay()}</span>
+                  </div>
                 </div>
               </div>
-              
-              {/* Status */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Status</label>
-                <span className={`inline-block px-3 py-1 rounded-md text-sm font-medium ${
-                  plot.status === 'Ready to Move In' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-blue-100 text-blue-800'
-                }`}>
-                  {plot.status}
-                </span>
-              </div>
-              
-              {/* Plot Size */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Plot Size Range</label>
-                <div className="flex items-center text-gray-800">
-                  <FaRulerCombined className="mr-2 text-blue-900" />
-                  <span>{getPlotSizeDisplay()}</span>
+
+              {/* Investment Details - Bottom Left */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">Investment Details</h3>
+                
+                {/* Investment */}
+                <div className="bg-blue-50 p-4 rounded-lg mb-6">
+                  <p className="text-blue-900 font-semibold">
+                    {getInvestmentDisplay()}
+                  </p>
                 </div>
+
+                {/* Investor Discovery Kit */}
+                {plot.investorDiscoveryKit?.url && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-3">Downloads</h4>
+                    <a
+                      href={plot.investorDiscoveryKit.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      <FaDownload className="mr-2" />
+                      Download Investor Discovery Kit
+                    </a>
+                    <p className="text-sm text-gray-600 mt-2">
+                      Contains brochure, payment plan, and promotional video
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Right Column - Investment & Downloads */}
+            {/* Right Column - Description & Key Salient Features */}
             <div>
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Investment Details</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-4">Description</h3>
               
-              {/* Investment */}
-              <div className="bg-blue-50 p-4 rounded-lg mb-6">
-                <p className="text-blue-900 font-semibold">
-                  {getInvestmentDisplay()}
-                </p>
-              </div>
 
-              {/* Investor Discovery Kit */}
-              {plot.investorDiscoveryKit?.url && (
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Downloads</h4>
-                  <a
-                    href={plot.investorDiscoveryKit.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                  >
-                    <FaDownload className="mr-2" />
-                    Download {plot.investorDiscoveryKit.title}
-                  </a>
-                  <p className="text-sm text-gray-600 mt-2">
-                    {plot.investorDiscoveryKit.description}
-                  </p>
+              {/* Description */}
+              {plot.description && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div 
+                    className="prose prose-blue max-w-none text-gray-700"
+                    dangerouslySetInnerHTML={{ __html: plot.description }}
+                  />
                 </div>
               )}
             </div>
           </div>
-
-          {/* Description */}
-          {plot.description && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Description</h3>
-              <div 
-                className="prose prose-blue max-w-none text-gray-700"
-                dangerouslySetInnerHTML={{ __html: plot.description }}
-              />
-            </div>
-          )}
         </div>
       </div>
     </div>

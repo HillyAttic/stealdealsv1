@@ -34,10 +34,10 @@ export default function ContactPage() {
         <Header />
 
         {/* Page Header */}
-        <div className="bg-gradient-to-r from-blue-700 to-blue-500 py-16 px-4">
+        <div className="bg-gradient-to-r from-primary to-secondary py-16 px-4">
           <div className="container mx-auto text-center">
             <h1 className="text-4xl font-bold text-white mb-4">Contact Us</h1>
-            <p className="text-blue-100 max-w-2xl mx-auto text-lg">
+            <p className="text-primary-100 max-w-2xl mx-auto text-lg">
               Get in touch with our team for any inquiries or assistance
             </p>
           </div>
@@ -54,44 +54,42 @@ export default function ContactPage() {
 
                   <div className="space-y-6">
                     <div className="flex items-start">
-                      <div className="bg-blue-100 p-3 rounded-full mr-4">
-                        <FaMapMarkerAlt className="text-blue-600 text-xl" />
+                      <div className="bg-primary-50 p-3 rounded-full mr-4">
+                        <FaMapMarkerAlt className="text-primary text-xl" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-800 mb-1">Office Address</h3>
-                        <p className="text-gray-600">Nirman Vihar, New Delhi</p>
+                        <p className="text-gray-600">2nd Floor, Block A, Ofis Square,<br/>The Iconic Corenthum, Noida Sector - 62,<br/>Uttar Pradesh - 201301</p>
                       </div>
                     </div>
 
                     <div className="flex items-start">
-                      <div className="bg-blue-100 p-3 rounded-full mr-4">
-                        <FaPhone className="text-blue-600 text-xl" />
+                      <div className="bg-secondary-50 p-3 rounded-full mr-4">
+                        <FaPhone className="text-secondary text-xl" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-800 mb-1">Phone Number</h3>
-                        <p className="text-gray-600">(+91) 9630403080</p>
+                        <p className="text-gray-600">+91 96 3040 3080</p>
                       </div>
                     </div>
 
                     <div className="flex items-start">
-                      <div className="bg-blue-100 p-3 rounded-full mr-4">
-                        <FaEnvelope className="text-blue-600 text-xl" />
+                      <div className="bg-accent-50 p-3 rounded-full mr-4">
+                        <FaEnvelope className="text-accent text-xl" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-800 mb-1">Email Address</h3>
-                        <p className="text-gray-600">hello@stealdeals.co.in</p>
+                        <p className="text-gray-600">hello@stealdeals.com</p>
                       </div>
                     </div>
 
                     <div className="flex items-start">
-                      <div className="bg-blue-100 p-3 rounded-full mr-4">
-                        <FaClock className="text-blue-600 text-xl" />
+                      <div className="bg-highlight/20 p-3 rounded-full mr-4">
+                        <FaClock className="text-primary text-xl" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-800 mb-1">Business Hours</h3>
-                        <p className="text-gray-600">Mon - Fri: 9:00 AM - 6:00 PM</p>
-                        <p className="text-gray-600">Saturday: 9:00 AM - 1:00 PM</p>
-                        <p className="text-gray-600">Sunday: Closed</p>
+                        <p className="text-gray-600">Mon - Fri: 9:00AM - 7:00PM</p>
                       </div>
                     </div>
                   </div>
@@ -99,20 +97,17 @@ export default function ContactPage() {
                   <div className="mt-8 pt-6 border-t border-gray-200">
                     <h3 className="font-semibold text-gray-800 mb-4">Connect With Us</h3>
                     <div className="flex space-x-4">
-                      <a href="#" className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-500 transition-colors">
+                      <a href="https://www.facebook.com/stealdeals.co.in/" className="bg-primary text-white p-3 rounded-full hover:bg-secondary transition-colors">
                         <FaFacebookF />
                       </a>
-                      <a href="#" className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-500 transition-colors">
+                      <a href="#" className="bg-primary text-white p-3 rounded-full hover:bg-secondary transition-colors">
                         <FaTwitter />
                       </a>
-                      <a href="#" className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-500 transition-colors">
+                      <a href="http://instagram.com/stealdeals.co.in/" className="bg-primary text-white p-3 rounded-full hover:bg-secondary transition-colors">
                         <FaInstagram />
                       </a>
-                      <a href="#" className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-500 transition-colors">
+                      <a href="https://www.linkedin.com/company/steal-deals/posts/?feedView=all" className="bg-primary text-white p-3 rounded-full hover:bg-secondary transition-colors">
                         <FaLinkedinIn />
-                      </a>
-                      <a href="#" className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-500 transition-colors">
-                        <FaYoutube />
                       </a>
                     </div>
                   </div>
@@ -124,43 +119,18 @@ export default function ContactPage() {
                 <div className="bg-white p-8 rounded-lg shadow-md">
                   <h2 className="text-2xl font-bold text-gray-800 mb-6">Send Us a Message</h2>
                   
-                  {/* Authentication Suggestion */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="text-blue-600 mr-3">
-                          <FaEnvelope className="text-lg" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-blue-800">Get personalized responses</p>
-                          <p className="text-xs text-blue-600">Sign in to track your inquiries and get faster responses</p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => requireAuth(() => {}, {
-                          feature: 'contact',
-                          title: 'Sign in for better support',
-                          message: 'Sign in to track your inquiries and get personalized responses from our team.'
-                        })}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                      >
-                        Sign In
-                      </button>
-                    </div>
-                  </div>
 
                   {showSuccessMessage && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
                         <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                          <FaCheckCircle className="text-green-500 text-3xl" />
+                          <FaCheckCircle className="text-secondary text-3xl" />
                         </div>
                         <h3 className="text-2xl font-bold text-gray-800 mb-2">Message Sent Successfully!</h3>
                         <p className="text-gray-600 mb-6">Thank you for reaching out. We'll get back to you shortly.</p>
                         <button
                           onClick={() => setShowSuccessMessage(false)}
-                          className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+                          className="bg-secondary hover:bg-accent text-white px-8 py-3 rounded-lg font-semibold transition-colors"
                         >
                           Great, Thanks!
                         </button>
@@ -188,7 +158,7 @@ export default function ContactPage() {
                             type="text"
                             id="name"
                             name="name"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                             placeholder="Your full name"
                             required
                           />
@@ -199,7 +169,7 @@ export default function ContactPage() {
                             type="email"
                             id="email"
                             name="email"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                             placeholder="Your email address"
                             required
                           />
@@ -210,7 +180,7 @@ export default function ContactPage() {
                             type="tel"
                             id="phone"
                             name="phone"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                             placeholder="Your phone number"
                           />
                         </div>
@@ -222,7 +192,7 @@ export default function ContactPage() {
                           id="message"
                           name="message"
                           rows={6}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
                           placeholder="Your message"
                           required
                         ></textarea>
@@ -231,7 +201,7 @@ export default function ContactPage() {
                       <div className="mt-6">
                         <button
                           type="submit"
-                          className="w-full bg-blue-600 text-white font-medium py-3 px-6 rounded-md hover:bg-blue-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          className="w-full bg-primary text-white font-medium py-3 px-6 rounded-md hover:bg-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                         >
                           Send Message
                         </button>
@@ -245,7 +215,7 @@ export default function ContactPage() {
         </section>
 
         {/* Map Location */}
-        <section className="bg-blue-50 py-16">
+        <section className="bg-primary-50 py-16">
           <div className="container mx-auto px-4 text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">Our Location</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">

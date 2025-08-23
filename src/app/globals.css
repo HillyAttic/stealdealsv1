@@ -67,19 +67,29 @@
   --card-foreground: #171717;
   --popover: #ffffff;
   --popover-foreground: #171717;
-  --primary: #0369a1;
-  --primary-foreground: #f9fafb;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #334155;
+  
+  /* Custom Brand Theme Colors - Force Load */
+  --primary: #154D71 !important;
+  --primary-rgb: 21, 77, 113 !important;
+  --primary-foreground: #ffffff !important;
+  --secondary: #1C6EA4 !important;
+  --secondary-rgb: 28, 110, 164 !important;
+  --secondary-foreground: #ffffff !important;
+  --accent: #33A1E0 !important;
+  --accent-rgb: 51, 161, 224 !important;
+  --accent-foreground: #ffffff !important;
+  --highlight: #FFF9AF !important;
+  --highlight-rgb: 255, 249, 175 !important;
+  --highlight-foreground: #171717 !important;
+  
+  /* Legacy support */
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
-  --accent: #f1f5f9;
-  --accent-foreground: #334155;
   --destructive: #ef4444;
   --destructive-foreground: #f9fafb;
   --border: #e2e8f0;
   --input: #e2e8f0;
-  --ring: #0369a1;
+  --ring: var(--primary);
   --radius: 0.5rem;
 }
 
@@ -98,19 +108,28 @@
     --card-foreground: #f9fafb;
     --popover: #262626;
     --popover-foreground: #f9fafb;
-    --primary: #38bdf8;
-    --primary-foreground: #171717;
-    --secondary: #334155;
-    --secondary-foreground: #f9fafb;
+    
+    /* Keep custom theme colors consistent in dark mode */
+    --primary: #154D71;
+    --primary-rgb: 21, 77, 113;
+    --primary-foreground: #ffffff;
+    --secondary: #1C6EA4;
+    --secondary-rgb: 28, 110, 164;
+    --secondary-foreground: #ffffff;
+    --accent: #33A1E0;
+    --accent-rgb: 51, 161, 224;
+    --accent-foreground: #ffffff;
+    --highlight: #FFF9AF;
+    --highlight-rgb: 255, 249, 175;
+    --highlight-foreground: #171717;
+    
     --muted: #334155;
     --muted-foreground: #94a3b8;
-    --accent: #334155;
-    --accent-foreground: #f9fafb;
     --destructive: #7f1d1d;
     --destructive-foreground: #f9fafb;
     --border: #27272a;
     --input: #27272a;
-    --ring: #38bdf8;
+    --ring: var(--primary);
   }
 }
 
@@ -133,4 +152,127 @@ body {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+}
+
+/* Ensure custom colors are loaded and override any opacity issues */
+@layer utilities {
+  .bg-primary {
+    background-color: #154D71 !important;
+  }
+  .bg-secondary {
+    background-color: #1C6EA4 !important;
+  }
+  .bg-accent {
+    background-color: #33A1E0 !important;
+  }
+  .bg-highlight {
+    background-color: #FFF9AF !important;
+  }
+  .text-primary {
+    color: #154D71 !important;
+  }
+  .text-secondary {
+    color: #1C6EA4 !important;
+  }
+  .text-accent {
+    color: #33A1E0 !important;
+  }
+  .text-highlight {
+    color: #FFF9AF !important;
+  }
+  .border-primary {
+    border-color: #154D71 !important;
+  }
+  .border-secondary {
+    border-color: #1C6EA4 !important;
+  }
+  .border-accent {
+    border-color: #33A1E0 !important;
+  }
+  .border-highlight {
+    border-color: #FFF9AF !important;
+  }
+  
+  /* Opacity variations */
+  .bg-primary\/5 {
+    background-color: rgba(21, 77, 113, 0.05) !important;
+  }
+  .bg-primary\/10 {
+    background-color: rgba(21, 77, 113, 0.1) !important;
+  }
+  .bg-primary\/20 {
+    background-color: rgba(21, 77, 113, 0.2) !important;
+  }
+  .bg-secondary\/5 {
+    background-color: rgba(28, 110, 164, 0.05) !important;
+  }
+  .bg-secondary\/10 {
+    background-color: rgba(28, 110, 164, 0.1) !important;
+  }
+  .bg-secondary\/20 {
+    background-color: rgba(28, 110, 164, 0.2) !important;
+  }
+  .bg-accent\/5 {
+    background-color: rgba(51, 161, 224, 0.05) !important;
+  }
+  .bg-accent\/10 {
+    background-color: rgba(51, 161, 224, 0.1) !important;
+  }
+  .bg-accent\/20 {
+    background-color: rgba(51, 161, 224, 0.2) !important;
+  }
+  .bg-highlight\/10 {
+    background-color: rgba(255, 249, 175, 0.1) !important;
+  }
+  .bg-highlight\/20 {
+    background-color: rgba(255, 249, 175, 0.2) !important;
+  }
+  .bg-highlight\/40 {
+    background-color: rgba(255, 249, 175, 0.4) !important;
+  }
+  
+  /* Border opacity variations */
+  .border-primary\/20 {
+    border-color: rgba(21, 77, 113, 0.2) !important;
+  }
+  .border-secondary\/20 {
+    border-color: rgba(28, 110, 164, 0.2) !important;
+  }
+  .border-accent\/20 {
+    border-color: rgba(51, 161, 224, 0.2) !important;
+  }
+  .border-highlight\/40 {
+    border-color: rgba(255, 249, 175, 0.4) !important;
+  }
+  
+  /* Text color variations */
+  .text-primary-100 {
+    color: #CCE1EE !important;
+  }
+  .text-primary\/20 {
+    color: rgba(21, 77, 113, 0.2) !important;
+  }
+  
+  /* White opacity variations */
+  .bg-white\/10 {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  .bg-white\/20 {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+  }
+  .bg-white\/30 {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+  }
+  .border-white\/20 {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+  .border-white\/30 {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+  .hover\:bg-white\/10:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  .hover\:bg-white\/30:hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+  }
 }

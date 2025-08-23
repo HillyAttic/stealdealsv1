@@ -79,7 +79,7 @@ export function FranchiseContactModal({ franchise, isOpen, onClose }: FranchiseC
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[70] p-4" style={{
+    <div className="fixed inset-0 flex items-center justify-center z-[1003] p-4" style={{
       backdropFilter: 'blur(12px)',
       WebkitBackdropFilter: 'blur(12px)',
       background: 'rgba(0, 0, 0, 0.5)'

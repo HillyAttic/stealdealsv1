@@ -115,7 +115,7 @@ export function FranchiseCard({
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
           {franchise.status === 'Limited' && (
-            <div className="absolute top-4 left-4 bg-yellow-500 text-white px-3 py-1 rounded-md text-sm font-medium">
+            <div className="absolute top-4 left-4 bg-highlight text-primary px-3 py-1 rounded-md text-sm font-medium">
               Limited
             </div>
           )}
@@ -139,12 +139,12 @@ export function FranchiseCard({
               {franchise.industry}
             </span>
             {franchise.segment && (
-              <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+              <span className="bg-secondary/10 text-secondary text-xs font-semibold px-2.5 py-0.5 rounded">
                 {franchise.segment}
               </span>
             )}
             {franchise.model && (
-              <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+              <span className="bg-accent/10 text-accent text-xs font-semibold px-2.5 py-0.5 rounded">
                 {franchise.model}
               </span>
             )}
@@ -158,8 +158,8 @@ export function FranchiseCard({
         </p>
 
         {/* Product Display - HIGH PRIORITY */}
-        <div className="bg-indigo-100 border-l-4 border-indigo-500 p-3 rounded-md mb-4 shadow-sm">
-          <h4 className="text-sm font-bold text-indigo-800 mb-1 uppercase">Product</h4>
+        <div className="bg-accent/10 border-l-4 border-accent p-3 rounded-md mb-4 shadow-sm">
+          <h4 className="text-sm font-bold text-accent mb-1 uppercase">Product</h4>
           <p className="text-md font-bold text-gray-900 group-hover:text-primary transition-colors">
             {franchise.product || franchise.name || 'Product Available'}
           </p>
@@ -168,7 +168,7 @@ export function FranchiseCard({
         {/* Investment and ROI */}
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div className="flex items-center text-sm text-gray-700">
-            <FaMoneyBillWave className="mr-2 text-green-600" />
+            <FaMoneyBillWave className="mr-2 text-secondary" />
             <span>
               {franchise.maxInvestment && franchise.maxInvestment !== "" 
                 ? `${formatInvestment(franchise.minInvestment)} - ${formatInvestment(franchise.maxInvestment)}`
@@ -176,7 +176,7 @@ export function FranchiseCard({
             </span>
           </div>
           <div className="flex items-center text-sm text-gray-700">
-            <FaChartLine className="mr-2 text-green-600" />
+            <FaChartLine className="mr-2 text-accent" />
             <span>{franchise.royalty || franchise.roi}</span>
           </div>
         </div>

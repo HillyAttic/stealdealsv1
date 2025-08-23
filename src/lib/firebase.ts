@@ -150,6 +150,7 @@ export interface Plot {
     url: string;
     description: string;
   };
+  keySalientFeatures?: string[]; // Array of key salient features
   images: string[]; // Array of image URLs
   createdAt?: number;
   updatedAt?: number;

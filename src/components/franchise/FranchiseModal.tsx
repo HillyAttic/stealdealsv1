@@ -53,7 +53,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
     setCurrentImageIndex(0);
   }, [franchise]);
 
-  // Handle escape key press and header visibility
+  // Handle escape key press and body scroll
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -64,23 +64,11 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden'; // Prevent background scrolling
-      
-      // Hide header when modal is open
-      const header = document.querySelector('header');
-      if (header) {
-        header.style.display = 'none';
-      }
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
-      
-      // Show header when modal closes
-      const header = document.querySelector('header');
-      if (header) {
-        header.style.display = 'block';
-      }
     };
   }, [isOpen, onClose]);
 
@@ -161,7 +149,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 md:p-4" style={{
+    <div className="fixed inset-0 flex items-center justify-center z-[1002] md:p-4" style={{
       backdropFilter: 'blur(10px)',
       WebkitBackdropFilter: 'blur(10px)',
       background: 'rgba(0, 0, 0, 0.3)'
