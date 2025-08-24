@@ -34,14 +34,19 @@ export default function ContactPage() {
         <Header />
 
         {/* Page Header */}
-        <div className="bg-gradient-to-r from-primary to-secondary py-16 px-4">
-          <div className="container mx-auto text-center">
-            <h1 className="text-4xl font-bold text-white mb-4">Contact Us</h1>
-            <p className="text-primary-100 max-w-2xl mx-auto text-lg">
-              Get in touch with our team for any inquiries or assistance
-            </p>
+        <section className="py-16 relative overflow-hidden" style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))'}}>
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-white/5 clip-path-diagonal"></div>
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full"></div>
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 rounded-full"></div>
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-white mb-4">Contact Us</h1>
+              <p className="text-blue-100 max-w-2xl mx-auto text-lg">
+                Get in touch with our team for any inquiries or assistance
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
 
         {/* Contact Information & Form */}
         <section className="py-16">

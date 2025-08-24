@@ -41,15 +41,20 @@ export default function AboutPage() {
         <Header />
         
         {/* Hero Section */}
-        <div className="bg-gradient-to-r from-primary to-secondary py-20 px-4">
-          <div className="container mx-auto text-center">
-            <h1 className="text-4xl font-bold text-white mb-6">About Us</h1>
-            <div className="w-24 h-1 bg-highlight mx-auto mb-6"></div>
-            <p className="text-primary-100 max-w-3xl mx-auto text-lg">
-              Steal Deals - Your trusted partner for real estate investment, leasing, and development
-            </p>
+        <section className="py-20 relative overflow-hidden" style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))'}}>
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-white/5 clip-path-diagonal"></div>
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full"></div>
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 rounded-full"></div>
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-white mb-6">About Us</h1>
+              <div className="w-24 h-1 bg-white/30 mx-auto mb-6"></div>
+              <p className="text-blue-100 max-w-3xl mx-auto text-lg">
+                Steal Deals - Your trusted partner for real estate investment, leasing, and development
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
         
         {/* About Company Section */}
         <section className="py-16 bg-white">
