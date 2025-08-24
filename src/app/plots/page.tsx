@@ -190,7 +190,7 @@ export default function PlotsPage() {
                       >
                         <PlotCard
                           plot={plot}
-                          linkPath={undefined} // Prevent default link behavior, use click handler instead
+                          linkPath={null} // Prevent default link behavior, use click handler instead
                           showWishlist={true}
                         />
                       </div>

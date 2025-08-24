@@ -157,7 +157,7 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - Basic Information + Investment Details */}
+            {/* Left Column - Basic Information (Desktop) / Full Width (Mobile) */}
             <div className="flex flex-col">
               <div className="flex-grow">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Project Details</h3>
@@ -199,26 +199,67 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
                 </div>
               </div>
 
-              {/* Investment Details - Bottom Left */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">Investment Details</h3>
+              {/* Investment Details - Show only on Desktop */}
+              <div className="hidden lg:block mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                  <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm mr-3">$</span>
+                  Investment Details
+                </h3>
                 
-                {/* Investment */}
-                <div className="bg-blue-50 p-4 rounded-lg mb-6">
-                  <p className="text-blue-900 font-semibold">
-                    {getInvestmentDisplay()}
-                  </p>
+                {/* Investment - Enhanced with Red Theme */}
+                <div className="relative bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-xl mb-6 shadow-lg transform hover:scale-105 transition-all duration-300">
+                  {/* Decorative elements */}
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-red-400 rounded-full opacity-20 -mt-10 -mr-10"></div>
+                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-red-700 rounded-full opacity-20 -mb-8 -ml-8"></div>
+                  
+                  {/* Content */}
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                        <span className="text-white text-xs font-medium uppercase tracking-wider">
+                          SPECIAL OFFER
+                        </span>
+                      </div>
+                      <div className="bg-yellow-400 text-red-800 px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                        HOT DEAL!
+                      </div>
+                    </div>
+                    
+                    <p className="text-white font-bold text-lg leading-relaxed mb-2">
+                      {getInvestmentDisplay()}
+                    </p>
+                    
+                    <div className="flex items-center text-red-100 text-sm">
+                      <span className="inline-block w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
+                      Limited time investment opportunity
+                    </div>
+                    
+                    {/* Call to action line */}
+                    <div className="mt-4 pt-3 border-t border-white/30">
+                      <p className="text-white/90 text-sm font-medium">
+                        <strong>Act Now:</strong> Secure your investment with minimal down payment
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-[shine_3s_ease-in-out_infinite]"></div>
                 </div>
 
                 {/* Investor Discovery Kit */}
                 {plot.investorDiscoveryKit?.url && (
                   <div className="mb-6">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-3">Downloads</h4>
+                    <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                      <span className="bg-green-100 text-green-600 rounded-full p-2 mr-2">
+                        <FaDownload className="text-sm" />
+                      </span>
+                      Downloads
+                    </h4>
                     <a
                       href={plot.investorDiscoveryKit.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                      className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                     >
                       <FaDownload className="mr-2" />
                       Download Investor Discovery Kit
@@ -231,11 +272,10 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
               </div>
             </div>
 
-            {/* Right Column - Description & Key Salient Features */}
+            {/* Right Column - Description */}
             <div>
               <h3 className="text-xl font-bold text-gray-800 mb-4">Description</h3>
               
-
               {/* Description */}
               {plot.description && (
                 <div className="mt-6 pt-6 border-t border-gray-200">
@@ -246,6 +286,78 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Investment Details - Show only on Mobile (below description) */}
+          <div className="lg:hidden mt-6 pt-6 border-t border-gray-200">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+              <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm mr-3">$</span>
+              Investment Details
+            </h3>
+            
+            {/* Investment - Enhanced with Red Theme */}
+            <div className="relative bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-xl mb-6 shadow-lg transform hover:scale-105 transition-all duration-300">
+              {/* Decorative elements */}
+              <div className="absolute top-0 right-0 w-20 h-20 bg-red-400 rounded-full opacity-20 -mt-10 -mr-10"></div>
+              <div className="absolute bottom-0 left-0 w-16 h-16 bg-red-700 rounded-full opacity-20 -mb-8 -ml-8"></div>
+              
+              {/* Content */}
+              <div className="relative z-10">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                    <span className="text-white text-xs font-medium uppercase tracking-wider">
+                      SPECIAL OFFER
+                    </span>
+                  </div>
+                  <div className="bg-yellow-400 text-red-800 px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                    HOT DEAL!
+                  </div>
+                </div>
+                
+                <p className="text-white font-bold text-lg leading-relaxed mb-2">
+                  {getInvestmentDisplay()}
+                </p>
+                
+                <div className="flex items-center text-red-100 text-sm">
+                  <span className="inline-block w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
+                  Limited time investment opportunity
+                </div>
+                
+                {/* Call to action line */}
+                <div className="mt-4 pt-3 border-t border-white/30">
+                  <p className="text-white/90 text-sm font-medium">
+                    <strong>Act Now:</strong> Secure your investment with minimal down payment
+                  </p>
+                </div>
+              </div>
+              
+              {/* Shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-[shine_3s_ease-in-out_infinite]"></div>
+            </div>
+
+            {/* Investor Discovery Kit */}
+            {plot.investorDiscoveryKit?.url && (
+              <div className="mb-6">
+                <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                  <span className="bg-green-100 text-green-600 rounded-full p-2 mr-2">
+                    <FaDownload className="text-sm" />
+                  </span>
+                  Downloads
+                </h4>
+                <a
+                  href={plot.investorDiscoveryKit.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                >
+                  <FaDownload className="mr-2" />
+                  Download Investor Discovery Kit
+                </a>
+                <p className="text-sm text-gray-600 mt-2">
+                  Contains brochure, payment plan, and promotional video
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
