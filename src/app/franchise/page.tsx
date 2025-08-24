@@ -170,28 +170,47 @@ export default function FranchisePage() {
         )}
         
         {/* Hero Section */}
-        <div className="bg-gradient-to-r from-primary to-secondary py-20 px-4">
-          <div className="container mx-auto text-center">
-            <h1 className="text-4xl font-bold text-white mb-6">Be a Franchise Partner</h1>
-            <p className="text-primary-100 max-w-2xl mx-auto text-lg mb-8">
-              Start your business with India's top brands and become a successful entrepreneur
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-md mx-auto">
-              <Link 
-                href="#browse-franchises" 
-                className="bg-white text-primary hover:bg-gray-50 py-3 px-6 rounded-md font-semibold transition-colors"
-              >
-                Browse Franchises
-              </Link>
-              <Link 
-                href="#contact-form" 
-                className="bg-secondary border-2 border-white text-white hover:bg-accent py-3 px-6 rounded-md font-semibold transition-colors"
-              >
-                List Your Brand
-              </Link>
+        <section className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-blue-900/50 z-10"></div>
+          <div className="absolute inset-0">
+            <div className="w-full h-full">
+              <Image 
+                src="https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+                alt="Franchise Opportunities"
+                fill
+                style={{ objectFit: 'cover' }}
+                priority
+                quality={100}
+                className="brightness-75"
+              />
             </div>
           </div>
-        </div>
+          
+          <div className="relative z-20 py-24 md:py-32">
+            <div className="container mx-auto px-4">
+              <div className="max-w-3xl">
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Be a Franchise Partner</h1>
+                <p className="text-xl text-gray-200 mb-8">
+                  Start your business with India's top brands and become a successful entrepreneur
+                </p>
+                <div className="flex flex-col sm:flex-row justify-start gap-4 max-w-md">
+                  <Link 
+                    href="#browse-franchises" 
+                    className="bg-white text-primary hover:bg-gray-50 py-3 px-6 rounded-md font-semibold transition-colors text-center"
+                  >
+                    Browse Franchises
+                  </Link>
+                  <Link 
+                    href="#contact-form" 
+                    className="bg-primary border-2 border-white text-white hover:bg-secondary py-3 px-6 rounded-md font-semibold transition-colors text-center"
+                  >
+                    List Your Brand
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
         
         {/* Stats Section */}
         <div className="bg-white py-12">

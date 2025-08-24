@@ -59,8 +59,8 @@ export default function ContactPage() {
 
                   <div className="space-y-6">
                     <div className="flex items-start">
-                      <div className="bg-primary-50 p-3 rounded-full mr-4">
-                        <FaMapMarkerAlt className="text-primary text-xl" />
+                      <div className="p-3 rounded-full mr-4" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                        <FaMapMarkerAlt className="text-xl" style={{color: 'rgb(28, 110, 164)'}} />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-800 mb-1">Office Address</h3>
@@ -69,8 +69,8 @@ export default function ContactPage() {
                     </div>
 
                     <div className="flex items-start">
-                      <div className="bg-secondary-50 p-3 rounded-full mr-4">
-                        <FaPhone className="text-secondary text-xl" />
+                      <div className="p-3 rounded-full mr-4" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                        <FaPhone className="text-xl" style={{color: 'rgb(28, 110, 164)'}} />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-800 mb-1">Phone Number</h3>
@@ -79,8 +79,8 @@ export default function ContactPage() {
                     </div>
 
                     <div className="flex items-start">
-                      <div className="bg-accent-50 p-3 rounded-full mr-4">
-                        <FaEnvelope className="text-accent text-xl" />
+                      <div className="p-3 rounded-full mr-4" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                        <FaEnvelope className="text-xl" style={{color: 'rgb(28, 110, 164)'}} />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-800 mb-1">Email Address</h3>
@@ -89,8 +89,8 @@ export default function ContactPage() {
                     </div>
 
                     <div className="flex items-start">
-                      <div className="bg-highlight/20 p-3 rounded-full mr-4">
-                        <FaClock className="text-primary text-xl" />
+                      <div className="p-3 rounded-full mr-4" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                        <FaClock className="text-xl" style={{color: 'rgb(28, 110, 164)'}} />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-800 mb-1">Business Hours</h3>
@@ -102,16 +102,40 @@ export default function ContactPage() {
                   <div className="mt-8 pt-6 border-t border-gray-200">
                     <h3 className="font-semibold text-gray-800 mb-4">Connect With Us</h3>
                     <div className="flex space-x-4">
-                      <a href="https://www.facebook.com/stealdeals.co.in/" className="bg-primary text-white p-3 rounded-full hover:bg-secondary transition-colors">
+                      <a 
+                        href="https://www.facebook.com/stealdeals.co.in/" 
+                        className="text-white p-3 rounded-full transition-all duration-300 hover:scale-105"
+                        style={{backgroundColor: 'rgb(28, 110, 164)'}}
+                        onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(21, 77, 113)'}
+                        onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(28, 110, 164)'}
+                      >
                         <FaFacebookF />
                       </a>
-                      <a href="#" className="bg-primary text-white p-3 rounded-full hover:bg-secondary transition-colors">
+                      <a 
+                        href="#" 
+                        className="text-white p-3 rounded-full transition-all duration-300 hover:scale-105"
+                        style={{backgroundColor: 'rgb(28, 110, 164)'}}
+                        onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(21, 77, 113)'}
+                        onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(28, 110, 164)'}
+                      >
                         <FaTwitter />
                       </a>
-                      <a href="http://instagram.com/stealdeals.co.in/" className="bg-primary text-white p-3 rounded-full hover:bg-secondary transition-colors">
+                      <a 
+                        href="http://instagram.com/stealdeals.co.in/" 
+                        className="text-white p-3 rounded-full transition-all duration-300 hover:scale-105"
+                        style={{backgroundColor: 'rgb(28, 110, 164)'}}
+                        onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(21, 77, 113)'}
+                        onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(28, 110, 164)'}
+                      >
                         <FaInstagram />
                       </a>
-                      <a href="https://www.linkedin.com/company/steal-deals/posts/?feedView=all" className="bg-primary text-white p-3 rounded-full hover:bg-secondary transition-colors">
+                      <a 
+                        href="https://www.linkedin.com/company/steal-deals/posts/?feedView=all" 
+                        className="text-white p-3 rounded-full transition-all duration-300 hover:scale-105"
+                        style={{backgroundColor: 'rgb(28, 110, 164)'}}
+                        onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(21, 77, 113)'}
+                        onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(28, 110, 164)'}
+                      >
                         <FaLinkedinIn />
                       </a>
                     </div>
@@ -129,13 +153,16 @@ export default function ContactPage() {
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
                         <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                          <FaCheckCircle className="text-secondary text-3xl" />
+                          <FaCheckCircle className="text-3xl" style={{color: 'rgb(28, 110, 164)'}} />
                         </div>
                         <h3 className="text-2xl font-bold text-gray-800 mb-2">Message Sent Successfully!</h3>
                         <p className="text-gray-600 mb-6">Thank you for reaching out. We'll get back to you shortly.</p>
                         <button
                           onClick={() => setShowSuccessMessage(false)}
-                          className="bg-secondary hover:bg-accent text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+                          className="text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105"
+                          style={{backgroundColor: 'rgb(28, 110, 164)'}}
+                          onMouseEnter={(e) => (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgb(21, 77, 113)'}
+                          onMouseLeave={(e) => (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgb(28, 110, 164)'}
                         >
                           Great, Thanks!
                         </button>
@@ -163,7 +190,18 @@ export default function ContactPage() {
                             type="text"
                             id="name"
                             name="name"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 transition-all duration-300"
+                            style={{
+                              '--focus-ring-color': 'rgba(28, 110, 164, 0.3)'
+                            } as React.CSSProperties & { '--focus-ring-color': string }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = 'rgb(28, 110, 164)';
+                              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(28, 110, 164, 0.1)';
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = '#d1d5db';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
                             placeholder="Your full name"
                             required
                           />
@@ -174,7 +212,18 @@ export default function ContactPage() {
                             type="email"
                             id="email"
                             name="email"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 transition-all duration-300"
+                            style={{
+                              '--focus-ring-color': 'rgba(28, 110, 164, 0.3)'
+                            } as React.CSSProperties & { '--focus-ring-color': string }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = 'rgb(28, 110, 164)';
+                              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(28, 110, 164, 0.1)';
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = '#d1d5db';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
                             placeholder="Your email address"
                             required
                           />
@@ -185,7 +234,18 @@ export default function ContactPage() {
                             type="tel"
                             id="phone"
                             name="phone"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 transition-all duration-300"
+                            style={{
+                              '--focus-ring-color': 'rgba(28, 110, 164, 0.3)'
+                            } as React.CSSProperties & { '--focus-ring-color': string }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = 'rgb(28, 110, 164)';
+                              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(28, 110, 164, 0.1)';
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = '#d1d5db';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
                             placeholder="Your phone number"
                           />
                         </div>
@@ -197,7 +257,15 @@ export default function ContactPage() {
                           id="message"
                           name="message"
                           rows={6}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 transition-all duration-300"
+                          onFocus={(e) => {
+                            e.currentTarget.style.borderColor = 'rgb(28, 110, 164)';
+                            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(28, 110, 164, 0.1)';
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = '#d1d5db';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
                           placeholder="Your message"
                           required
                         ></textarea>
@@ -206,7 +274,12 @@ export default function ContactPage() {
                       <div className="mt-6">
                         <button
                           type="submit"
-                          className="w-full bg-primary text-white font-medium py-3 px-6 rounded-md hover:bg-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                          className="w-full text-white font-medium py-3 px-6 rounded-md transition-all duration-300 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2"
+                          style={{backgroundColor: 'rgb(28, 110, 164)'}}
+                          onMouseEnter={(e) => (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgb(21, 77, 113)'}
+                          onMouseLeave={(e) => (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgb(28, 110, 164)'}
+                          onFocus={(e) => e.currentTarget.style.boxShadow = '0 0 0 3px rgba(28, 110, 164, 0.3)'}
+                          onBlur={(e) => e.currentTarget.style.boxShadow = 'none'}
                         >
                           Send Message
                         </button>
@@ -220,7 +293,7 @@ export default function ContactPage() {
         </section>
 
         {/* Map Location */}
-        <section className="bg-primary-50 py-16">
+        <section className="py-16" style={{backgroundColor: 'rgba(28, 110, 164, 0.05)'}}>
           <div className="container mx-auto px-4 text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">Our Location</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
