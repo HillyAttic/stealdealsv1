@@ -1,11 +1,14 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import Link from 'next/link';
-import { FaMapMarkerAlt, FaRulerCombined, FaDownload } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaRulerCombined, FaDownload, FaLock } from 'react-icons/fa';
 import { WishlistButton } from '@/components/wishlist';
 import PropertyImage from '@/components/PropertyImage';
 import { Plot } from '@/lib/firebase';
+import { useGatedContent } from '@/hooks/useGatedContent';
+import { PlotGatedContentModal } from './PlotGatedContentModal';
+import { PlotSuccessMessage } from './PlotSuccessMessage';
 
 interface PlotCardProps {
   plot: Plot;
@@ -20,6 +23,15 @@ export function PlotCard({
   className = '',
   showWishlist = true
 }: PlotCardProps) {
+  // Generate a consistent ID for this plot
+  const plotId = plot.id || `plot-${plot.project?.replace(/\s+/g, '-').toLowerCase()}`;
+
+  // Gated content state
+  const { isContentUnlocked, unlockContent } = useGatedContent('plot');
+  const [showGatedModal, setShowGatedModal] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const isUnlocked = isContentUnlocked(plotId);
+
   // Memoized callback to prevent unnecessary re-renders
   const handleAuthRequired = useCallback(() => {
     // No longer needed - auth prompts are disabled
@@ -51,6 +63,38 @@ export function PlotCard({
       return `Investment starts from ${formatCurrency(plot.investmentStartsFrom.amount)} per ${plot.investmentStartsFrom.unit} only`;
     }
     return 'Investment details not available';
+  };
+
+  // Handle investor discovery kit click
+  const handleInvestorKitClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    
+    if (!plot.investorDiscoveryKit?.url) {
+      return; // Do nothing if no URL
+    }
+    
+    if (isUnlocked) {
+      // Content is unlocked, open the discovery kit URL
+      window.open(plot.investorDiscoveryKit.url, '_blank', 'noopener,noreferrer');
+    } else {
+      // Content is locked, show the gated modal
+      setShowGatedModal(true);
+    }
+  };
+
+  // Handle successful form submission
+  const handleGatedSuccess = () => {
+    setShowGatedModal(false);
+    unlockContent(plotId);
+    setShowSuccessMessage(true);
+  };
+
+  // Handle download from success message
+  const handleDownloadFromSuccess = () => {
+    setShowSuccessMessage(false);
+    if (plot.investorDiscoveryKit?.url) {
+      window.open(plot.investorDiscoveryKit.url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const CardContent = () => (
@@ -117,21 +161,55 @@ export function PlotCard({
           </p>
         </div>
 
-        {/* Investor Discovery Kit Download */}
-        {plot.investorDiscoveryKit?.url && (
-          <div className="mt-3">
-            <a
-              href={plot.investorDiscoveryKit.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
-              onClick={(e) => e.stopPropagation()} // Prevent card click when clicking download
+        {/* Investor Discovery Kit - Gated Content */}
+        <div className="border-t pt-3 mt-auto">
+          {plot.investorDiscoveryKit?.url ? (
+            <button
+              onClick={handleInvestorKitClick}
+              className={`w-full flex justify-center items-center py-2 px-4 rounded transition-all duration-300 text-white ${
+                isUnlocked 
+                  ? 'hover:shadow-lg' 
+                  : 'hover:shadow-lg'
+              }`}
+              style={{
+                background: isUnlocked 
+                  ? '#154D71' 
+                  : 'linear-gradient(to right, #f59e0b, #dc2626)'
+              }}
+              onMouseEnter={(e) => {
+                if (isUnlocked) {
+                  e.currentTarget.style.background = 'rgba(21, 77, 113, 0.9)';
+                } else {
+                  e.currentTarget.style.background = 'linear-gradient(to right, #d97706, #b91c1c)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (isUnlocked) {
+                  e.currentTarget.style.background = '#154D71';
+                } else {
+                  e.currentTarget.style.background = 'linear-gradient(to right, #f59e0b, #dc2626)';
+                }
+              }}
             >
+              {isUnlocked ? (
+                <>
+                  <FaDownload className="mr-2" />
+                  Investor Discovery Kit
+                </>
+              ) : (
+                <>
+                  <FaLock className="mr-2" />
+                  Unlock Discovery Kit
+                </>
+              )}
+            </button>
+          ) : (
+            <div className="w-full flex justify-center items-center bg-gray-400 text-gray-200 py-2 px-4 rounded cursor-not-allowed">
               <FaDownload className="mr-2" />
-              Download Investor Discovery Kit
-            </a>
-          </div>
-        )}
+              Investor Discovery Kit
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -145,6 +223,22 @@ export function PlotCard({
       ) : (
         <CardContent />
       )}
+      
+      {/* Gated Content Modal */}
+      <PlotGatedContentModal
+        plot={plot}
+        isOpen={showGatedModal}
+        onClose={() => setShowGatedModal(false)}
+        onSuccess={handleGatedSuccess}
+      />
+      
+      {/* Success Message */}
+      <PlotSuccessMessage
+        isOpen={showSuccessMessage}
+        onClose={() => setShowSuccessMessage(false)}
+        onDownload={handleDownloadFromSuccess}
+        plotName={plot.project}
+      />
     </>
   );
 }

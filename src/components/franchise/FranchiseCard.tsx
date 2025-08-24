@@ -62,7 +62,7 @@ export function FranchiseCard({
   const franchiseId = franchise.id || `franchise-${++franchiseIdCounter}`;
 
   // Gated content state
-  const { isContentUnlocked, unlockContent } = useGatedContent();
+  const { isContentUnlocked, unlockContent } = useGatedContent('franchise');
   const [showGatedModal, setShowGatedModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const isUnlocked = isContentUnlocked(franchiseId);
@@ -227,8 +227,8 @@ export function FranchiseCard({
             <p className="text-xs text-gray-700">
               {(franchise.minArea && franchise.minArea !== "NA") && 
                (franchise.maxArea && franchise.maxArea !== "NA")
-                ? `${franchise.minArea} - ${franchise.maxArea} sq.ft.`
-                : `${franchise.minArea !== "NA" ? franchise.minArea : franchise.maxArea} sq.ft.`}
+                ? `${franchise.minArea} - ${franchise.maxArea}`
+                : `${franchise.minArea !== "NA" ? franchise.minArea : franchise.maxArea}`}
             </p>
           </div>
         )}

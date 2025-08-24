@@ -283,24 +283,24 @@ export default function FranchisePage() {
         </section>
         
         {/* Stats Section */}
-        <div className="bg-white py-12">
+        <div className="bg-white py-12 lg:py-16">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-              <div className="bg-primary-50 rounded-lg p-6">
-                <div className="text-4xl font-bold text-primary mb-2">500+</div>
-                <div className="text-gray-600">Brand Partners</div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 text-center">
+              <div style={{backgroundColor: '#BBDCE5'}} className="rounded-lg p-4 sm:p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">500+</div>
+                <div className="text-gray-600 text-sm sm:text-base">Brand Partners</div>
               </div>
-              <div className="bg-secondary-50 rounded-lg p-6">
-                <div className="text-4xl font-bold text-secondary mb-2">10,000+</div>
-                <div className="text-gray-600">Franchise Outlets</div>
+              <div style={{backgroundColor: '#BBDCE5'}} className="rounded-lg p-4 sm:p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">10,000+</div>
+                <div className="text-gray-600 text-sm sm:text-base">Franchise Outlets</div>
               </div>
-              <div className="bg-accent-50 rounded-lg p-6">
-                <div className="text-4xl font-bold text-accent mb-2">100+</div>
-                <div className="text-gray-600">Cities Covered</div>
+              <div style={{backgroundColor: '#BBDCE5'}} className="rounded-lg p-4 sm:p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">100+</div>
+                <div className="text-gray-600 text-sm sm:text-base">Cities Covered</div>
               </div>
-              <div className="bg-highlight rounded-lg p-6">
-                <div className="text-4xl font-bold text-primary mb-2">95%</div>
-                <div className="text-gray-600">Success Rate</div>
+              <div style={{backgroundColor: '#BBDCE5'}} className="rounded-lg p-4 sm:p-6 shadow-md hover:shadow-lg transition-shadow duration-300">
+                <div className="text-3xl sm:text-4xl font-bold text-primary mb-2">95%</div>
+                <div className="text-gray-600 text-sm sm:text-base">Success Rate</div>
               </div>
             </div>
           </div>
