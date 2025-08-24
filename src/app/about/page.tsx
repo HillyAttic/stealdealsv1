@@ -203,61 +203,7 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-        
-        {/* Services Section */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">Our Services</h2>
-              <div className="w-20 h-1 bg-primary mx-auto mb-6"></div>
-              <p className="text-gray-600">
-                We offer comprehensive real estate solutions across multiple verticals to meet all your property needs
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-shadow">
-                <div className="bg-primary-50 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
-                  <FaBuilding className="text-primary text-2xl" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Pre-Leased Properties</h3>
-                <p className="text-gray-600 text-center">
-                  Banks, insurance companies, independent buildings, offices, and retail showrooms across Delhi, Noida, Ghaziabad, and Gurgaon.
-                </p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-shadow">
-                <div className="bg-secondary-50 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
-                  <FaMapMarkerAlt className="text-secondary text-2xl" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Commercial & Industrial Plots</h3>
-                <p className="text-gray-600 text-center">
-                  Prime locations in Udyog Vihar, Golf Course Road, Infocity, Manesar, Sahibabad, Jhilmil, Patparganj, Faridabad, and Noida.
-                </p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-shadow">
-                <div className="bg-accent-50 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
-                  <FaHotel className="text-accent text-2xl" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Hotel & Banquet Transactions</h3>
-                <p className="text-gray-600 text-center">
-                  Land acquisition, project feasibility studies, joint ventures, and existing property leasing solutions.
-                </p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-shadow">
-                <div className="bg-highlight/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
-                  <FaTools className="text-primary text-2xl" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Construction & Development</h3>
-                <p className="text-gray-600 text-center">
-                  Residential builder floor construction in Rajgarh Colony, Krishna Nagar, with investment opportunities at land stage and floor bookings.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+
         
         {/* Values Section */}
         <section className="py-16 bg-gray-50">
@@ -406,23 +352,28 @@ export default function AboutPage() {
         </section>
         
         {/* CTA Section */}
-        <section className="py-16 bg-gradient-to-r from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)] text-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-6">Ready to Find Your Next Investment?</h2>
-              <p className="text-white/80 mb-8 text-lg">
+        <section className="py-20 bg-gradient-to-r from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)] relative overflow-hidden">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-white/5 clip-path-diagonal"></div>
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full"></div>
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 rounded-full"></div>
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="text-center max-w-4xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Ready to Find Your Next Investment?</h2>
+              <p className="text-white/80 text-lg mb-10 leading-relaxed">
                 Whether you're looking for pre-leased properties, commercial plots, or development opportunities, we have the expertise to help you succeed.
               </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                 <Link 
                   href="/inventory" 
-                  className="bg-white text-[rgb(21,77,113)] hover:bg-white/90 hover:text-[rgb(28,110,164)] py-3 px-8 rounded-md font-semibold transition-all duration-300"
+                  className="bg-white text-[rgb(21,77,113)] hover:bg-white/90 hover:text-[rgb(28,110,164)] px-8 py-4 rounded-lg text-lg font-bold transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
                   Browse Properties
                 </Link>
                 <Link 
                   href="/contact" 
-                  className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-[rgb(21,77,113)] py-3 px-8 rounded-md font-semibold transition-all duration-300"
+                  className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-[rgb(21,77,113)] px-8 py-4 rounded-lg text-lg font-bold transition-all duration-300"
                 >
                   Contact Us
                 </Link>
