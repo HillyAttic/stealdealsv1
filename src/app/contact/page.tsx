@@ -302,16 +302,78 @@ export default function ContactPage() {
           </div>
 
           <div className="container mx-auto px-4">
+            {/* Address Display Card */}
+            <div className="bg-white p-8 rounded-lg shadow-md mb-6">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-gray-800 mb-6">Our Office Location</h3>
+                <div className="text-lg text-gray-700 leading-relaxed space-y-2">
+                  <p className="font-semibold" style={{color: 'rgb(28, 110, 164)'}}>2nd Floor, Block A, Ofis Square</p>
+                  <p className="font-semibold" style={{color: 'rgb(28, 110, 164)'}}>The Iconic Corenthum, Noida Sector - 62</p>
+                  <p className="font-semibold" style={{color: 'rgb(28, 110, 164)'}}>Uttar Pradesh - 201301</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Map Container with Multiple Options */}
             <div className="bg-white p-3 rounded-lg shadow-md">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.8848371386!2d77.28720821451529!3d28.63322088241705!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfbdda90e78d7%3A0x9e96b275a7af96af!2sNirman%20Vihar%2C%20Preet%20Vihar%2C%20New%20Delhi%2C%20Delhi%20110092!5e0!3m2!1sen!2sin!4v1654780912537!5m2!1sen!2sin"
-                width="100%"
-                height="450"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              ></iframe>
+              {/* Primary Google Maps Embed */}
+              <div className="mb-4">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3504.0926395963837!2d77.36589261508!3d28.569007582436155!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390ce56d00000000%3A0x0000000000000000!2sThe%20Iconic%20Corenthum%2C%20Sector%2062%2C%20Noida%2C%20Uttar%20Pradesh%20201301!5e0!3m2!1sen!2sin!4v1735063500000!5m2!1sen!2sin"
+                  width="100%"
+                  height="450"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="StealDeals Office Location - The Iconic Corenthum, Noida Sector 62"
+                ></iframe>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Google Maps */}
+                <a 
+                  href="https://www.google.com/maps/search/The+Iconic+Corenthum,+Sector+62,+Noida,+Uttar+Pradesh+201301/@28.569007,77.36589,17z"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center px-4 py-3 text-white rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  style={{backgroundColor: 'rgb(28, 110, 164)'}}
+                  onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(21, 77, 113)'}
+                  onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(28, 110, 164)'}
+                >
+                  <FaMapMarkerAlt className="mr-2" />
+                  Open in Google Maps
+                </a>
+                
+                {/* Apple Maps */}
+                <a 
+                  href="https://maps.apple.com/?q=The+Iconic+Corenthum,+Sector+62,+Noida,+Uttar+Pradesh+201301"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center px-4 py-3 text-white rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  style={{backgroundColor: 'rgb(51, 161, 224)'}}
+                  onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(28, 110, 164)'}
+                  onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(51, 161, 224)'}
+                >
+                  <FaMapMarkerAlt className="mr-2" />
+                  Open in Apple Maps
+                </a>
+                
+                {/* Get Directions */}
+                <a 
+                  href="https://www.google.com/maps/dir//The+Iconic+Corenthum,+Sector+62,+Noida,+Uttar+Pradesh+201301"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center px-4 py-3 text-white rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  style={{backgroundColor: 'rgb(21, 77, 113)'}}
+                  onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(28, 110, 164)'}
+                  onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgb(21, 77, 113)'}
+                >
+                  <FaMapMarkerAlt className="mr-2" />
+                  Get Directions
+                </a>
+              </div>
             </div>
           </div>
         </section>

@@ -35,7 +35,7 @@ interface Property {
 
 interface PropertyCardProps {
   property: Property;
-  linkPath?: string;
+  linkPath?: string | null;
   className?: string;
   showWishlist?: boolean;
 }
