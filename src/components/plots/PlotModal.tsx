@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaTimes, FaDownload, FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaRulerCombined } from 'react-icons/fa';
+import { FaTimes, FaDownload, FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaRulerCombined, FaLock } from 'react-icons/fa';
 import PropertyImage from '@/components/PropertyImage';
 import { Plot } from '@/lib/firebase';
+import { useGatedContent } from '@/hooks/useGatedContent';
+import { PlotGatedContentModal } from './PlotGatedContentModal';
+import { PlotSuccessMessage } from './PlotSuccessMessage';
 
 interface PlotModalProps {
   plot: Plot | null;
@@ -13,6 +16,15 @@ interface PlotModalProps {
 
 export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  // Generate a consistent ID for this plot (same as PlotCard)
+  const plotId = plot?.id || `plot-${plot?.project?.replace(/\s+/g, '-').toLowerCase()}`;
+
+  // Gated content state
+  const { isContentUnlocked, unlockContent } = useGatedContent('plot');
+  const [showGatedModal, setShowGatedModal] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const isUnlocked = plot ? isContentUnlocked(plotId) : false;
 
   // Reset image index when plot changes
   useEffect(() => {
@@ -87,6 +99,38 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
     }
   };
 
+  // Handle investor discovery kit click
+  const handleInvestorKitClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!plot?.investorDiscoveryKit?.url) {
+      return;
+    }
+    
+    if (isUnlocked) {
+      // Content is unlocked, open the discovery kit URL
+      window.open(plot.investorDiscoveryKit.url, '_blank', 'noopener,noreferrer');
+    } else {
+      // Content is locked, show the gated modal
+      setShowGatedModal(true);
+    }
+  };
+
+  // Handle successful form submission
+  const handleGatedSuccess = () => {
+    setShowGatedModal(false);
+    unlockContent(plotId);
+    setShowSuccessMessage(true);
+  };
+
+  // Handle download from success message
+  const handleDownloadFromSuccess = () => {
+    setShowSuccessMessage(false);
+    if (plot?.investorDiscoveryKit?.url) {
+      window.open(plot.investorDiscoveryKit.url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   const validImages = plot.images?.filter(img => img && img.trim() !== '') || [];
 
   return (
@@ -157,7 +201,7 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - Basic Information (Desktop) / Full Width (Mobile) */}
+            {/* Left Column - Basic Information */}
             <div className="flex flex-col">
               <div className="flex-grow">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Project Details</h3>
@@ -198,78 +242,6 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
                   </div>
                 </div>
               </div>
-
-              {/* Investment Details - Show only on Desktop */}
-              <div className="hidden lg:block mt-6 pt-6 border-t border-gray-200">
-                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                  <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm mr-3">$</span>
-                  Investment Details
-                </h3>
-                
-                {/* Investment - Enhanced with Red Theme */}
-                <div className="relative bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-xl mb-6 shadow-lg transform hover:scale-105 transition-all duration-300">
-                  {/* Decorative elements */}
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-red-400 rounded-full opacity-20 -mt-10 -mr-10"></div>
-                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-red-700 rounded-full opacity-20 -mb-8 -ml-8"></div>
-                  
-                  {/* Content */}
-                  <div className="relative z-10">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
-                        <span className="text-white text-xs font-medium uppercase tracking-wider">
-                          SPECIAL OFFER
-                        </span>
-                      </div>
-                      <div className="bg-yellow-400 text-red-800 px-3 py-1 rounded-full text-xs font-bold animate-pulse">
-                        HOT DEAL!
-                      </div>
-                    </div>
-                    
-                    <p className="text-white font-bold text-lg leading-relaxed mb-2">
-                      {getInvestmentDisplay()}
-                    </p>
-                    
-                    <div className="flex items-center text-red-100 text-sm">
-                      <span className="inline-block w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
-                      Limited time investment opportunity
-                    </div>
-                    
-                    {/* Call to action line */}
-                    <div className="mt-4 pt-3 border-t border-white/30">
-                      <p className="text-white/90 text-sm font-medium">
-                        <strong>Act Now:</strong> Secure your investment with minimal down payment
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-[shine_3s_ease-in-out_infinite]"></div>
-                </div>
-
-                {/* Investor Discovery Kit */}
-                {plot.investorDiscoveryKit?.url && (
-                  <div className="mb-6">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                      <span className="bg-green-100 text-green-600 rounded-full p-2 mr-2">
-                        <FaDownload className="text-sm" />
-                      </span>
-                      Downloads
-                    </h4>
-                    <a
-                      href={plot.investorDiscoveryKit.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                    >
-                      <FaDownload className="mr-2" />
-                      Download Investor Discovery Kit
-                    </a>
-                    <p className="text-sm text-gray-600 mt-2">
-                      Contains brochure, payment plan, and promotional video
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Right Column - Description */}
@@ -283,6 +255,162 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
                     className="prose prose-blue max-w-none text-gray-700"
                     dangerouslySetInnerHTML={{ __html: plot.description }}
                   />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Investment Details and Downloads Grid - Desktop Only */}
+          <div className="hidden lg:block mt-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Investment Details Card */}
+              <div>
+                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                  <span className="bg-red-600 text-white px-3 py-1 rounded-full text-sm mr-3">$</span>
+                  Investment Details
+                </h3>
+                
+                {/* Investment - Enhanced with Red Theme */}
+                <div className="relative bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 h-[280px] flex flex-col">
+                  {/* Decorative elements */}
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-red-400 rounded-full opacity-20 -mt-10 -mr-10"></div>
+                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-red-700 rounded-full opacity-20 -mb-8 -ml-8"></div>
+                  
+                  {/* Content */}
+                  <div className="relative z-10 flex-1 flex flex-col">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                        <span className="text-white text-xs font-medium uppercase tracking-wider">
+                          SPECIAL OFFER
+                        </span>
+                      </div>
+                      <div className="bg-yellow-400 text-red-800 px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+                        HOT DEAL!
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col justify-center">
+                      <p className="text-white font-bold text-lg leading-relaxed mb-2">
+                        {getInvestmentDisplay()}
+                      </p>
+                      
+                      <div className="flex items-center text-red-100 text-sm mb-4">
+                        <span className="inline-block w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
+                        Limited time investment opportunity
+                      </div>
+                    </div>
+                    
+                    {/* Call to action line */}
+                    <div className="mt-auto pt-3 border-t border-white/30">
+                      <p className="text-white/90 text-sm font-medium">
+                        <strong>Act Now:</strong> Secure your investment with minimal down payment
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-[shine_3s_ease-in-out_infinite]"></div>
+                </div>
+              </div>
+
+              {/* Downloads Card */}
+              {plot.investorDiscoveryKit?.url && (
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <span className={`px-3 py-1 rounded-full text-sm mr-3 ${
+                      isUnlocked 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-orange-600 text-white'
+                    }`}>
+                      {isUnlocked ? '📁' : '🔒'}
+                    </span>
+                    Downloads
+                  </h3>
+                  
+                  {/* Enhanced Download Card with Blue Theme - Same height as Investment Details */}
+                  <div className={`relative p-6 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 h-[280px] flex flex-col ${
+                    isUnlocked 
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
+                      : 'bg-gradient-to-r from-orange-500 to-red-600'
+                  }`}>
+                    {/* Decorative elements */}
+                    <div className={`absolute top-0 right-0 w-20 h-20 rounded-full opacity-20 -mt-10 -mr-10 ${
+                      isUnlocked ? 'bg-blue-400' : 'bg-orange-400'
+                    }`}></div>
+                    <div className={`absolute bottom-0 left-0 w-16 h-16 rounded-full opacity-20 -mb-8 -ml-8 ${
+                      isUnlocked ? 'bg-blue-700' : 'bg-red-700'
+                    }`}></div>
+                    
+                    {/* Content */}
+                    <div className="relative z-10 flex-1 flex flex-col">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                          <span className="text-white text-xs font-medium uppercase tracking-wider">
+                            {isUnlocked ? 'AVAILABLE NOW' : 'UNLOCK REQUIRED'}
+                          </span>
+                        </div>
+                        <div className={`px-3 py-1 rounded-full text-xs font-bold animate-pulse ${
+                          isUnlocked 
+                            ? 'bg-green-400 text-blue-800' 
+                            : 'bg-yellow-400 text-red-800'
+                        }`}>
+                          {isUnlocked ? 'READY!' : 'LOCKED!'}
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1 flex flex-col justify-center">
+                        <p className="text-white font-bold text-lg leading-relaxed mb-4">
+                          {isUnlocked 
+                            ? 'Download complete investor discovery kit with brochures & videos'
+                            : 'Submit your details to unlock exclusive investor discovery kit'
+                          }
+                        </p>
+                        
+                        <div className="flex items-center text-blue-100 text-sm mb-6">
+                          <span className="inline-block w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
+                          {isUnlocked 
+                            ? 'Instant download access available'
+                            : 'Quick form submission required'
+                          }
+                        </div>
+                      </div>
+                      
+                      {/* Call to action section */}
+                      <div className="mt-auto pt-3 border-t border-white/30">
+                        <p className="text-white/90 text-sm font-medium mb-3">
+                          <strong>{isUnlocked ? 'Click below:' : 'Get Access:'}:</strong> {isUnlocked 
+                            ? 'Instant access to all materials'
+                            : 'Fill the form to unlock premium investment materials'
+                          }
+                        </p>
+                        
+                        {/* Enhanced Download Button */}
+                        <button
+                          onClick={handleInvestorKitClick}
+                          className={`w-full flex justify-center items-center py-3 px-6 rounded-lg font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 ${
+                            isUnlocked 
+                              ? 'bg-white text-blue-600 hover:bg-blue-50' 
+                              : 'bg-white text-orange-600 hover:bg-orange-50'
+                          }`}
+                        >
+                          {isUnlocked ? (
+                            <>
+                              <FaDownload className="mr-3 text-xl" />
+                              Download Discovery Kit
+                            </>
+                          ) : (
+                            <>
+                              <FaLock className="mr-3 text-xl" />
+                              Unlock Discovery Kit
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    
+                    {/* Shine effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-[shine_3s_ease-in-out_infinite]"></div>
+                  </div>
                 </div>
               )}
             </div>
@@ -335,32 +463,123 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-[shine_3s_ease-in-out_infinite]"></div>
             </div>
 
-            {/* Investor Discovery Kit */}
+            {/* Investor Discovery Kit - Mobile Only */}
             {plot.investorDiscoveryKit?.url && (
               <div className="mb-6">
-                <h4 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                  <span className="bg-green-100 text-green-600 rounded-full p-2 mr-2">
-                    <FaDownload className="text-sm" />
+                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                  <span className={`px-3 py-1 rounded-full text-sm mr-3 ${
+                    isUnlocked 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-orange-600 text-white'
+                  }`}>
+                    {isUnlocked ? '📁' : '🔒'}
                   </span>
                   Downloads
-                </h4>
-                <a
-                  href={plot.investorDiscoveryKit.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                >
-                  <FaDownload className="mr-2" />
-                  Download Investor Discovery Kit
-                </a>
-                <p className="text-sm text-gray-600 mt-2">
-                  Contains brochure, payment plan, and promotional video
+                </h3>
+                
+                {/* Enhanced Download Card with Blue Theme - Mobile */}
+                <div className={`relative p-6 rounded-xl mb-6 shadow-lg transform hover:scale-105 transition-all duration-300 ${
+                  isUnlocked 
+                    ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
+                    : 'bg-gradient-to-r from-orange-500 to-red-600'
+                }`}>
+                  {/* Decorative elements */}
+                  <div className={`absolute top-0 right-0 w-16 h-16 rounded-full opacity-20 -mt-8 -mr-8 ${
+                    isUnlocked ? 'bg-blue-400' : 'bg-orange-400'
+                  }`}></div>
+                  <div className={`absolute bottom-0 left-0 w-12 h-12 rounded-full opacity-20 -mb-6 -ml-6 ${
+                    isUnlocked ? 'bg-blue-700' : 'bg-red-700'
+                  }`}></div>
+                  
+                  {/* Content */}
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="bg-white/20 backdrop-blur-sm rounded-lg px-2 py-1">
+                        <span className="text-white text-xs font-medium uppercase tracking-wider">
+                          {isUnlocked ? 'AVAILABLE' : 'UNLOCK'}
+                        </span>
+                      </div>
+                      <div className={`px-2 py-1 rounded-full text-xs font-bold animate-pulse ${
+                        isUnlocked 
+                          ? 'bg-green-400 text-blue-800' 
+                          : 'bg-yellow-400 text-red-800'
+                      }`}>
+                        {isUnlocked ? 'READY!' : 'LOCKED!'}
+                      </div>
+                    </div>
+                    
+                    <p className="text-white font-bold text-base leading-relaxed mb-2">
+                      {isUnlocked 
+                        ? 'Download investor discovery kit'
+                        : 'Submit details to unlock kit'
+                      }
+                    </p>
+                    
+                    <div className="flex items-center text-blue-100 text-sm">
+                      <span className="inline-block w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
+                      {isUnlocked 
+                        ? 'Instant download access'
+                        : 'Quick form required'
+                      }
+                    </div>
+                    
+                    {/* Enhanced Download Button */}
+                    <div className="mt-4">
+                      <button
+                        onClick={handleInvestorKitClick}
+                        className={`w-full flex justify-center items-center py-3 px-4 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 ${
+                          isUnlocked 
+                            ? 'bg-white text-blue-600 hover:bg-blue-50' 
+                            : 'bg-white text-orange-600 hover:bg-orange-50'
+                        }`}
+                      >
+                        {isUnlocked ? (
+                          <>
+                            <FaDownload className="mr-2" />
+                            Download Kit
+                          </>
+                        ) : (
+                          <>
+                            <FaLock className="mr-2" />
+                            Unlock Kit
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full animate-[shine_3s_ease-in-out_infinite]"></div>
+                </div>
+                
+                <p className="text-sm text-gray-600 mt-2 text-center">
+                  📋 Contains brochure, payment plan, and promotional materials
                 </p>
               </div>
             )}
           </div>
         </div>
       </div>
+      
+      {/* Gated Content Modal */}
+      {plot && (
+        <PlotGatedContentModal
+          plot={plot}
+          isOpen={showGatedModal}
+          onClose={() => setShowGatedModal(false)}
+          onSuccess={handleGatedSuccess}
+        />
+      )}
+      
+      {/* Success Message */}
+      {plot && (
+        <PlotSuccessMessage
+          isOpen={showSuccessMessage}
+          onClose={() => setShowSuccessMessage(false)}
+          onDownload={handleDownloadFromSuccess}
+          plotName={plot.project}
+        />
+      )}
     </div>
   );
 }
