@@ -30,7 +30,7 @@ const PUBLIC_PATHS = [
   '/api/properties',
   '/api/franchises',
   '/_next',
-  '/favicon.ico',
+  '/favicon.svg',
   '/development.png',
   '/',
   '/about',

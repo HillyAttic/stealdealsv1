@@ -33,10 +33,6 @@ export const metadata: Metadata = {
         url: '/favicon-16x16.png',
         sizes: '16x16',
         type: 'image/png',
-      },
-      {
-        url: '/favicon.ico',
-        sizes: 'any',
       }
     ],
     apple: [
@@ -91,7 +87,6 @@ export default function RootLayout({
           <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
           <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-          <link rel="shortcut icon" href="/favicon.ico" />
           <link rel="manifest" href="/manifest.json" />
           {/* Add Boxicons for icons used in the admin panel */}
           <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet' />
