@@ -595,7 +595,7 @@ export default function Home() {
         </section>
         
         {/* Call to Action Section - Enhanced with premium design */}
-        <section className="py-20 bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 relative overflow-hidden">
+        <section className="py-20 bg-gradient-to-r from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)] relative overflow-hidden">
           {/* Decorative elements */}
           <div className="absolute top-0 right-0 w-1/2 h-full bg-white/5 clip-path-diagonal"></div>
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full"></div>
@@ -603,11 +603,11 @@ export default function Home() {
           
           <div className="container mx-auto px-4 relative z-10">
             <div className="text-center max-w-4xl mx-auto">
-              <h6 className="text-blue-300 font-semibold mb-3 uppercase tracking-wider">Get Started Today</h6>
+              <h6 className="text-white/80 font-semibold mb-3 uppercase tracking-wider">Get Started Today</h6>
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Ready to Make Your Next <span className="text-blue-300">Investment</span>?
+                Ready to Make Your Next <span className="text-white/90">Investment</span>?
               </h2>
-              <p className="text-blue-100 text-lg mb-10 leading-relaxed">
+              <p className="text-white/80 text-lg mb-10 leading-relaxed">
                 Join thousands of satisfied investors who have found their perfect properties with Steal Deals. 
                 Our expert team is ready to guide you through every step of your investment journey.
               </p>
@@ -615,7 +615,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                 <Link 
                   href="/contact" 
-                  className="group inline-flex items-center bg-white text-blue-900 px-8 py-4 rounded-lg text-lg font-bold hover:bg-blue-50 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  className="group inline-flex items-center bg-white text-[rgb(21,77,113)] px-8 py-4 rounded-lg text-lg font-bold hover:bg-white/90 hover:text-[rgb(28,110,164)] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
                   <FaPhone className="mr-3 group-hover:animate-pulse" />
                   Schedule Consultation
@@ -624,7 +624,7 @@ export default function Home() {
                 
                 <Link 
                   href="/inventory" 
-                  className="inline-flex items-center bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-white hover:text-blue-900 transition-all duration-300"
+                  className="inline-flex items-center bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-white hover:text-[rgb(21,77,113)] transition-all duration-300"
                 >
                   <FaListUl className="mr-3" />
                   Browse Properties
@@ -634,15 +634,15 @@ export default function Home() {
               <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                 <div className="text-white">
                   <p className="text-3xl font-bold mb-2">500+</p>
-                  <p className="text-blue-200">Properties Listed</p>
+                  <p className="text-white/80">Properties Listed</p>
                 </div>
                 <div className="text-white">
                   <p className="text-3xl font-bold mb-2">1000+</p>
-                  <p className="text-blue-200">Happy Clients</p>
+                  <p className="text-white/80">Happy Clients</p>
                 </div>
                 <div className="text-white">
                   <p className="text-3xl font-bold mb-2">15+</p>
-                  <p className="text-blue-200">Years Experience</p>
+                  <p className="text-white/80">Years Experience</p>
                 </div>
               </div>
             </div>

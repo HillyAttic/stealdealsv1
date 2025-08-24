@@ -41,7 +41,7 @@ export default function AboutPage() {
         <Header />
         
         {/* Hero Section */}
-        <section className="py-20 relative overflow-hidden" style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))'}}>
+        <section className="py-20 relative overflow-hidden bg-gradient-to-r from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)]">
           <div className="absolute top-0 right-0 w-1/2 h-full bg-white/5 clip-path-diagonal"></div>
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full"></div>
           <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 rounded-full"></div>
@@ -49,7 +49,7 @@ export default function AboutPage() {
             <div className="text-center">
               <h1 className="text-4xl font-bold text-white mb-6">About Us</h1>
               <div className="w-24 h-1 bg-white/30 mx-auto mb-6"></div>
-              <p className="text-blue-100 max-w-3xl mx-auto text-lg">
+              <p className="text-white/80 max-w-3xl mx-auto text-lg">
                 Steal Deals - Your trusted partner for real estate investment, leasing, and development
               </p>
             </div>
@@ -406,23 +406,23 @@ export default function AboutPage() {
         </section>
         
         {/* CTA Section */}
-        <section className="py-16 bg-primary text-white">
+        <section className="py-16 bg-gradient-to-r from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)] text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl font-bold mb-6">Ready to Find Your Next Investment?</h2>
-              <p className="text-primary-100 mb-8 text-lg">
+              <p className="text-white/80 mb-8 text-lg">
                 Whether you're looking for pre-leased properties, commercial plots, or development opportunities, we have the expertise to help you succeed.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Link 
                   href="/inventory" 
-                  className="bg-white text-primary hover:bg-primary-50 py-3 px-8 rounded-md font-semibold transition-colors"
+                  className="bg-white text-[rgb(21,77,113)] hover:bg-white/90 hover:text-[rgb(28,110,164)] py-3 px-8 rounded-md font-semibold transition-all duration-300"
                 >
                   Browse Properties
                 </Link>
                 <Link 
                   href="/contact" 
-                  className="bg-secondary border-2 border-white text-white hover:bg-accent py-3 px-8 rounded-md font-semibold transition-colors"
+                  className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-[rgb(21,77,113)] py-3 px-8 rounded-md font-semibold transition-all duration-300"
                 >
                   Contact Us
                 </Link>
