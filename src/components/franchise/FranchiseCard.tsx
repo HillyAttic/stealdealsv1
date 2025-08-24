@@ -28,6 +28,7 @@ interface Franchise {
   brandDeck?: string;
   productList?: string;
   roiSheet?: string;
+  investorDiscoveryKitUrl?: string;
   investment: number | string;
   location: string;
   status: string;
@@ -226,10 +227,23 @@ export function FranchiseCard({
         </div>
         
         <div className="border-t pt-3 mt-auto">
-          <div className="w-full flex justify-center items-center bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded transition-colors">
-            <FaDownload className="mr-2" />
-            Investor Discovery Kit
-          </div>
+          {franchise.investorDiscoveryKitUrl ? (
+            <a 
+              href={franchise.investorDiscoveryKitUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex justify-center items-center bg-primary hover:bg-primary/90 text-white py-2 px-4 rounded transition-colors"
+              onClick={(e) => e.stopPropagation()} // Prevent card click when clicking download
+            >
+              <FaDownload className="mr-2" />
+              Investor Discovery Kit
+            </a>
+          ) : (
+            <div className="w-full flex justify-center items-center bg-gray-400 text-gray-200 py-2 px-4 rounded cursor-not-allowed">
+              <FaDownload className="mr-2" />
+              Investor Discovery Kit
+            </div>
+          )}
         </div>
       </div>
     </div>

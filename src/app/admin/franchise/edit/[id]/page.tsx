@@ -444,6 +444,18 @@ function EditFranchiseContent() {
                       className="w-full p-2 border border-gray-300 rounded text-gray-800"
                     />
                   </div>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Investor Discovery Kit URL</label>
+                    <input
+                      type="url"
+                      name="investorDiscoveryKitUrl"
+                      value={franchise.investorDiscoveryKitUrl || ''}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
+                      placeholder="https://drive.google.com/file/d/your-file-id/view"
+                    />
+                    <div className="text-xs text-gray-500 mt-1">Google Drive URL for the Investor Discovery Kit download</div>
+                  </div>
                 </div>
               </div>
 

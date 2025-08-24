@@ -30,6 +30,7 @@ interface Franchise {
   brandDeck?: string;
   productList?: string;
   roiSheet?: string;
+  investorDiscoveryKitUrl?: string;
   investment: number;  // Legacy field
   location: string;    // Legacy field
   status: string;

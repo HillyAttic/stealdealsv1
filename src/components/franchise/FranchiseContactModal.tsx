@@ -25,6 +25,7 @@ interface Franchise {
   brandDeck?: string;
   productList?: string;
   roiSheet?: string;
+  investorDiscoveryKitUrl?: string;
   investment: number | string;
   location: string;
   status: string;
