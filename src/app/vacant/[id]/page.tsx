@@ -210,7 +210,6 @@ export default function VacantPropertyDetails() {
                       <WishlistButton
                         propertyId={propertyId}
                         size="lg"
-                        onAuthRequired={() => setShowAuthPrompt(true)}
                       />
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -366,14 +365,6 @@ export default function VacantPropertyDetails() {
         </section>
         
         <Footer />
-
-        {/* Auth Prompt Modal */}
-        <AuthPrompt
-          isOpen={showAuthPrompt}
-          onClose={() => setShowAuthPrompt(false)}
-          title="Sign in to save properties"
-          feature="wishlist"
-        />
       </ClientOnly>
     </main>
   );

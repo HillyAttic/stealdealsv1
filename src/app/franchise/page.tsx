@@ -59,6 +59,10 @@ export default function FranchisePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedSegment, setSelectedSegment] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedInvestmentRange, setSelectedInvestmentRange] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   // Check for success message from FormSubmit
   React.useEffect(() => {
@@ -125,11 +129,63 @@ export default function FranchisePage() {
     setSelectedFranchise(null);
   };
 
-  // Get unique industries and locations for filter dropdowns
+  // Get unique industries, locations, segments, and models for filter dropdowns
   const industries = Array.from(new Set(franchises.map(f => f.industry))).filter(Boolean);
-  const locations = Array.from(new Set(franchises.map(f => f.location))).filter(Boolean);
+  // Only use locations that exist in the database (from both location and headquarter fields)
+  const allLocations = Array.from(new Set([
+    ...franchises.map(f => f.location).filter(Boolean),
+    ...franchises.map(f => f.headquarter).filter(Boolean)
+  ])).filter(Boolean).sort();
+  
+  const segments = Array.from(new Set(franchises.map(f => f.segment))).filter(Boolean);
+  const models = Array.from(new Set(franchises.map(f => f.model))).filter(Boolean);
+  
+  // Investment range options
+  const investmentRanges = [
+    { label: 'Less than ₹5 Lakhs', min: 0, max: 500000 },
+    { label: '₹5 Lakhs – ₹10 Lakhs', min: 500000, max: 1000000 },
+    { label: '₹10 Lakhs – ₹20 Lakhs', min: 1000000, max: 2000000 },
+    { label: '₹20 Lakhs – ₹50 Lakhs', min: 2000000, max: 5000000 },
+    { label: '₹50 Lakhs – ₹1 Crore', min: 5000000, max: 10000000 },
+    { label: '₹1 Crore – ₹2 Crores', min: 10000000, max: 20000000 },
+    { label: '₹2 Crores – ₹5 Crores', min: 20000000, max: 50000000 },
+    { label: '₹5 Crores – ₹10 Crores', min: 50000000, max: 100000000 },
+    { label: 'Above ₹10 Crores', min: 100000000, max: Infinity }
+  ];
+  
+  // Helper function to get investment amount as number with improved parsing
+  const getInvestmentAmount = (franchise: Franchise) => {
+    const investment = franchise.minInvestment || franchise.investment;
+    
+    if (typeof investment === 'string') {
+      // Handle different string formats
+      let cleanStr = investment.toUpperCase().replace(/[^0-9.LAKCRORE]/g, '');
+      
+      // Extract numeric value
+      const numMatch = cleanStr.match(/([0-9.]+)/);
+      if (!numMatch) return 0;
+      
+      let num = parseFloat(numMatch[1]);
+      if (isNaN(num)) return 0;
+      
+      // Check for lakhs/crores indicators in original string
+      const originalUpper = investment.toUpperCase();
+      if (originalUpper.includes('CRORE') || originalUpper.includes('CR')) {
+        return num * 10000000; // Convert crores to rupees
+      } else if (originalUpper.includes('LAKH') || originalUpper.includes('LAC') || originalUpper.includes('LK')) {
+        return num * 100000; // Convert lakhs to rupees
+      } else if (originalUpper.includes('THOUSAND') || originalUpper.includes('K')) {
+        return num * 1000; // Convert thousands to rupees
+      }
+      
+      // If no unit specified, assume the number is already in rupees
+      return num;
+    }
+    
+    return typeof investment === 'number' ? investment : 0;
+  };
 
-  // Filter franchises based on search term, industry, and location
+  // Filter franchises based on all filter criteria
   const filteredFranchises = franchises.filter(franchise => {
     const searchStr = searchTerm.toLowerCase();
     const matchesSearch = 
@@ -139,9 +195,22 @@ export default function FranchisePage() {
       (franchise.description?.toLowerCase().includes(searchStr) || '');
       
     const matchesIndustry = selectedIndustry ? franchise.industry === selectedIndustry : true;
-    const matchesLocation = selectedLocation ? franchise.location === selectedLocation : true;
+    const matchesLocation = selectedLocation ? 
+      (franchise.location === selectedLocation || franchise.headquarter === selectedLocation) : true;
+    const matchesSegment = selectedSegment ? franchise.segment === selectedSegment : true;
+    const matchesModel = selectedModel ? franchise.model === selectedModel : true;
     
-    return matchesSearch && matchesIndustry && matchesLocation;
+    // Investment range filter
+    let matchesInvestment = true;
+    if (selectedInvestmentRange) {
+      const range = investmentRanges.find(r => r.label === selectedInvestmentRange);
+      if (range) {
+        const franchiseInvestment = getInvestmentAmount(franchise);
+        matchesInvestment = franchiseInvestment >= range.min && franchiseInvestment < range.max;
+      }
+    }
+    
+    return matchesSearch && matchesIndustry && matchesLocation && matchesSegment && matchesModel && matchesInvestment;
   });
 
   return (
@@ -237,10 +306,11 @@ export default function FranchisePage() {
           </div>
         </div>
         
-        {/* Filter Section */}
+        {/* Enhanced Filter Section */}
         <section className="py-8 bg-gray-100">
           <div className="container mx-auto px-4">
-            <div className="flex flex-col md:flex-row gap-4">
+            {/* Search Bar */}
+            <div className="flex flex-col gap-4 mb-6">
               <div className="relative flex-grow">
                 <input
                   type="text"
@@ -252,34 +322,158 @@ export default function FranchisePage() {
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               </div>
               
-              <div className="relative w-full md:w-1/4">
-                <select 
-                  className="w-full px-4 py-3 border rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800"
-                  value={selectedIndustry}
-                  onChange={(e) => setSelectedIndustry(e.target.value)}
+              {/* Filter Toggle Button */}
+              <div className="flex justify-between items-center">
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="flex items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  <option value="">All Industries</option>
-                  {industries.map(industry => (
-                    <option key={industry} value={industry}>{industry}</option>
-                  ))}
-                </select>
-                <FaFilter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              </div>
-              
-              <div className="relative w-full md:w-1/4">
-                <select 
-                  className="w-full px-4 py-3 border rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800"
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                >
-                  <option value="">All Locations</option>
-                  {locations.map(location => (
-                    <option key={location} value={location}>{location}</option>
-                  ))}
-                </select>
-                <FaFilter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <FaFilter className="text-gray-600" />
+                  <span className="font-medium text-gray-700">Franchise Filters</span>
+                  <FaChevronDown className={`text-gray-600 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {/* Active Filters Count */}
+                {(selectedIndustry || selectedSegment || selectedModel || selectedInvestmentRange || selectedLocation) && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Active filters:</span>
+                    <span className="bg-primary text-white px-2 py-1 rounded-full text-xs font-medium">
+                      {[selectedIndustry, selectedSegment, selectedModel, selectedInvestmentRange, selectedLocation].filter(Boolean).length}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
+            
+            {/* Collapsible Filter Panel */}
+            {showFilters && (
+              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <FaFilter className="text-primary" />
+                  Filter Franchise Opportunities
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                  {/* Category (Industry) Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <div className="relative">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
+                        value={selectedIndustry}
+                        onChange={(e) => setSelectedIndustry(e.target.value)}
+                      >
+                        <option value="">All Categories</option>
+                        {industries.map(industry => (
+                          <option key={industry} value={industry}>{industry}</option>
+                        ))}
+                      </select>
+                      <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  
+                  {/* Segment Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Segment</label>
+                    <div className="relative">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
+                        value={selectedSegment}
+                        onChange={(e) => setSelectedSegment(e.target.value)}
+                      >
+                        <option value="">All Segments</option>
+                        {segments.map(segment => (
+                          <option key={segment} value={segment}>{segment}</option>
+                        ))}
+                      </select>
+                      <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  
+                  {/* Model Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                    <div className="relative">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                      >
+                        <option value="">All Models</option>
+                        <option value="FOFO">FOFO</option>
+                        <option value="COCO">COCO</option>
+                        <option value="FOCO">FOCO</option>
+                        <option value="Hybrid">Hybrid</option>
+                        {models.map(model => (
+                          <option key={model} value={model}>{model}</option>
+                        ))}
+                      </select>
+                      <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  
+                  {/* Investment Range Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Investment Range</label>
+                    <div className="relative">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
+                        value={selectedInvestmentRange}
+                        onChange={(e) => setSelectedInvestmentRange(e.target.value)}
+                      >
+                        <option value="">All Ranges</option>
+                        {investmentRanges.map(range => (
+                          <option key={range.label} value={range.label}>{range.label}</option>
+                        ))}
+                      </select>
+                      <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  
+                  {/* Location Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                    <div className="relative">
+                      <select 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
+                        value={selectedLocation}
+                        onChange={(e) => setSelectedLocation(e.target.value)}
+                      >
+                        <option value="">All Locations</option>
+                        {allLocations.map(location => (
+                          <option key={location} value={location}>{location}</option>
+                        ))}
+                      </select>
+                      <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Filter Actions */}
+                <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedIndustry('');
+                      setSelectedSegment('');
+                      setSelectedModel('');
+                      setSelectedInvestmentRange('');
+                      setSelectedLocation('');
+                    }}
+                    className="text-sm text-gray-600 hover:text-gray-800 underline transition-colors"
+                  >
+                    Clear All Filters
+                  </button>
+                  
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>Showing {filteredFranchises.length} of {franchises.length} franchises</span>
+                    {filteredFranchises.length !== franchises.length && (
+                      <span className="text-primary font-medium">({franchises.length - filteredFranchises.length} filtered out)</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
         
@@ -318,11 +512,14 @@ export default function FranchisePage() {
                   onClick={() => {
                     setSearchTerm('');
                     setSelectedIndustry('');
+                    setSelectedSegment('');
+                    setSelectedModel('');
+                    setSelectedInvestmentRange('');
                     setSelectedLocation('');
                   }}
                   className="px-6 py-3 bg-primary text-white rounded-md hover:bg-secondary transition-colors"
                 >
-                  Clear Filters
+                  Clear All Filters
                 </button>
               </div>
             ) : (

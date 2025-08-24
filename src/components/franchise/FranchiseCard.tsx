@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { FaMapMarkerAlt, FaMoneyBillWave, FaChartLine, FaHandshake, FaDownload } from 'react-icons/fa';
 import { WishlistButton } from '@/components/wishlist';
-import { AuthPrompt } from '@/components/auth';
 
 // Define the Franchise interface to match the database
 interface Franchise {
@@ -53,8 +52,6 @@ export function FranchiseCard({
   showWishlist = true,
   onOpenModal
 }: FranchiseCardProps) {
-  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
-
   // Counter for generating consistent IDs
   let franchiseIdCounter = 0;
   
@@ -63,7 +60,7 @@ export function FranchiseCard({
 
   // Memoized callback to prevent unnecessary re-renders
   const handleAuthRequired = useCallback(() => {
-    setShowAuthPrompt(true);
+    // No longer needed - auth prompts are disabled
   }, []);
 
   // Format the investment amount to show as lakhs or crores
@@ -252,14 +249,6 @@ export function FranchiseCard({
   return (
     <>
       <CardContent />
-
-      {/* Auth Prompt Modal */}
-      <AuthPrompt
-        isOpen={showAuthPrompt}
-        onClose={() => setShowAuthPrompt(false)}
-        title="Sign in to save franchises"
-        feature="wishlist"
-      />
     </>
   );
 }

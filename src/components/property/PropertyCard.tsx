@@ -46,11 +46,9 @@ export function PropertyCard({
   className = '',
   showWishlist = true
 }: PropertyCardProps) {
-  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
-
   // Memoized callback to prevent unnecessary re-renders
   const handleAuthRequired = useCallback(() => {
-    setShowAuthPrompt(true);
+    // No longer needed - auth prompts are disabled
   }, []);
 
   // Format currency using Indian format
@@ -230,14 +228,6 @@ export function PropertyCard({
       ) : (
         <CardContent />
       )}
-
-      {/* Auth Prompt Modal */}
-      <AuthPrompt
-        isOpen={showAuthPrompt}
-        onClose={() => setShowAuthPrompt(false)}
-        title="Sign in to save properties"
-        feature="wishlist"
-      />
     </>
   );
 }

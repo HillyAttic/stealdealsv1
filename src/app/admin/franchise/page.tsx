@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
-import { FaPlus, FaPencilAlt, FaTrash, FaSearch, FaFilter } from 'react-icons/fa';
+import { FaPlus, FaPencilAlt, FaTrash, FaSearch, FaEye } from 'react-icons/fa';
+import { BsBuilding } from 'react-icons/bs';
 import ClientOnly from '@/components/ClientOnly';
 
 // Franchise interface
@@ -69,7 +70,7 @@ function FranchiseContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedIndustry, setSelectedIndustry] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   // Load franchises from API
   useEffect(() => {
@@ -109,79 +110,48 @@ function FranchiseContent() {
     checkAuthAndLoadData();
   }, [router]);
 
-  // Filter franchises based on search term and industry
-  const filteredFranchises = franchises.filter(franchise => {
-    const searchStr = searchTerm.toLowerCase();
-    const matchesSearch = 
-      (franchise.name?.toLowerCase() || '').includes(searchStr) ||
-      (franchise.location?.toLowerCase() || '').includes(searchStr) ||
-      (franchise.industry?.toLowerCase() || '').includes(searchStr) ||
-      (franchise.product?.toLowerCase() || '').includes(searchStr);
-    
-    // Apply industry filter if selected
-    const matchesIndustry = selectedIndustry ? 
-      franchise.industry?.toString() === selectedIndustry : true;
-    
-    return matchesSearch && matchesIndustry;
-  });
-
-  // Handle franchise deletion
-  const handleDelete = async (id: string | null | undefined) => {
-    if (!id) return;
-    
-    if (window.confirm('Are you sure you want to delete this franchise?')) {
-      try {
-        setIsLoading(true);
-        const response = await fetch(`/api/franchises/${id}`, {
-          method: 'DELETE',
-          credentials: 'include' // Include cookies
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to delete: ${response.status}`);
-        }
-        
-        // Filter out deleted franchise
-        setFranchises(franchises.filter(franchise => franchise.id !== id));
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error deleting franchise:', err);
-        setError('Failed to delete franchise. Please try again later.');
-        setIsLoading(false);
-      }
-    }
-  };
-
-  // Get unique industries from franchises
-  const uniqueIndustries = Array.from(
-    new Set(franchises.map(franchise => franchise.industry || '').filter(Boolean))
+  // Filter franchises based on search term
+  const filteredFranchises = franchises.filter(franchise =>
+    franchise.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    franchise.industry?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    franchise.headquarter?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    franchise.product?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Formats a string value or returns a dash if undefined
-  const formatString = (value: string | undefined): string => {
-    if (!value) return '-';
-    return value;
-  };
-
-  // Format for displaying dates
-  const formatDate = (dateStr?: string | number) => {
-    if (!dateStr) return '-';
+  // Handle franchise deletion
+  const handleDelete = async (id: string) => {
+    if (!id) return;
     
     try {
-      let date: Date;
-      if (typeof dateStr === 'number') {
-        date = new Date(dateStr);
+      const response = await fetch(`/api/franchises/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        setFranchises(franchises.filter(franchise => franchise.id !== id));
+        setDeleteConfirm(null);
       } else {
-        date = new Date(dateStr);
+        throw new Error('Failed to delete franchise');
       }
-      
-      if (isNaN(date.getTime())) return '-';
-      
-      return date.toLocaleDateString('en-IN');
-    } catch (err) {
-      return '-';
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      setError(err.message || 'Failed to delete franchise');
     }
   };
+
+  // Format currency similar to plots page
+  const formatCurrency = (amount: number | string): string => {
+    if (!amount) return 'Not specified';
+    if (typeof amount === 'string' && isNaN(Number(amount))) {
+      return amount; // Return formatted string like "20 LACS"
+    }
+    const numAmount = typeof amount === 'string' ? Number(amount) : amount;
+    if (isNaN(numAmount)) return 'Not specified';
+    return `₹${numAmount.toLocaleString('en-IN')}`;
+  };
+
+
 
   return (
     <>
@@ -204,124 +174,172 @@ function FranchiseContent() {
         </div>
       )}
 
-      {/* Search and Filter */}
+      {/* Search */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-grow">
           <input
             type="text"
-            placeholder="Search franchises..."
+            placeholder="Search franchises by name, industry, or location..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full px-4 py-2 pl-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
-        <div className="relative w-full sm:w-1/4">
-          <select 
-            className="w-full px-4 py-2 border rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={selectedIndustry}
-            onChange={(e) => setSelectedIndustry(e.target.value)}
-          >
-            <option value="">All Industries</option>
-            {uniqueIndustries.map((industry) => (
-              <option key={industry} value={industry}>{industry}</option>
-            ))}
-          </select>
-          <FaFilter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-        </div>
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-900"></div>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 table-sm">
-              <thead className="table-light">
-                <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FID</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INDUSTRY</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SEGMENT</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRODUCT</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MODEL</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MIN AREA</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MAX AREA</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MIN INVESTMENT</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MAX INVESTMENT</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROYALITY</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ESTABLISHMENT YEAR</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FRANCHISE STARTED YEAR</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NUMBER OF OUTLETS</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MIN PAYBACK PERIOD</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MAX PAYBACK PERIOD</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HEADQUATER</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REMARKS</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BRAND DECK</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PRODUCT LIST/MENU</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROI SHEET</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ADDDATE</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MODDATE</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredFranchises.length === 0 ? (
-                  <tr>
-                    <td colSpan={23} className="px-4 py-2 whitespace-nowrap text-center text-gray-500">
-                      No franchises found
-                    </td>
-                  </tr>
-                ) : (
-                  filteredFranchises.map((franchise, index) => (
-                    <tr key={franchise.id || index} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{franchise.id || (index + 1)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.industry)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.segment)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.product || franchise.name)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.model)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.minArea)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.maxArea)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.minInvestment?.toString())}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString((franchise.maxInvestment || franchise.investment)?.toString())}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.royalty)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.establishmentYear)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.franchiseStartedYear)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.numberOutlets)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.minPaybackPeriod)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.maxPaybackPeriod)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.headquarter || franchise.location)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.remarks)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.brandDeck)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.productList)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatString(franchise.roiSheet)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatDate(franchise.addDate || franchise.createdAt)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{formatDate(franchise.modDate || franchise.updatedAt)}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          <Link 
-                            href={`/admin/franchise/edit/${franchise.id}`}
-                            className="text-blue-600 hover:text-blue-900 cursor-pointer px-2 py-1 rounded hover:bg-blue-100 inline-block"
-                            title="Edit"
-                          >
-                            <FaPencilAlt />
-                          </Link>
-                          <button 
-                            onClick={() => handleDelete(franchise.id)}
-                            className="text-red-600 hover:text-red-900 cursor-pointer px-2 py-1 rounded hover:bg-red-100"
-                            title="Delete"
-                            type="button"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
-                      </td>
+        <>
+          <div className="mb-4">
+            <p className="text-gray-600">
+              Showing {filteredFranchises.length} of {franchises.length} franchises
+            </p>
+          </div>
+          
+          {filteredFranchises.length === 0 ? (
+            <div className="text-center py-20">
+              <BsBuilding className="text-gray-300 text-6xl mx-auto mb-4" />
+              <h3 className="text-xl text-gray-600 mb-2">
+                {franchises.length === 0 ? 'No franchises found' : 'No matching franchises'}
+              </h3>
+              <p className="text-gray-500 mb-4">
+                {franchises.length === 0 ? 'Create your first franchise opportunity' : 'Try adjusting your search criteria'}
+              </p>
+              {franchises.length === 0 && (
+                <Link
+                  href="/admin/franchise/new"
+                  className="px-4 py-2 bg-blue-900 text-white rounded hover:bg-blue-800"
+                >
+                  Add New Franchise
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 table-sm">
+                  <thead className="table-light">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FID</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BRAND/NAME</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INDUSTRY</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LOCATION</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STATUS</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INVESTMENT</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROYALTY</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredFranchises.map((franchise, index) => (
+                      <tr key={franchise.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                          <span className="font-mono text-xs text-gray-500">
+                            F{String(index + 1).padStart(3, '0')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{franchise.name || franchise.product}</div>
+                          {franchise.image && (
+                            <img 
+                              src={franchise.image} 
+                              alt={franchise.name}
+                              className="w-12 h-8 object-cover rounded mt-1"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          )}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{franchise.industry}</div>
+                          {franchise.segment && (
+                            <div className="text-xs text-gray-500">{franchise.segment}</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                          {franchise.headquarter || franchise.location}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            franchise.status === 'Active' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {franchise.status || 'Active'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                          {franchise.maxInvestment && franchise.maxInvestment !== franchise.minInvestment
+                            ? `${formatCurrency(franchise.minInvestment || 0)} - ${formatCurrency(franchise.maxInvestment || 0)}`
+                            : formatCurrency(franchise.minInvestment || franchise.investment || 0)
+                          }
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                          {franchise.royalty || franchise.roi || 'Contact for details'}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-1">
+                            <Link
+                              href={`/franchise/${franchise.id}`}
+                              className="text-indigo-600 hover:text-indigo-900 p-1"
+                              target="_blank"
+                              title="View Franchise"
+                            >
+                              <FaEye />
+                            </Link>
+                            <Link
+                              href={`/admin/franchise/edit/${franchise.id}`}
+                              className="text-yellow-600 hover:text-yellow-900 p-1"
+                              title="Edit Franchise"
+                            >
+                              <FaPencilAlt />
+                            </Link>
+                            <button
+                              onClick={() => setDeleteConfirm(franchise.id || null)}
+                              className="text-red-600 hover:text-red-900 p-1"
+                              title="Delete Franchise"
+                            >
+                              <FaTrash />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">Confirm Delete</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this franchise? This action cannot be undone.
+            </p>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => handleDelete(deleteConfirm)}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

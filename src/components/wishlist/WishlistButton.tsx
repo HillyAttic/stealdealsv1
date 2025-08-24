@@ -60,9 +60,8 @@ export function WishlistButton({
     e.preventDefault();
     e.stopPropagation();
 
-    // Check if user is authenticated
+    // Check if user is authenticated - simply return without showing auth prompt
     if (!isAuthenticated) {
-      onAuthRequired?.();
       return;
     }
 

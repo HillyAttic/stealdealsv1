@@ -201,7 +201,6 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
                           <WishlistButton
                             propertyId={`franchise-${resolvedParams.id}`}
                             size="lg"
-                            onAuthRequired={() => setShowAuthPrompt(true)}
                           />
                         </div>
                       </div>

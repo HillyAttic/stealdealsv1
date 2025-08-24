@@ -173,7 +173,6 @@ const PropertyCard = ({ property, onAuthRequired }: { property: any; onAuthRequi
             <WishlistButton
               propertyId={property.id?.toString() || property.originalId?.toString() || ''}
               size="md"
-              onAuthRequired={onAuthRequired}
             />
           </div>
           <div className="absolute bottom-4 left-4 bg-blue-900 text-white px-3 py-1 rounded-md text-sm font-medium">

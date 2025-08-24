@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import Link from 'next/link';
 import { FaMapMarkerAlt, FaRulerCombined, FaDownload } from 'react-icons/fa';
 import { WishlistButton } from '@/components/wishlist';
-import { AuthPrompt } from '@/components/auth';
 import PropertyImage from '@/components/PropertyImage';
 import { Plot } from '@/lib/firebase';
 
@@ -21,11 +20,9 @@ export function PlotCard({
   className = '',
   showWishlist = true
 }: PlotCardProps) {
-  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
-
   // Memoized callback to prevent unnecessary re-renders
   const handleAuthRequired = useCallback(() => {
-    setShowAuthPrompt(true);
+    // No longer needed - auth prompts are disabled
   }, []);
 
   // Format currency using Indian format
@@ -148,14 +145,6 @@ export function PlotCard({
       ) : (
         <CardContent />
       )}
-
-      {/* Auth Prompt Modal */}
-      <AuthPrompt
-        isOpen={showAuthPrompt}
-        onClose={() => setShowAuthPrompt(false)}
-        title="Sign in to save plots"
-        feature="wishlist"
-      />
     </>
   );
 }

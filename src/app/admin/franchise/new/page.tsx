@@ -49,9 +49,6 @@ function FranchiseForm() {
     headquarter: '',
     remarks: '',
     image: '',
-    brandDeck: '',
-    productList: '',
-    roiSheet: '',
     investorDiscoveryKitUrl: ''
   });
   
@@ -456,55 +453,7 @@ function FranchiseForm() {
             </div>
           </div>
 
-          <div className="row mb-3 flex">
-            <div className="col-sm-4 position-relative w-1/3">
-              <div className="input-group flex">
-                <span className="input-group-text px-2 py-1 bg-gray-200 border border-r-0 border-gray-400 rounded-l text-gray-700">Brand Deck</span>
-                <input 
-                  type="text" 
-                  className="form-control w-full px-2 py-1 border border-gray-400 rounded-r text-gray-800 bg-white" 
-                  id="inputBrandDeck"
-                  name="brandDeck"
-                  value={franchise.brandDeck}
-                  onChange={handleChange} 
-                  placeholder="Brand Deck"
-                />
-                <div className="invalid-tooltip">Brand Deck</div>
-              </div>
-            </div>
-            
-            <div className="col-sm-4 position-relative w-1/3 ml-4">
-              <div className="input-group flex">
-                <span className="input-group-text px-2 py-1 bg-gray-200 border border-r-0 border-gray-400 rounded-l text-gray-700">Product List/Menu</span>
-                <input 
-                  type="text" 
-                  className="form-control w-full px-2 py-1 border border-gray-400 rounded-r text-gray-800 bg-white" 
-                  id="inputProductList"
-                  name="productList"
-                  value={franchise.productList}
-                  onChange={handleChange} 
-                  placeholder="Product List/Menu"
-                />
-                <div className="invalid-tooltip">Product List/Menu</div>
-              </div>
-            </div>
-            
-            <div className="col-sm-4 position-relative w-1/3 ml-4">
-              <div className="input-group flex">
-                <span className="input-group-text px-2 py-1 bg-gray-200 border border-r-0 border-gray-400 rounded-l text-gray-700">ROI Sheet</span>
-                <input 
-                  type="text" 
-                  className="form-control w-full px-2 py-1 border border-gray-400 rounded-r text-gray-800 bg-white" 
-                  id="inputRoi"
-                  name="roiSheet"
-                  value={franchise.roiSheet}
-                  onChange={handleChange} 
-                  placeholder="ROI Sheet"
-                />
-                <div className="invalid-tooltip">ROI Sheet</div>
-              </div>
-            </div>
-          </div>
+
           
           {/* Google Drive URL for Investor Discovery Kit */}
           <div className="row mb-3 flex">
