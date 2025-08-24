@@ -220,91 +220,103 @@ function FranchiseContent() {
             </div>
           ) : (
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 table-sm">
+              <div className="overflow-hidden"> {/* Removed overflow-x-auto to prevent horizontal scroll */}
+                <table className="w-full divide-y divide-gray-200 table-fixed"> {/* Changed to table-fixed and w-full */}
                   <thead className="table-light">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FID</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BRAND/NAME</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INDUSTRY</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LOCATION</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STATUS</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INVESTMENT</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROYALTY</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
+                      <th className="w-12 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FID</th>
+                      <th className="w-1/4 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BRAND/NAME</th>
+                      <th className="w-1/6 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INDUSTRY</th>
+                      <th className="w-1/6 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LOCATION</th>
+                      <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STATUS</th>
+                      <th className="w-1/6 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INVESTMENT</th>
+                      <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROYALTY</th>
+                      <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredFranchises.map((franchise, index) => (
                       <tr key={franchise.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                        <td className="w-12 px-2 py-2 text-sm text-gray-900">
                           <span className="font-mono text-xs text-gray-500">
                             F{String(index + 1).padStart(3, '0')}
                           </span>
                         </td>
-                        <td className="px-4 py-2 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{franchise.name || franchise.product}</div>
+                        <td className="w-1/4 px-2 py-2">
+                          <div className="text-sm font-medium text-gray-900 truncate" title={franchise.name || franchise.product}>
+                            {franchise.name || franchise.product}
+                          </div>
                           {franchise.image && (
                             <img 
                               src={franchise.image} 
                               alt={franchise.name}
-                              className="w-12 h-8 object-cover rounded mt-1"
+                              className="w-10 h-6 object-cover rounded mt-1"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
                               }}
                             />
                           )}
                         </td>
-                        <td className="px-4 py-2 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{franchise.industry}</div>
+                        <td className="w-1/6 px-2 py-2">
+                          <div className="text-sm text-gray-900 truncate" title={franchise.industry}>{franchise.industry}</div>
                           {franchise.segment && (
-                            <div className="text-xs text-gray-500">{franchise.segment}</div>
+                            <div className="text-xs text-gray-500 truncate" title={franchise.segment}>{franchise.segment}</div>
                           )}
                         </td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                          {franchise.headquarter || franchise.location}
+                        <td className="w-1/6 px-2 py-2 text-sm text-gray-500">
+                          <div className="truncate" title={franchise.headquarter || franchise.location}>
+                            {franchise.headquarter || franchise.location}
+                          </div>
                         </td>
-                        <td className="px-4 py-2 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        <td className="w-16 px-2 py-2">
+                          <span className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded-full ${
                             franchise.status === 'Active' 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-yellow-100 text-yellow-800'
                           }`}>
-                            {franchise.status || 'Active'}
+                            {(franchise.status || 'Active').substring(0, 6)}
                           </span>
                         </td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                          {franchise.maxInvestment && franchise.maxInvestment !== franchise.minInvestment
-                            ? `${formatCurrency(franchise.minInvestment || 0)} - ${formatCurrency(franchise.maxInvestment || 0)}`
-                            : formatCurrency(franchise.minInvestment || franchise.investment || 0)
-                          }
+                        <td className="w-1/6 px-2 py-2 text-sm text-gray-900">
+                          <div className="truncate" title={
+                            franchise.maxInvestment && franchise.maxInvestment !== franchise.minInvestment
+                              ? `${formatCurrency(franchise.minInvestment || 0)} - ${formatCurrency(franchise.maxInvestment || 0)}`
+                              : formatCurrency(franchise.minInvestment || franchise.investment || 0)
+                          }>
+                            {franchise.maxInvestment && franchise.maxInvestment !== franchise.minInvestment
+                              ? `${formatCurrency(franchise.minInvestment || 0)} - ${formatCurrency(franchise.maxInvestment || 0)}`
+                              : formatCurrency(franchise.minInvestment || franchise.investment || 0)
+                            }
+                          </div>
                         </td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                          {franchise.royalty || franchise.roi || 'Contact for details'}
+                        <td className="w-20 px-2 py-2 text-sm text-gray-500">
+                          <div className="truncate" title={franchise.royalty || franchise.roi || 'Contact for details'}>
+                            {(franchise.royalty || franchise.roi || 'Contact').substring(0, 10)}
+                          </div>
                         </td>
-                        <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-1">
+                        <td className="w-20 px-2 py-2 text-sm font-medium">
+                          <div className="flex space-x-0.5">
                             <Link
                               href={`/franchise/${franchise.id}`}
-                              className="text-indigo-600 hover:text-indigo-900 p-1"
+                              className="text-indigo-600 hover:text-indigo-900 p-0.5"
                               target="_blank"
                               title="View Franchise"
                             >
-                              <FaEye />
+                              <FaEye className="text-xs" />
                             </Link>
                             <Link
                               href={`/admin/franchise/edit/${franchise.id}`}
-                              className="text-yellow-600 hover:text-yellow-900 p-1"
+                              className="text-yellow-600 hover:text-yellow-900 p-0.5"
                               title="Edit Franchise"
                             >
-                              <FaPencilAlt />
+                              <FaPencilAlt className="text-xs" />
                             </Link>
                             <button
                               onClick={() => setDeleteConfirm(franchise.id || null)}
-                              className="text-red-600 hover:text-red-900 p-1"
+                              className="text-red-600 hover:text-red-900 p-0.5"
                               title="Delete Franchise"
                             >
-                              <FaTrash />
+                              <FaTrash className="text-xs" />
                             </button>
                           </div>
                         </td>
@@ -320,8 +332,8 @@ function FranchiseContent() {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-gradient-to-br from-black/40 via-black/50 to-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white/95 backdrop-blur-sm border border-white/20 p-6 rounded-lg max-w-md w-full mx-4 shadow-2xl">
             <h3 className="text-lg font-bold text-gray-800 mb-4">Confirm Delete</h3>
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete this franchise? This action cannot be undone.
@@ -329,13 +341,13 @@ function FranchiseContent() {
             <div className="flex space-x-4">
               <button
                 onClick={() => handleDelete(deleteConfirm)}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 backdrop-blur-sm"
               >
                 Delete
               </button>
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                className="px-4 py-2 bg-gray-300/90 backdrop-blur-sm text-gray-700 rounded hover:bg-gray-400/90"
               >
                 Cancel
               </button>

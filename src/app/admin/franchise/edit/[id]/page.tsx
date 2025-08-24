@@ -413,37 +413,7 @@ function EditFranchiseContent() {
                     className="w-full p-2 border border-gray-300 rounded text-gray-800"
                   />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Brand Deck</label>
-                    <input
-                      type="text"
-                      name="brandDeck"
-                      value={franchise.brandDeck || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Product List/Menu</label>
-                    <input
-                      type="text"
-                      name="productList"
-                      value={franchise.productList || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">ROI Sheet</label>
-                    <input
-                      type="text"
-                      name="roiSheet"
-                      value={franchise.roiSheet || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                   <div className="mb-3">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Investor Discovery Kit URL</label>
                     <input
