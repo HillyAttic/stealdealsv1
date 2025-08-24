@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaSearch, FaUser, FaEnvelope, FaCalendar, FaEye, FaEdit, FaCheck, FaTimes, FaExternalLinkAlt, FaShield, FaUserCheck, FaBan, FaLock } from 'react-icons/fa';
+import { FaSearch, FaUser, FaEnvelope, FaCalendar, FaEye, FaEdit, FaCheck, FaTimes, FaExternalLinkAlt, FaUserCheck, FaBan, FaLock } from 'react-icons/fa';
 import Link from 'next/link';
 import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
 import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
@@ -195,7 +195,7 @@ export function UserManagement() {
           <p className="text-gray-600">Manage and monitor Clerk authenticated users</p>
         </div>
         <div className="flex items-center space-x-2 text-sm text-gray-500">
-          <FaShield />
+          <FaLock />
           <span>Admin authenticated via Firebase</span>
           <span>•</span>
           <span>Users from Clerk</span>
@@ -256,7 +256,7 @@ export function UserManagement() {
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <div className="flex items-center">
               <div className="p-2 bg-yellow-100 rounded-lg">
-                <FaShield className="text-yellow-600" />
+                <FaLock className="text-yellow-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm text-gray-600">2FA Enabled</p>
@@ -398,7 +398,7 @@ export function UserManagement() {
                       <div className="flex flex-col space-y-1">
                         {user.twoFactorEnabled && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                            <FaShield className="mr-1" /> 2FA
+                            <FaLock className="mr-1" /> 2FA
                           </span>
                         )}
                         {user.phoneNumber && (

@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
       const offset = (page - 1) * limit;
       
       // Fetch users from Clerk with search and pagination
-      const usersResponse = await clerkClient.users.getUserList({
+      const client = await clerkClient();
+      const usersResponse = await client.users.getUserList({
         limit,
         offset,
         ...(search && { query: search })
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
       }));
       
       // Get total count for pagination
-      const totalUsersResponse = await clerkClient.users.getCount();
+      const totalUsersResponse = await client.users.getCount();
       
       // Calculate statistics
       const totalUsers = totalUsersResponse;
