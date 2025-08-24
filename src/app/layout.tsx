@@ -7,6 +7,7 @@ import ChatBotWrapper from "@/components/ChatBotWrapper";
 import ErrorSuppressor from "@/components/ErrorSuppressor";
 import DevErrorSuppressor from "@/components/error-boundaries/DevErrorSuppressor";
 import TestCredentials from "@/components/dev/TestCredentials";
+import { ClerkProvider } from '@clerk/nextjs';
 
 const jost = Jost({
   variable: "--font-jost",
@@ -81,55 +82,57 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        {/* Favicon links */}
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
-        <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-        <link rel="shortcut icon" href="/favicon.ico" />
-        <link rel="manifest" href="/manifest.json" />
-        {/* Add Boxicons for icons used in the admin panel */}
-        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet' />
-        {/* Temporarily disabled for performance */}
-        {/* <BitdefenderCleaner /> */}
-        {/* Handle browser extension errors */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Suppress browser extension errors
-              window.addEventListener('error', function(e) {
-                if (e.message && e.message.includes('message channel closed')) {
-                  e.preventDefault();
-                  return false;
-                }
-              });
-              
-              window.addEventListener('unhandledrejection', function(e) {
-                if (e.reason && e.reason.message && 
-                    e.reason.message.includes('message channel closed')) {
-                  e.preventDefault();
-                  return false;
-                }
-              });
-            `
-          }}
-        />
-      </head>
-      <body
-        className={`${jost.variable} antialiased`}
-        suppressHydrationWarning
-        {...customData}
-      >
-        {/* Temporarily disabled for performance */}
-        {/* <ErrorSuppressor />
-        <DevErrorSuppressor /> */}
-        <Providers>{children}</Providers>
-        <ChatBotWrapper />
-        {/* <TestCredentials /> */}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+          {/* Favicon links */}
+          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+          <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
+          <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
+          <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+          <link rel="shortcut icon" href="/favicon.ico" />
+          <link rel="manifest" href="/manifest.json" />
+          {/* Add Boxicons for icons used in the admin panel */}
+          <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet' />
+          {/* Temporarily disabled for performance */}
+          {/* <BitdefenderCleaner /> */}
+          {/* Handle browser extension errors */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                // Suppress browser extension errors
+                window.addEventListener('error', function(e) {
+                  if (e.message && e.message.includes('message channel closed')) {
+                    e.preventDefault();
+                    return false;
+                  }
+                });
+                
+                window.addEventListener('unhandledrejection', function(e) {
+                  if (e.reason && e.reason.message && 
+                      e.reason.message.includes('message channel closed')) {
+                    e.preventDefault();
+                    return false;
+                  }
+                });
+              `
+            }}
+          />
+        </head>
+        <body
+          className={`${jost.variable} antialiased`}
+          suppressHydrationWarning
+          {...customData}
+        >
+          {/* Temporarily disabled for performance */}
+          {/* <ErrorSuppressor />
+          <DevErrorSuppressor /> */}
+          <Providers>{children}</Providers>
+          <ChatBotWrapper />
+          {/* <TestCredentials /> */}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

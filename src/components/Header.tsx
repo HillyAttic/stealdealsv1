@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FaBars, FaTimes, FaHome, FaInfoCircle, FaWarehouse, FaLandmark, FaHandshake, FaUtensils, FaImages, FaPhoneAlt } from 'react-icons/fa';
 import { usePathname } from 'next/navigation';
-import { AuthButton } from './auth';
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -140,9 +140,32 @@ const Header = () => {
               </ul>
             </nav>
 
-            {/* Right side buttons - Authentication only */}
+            {/* Right side buttons - Clerk Authentication */}
             <div className="hidden md:flex items-center space-x-3 flex-shrink-0 ml-4">
-              <AuthButton />
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    <Image
+                      src="https://cdn-icons-png.flaticon.com/512/17468/17468741.png"
+                      alt="User"
+                      width={20}
+                      height={20}
+                      className="filter brightness-0 invert"
+                    />
+                    <span className="hidden md:block text-sm font-medium">Sign In</span>
+                  </button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <UserButton 
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-8 h-8 rounded-full",
+                      userButtonTrigger: "focus:shadow-none"
+                    }
+                  }}
+                />
+              </SignedIn>
             </div>
           </div>
         </div>
@@ -187,9 +210,34 @@ const Header = () => {
               ))}
             </ul>
 
-            {/* Mobile Authentication */}
+            {/* Mobile Clerk Authentication */}
             <div className="px-4 py-4 border-t border-blue-700/30 mt-4 space-y-3">
-              <AuthButton />
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200">
+                    <Image
+                      src="https://cdn-icons-png.flaticon.com/512/17468/17468741.png"
+                      alt="User"
+                      width={20}
+                      height={20}
+                      className="filter brightness-0 invert"
+                    />
+                    <span className="text-sm font-medium">Sign In</span>
+                  </button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <div className="flex items-center justify-center">
+                  <UserButton 
+                    appearance={{
+                      elements: {
+                        avatarBox: "w-8 h-8 rounded-full",
+                        userButtonTrigger: "focus:shadow-none"
+                      }
+                    }}
+                  />
+                </div>
+              </SignedIn>
             </div>
           </nav>
         </div>

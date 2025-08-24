@@ -1,39 +1,49 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-// Define which paths should be protected
-const PROTECTED_PATHS = [
+// Define admin paths that should use Firebase auth (not Clerk)
+const ADMIN_PATHS = [
   '/api/admin',
   '/admin/dashboard',
   '/admin/pre-leased', 
   '/admin/vacant',
   '/admin/franchise',
   '/admin/vacant/edit',
-  '/admin/pre-leased/edit'
+  '/admin/pre-leased/edit',
+  '/admin/login',
+  '/admin/users',
+  '/api/auth' // This handles Firebase admin auth
 ];
 
-// User-specific protected paths (API routes only)
-const USER_PROTECTED_PATHS = [
-  // We'll handle authentication at the API route level, not middleware
-];
+// Define user paths that should be protected by Clerk
+const isUserProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/api/user(.*)',
+  '/api/wishlist(.*)',
+  '/api/activity(.*)'
+]);
 
-// Paths that should skip middleware processing
+// Paths that should skip all auth checks
 const PUBLIC_PATHS = [
-  '/api/auth',
   '/api/contact',
   '/api/properties',
   '/api/franchises',
-  '/api/user', // Allow user API calls through
-  '/api/wishlist', // Allow wishlist calls through  
-  '/api/activity', // Allow activity calls through
-  '/admin/login',
   '/_next',
   '/favicon.ico',
-  '/development.png'
+  '/development.png',
+  '/',
+  '/about',
+  '/plots',
+  '/vacant',
+  '/franchise',
+  '/contact',
+  '/privacy',
+  '/terms'
 ];
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = new URL(request.url);
+export default clerkMiddleware((auth, req) => {
+  const { pathname } = new URL(req.url);
   
   // Skip middleware for static files and Next.js internal routes
   if (pathname.startsWith('/_next') || 
@@ -42,28 +52,30 @@ export async function middleware(request: NextRequest) {
       pathname === '/development.png') {
     return NextResponse.next();
   }
-  
-  // Skip middleware for public paths
+
+  // Skip Clerk auth for admin paths - let Firebase handle them
+  if (ADMIN_PATHS.some(path => pathname.startsWith(path))) {
+    return NextResponse.next();
+  }
+
+  // Skip auth for public paths
   if (PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
-  // For now, let's allow all routes to pass through to avoid blocking the app
-  // Authentication will be handled at the component level
-  return NextResponse.next();
-}
+  // Protect user routes with Clerk
+  if (isUserProtectedRoute(req)) {
+    auth().protect();
+  }
 
-// Configure which paths should trigger this middleware
+  return NextResponse.next();
+});
+
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api/auth (authentication endpoints)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public folder)
-     */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Skip Next.js internals and all static files, unless found in search params
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Always run for API routes
+    "/(api|trpc)(.*)",
   ],
 };
