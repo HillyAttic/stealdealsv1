@@ -40,79 +40,213 @@ export default function AboutPage() {
       <ClientOnly>
         <Header />
         
-        {/* Hero Section */}
-        <section className="py-20 relative overflow-hidden bg-gradient-to-r from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)]">
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-white/5 clip-path-diagonal"></div>
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full"></div>
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 rounded-full"></div>
+        {/* Enhanced Hero Section with Compact Height */}
+        <section className="py-16 md:py-20 relative overflow-hidden bg-gradient-to-br from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)]">
+          {/* Advanced Background Elements */}
+          <div className="absolute inset-0">
+            {/* Animated Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[rgb(21,77,113)]/50 via-transparent to-[rgb(51,161,224)]/50 animate-pulse"></div>
+            
+            {/* Floating Geometric Elements */}
+            <div className="absolute top-1/4 right-1/4 w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full blur-xl animate-bounce"></div>
+            <div className="absolute bottom-1/3 left-1/4 w-16 h-16 md:w-24 md:h-24 bg-[#8CCDEB]/20 rounded-full blur-lg animate-pulse"></div>
+            <div className="absolute top-1/2 left-1/2 w-12 h-12 md:w-16 md:h-16 bg-white/10 rounded-full blur-md animate-bounce" style={{animationDelay: '1s'}}></div>
+            
+            {/* Diagonal Glass Effect */}
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-bl from-white/10 via-white/5 to-transparent backdrop-blur-sm transform skew-x-12"></div>
+            
+            {/* Corner Orbs with Enhanced Effects */}
+            <div className="absolute -top-24 -right-24 w-48 h-48 md:w-64 md:h-64 bg-gradient-to-br from-white/15 via-[#8CCDEB]/10 to-transparent rounded-full blur-2xl animate-pulse"></div>
+            <div className="absolute -bottom-24 -left-24 w-48 h-48 md:w-64 md:h-64 bg-gradient-to-tr from-white/15 via-[#8CCDEB]/10 to-transparent rounded-full blur-2xl animate-pulse" style={{animationDelay: '2s'}}></div>
+          </div>
+          
           <div className="container mx-auto px-4 relative z-10">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-white mb-6">About Us</h1>
-              <div className="w-24 h-1 bg-white/30 mx-auto mb-6"></div>
-              <p className="text-white/80 max-w-3xl mx-auto text-lg">
-                Steal Deals - Your trusted partner for real estate investment, leasing, and development
+            <div className="text-center max-w-4xl mx-auto">
+              {/* Enhanced Main Heading */}
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+                <span className="bg-gradient-to-r from-white via-[#8CCDEB] to-white bg-clip-text text-transparent">About Us</span>
+              </h1>
+              
+              {/* Animated Divider */}
+              <div className="flex items-center justify-center mb-6">
+                <div className="w-6 h-0.5 bg-white/30 rounded-full"></div>
+                <div className="w-12 h-1 bg-gradient-to-r from-white/60 via-[#8CCDEB] to-white/60 rounded-full mx-3 shadow-lg"></div>
+                <div className="w-6 h-0.5 bg-white/30 rounded-full"></div>
+              </div>
+              
+              {/* Enhanced Description */}
+              <p className="text-white/90 max-w-3xl mx-auto text-lg md:text-xl leading-relaxed font-medium">
+                <span className="text-[#8CCDEB] font-bold">Steal Deals</span> - Your trusted partner for 
+                <span className="bg-gradient-to-r from-white to-[#8CCDEB] bg-clip-text text-transparent font-semibold"> real estate investment</span>, 
+                leasing, and development
               </p>
             </div>
           </div>
+          
+          {/* Bottom Wave Effect */}
+          <div className="absolute bottom-0 left-0 w-full">
+            <svg className="w-full h-12 md:h-16" viewBox="0 0 1200 120" preserveAspectRatio="none">
+              <path d="M0,0V120L1200,120V0C1200,0,1000,60,600,60C200,60,0,0,0,0Z" fill="white" fillOpacity="0.1"></path>
+            </svg>
+          </div>
         </section>
         
-        {/* About Company Section */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-800 mb-6">STEAL DEALS</h2>
-                <div className="w-20 h-1 bg-primary mb-6"></div>
-                <h3 className="text-xl font-bold text-primary mb-4">Empowering Investments. Enabling Growth.</h3>
-                <p className="text-gray-600 mb-6 text-lg leading-relaxed">
-                  Steal Deals is a modern-day commercial real estate and franchise
-                  consulting firm that bridges the gap between aspiration and execution. With a sharp focus on
-                  franchise expansion and leasing solutions, we empower individuals and businesses to unlock
-                  long-term income opportunities through strategic investments and partnerships.
-                </p>
-                <p className="text-gray-600 mb-4 text-lg leading-relaxed">
-                  At our core, we specialize in:
-                </p>
-                <ul className="text-gray-600 mb-6 text-lg leading-relaxed list-disc pl-6">
-                  <li className="mb-2">
-                    <span className="font-semibold">Franchise Consulting</span> - Helping you invest in and grow top-performing franchises across India,
-                    whether in retail, food & beverage, or emerging sectors.
-                  </li>
-                  <li className="mb-2">
-                    <span className="font-semibold">Leasing Solutions</span> - Curating the perfect spaces for national and regional brands, ensuring
-                    high-visibility, high-footfall locations across urban markets.
-                  </li>
-                  <li className="mb-2">
-                    <span className="font-semibold">Real Estate Investments</span> - Offering handpicked pre-leased commercial assets and plots
-                    (residential, commercial, industrial) in Delhi NCR that ensure stable, long-term returns.
-                  </li>
-                </ul>
-                <p className="text-gray-600 mb-6 text-lg leading-relaxed">
-                  Whether you're a first-time investor exploring alternative income streams or an established
-                  entrepreneur looking to diversify your portfolio, Steal Deals is your trusted partner in navigating the
-                  world of commercial growth.
-                </p>
-                <p className="text-gray-600 mb-6 text-lg leading-relaxed">
-                  We don't just close transactions - we build ecosystems where brands thrive, landlords profit, and
-                  investors flourish.
-                </p>
+        {/* About Company Section - Enhanced UI/UX with Theme Colors */}
+        <section className="py-20 bg-gradient-to-br from-white via-[#8CCDEB]/20 to-white relative overflow-hidden">
+          {/* Decorative Background Elements */}
+          <div className="absolute inset-0">
+            <div className="absolute top-20 left-10 w-40 h-40 bg-[rgb(51,161,224)]/20 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-32 right-16 w-56 h-56 bg-[rgb(28,110,164)]/15 rounded-full blur-2xl animate-pulse"></div>
+            <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-[#8CCDEB]/25 rounded-full blur-xl animate-bounce"></div>
+          </div>
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+              <div className="relative">
+                {/* Premium Badge */}
+                <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[rgb(21,77,113)] to-[rgb(28,110,164)] text-white rounded-full text-sm font-semibold mb-8 shadow-lg">
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Commercial Real Estate Leaders
+                </div>
+                
+                <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)] bg-clip-text text-transparent mb-8 leading-tight">
+                  STEAL DEALS
+                </h2>
+                <div className="w-32 h-2 bg-gradient-to-r from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)] rounded-full mb-8 shadow-lg"></div>
+                
+                <h3 className="text-2xl font-bold text-transparent bg-gradient-to-r from-[rgb(28,110,164)] to-[rgb(51,161,224)] bg-clip-text mb-6">
+                  Empowering Investments. Enabling Growth.
+                </h3>
+                
+                <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200 mb-8">
+                  <p className="text-gray-700 mb-6 text-lg leading-relaxed">
+                    Steal Deals is a modern-day commercial real estate and franchise
+                    consulting firm that bridges the gap between aspiration and execution. With a sharp focus on
+                    franchise expansion and leasing solutions, we empower individuals and businesses to unlock
+                    long-term income opportunities through strategic investments and partnerships.
+                  </p>
+                  
+                  <div className="mb-6">
+                    <h4 className="text-xl font-bold text-gray-800 mb-4">
+                      At our core, we specialize in:
+                    </h4>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border-l-4 border-[rgb(21,77,113)]">
+                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-4 h-4 text-[rgb(21,77,113)]" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div>
+                          <span className="font-semibold text-[rgb(21,77,113)]">Franchise Consulting</span>
+                          <span className="text-gray-600"> - Helping you invest in and grow top-performing franchises across India, whether in retail, food & beverage, or emerging sectors.</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border-l-4 border-[rgb(21,77,113)]">
+                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-4 h-4 text-[rgb(21,77,113)]" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div>
+                          <span className="font-semibold text-[rgb(21,77,113)]">Leasing Solutions</span>
+                          <span className="text-gray-600"> - Curating the perfect spaces for national and regional brands, ensuring high-visibility, high-footfall locations across urban markets.</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border-l-4 border-[rgb(21,77,113)]">
+                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                          <svg className="w-4 h-4 text-[rgb(21,77,113)]" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <span className="font-semibold text-[rgb(21,77,113)]">Real Estate Investments</span>
+                          <span className="text-gray-600"> - Offering handpicked pre-leased commercial assets and plots (residential, commercial, industrial) in Delhi NCR that ensure stable, long-term returns.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4 text-gray-700 text-lg leading-relaxed">
+                    <p>
+                      Whether you're a first-time investor exploring alternative income streams or an established
+                      entrepreneur looking to diversify your portfolio, Steal Deals is your trusted partner in navigating the
+                      world of commercial growth.
+                    </p>
+                    <p className="font-medium text-gray-800">
+                      We don't just close transactions - we build ecosystems where brands thrive, landlords profit, and
+                      investors flourish.
+                    </p>
+                  </div>
+                </div>
+                
                 <div className="mt-8">
                   <Link 
                     href="/contact" 
-                    className="bg-primary text-white hover:bg-secondary px-6 py-3 rounded-md font-medium transition-colors inline-block"
+                    className="group relative inline-flex items-center px-8 py-4 bg-gradient-to-r from-[rgb(21,77,113)] to-[rgb(28,110,164)] text-white font-semibold rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                   >
-                    Get In Touch
+                    <div className="absolute inset-0 bg-gradient-to-r from-[rgb(28,110,164)] to-[rgb(51,161,224)] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <span className="relative z-10 mr-2">Get In Touch</span>
+                    <svg className="relative z-10 w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
                   </Link>
                 </div>
               </div>
-              <div className="relative">
-                <div className="bg-primary absolute top-0 left-0 w-64 h-64 rounded-lg opacity-20 -z-10 transform -translate-x-4 -translate-y-4"></div>
-                <img 
-                  src="/images/about_us/ishank kohli (1).png" 
-                  alt="Ishank Kohli - Thought Leader" 
-                  className="rounded-lg shadow-xl w-full h-auto object-cover z-10"
-                />
-                <div className="bg-highlight absolute bottom-0 right-0 w-64 h-64 rounded-lg opacity-20 -z-10 transform translate-x-4 translate-y-4"></div>
+              
+              <div className="relative group">
+                {/* Enhanced Image Container with Glassmorphism */}
+                <div className="relative overflow-hidden rounded-3xl shadow-2xl transform group-hover:scale-105 transition-all duration-700">
+                  {/* Animated Background Elements */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-[rgb(51,161,224)]/20 via-[#8CCDEB]/20 to-[rgb(28,110,164)]/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute -top-8 -left-8 w-32 h-32 bg-[rgb(51,161,224)]/30 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                  <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-[rgb(28,110,164)]/30 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                  
+                  {/* Image with Overlay */}
+                  <div className="relative z-10">
+                    <img 
+                      src="/images/about_us/ishank kohli (1).png" 
+                      alt="Ishank Kohli - Thought Leader" 
+                      className="rounded-3xl w-full h-auto object-cover filter group-hover:brightness-110 transition-all duration-500"
+                    />
+                    
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[rgb(21,77,113)]/20 via-transparent to-transparent rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    
+                    {/* Professional Badge */}
+                    <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-[rgb(51,161,224)] rounded-full animate-pulse"></div>
+                        <span className="text-gray-800 font-semibold text-sm">CEO & Founder</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Floating Elements */}
+                  <div className="absolute top-4 right-4 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:rotate-180 transition-all duration-700">
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+                
+                {/* Quote Card */}
+                <div className="absolute -bottom-6 -left-6 bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-[#8CCDEB]/30 max-w-xs transform -rotate-2 group-hover:rotate-0 transition-transform duration-500">
+                  <div className="flex items-start space-x-3">
+                    <svg className="w-8 h-8 text-[rgb(51,161,224)] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p className="text-gray-700 text-sm font-medium mb-1">"Building bridges between dreams and reality"</p>
+                      <p className="text-gray-500 text-xs">- Leadership Vision</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -293,7 +427,7 @@ export default function AboutPage() {
                     Omaxe Group
                   </h3>
                   <p className="text-gray-600 text-center leading-relaxed">
-                    Trusted consultant for residential and commercial projects across multiple cities
+                    Trusted consultant for residential and commercial projects across cities
                   </p>
                   
                   <div className="mt-2 flex justify-center">
@@ -305,22 +439,22 @@ export default function AboutPage() {
               </div>
             </div>
 
-            {/* Bottom Stats Section */}
-            <div className="mt-16 text-center">
-              <div className="inline-flex items-center justify-center space-x-8 bg-white/60 backdrop-blur-sm rounded-2xl px-8 py-6 shadow-xl">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-gray-700 font-semibold">Active Partnerships</span>
+            {/* Bottom Stats Section - Hidden on Mobile */}
+            <div className="mt-16 text-center hidden sm:block">
+              <div className="inline-flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8 bg-white/60 backdrop-blur-sm rounded-2xl px-4 sm:px-8 py-4 sm:py-6 shadow-xl max-w-4xl mx-auto">
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-gray-700 font-semibold text-sm sm:text-base">Active Partnerships</span>
                 </div>
-                <div className="w-px h-8 bg-gray-300"></div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                  <span className="text-gray-700 font-semibold">Trusted Since 2008</span>
+                <div className="hidden sm:block w-px h-8 bg-gray-300"></div>
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-gray-700 font-semibold text-sm sm:text-base">Trusted Since 2008</span>
                 </div>
-                <div className="w-px h-8 bg-gray-300"></div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
-                  <span className="text-gray-700 font-semibold">Pan-India Presence</span>
+                <div className="hidden sm:block w-px h-8 bg-gray-300"></div>
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-purple-500 rounded-full animate-pulse"></div>
+                  <span className="text-gray-700 font-semibold text-sm sm:text-base">Pan-India Presence</span>
                 </div>
               </div>
             </div>
