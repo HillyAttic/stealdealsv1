@@ -28,6 +28,10 @@ function SearchParamsHandler({ setShowAuthModal }: { setShowAuthModal: (show: bo
 
 export default function Home() {
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [plotsCount, setPlotsCount] = useState(0);
+  const [franchisesCount, setFranchisesCount] = useState(110);
+  const [vacantCount, setVacantCount] = useState(15);
+  const [preLeasedCount, setPreLeasedCount] = useState(20);
 
   // Add custom styles
   React.useEffect(() => {
@@ -43,61 +47,63 @@ export default function Home() {
     };
   }, []);
 
-  // Sample property categories data
-  const categories = [
-    {
-      id: 1,
-      title: 'Pre-Leased Inventory',
-      count: 20,
-      icon: <FaBuilding className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
-      image: 'https://images.pexels.com/photos/1668928/pexels-photo-1668928.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      link: '/inventory',
-      description: 'Premium commercial properties with long-term tenants and stable rental income'
-    },
-    {
-      id: 2,
-      title: 'Vacant',
-      count: 15,
-      icon: <FaStore className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
-      image: 'https://images.pexels.com/photos/264507/pexels-photo-264507.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      link: '/vacant',
-      description: 'Ready-to-occupy commercial spaces for your business or investment'
-    },
-    {
-      id: 3,
-      title: 'Plots',
-      count: 10,
-      icon: <FaMapMarkerAlt className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
-      image: 'https://images.pexels.com/photos/462331/pexels-photo-462331.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      link: '/plots',
-      description: 'Premium land plots for commercial and industrial development'
-    },
-    {
-      id: 4,
-      title: 'Be a Franchise',
-      count: 25,
-      icon: <FaHandshake className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
-      image: 'https://images.pexels.com/photos/3962294/pexels-photo-3962294.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-      link: '/franchise',
-      description: 'Top franchise opportunities across various industries and investment levels'
-    }
-  ];
+
+  
+  // Fetch dynamic counts from APIs
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        // Fetch plots count
+        const plotsResponse = await fetch('/api/plots');
+        if (plotsResponse.ok) {
+          const plotsData = await plotsResponse.json();
+          setPlotsCount(plotsData.total || 0);
+        }
+        
+        // Fetch franchises count
+        const franchisesResponse = await fetch('/api/franchises');
+        if (franchisesResponse.ok) {
+          const franchisesData = await franchisesResponse.json();
+          setFranchisesCount(franchisesData.total || 110);
+        }
+        
+        // Fetch vacant properties count
+        const vacantResponse = await fetch('/api/properties?propertyType=Vacant');
+        if (vacantResponse.ok) {
+          const vacantData = await vacantResponse.json();
+          setVacantCount(vacantData.total || 15);
+        }
+        
+        // Fetch pre-leased properties count
+        const preLeasedResponse = await fetch('/api/properties?propertyType=Pre-Leased');
+        if (preLeasedResponse.ok) {
+          const preLeasedData = await preLeasedResponse.json();
+          setPreLeasedCount(preLeasedData.total || 20);
+        }
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+        // Keep default values on error
+      }
+    };
+    
+    fetchCounts();
+  }, []);
   
   const bestServices = [
     {
       id: 1,
       title: 'Plots',
-      count: 0,
+      count: plotsCount,
       icon: <FaMapMarkerAlt className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
-      image: 'https://images.pexels.com/photos/462331/pexels-photo-462331.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+      image: 'https://prestigeprelaunchprojects.com/images/prestige-plots-devanahallii.jpg',
       link: '/plots'
     },
     {
       id: 2,
       title: 'Be a Franchise',
-      count: 110,
+      count: franchisesCount,
       icon: <FaHandshake className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
-      image: 'https://images.pexels.com/photos/3962294/pexels-photo-3962294.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+      image: 'https://specials-images.forbesimg.com/imageserve/65bba21b5b2d37f74a168e56/960x0.jpg',
       link: '/franchise'
     }
   ];
@@ -321,7 +327,7 @@ export default function Home() {
                 <div className="relative h-full">
                   <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden h-[300px] md:h-[400px] lg:h-full">
                     <Image 
-                      src="https://images.pexels.com/photos/3182812/pexels-photo-3182812.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+                      src="/images/about_us/ishank kohli (1).png"
                       alt="About Steal Deals"
                       fill
                       style={{ objectFit: 'cover' }}
@@ -549,60 +555,7 @@ export default function Home() {
         {/* Trust Badges Section - New premium section */}
         <TrustedBrands />
         
-        {/* Categories Section - Enhanced with premium styling */}
-        {/* <section className="py-20 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h6 className="font-semibold mb-3 uppercase tracking-wider" style={{ color: 'rgb(28, 110, 164)' }}>Explore Our Services</h6>
-              <h2 className="text-4xl font-bold text-gray-800 mb-6 relative inline-block">
-                Our Categories
-                <span className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-blue-900"></span>
-              </h2>
-              <p className="text-gray-600 max-w-3xl mx-auto mt-8 text-lg">
-                Discover our comprehensive range of commercial real estate and franchise services
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {categories.map((category) => (
-                <div key={category.id} className="bg-white rounded-xl shadow-lg overflow-hidden group hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                  <div className="h-52 relative overflow-hidden">
-                    <img 
-                      src={category.image} 
-                      alt={category.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="bg-white/90 rounded-full p-5 shadow-lg transform group-hover:scale-110 transition-all duration-300">
-                        {category.icon}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-6 text-center">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">{category.count}+ Listings</h3>
-                    <p className="font-semibold mb-3 text-lg" style={{ color: 'rgb(28, 110, 164)' }}>{category.title}</p>
-                    <p className="text-gray-600 mb-4 text-sm">{category.description}</p>
-                    <Link 
-                      href={category.link} 
-                      className="inline-flex items-center font-medium transition-colors group"
-                     style={{ color: 'rgb(28, 110, 164)' }}
-                     onMouseEnter={(e) => {
-                       e.currentTarget.style.color = 'rgb(21, 77, 113)';
-                     }}
-                     onMouseLeave={(e) => {
-                       e.currentTarget.style.color = 'rgb(28, 110, 164)';
-                     }}
-                    >
-                      Explore
-                      <FaArrowRight className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section> */}
+
         
         {/* Best Services Section - Enhanced with premium styling */}
         <section className="py-20 bg-white relative">
