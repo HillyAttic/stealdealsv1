@@ -34,7 +34,7 @@ export default function ContactPage() {
         <Header />
 
         {/* Page Header */}
-        <section className="py-16 relative overflow-hidden" style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))'}}>
+        <section className="py-20 relative overflow-hidden" style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))'}}>
           <div className="absolute top-0 right-0 w-1/2 h-full bg-white/5 clip-path-diagonal"></div>
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full"></div>
           <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 rounded-full"></div>
@@ -302,18 +302,6 @@ export default function ContactPage() {
           </div>
 
           <div className="container mx-auto px-4">
-            {/* Address Display Card */}
-            <div className="bg-white p-8 rounded-lg shadow-md mb-6">
-              <div className="text-center">
-                <h3 className="text-2xl font-bold text-gray-800 mb-6">Our Office Location</h3>
-                <div className="text-lg text-gray-700 leading-relaxed space-y-2">
-                  <p className="font-semibold" style={{color: 'rgb(28, 110, 164)'}}>2nd Floor, Block A, Ofis Square</p>
-                  <p className="font-semibold" style={{color: 'rgb(28, 110, 164)'}}>The Iconic Corenthum, Noida Sector - 62</p>
-                  <p className="font-semibold" style={{color: 'rgb(28, 110, 164)'}}>Uttar Pradesh - 201301</p>
-                </div>
-              </div>
-            </div>
-            
             {/* Map Container with Multiple Options */}
             <div className="bg-white p-3 rounded-lg shadow-md">
               {/* Primary Google Maps Embed */}
