@@ -134,7 +134,7 @@ export function PlotCard({
       <div className="p-5 flex-1 flex flex-col">
         {/* Project and Developer - Clean display without labels */}
         <div className="mb-4">
-          <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-900 transition-colors leading-tight">
+          <h3 className="text-xl font-bold text-gray-900 mb-2 transition-colors leading-tight" style={{ '&:hover': { color: 'rgb(28, 110, 164)' } }}>
             {plot.project || 'Project Name Not Available'}
           </h3>
           <p className="text-base text-gray-600 font-medium">
@@ -144,19 +144,19 @@ export function PlotCard({
         
         {/* Location */}
         <div className="flex items-center text-gray-600 mb-3">
-          <FaMapMarkerAlt className="mr-2 text-blue-900" />
+          <FaMapMarkerAlt className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
           <span>{plot.location}</span>
         </div>
         
         {/* Plot Size Range */}
         <div className="flex items-center text-gray-600 mb-3">
-          <FaRulerCombined className="mr-2 text-blue-900" />
+          <FaRulerCombined className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
           <span>{getPlotSizeDisplay()}</span>
         </div>
         
         {/* Investment Details */}
         <div className="bg-blue-50 p-3 rounded-md mb-4 mt-auto">
-          <p className="text-blue-900 font-semibold text-sm leading-relaxed">
+          <p className="font-semibold text-sm leading-relaxed" style={{ color: 'rgb(28, 110, 164)' }}>
             {getInvestmentDisplay()}
           </p>
         </div>

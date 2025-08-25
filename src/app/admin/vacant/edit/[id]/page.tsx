@@ -169,7 +169,7 @@ function EditVacantPropertyContent() {
       <div className="border p-4 rounded">
         <div className="card-title d-flex align-items-center flex justify-between mb-4">
           <div className="flex items-center">
-            <h5 className="mb-0 text-xl font-bold text-blue-900">Edit Vacant Property</h5>
+            <h5 className="mb-0 text-xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>Edit Vacant Property</h5>
           </div>
           <div>
             <button 
@@ -200,7 +200,7 @@ function EditVacantPropertyContent() {
               
               {/* Location Information */}
               <div className="p-4 bg-blue-50 rounded-md mb-6">
-                <h3 className="text-md font-semibold mb-3 text-blue-900 border-b border-blue-200 pb-2">LOCATION DETAILS</h3>
+                <h3 className="text-md font-semibold mb-3 border-b border-blue-200 pb-2" style={{ color: 'rgb(28, 110, 164)' }}>LOCATION DETAILS</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="mb-3">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>

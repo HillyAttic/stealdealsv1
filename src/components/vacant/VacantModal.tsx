@@ -502,7 +502,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="text-gray-500 text-sm uppercase mb-2">Floor</h4>
                       <div className="flex items-center">
-                        <FaBuilding className="text-blue-900 mr-2 text-xl" />
+                        <FaBuilding className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
                         <span className="text-lg font-semibold">{property.floor}</span>
                       </div>
                     </div>
@@ -512,7 +512,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="text-gray-500 text-sm uppercase mb-2">Super Area</h4>
                       <div className="flex items-center">
-                        <FaRulerCombined className="text-blue-900 mr-2 text-xl" />
+                        <FaRulerCombined className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
                         <span className="text-lg font-semibold">{property.superArea} Sq.Ft</span>
                       </div>
                     </div>
@@ -522,7 +522,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="text-gray-500 text-sm uppercase mb-2">Carpet Area</h4>
                       <div className="flex items-center">
-                        <FaRulerCombined className="text-blue-900 mr-2 text-xl" />
+                        <FaRulerCombined className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
                         <span className="text-lg font-semibold">{property.carpetArea} Sq.Ft</span>
                       </div>
                     </div>
@@ -532,7 +532,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h4 className="text-gray-500 text-sm uppercase mb-2">Rent</h4>
                       <div className="flex items-center">
-                        <FaRupeeSign className="text-blue-900 mr-2 text-xl" />
+                        <FaRupeeSign className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
                         <span className="text-lg font-semibold">{formatCurrency(property.rent)}/month</span>
                       </div>
                     </div>
@@ -619,7 +619,8 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                   <div className="space-y-4 mt-auto">
                     <button 
                       onClick={handleContactClick}
-                      className="w-full flex items-center justify-center gap-3 bg-white text-blue-900 hover:bg-blue-50 transition-colors py-3 px-6 rounded-lg font-semibold"
+                      className="w-full flex items-center justify-center gap-3 bg-white hover:bg-blue-50 transition-colors py-3 px-6 rounded-lg font-semibold"
+                     style={{ color: 'rgb(28, 110, 164)' }}
                     >
                       <FaEnvelope className="text-lg" />
                       Request Information

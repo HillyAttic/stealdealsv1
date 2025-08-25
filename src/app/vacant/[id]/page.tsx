@@ -175,7 +175,14 @@ export default function VacantPropertyDetails() {
           <div className="container mx-auto px-4">
             <button 
               onClick={() => router.push('/vacant')}
-              className="flex items-center text-blue-900 hover:text-blue-700 mb-8"
+              className="flex items-center transition-colors mb-8"
+             style={{ color: 'rgb(28, 110, 164)' }}
+             onMouseEnter={(e) => {
+               e.currentTarget.style.color = 'rgb(21, 77, 113)';
+             }}
+             onMouseLeave={(e) => {
+               e.currentTarget.style.color = 'rgb(28, 110, 164)';
+             }}
             >
               <FaArrowLeft className="mr-2" />
               Back to Vacant Properties
@@ -230,7 +237,7 @@ export default function VacantPropertyDetails() {
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-gray-500 text-sm uppercase mb-2">Floor</h3>
                         <div className="flex items-center">
-                          <FaBuilding className="text-blue-900 mr-2 text-xl" />
+                          <FaBuilding className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
                           <span className="text-lg font-semibold">{property.floor}</span>
                         </div>
                       </div>
@@ -239,7 +246,7 @@ export default function VacantPropertyDetails() {
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <h3 className="text-gray-500 text-sm uppercase mb-2">Super Area</h3>
                           <div className="flex items-center">
-                            <FaRulerCombined className="text-blue-900 mr-2 text-xl" />
+                            <FaRulerCombined className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
                             <span className="text-lg font-semibold">{property.superArea} Sq.Ft</span>
                           </div>
                         </div>
@@ -249,7 +256,7 @@ export default function VacantPropertyDetails() {
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <h3 className="text-gray-500 text-sm uppercase mb-2">Carpet Area</h3>
                           <div className="flex items-center">
-                            <FaRulerCombined className="text-blue-900 mr-2 text-xl" />
+                            <FaRulerCombined className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
                             <span className="text-lg font-semibold">{property.carpetArea} Sq.Ft</span>
                           </div>
                         </div>
@@ -259,7 +266,7 @@ export default function VacantPropertyDetails() {
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <h3 className="text-gray-500 text-sm uppercase mb-2">Rent</h3>
                           <div className="flex items-center">
-                            <FaRupeeSign className="text-blue-900 mr-2 text-xl" />
+                            <FaRupeeSign className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
                             <span className="text-lg font-semibold">{formatCurrency(property.rent)}/month</span>
                           </div>
                         </div>
@@ -344,7 +351,8 @@ export default function VacantPropertyDetails() {
                     <Link 
                       href="/contact" 
                       onClick={handleContactClick}
-                      className="flex items-center justify-center gap-2 bg-white text-blue-900 hover:bg-blue-50 transition-colors py-3 px-6 rounded-md font-medium"
+                      className="flex items-center justify-center gap-2 bg-white hover:bg-blue-50 transition-colors py-3 px-6 rounded-md font-medium"
+                     style={{ color: 'rgb(28, 110, 164)' }}
                     >
                       <FaEnvelope />
                       Contact Us

@@ -49,7 +49,7 @@ export default function Home() {
       id: 1,
       title: 'Pre-Leased Inventory',
       count: 20,
-      icon: <FaBuilding className="text-3xl text-blue-900" />,
+      icon: <FaBuilding className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
       image: 'https://images.pexels.com/photos/1668928/pexels-photo-1668928.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
       link: '/inventory',
       description: 'Premium commercial properties with long-term tenants and stable rental income'
@@ -58,7 +58,7 @@ export default function Home() {
       id: 2,
       title: 'Vacant',
       count: 15,
-      icon: <FaStore className="text-3xl text-blue-900" />,
+      icon: <FaStore className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
       image: 'https://images.pexels.com/photos/264507/pexels-photo-264507.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
       link: '/vacant',
       description: 'Ready-to-occupy commercial spaces for your business or investment'
@@ -67,7 +67,7 @@ export default function Home() {
       id: 3,
       title: 'Plots',
       count: 10,
-      icon: <FaMapMarkerAlt className="text-3xl text-blue-900" />,
+      icon: <FaMapMarkerAlt className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
       image: 'https://images.pexels.com/photos/462331/pexels-photo-462331.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
       link: '/plots',
       description: 'Premium land plots for commercial and industrial development'
@@ -76,7 +76,7 @@ export default function Home() {
       id: 4,
       title: 'Be a Franchise',
       count: 25,
-      icon: <FaHandshake className="text-3xl text-blue-900" />,
+      icon: <FaHandshake className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
       image: 'https://images.pexels.com/photos/3962294/pexels-photo-3962294.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
       link: '/franchise',
       description: 'Top franchise opportunities across various industries and investment levels'
@@ -88,7 +88,7 @@ export default function Home() {
       id: 1,
       title: 'Plots',
       count: 0,
-      icon: <FaMapMarkerAlt className="text-3xl text-blue-900" />,
+      icon: <FaMapMarkerAlt className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
       image: 'https://images.pexels.com/photos/462331/pexels-photo-462331.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
       link: '/plots'
     },
@@ -96,7 +96,7 @@ export default function Home() {
       id: 2,
       title: 'Be a Franchise',
       count: 110,
-      icon: <FaHandshake className="text-3xl text-blue-900" />,
+      icon: <FaHandshake className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
       image: 'https://images.pexels.com/photos/3962294/pexels-photo-3962294.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
       link: '/franchise'
     }
@@ -168,7 +168,19 @@ export default function Home() {
                   <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center animate-slideUp" style={{ animationDelay: '0.6s' }}>
                     <Link 
                       href="/franchise" 
-                      className="group inline-flex items-center justify-center bg-blue-900 hover:bg-blue-800 text-white py-2.5 px-4 sm:py-3 sm:px-8 rounded-md text-sm sm:text-lg font-medium transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20"
+                      className="group inline-flex items-center justify-center text-white py-2.5 px-4 sm:py-3 sm:px-8 rounded-md text-sm sm:text-lg font-medium transition-all duration-300 hover:shadow-lg"
+                      style={{
+                        backgroundColor: 'rgb(28, 110, 164)',
+                        boxShadow: '0 4px 14px 0 rgba(28, 110, 164, 0.2)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgb(21, 77, 113)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px 0 rgba(21, 77, 113, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgb(28, 110, 164)';
+                        e.currentTarget.style.boxShadow = '0 4px 14px 0 rgba(28, 110, 164, 0.2)';
+                      }}
                     >
                       <span className="hidden sm:inline">View all Franchises</span>
                       <span className="sm:hidden">All Franchises</span>
@@ -188,46 +200,105 @@ export default function Home() {
           </div>
           
           {/* Premium features section */}
-          <div className="relative z-20 bg-gradient-to-r from-blue-800 to-indigo-900 py-6 border-t border-blue-700 shadow-lg">
+          <div className="relative z-20 py-6 border-t shadow-lg" style={{ 
+            backgroundColor: 'rgb(28, 110, 164)',
+            borderTopColor: 'rgba(21, 77, 113, 0.5)'
+          }}>
             <div className="container mx-auto px-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-white">
-                <div className="flex flex-col items-center md:flex-row md:items-center group hover:bg-blue-700/20 p-2 rounded-lg transition-all duration-300">
-                  <div className="bg-blue-700/50 p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 group-hover:bg-blue-600 transition-all duration-300">
+                <div className="flex flex-col items-center md:flex-row md:items-center group p-2 rounded-lg transition-all duration-300"
+                  style={{
+                    transition: 'background-color 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <div className="p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 transition-all duration-300"
+                    style={{ 
+                      backgroundColor: 'rgb(21, 77, 113)'
+                    }}
+                  >
                     <FaBuilding className="text-2xl" />
                   </div>
                   <div className="text-center md:text-left">
-                    <h3 className="text-lg font-bold">Premium Locations</h3>
-                    <p className="text-blue-200 text-sm">Prime real estate</p>
+                    <h3 className="text-lg font-bold text-white">Premium Locations</h3>
+                    <p className="text-white/80 text-sm">Prime real estate</p>
                   </div>
                 </div>
                 
-                <div className="flex flex-col items-center md:flex-row md:items-center group hover:bg-blue-700/20 p-2 rounded-lg transition-all duration-300">
-                  <div className="bg-blue-700/50 p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 group-hover:bg-blue-600 transition-all duration-300">
+                <div className="flex flex-col items-center md:flex-row md:items-center group p-2 rounded-lg transition-all duration-300"
+                  style={{
+                    transition: 'background-color 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <div className="p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 transition-all duration-300"
+                    style={{ 
+                      backgroundColor: 'rgb(21, 77, 113)'
+                    }}
+                  >
                     <FaHandshake className="text-2xl" />
                   </div>
                   <div className="text-center md:text-left">
-                    <h3 className="text-lg font-bold">Expert Advisors</h3>
-                    <p className="text-blue-200 text-sm">Personal guidance</p>
+                    <h3 className="text-lg font-bold text-white">Expert Advisors</h3>
+                    <p className="text-white/80 text-sm">Personal guidance</p>
                   </div>
                 </div>
                 
-                <div className="flex flex-col items-center md:flex-row md:items-center group hover:bg-blue-700/20 p-2 rounded-lg transition-all duration-300">
-                  <div className="bg-blue-700/50 p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 group-hover:bg-blue-600 transition-all duration-300">
+                <div className="flex flex-col items-center md:flex-row md:items-center group p-2 rounded-lg transition-all duration-300"
+                  style={{
+                    transition: 'background-color 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <div className="p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 transition-all duration-300"
+                    style={{ 
+                      backgroundColor: 'rgb(21, 77, 113)'
+                    }}
+                  >
                     <FaStar className="text-2xl" />
                   </div>
                   <div className="text-center md:text-left">
-                    <h3 className="text-lg font-bold">Top Rated</h3>
-                    <p className="text-blue-200 text-sm">Client satisfaction</p>
+                    <h3 className="text-lg font-bold text-white">Top Rated</h3>
+                    <p className="text-white/80 text-sm">Client satisfaction</p>
                   </div>
                 </div>
                 
-                <div className="flex flex-col items-center md:flex-row md:items-center group hover:bg-blue-700/20 p-2 rounded-lg transition-all duration-300">
-                  <div className="bg-blue-700/50 p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 group-hover:bg-blue-600 transition-all duration-300">
+                <div className="flex flex-col items-center md:flex-row md:items-center group p-2 rounded-lg transition-all duration-300"
+                  style={{
+                    transition: 'background-color 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <div className="p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 transition-all duration-300"
+                    style={{ 
+                      backgroundColor: 'rgb(21, 77, 113)'
+                    }}
+                  >
                     <FaPhone className="text-2xl" />
                   </div>
                   <div className="text-center md:text-left">
-                    <h3 className="text-lg font-bold">24/7 Support</h3>
-                    <p className="text-blue-200 text-sm">Always available</p>
+                    <h3 className="text-lg font-bold text-white">24/7 Support</h3>
+                    <p className="text-white/80 text-sm">Always available</p>
                   </div>
                 </div>
               </div>
@@ -239,9 +310,9 @@ export default function Home() {
         <section className="py-16 md:py-24 bg-gradient-to-b from-white to-blue-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
-              <h6 className="text-blue-900 font-semibold mb-3 uppercase tracking-wider">Who We Are</h6>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">About <span className="text-blue-900">Steal Deals</span></h2>
-              <div className="w-24 h-1 bg-blue-900 mx-auto"></div>
+              <h6 className="font-semibold mb-3 uppercase tracking-wider" style={{ color: 'rgb(28, 110, 164)' }}>Who We Are</h6>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">About <span style={{ color: 'rgb(28, 110, 164)' }}>Steal Deals</span></h2>
+              <div className="w-24 h-1 mx-auto" style={{ backgroundColor: 'rgb(28, 110, 164)' }}></div>
               <p className="mt-6 text-gray-600 max-w-3xl mx-auto text-base md:text-lg">Real Estate Investments. Leasing.</p>
             </div>
             
@@ -273,7 +344,11 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                  <div className="absolute -top-5 -right-5 bg-blue-900 text-white rounded-full w-24 h-24 flex flex-col items-center justify-center shadow-lg transform rotate-12">
+                  <div className="absolute -top-5 -right-5 text-white rounded-full w-24 h-24 flex flex-col items-center justify-center shadow-lg transform rotate-12"
+                    style={{
+                      backgroundColor: 'rgb(28, 110, 164)'
+                    }}
+                  >
                     <p className="text-xl font-bold">20+</p>
                     <p className="text-xs">Years Exp</p>
                   </div>
@@ -285,7 +360,7 @@ export default function Home() {
                   <p className="text-gray-700 mb-6 text-base md:text-lg">We have our offices in Delhi, Noida, Gurugram and Dubai. We provide advisory services in the following corridors:</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 transition-transform duration-300 hover:scale-105 hover:shadow-md">
-                      <div className="text-blue-900 mb-3 text-xl">
+                      <div className="mb-3 text-xl" style={{ color: 'rgb(28, 110, 164)' }}>
                         <FaBuilding className="inline-block mr-2" />
                         <span className="font-bold">Frachise Expansion</span>
                       </div>
@@ -293,7 +368,7 @@ export default function Home() {
                     </div>
                     
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 transition-transform duration-300 hover:scale-105 hover:shadow-md">
-                      <div className="text-blue-900 mb-3 text-xl">
+                      <div className="mb-3 text-xl" style={{ color: 'rgb(28, 110, 164)' }}>
                         <FaHome className="inline-block mr-2" />
                         <span className="font-bold">Investment in Plots</span>
                       </div>
@@ -301,7 +376,7 @@ export default function Home() {
                     </div>
                     
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 transition-transform duration-300 hover:scale-105 hover:shadow-md">
-                      <div className="text-blue-900 mb-3 text-xl">
+                      <div className="mb-3 text-xl" style={{ color: 'rgb(28, 110, 164)' }}>
                         <FaHotel className="inline-block mr-2" />
                         <span className="font-bold">Vacant Land</span>
                       </div>
@@ -309,7 +384,7 @@ export default function Home() {
                     </div>
                     
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 transition-transform duration-300 hover:scale-105 hover:shadow-md">
-                      <div className="text-blue-900 mb-3 text-xl">
+                      <div className="mb-3 text-xl" style={{ color: 'rgb(28, 110, 164)' }}>
                         <FaStore className="inline-block mr-2" />
                         <span className="font-bold">Pre-Leased Properties</span>
                       </div>
@@ -320,7 +395,19 @@ export default function Home() {
                   <div className="mt-8 text-center">
                     <Link 
                       href="/about" 
-                      className="inline-flex items-center bg-blue-900 hover:bg-blue-800 text-white px-6 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-blue-900/20"
+                      className="inline-flex items-center text-white px-6 py-3 rounded-full font-medium transition-all shadow-lg"
+                      style={{
+                        backgroundColor: 'rgb(28, 110, 164)',
+                        boxShadow: '0 4px 14px 0 rgba(28, 110, 164, 0.2)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgb(21, 77, 113)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px 0 rgba(21, 77, 113, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgb(28, 110, 164)';
+                        e.currentTarget.style.boxShadow = '0 4px 14px 0 rgba(28, 110, 164, 0.2)';
+                      }}
                     >
                       Learn More About Us
                       <FaArrowRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
@@ -341,10 +428,10 @@ export default function Home() {
           <div className="container mx-auto px-4 relative z-10">
             {/* Section Header */}
             <div className="max-w-3xl mx-auto text-center mb-16">
-              <div className="inline-block px-3 py-1 bg-blue-100 text-blue-900 text-sm font-semibold rounded-full mb-3">
+              <div className="inline-block px-3 py-1 bg-blue-100 text-sm font-semibold rounded-full mb-3" style={{ color: 'rgb(28, 110, 164)' }}>
                 WHY CHOOSE US
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-4">Our <span className="text-blue-900">Expertise</span></h2>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">Our <span style={{ color: 'rgb(28, 110, 164)' }}>Expertise</span></h2>
               <p className="text-gray-600 text-lg">
                 We've helped thousands of clients find their perfect investment property
               </p>
@@ -366,23 +453,23 @@ export default function Home() {
                 <div className="absolute -bottom-6 -right-6 bg-white rounded-lg p-6 shadow-xl max-w-[240px]">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center border-r border-gray-200 pr-2">
-                      <p className="text-3xl font-bold text-blue-900">15+</p>
+                      <p className="text-3xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>15+</p>
                       <p className="text-gray-500 text-sm">Years Experience</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-3xl font-bold text-blue-900">1200+</p>
+                      <p className="text-3xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>1200+</p>
                       <p className="text-gray-500 text-sm">Properties Sold</p>
                     </div>
                   </div>
                 </div>
                 
                 {/* Decorative element */}
-                <div className="absolute -top-4 -left-4 w-24 h-24 bg-blue-900 rounded-full opacity-10"></div>
+                <div className="absolute -top-4 -left-4 w-24 h-24 rounded-full opacity-10" style={{ backgroundColor: 'rgb(28, 110, 164)' }}></div>
               </div>
               
               {/* Right Column - Content */}
               <div className="order-1 lg:order-2 space-y-6">
-                <h3 className="text-2xl font-bold text-gray-800">Premium Real Estate <span className="text-blue-900">Investment Partner</span></h3>
+                <h3 className="text-2xl font-bold text-gray-800">Premium Real Estate <span style={{ color: 'rgb(28, 110, 164)' }}>Investment Partner</span></h3>
                 <p className="text-gray-600">
                   At Steal Deals, we provide expert guidance and market intelligence to help you make informed real estate investment decisions.
                 </p>
@@ -393,7 +480,7 @@ export default function Home() {
                   <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300 border border-gray-100">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 mr-4">
-                        <div className="bg-blue-100 text-blue-900 rounded-full p-3">
+                        <div className="bg-blue-100 rounded-full p-3" style={{ color: 'rgb(28, 110, 164)' }}>
                           <FaHandshake className="text-xl" />
                         </div>
                       </div>
@@ -408,7 +495,7 @@ export default function Home() {
                   <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300 border border-gray-100">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 mr-4">
-                        <div className="bg-blue-100 text-blue-900 rounded-full p-3">
+                        <div className="bg-blue-100 rounded-full p-3" style={{ color: 'rgb(28, 110, 164)' }}>
                           <FaChartLine className="text-xl" />
                         </div>
                       </div>
@@ -423,7 +510,7 @@ export default function Home() {
                   <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300 border border-gray-100">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 mr-4">
-                        <div className="bg-blue-100 text-blue-900 rounded-full p-3">
+                        <div className="bg-blue-100 rounded-full p-3" style={{ color: 'rgb(28, 110, 164)' }}>
                           <FaSearch className="text-xl" />
                         </div>
                       </div>
@@ -439,7 +526,16 @@ export default function Home() {
                 <div className="mt-8">
                   <Link 
                     href="/contact" 
-                    className="inline-flex items-center bg-blue-900 text-white py-3 px-6 rounded-lg hover:bg-blue-800 transition-colors shadow-md"
+                    className="inline-flex items-center text-white py-3 px-6 rounded-lg transition-colors shadow-md"
+                    style={{
+                      backgroundColor: 'rgb(28, 110, 164)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgb(21, 77, 113)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgb(28, 110, 164)';
+                    }}
                   >
                     Schedule a Consultation
                     <FaChevronRight className="ml-2" />
@@ -457,7 +553,7 @@ export default function Home() {
         {/* <section className="py-20 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
-              <h6 className="text-blue-900 font-semibold mb-3 uppercase tracking-wider">Explore Our Services</h6>
+              <h6 className="font-semibold mb-3 uppercase tracking-wider" style={{ color: 'rgb(28, 110, 164)' }}>Explore Our Services</h6>
               <h2 className="text-4xl font-bold text-gray-800 mb-6 relative inline-block">
                 Our Categories
                 <span className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-blue-900"></span>
@@ -485,11 +581,18 @@ export default function Home() {
                   </div>
                   <div className="p-6 text-center">
                     <h3 className="text-xl font-bold text-gray-800 mb-2">{category.count}+ Listings</h3>
-                    <p className="text-blue-900 font-semibold mb-3 text-lg">{category.title}</p>
+                    <p className="font-semibold mb-3 text-lg" style={{ color: 'rgb(28, 110, 164)' }}>{category.title}</p>
                     <p className="text-gray-600 mb-4 text-sm">{category.description}</p>
                     <Link 
                       href={category.link} 
-                      className="inline-flex items-center text-blue-900 font-medium hover:text-blue-700 transition-colors group"
+                      className="inline-flex items-center font-medium transition-colors group"
+                     style={{ color: 'rgb(28, 110, 164)' }}
+                     onMouseEnter={(e) => {
+                       e.currentTarget.style.color = 'rgb(21, 77, 113)';
+                     }}
+                     onMouseLeave={(e) => {
+                       e.currentTarget.style.color = 'rgb(28, 110, 164)';
+                     }}
                     >
                       Explore
                       <FaArrowRight className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
@@ -509,10 +612,10 @@ export default function Home() {
           
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
-              <h6 className="text-blue-900 font-semibold mb-3 uppercase tracking-wider">Excellence in</h6>
+              <h6 className="font-semibold mb-3 uppercase tracking-wider" style={{ color: 'rgb(28, 110, 164)' }}>Excellence in</h6>
               <h2 className="text-4xl font-bold text-gray-800 mb-6 relative inline-block">
                 Best Services
-                <span className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-blue-900"></span>
+                <span className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-1" style={{ backgroundColor: 'rgb(28, 110, 164)' }}></span>
               </h2>
               <p className="text-gray-600 max-w-3xl mx-auto mt-8 text-lg">
                 Our website is dedicated to providing a comprehensive and user-friendly experience for 
@@ -558,10 +661,10 @@ export default function Home() {
           
           <div className="container mx-auto px-4 relative z-10">
             <div className="text-center mb-16">
-              <h6 className="text-blue-900 font-semibold mb-3 uppercase tracking-wider">Success Stories</h6>
+              <h6 className="font-semibold mb-3 uppercase tracking-wider" style={{ color: 'rgb(28, 110, 164)' }}>Success Stories</h6>
               <h2 className="text-4xl font-bold text-gray-800 mb-6 relative inline-block">
                 What Our Clients Say
-                <span className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-blue-900"></span>
+                <span className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-1" style={{ backgroundColor: 'rgb(28, 110, 164)' }}></span>
               </h2>
             </div>
             
@@ -569,7 +672,7 @@ export default function Home() {
               {testimonials.map((testimonial) => (
                 <div key={testimonial.id} className="bg-white rounded-xl shadow-lg p-8 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                   <div className="mb-6">
-                    <FaQuoteLeft className="text-blue-900 text-3xl opacity-20" />
+                    <FaQuoteLeft className="text-3xl opacity-20" style={{ color: 'rgb(28, 110, 164)' }} />
                   </div>
                   <p className="text-gray-600 mb-6 leading-relaxed">{testimonial.testimonial}</p>
                   <div className="flex items-center justify-between">
@@ -581,7 +684,7 @@ export default function Home() {
                       />
                       <div>
                         <h4 className="font-bold text-gray-800">{testimonial.name}</h4>
-                        <p className="text-blue-900 text-sm">{testimonial.position}</p>
+                        <p className="text-sm" style={{ color: 'rgb(28, 110, 164)' }}>{testimonial.position}</p>
                       </div>
                     </div>
                     <div className="flex">

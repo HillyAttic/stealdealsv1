@@ -71,7 +71,8 @@ export default function HorecaPage() {
             <div id="contact">
               <Link 
                 href="/add-property" 
-                className="inline-flex items-center bg-white text-blue-900 hover:bg-blue-50 px-6 py-3 rounded-md font-semibold text-lg transition-colors shadow-lg"
+                className="inline-flex items-center bg-white hover:bg-blue-50 px-6 py-3 rounded-md font-semibold text-lg transition-colors shadow-lg"
+                style={{ color: 'rgb(28, 110, 164)' }}
               >
                 List Your Property
               </Link>

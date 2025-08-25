@@ -207,9 +207,10 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
                     href={item.href}
                     className={`flex items-center p-3 rounded-md transition-colors ${
                       pathname === item.href 
-                        ? 'bg-blue-50 text-blue-900 font-medium' 
+                        ? 'bg-blue-50 font-medium' 
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
+                    style={pathname === item.href ? { color: 'rgb(28, 110, 164)' } : {}}
                   >
                     <span className="mr-3">{item.icon}</span>
                     {item.name}

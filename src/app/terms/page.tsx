@@ -36,7 +36,7 @@ export default function TermsPage() {
             {/* Introduction */}
             <div className="mb-8 md:mb-12">
               <p className="text-gray-600 text-sm md:text-lg leading-relaxed mb-4 md:mb-6">
-                Welcome to Steal Deals ("we," "us," "our," "Steal Deals"). By accessing or using our website located at <a href="https://stealdeals.co.in" className="text-blue-900 hover:underline break-all">https://stealdeals.co.in</a> (the "Site") and any related services (collectively, the "Services"), you ("you," "your," "user") agree to be bound by these Terms and Conditions ("Terms").
+                Welcome to Steal Deals ("we," "us," "our," "Steal Deals"). By accessing or using our website located at <a href="https://stealdeals.co.in" className="hover:underline break-all" style={{ color: 'rgb(28, 110, 164)' }}>https://stealdeals.co.in</a> (the "Site") and any related services (collectively, the "Services"), you ("you," "your," "user") agree to be bound by these Terms and Conditions ("Terms").
               </p>
               <div className="bg-red-50 border-l-4 border-red-500 p-4 md:p-6 rounded-r-lg">
                 <div className="flex items-start">
@@ -52,7 +52,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">1</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>1</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Acceptance of Terms</h2>
               </div>
@@ -72,7 +72,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">2</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>2</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Definitions</h2>
               </div>
@@ -102,7 +102,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">3</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>3</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">User Accounts</h2>
               </div>
@@ -129,7 +129,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">4</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>4</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Intellectual Property Rights</h2>
               </div>
@@ -162,7 +162,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">5</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>5</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">User Conduct and Responsibilities</h2>
               </div>
@@ -193,7 +193,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">6</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>6</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">User-Generated Content</h2>
               </div>
@@ -228,7 +228,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">7</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>7</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Third-Party Links and Deal Information</h2>
               </div>
@@ -266,7 +266,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">8</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>8</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Disclaimer of Warranties; Limitation of Liability</h2>
               </div>
@@ -304,7 +304,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">9</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>9</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Indemnification</h2>
               </div>
@@ -321,7 +321,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">10</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>10</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Termination</h2>
               </div>
@@ -341,7 +341,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">11</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>11</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Governing Law and Dispute Resolution</h2>
               </div>
@@ -373,7 +373,7 @@ export default function TermsPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">12</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>12</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Miscellaneous</h2>
               </div>
@@ -399,7 +399,7 @@ export default function TermsPage() {
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 md:p-8 rounded-xl border border-blue-200 mb-8 md:mb-12">
               <div className="flex items-center justify-center md:justify-start mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">13</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>13</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Contact Information</h2>
               </div>
@@ -408,7 +408,7 @@ export default function TermsPage() {
                   If you have any questions about these Terms, please contact us at:
                 </p>
                 <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-blue-100 text-center">
-                  <h3 className="text-lg md:text-xl font-bold text-blue-900 mb-4 md:mb-6">Steal Deals</h3>
+                  <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6" style={{ color: 'rgb(28, 110, 164)' }}>Steal Deals</h3>
                   <div className="space-y-4 md:space-y-6 max-w-sm mx-auto">
                     <div className="flex flex-col items-center md:flex-row md:items-start md:text-left text-center">
                       <FaMapMarkerAlt className="text-blue-600 mb-2 md:mb-0 md:mr-3 md:mt-1 flex-shrink-0" />
@@ -426,7 +426,7 @@ export default function TermsPage() {
                       <FaEnvelope className="text-blue-600 mb-2 md:mb-0 md:mr-3 flex-shrink-0" />
                       <div>
                         <p className="text-gray-700 font-medium text-sm md:text-base mb-1">Email:</p>
-                        <a href="mailto:hello@stealdeals.co.in" className="text-blue-900 hover:underline font-semibold text-sm md:text-base break-all">
+                        <a href="mailto:hello@stealdeals.co.in" className="hover:underline font-semibold text-sm md:text-base break-all" style={{ color: 'rgb(28, 110, 164)' }}>
                           hello@stealdeals.co.in
                         </a>
                       </div>
@@ -453,7 +453,8 @@ export default function TermsPage() {
               <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
                 <a 
                   href="mailto:hello@stealdeals.co.in" 
-                  className="bg-white text-blue-900 hover:bg-blue-50 py-2 md:py-3 px-6 md:px-8 rounded-md font-semibold transition-colors inline-flex items-center justify-center text-sm md:text-base"
+                  className="bg-white hover:bg-blue-50 py-2 md:py-3 px-6 md:px-8 rounded-md font-semibold transition-colors inline-flex items-center justify-center text-sm md:text-base"
+                 style={{ color: 'rgb(28, 110, 164)' }}
                 >
                   <FaEnvelope className="mr-2" />
                   Contact Us

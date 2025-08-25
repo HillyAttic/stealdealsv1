@@ -197,7 +197,7 @@ function AdminLoginContent() {
           </div>
           
           <div className="text-center text-sm">
-            <Link href="/" className="text-blue-900 hover:text-blue-800">
+            <Link href="/" className="hover:text-blue-800" style={{ color: 'rgb(28, 110, 164)' }}>
               Back to Website
             </Link>
           </div>

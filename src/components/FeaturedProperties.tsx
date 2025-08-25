@@ -88,26 +88,26 @@ const PropertyCard = ({ property }: { property: typeof properties[0] }) => {
       </div>
       
       <div className="p-5">
-        <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-900 transition-colors">
+        <h3 className="text-xl font-bold text-gray-800 mb-2 transition-colors" style={{ '&:hover': { color: 'rgb(28, 110, 164)' } }}>
           {property.title}
         </h3>
         <p className="text-gray-600 mb-3 flex items-center text-sm">
-          <FaMapMarkerAlt className="mr-2 text-blue-900" />
+          <FaMapMarkerAlt className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
           {property.location}
         </p>
-        <p className="text-blue-900 font-bold text-xl mb-4">{property.price}</p>
+        <p className="font-bold text-xl mb-4" style={{ color: 'rgb(28, 110, 164)' }}>{property.price}</p>
         
         <div className="flex justify-between text-gray-600 border-t pt-4">
           <div className="flex items-center text-sm">
-            <FaBed className="mr-1 text-blue-900" />
+            <FaBed className="mr-1" style={{ color: 'rgb(28, 110, 164)' }} />
             <span>{property.beds} Beds</span>
           </div>
           <div className="flex items-center text-sm">
-            <FaBath className="mr-1 text-blue-900" />
+            <FaBath className="mr-1" style={{ color: 'rgb(28, 110, 164)' }} />
             <span>{property.baths} Baths</span>
           </div>
           <div className="flex items-center text-sm">
-            <FaRulerCombined className="mr-1 text-blue-900" />
+            <FaRulerCombined className="mr-1" style={{ color: 'rgb(28, 110, 164)' }} />
             <span>{property.area}</span>
           </div>
         </div>

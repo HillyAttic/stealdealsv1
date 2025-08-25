@@ -87,7 +87,7 @@ const Header = () => {
           <div className="flex items-center py-3">
             {/* Logo - Left aligned */}
             <div className="flex-shrink-0 mr-auto">
-              <Link href="/" className="text-xl sm:text-2xl font-bold text-blue-900 transition-all duration-300 flex items-start hover:opacity-80">
+              <Link href="/" className="text-xl sm:text-2xl font-bold transition-all duration-300 flex items-start hover:opacity-80" style={{ color: 'rgb(28, 110, 164)' }}>
                 <div className="overflow-hidden transition-all duration-500 transform hover:scale-105 flex items-center justify-start">
                   <Image
                     src="/logo.svg"
@@ -108,8 +108,8 @@ const Header = () => {
               aria-label="Toggle mobile menu"
             >
               {mobileMenuOpen ?
-                <FaTimes className="text-blue-900 transition-colors duration-300" /> :
-                <FaBars className="text-blue-900 transition-colors duration-300" />
+                <FaTimes className="transition-colors duration-300" style={{ color: 'rgb(28, 110, 164)' }} /> :
+                <FaBars className="transition-colors duration-300" style={{ color: 'rgb(28, 110, 164)' }} />
               }
             </button>
 
@@ -191,8 +191,9 @@ const Header = () => {
         onClick={toggleMobileMenu}
       >
         <div
-          className={`fixed inset-y-0 right-0 max-w-xs w-full bg-gradient-to-b from-blue-900 to-blue-800 shadow-xl transform transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          className={`fixed inset-y-0 right-0 max-w-xs w-full shadow-xl transform transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
             }`}
+          style={{ background: 'linear-gradient(to bottom, rgb(21, 77, 113), rgb(18, 65, 96))' }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex justify-end p-4">
@@ -211,9 +212,22 @@ const Header = () => {
                   <Link
                     href={item.path}
                     className={`flex items-center py-2 px-4 rounded-md ${item.path === pathname
-                      ? 'bg-blue-700/50 text-white font-medium'
-                      : 'text-blue-100 hover:bg-blue-700/30'
+                      ? 'text-white font-medium'
+                      : 'text-blue-100'
                       } transition-colors duration-200`}
+                    style={{
+                      backgroundColor: item.path === pathname ? 'rgba(255, 255, 255, 0.2)' : 'transparent'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (item.path !== pathname) {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (item.path !== pathname) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }
+                    }}
                     onClick={toggleMobileMenu}
                   >
                     <span className="mr-3 text-lg">{item.icon}</span>
@@ -224,10 +238,18 @@ const Header = () => {
             </ul>
 
             {/* Mobile Clerk Authentication */}
-            <div className="px-4 py-4 border-t border-blue-700/30 mt-4 space-y-3">
+            <div className="px-4 py-4 border-t border-white/20 mt-4 space-y-3">
               <SignedOut>
                 <SignInButton mode="modal">
-                  <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200">
+                  <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors duration-200"
+                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                    }}
+                  >
                     <Image
                       src="https://cdn-icons-png.flaticon.com/512/17468/17468741.png"
                       alt="User"

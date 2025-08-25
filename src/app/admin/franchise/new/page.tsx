@@ -130,7 +130,7 @@ function FranchiseForm() {
           <div>
             <i className="bx bxs-user me-1 text-2xl text-blue-500"></i>
           </div>
-          <h5 className="mb-0 text-xl font-bold text-blue-900 ml-2">Franchise Inventory</h5>
+          <h5 className="mb-0 text-xl font-bold ml-2" style={{ color: 'rgb(28, 110, 164)' }}>Franchise Inventory</h5>
           <div className="ml-auto">
             <button 
               id="btnList" 

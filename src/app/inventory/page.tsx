@@ -182,26 +182,26 @@ const PropertyCard = ({ property, onAuthRequired }: { property: any; onAuthRequi
       </div>
       
       <div className="p-5">
-        <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-900 transition-colors">
+        <h3 className="text-xl font-bold text-gray-800 mb-2 transition-colors" style={{ '&:hover': { color: 'rgb(28, 110, 164)' } }}>
           {getPropertyTitle(property)}
         </h3>
         <p className="text-gray-600 mb-3 flex items-center text-sm">
-          <FaMapMarkerAlt className="mr-2 text-blue-900" />
+          <FaMapMarkerAlt className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
           {property.location}{property.district ? `, ${property.district}` : ''}
         </p>
         <div className="mb-4 p-2 bg-blue-50 border border-blue-100 rounded-md">
           <p className="text-gray-600 text-sm mb-1">Investment Amount</p>
-          <p className="text-blue-900 font-bold text-xl">
+          <p className="font-bold text-xl" style={{ color: 'rgb(28, 110, 164)' }}>
             {property.askingPrice ? formatPrice({ askingPrice: property.askingPrice }) : formatPrice(property)}
           </p>
         </div>
         
         <div className="flex justify-between text-gray-600 border-t pt-4">
           <div className="flex items-center text-sm">
-            <span className="px-2 py-1 bg-blue-100 text-blue-900 rounded-md">{property.category}</span>
+            <span className="px-2 py-1 bg-blue-100 rounded-md" style={{ color: 'rgb(28, 110, 164)' }}>{property.category}</span>
           </div>
           <div className="flex items-center text-sm">
-            <FaRulerCombined className="mr-1 text-blue-900" />
+            <FaRulerCombined className="mr-1" style={{ color: 'rgb(28, 110, 164)' }} />
             <span>{property.totalArea ? 
               ((/sq\.?ft\.?/i).test(property.totalArea) ? property.totalArea : `${property.totalArea} SQ.FT.`) 
               : ''}</span>
@@ -209,7 +209,7 @@ const PropertyCard = ({ property, onAuthRequired }: { property: any; onAuthRequi
         </div>
         
         <div className="mt-3 pt-2 border-t border-gray-100">
-          <p className="text-blue-900 font-semibold mb-2">Financial Highlights</p>
+          <p className="font-semibold mb-2" style={{ color: 'rgb(28, 110, 164)' }}>Financial Highlights</p>
           <div className="grid grid-cols-1 gap-2">
             {property.rent && (
               <div className="flex items-center p-2 bg-green-50 border border-green-100 rounded-md">
@@ -230,29 +230,29 @@ const PropertyCard = ({ property, onAuthRequired }: { property: any; onAuthRequi
             )}
           </div>
 
-          <p className="text-blue-900 font-semibold mt-4 mb-2">Property Details</p>
+          <p className="font-semibold mt-4 mb-2" style={{ color: 'rgb(28, 110, 164)' }}>Property Details</p>
           <div className="flex items-center text-sm mb-2">
-            <span className="text-blue-900 font-medium mr-1">Tenant:</span>
+            <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>Tenant:</span>
             <span className="font-semibold text-gray-800">{property.tenant || ''}</span>
           </div>
           
           {property.leaseTerm && (
             <div className="flex items-center text-sm mb-2">
-              <span className="text-blue-900 font-medium mr-1">Lease Term:</span>
+              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>Lease Term:</span>
               <span className="text-gray-800">{property.leaseTerm}</span>
             </div>
           )}
           
           {property.floor && (
             <div className="flex items-center text-sm mb-2">
-              <span className="text-blue-900 font-medium mr-1">Floor:</span>
+              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>Floor:</span>
               <span className="text-gray-800">{property.floor}</span>
             </div>
           )}
           
           {property.areaOnSale && (
             <div className="flex items-center text-sm mb-2">
-              <span className="text-blue-900 font-medium mr-1">Area on Sale:</span>
+              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>Area on Sale:</span>
               <span className="text-gray-800">
                 {(/sq\.?ft\.?/i).test(property.areaOnSale) ? property.areaOnSale : `${property.areaOnSale} SQ.FT.`}
               </span>
@@ -261,7 +261,7 @@ const PropertyCard = ({ property, onAuthRequired }: { property: any; onAuthRequi
           
           {property.propertyStatus && (
             <div className="flex items-center text-sm mb-2">
-              <span className="text-blue-900 font-medium mr-1">Status:</span>
+              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>Status:</span>
               <span className="text-gray-800">{property.propertyStatus}</span>
             </div>
           )}
@@ -542,7 +542,7 @@ export default function InventoryPage() {
           <div className="container mx-auto px-4">
             <div className="mb-8 flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-800">
-                <span className="text-blue-900">{properties.length}</span> Properties Available
+                <span style={{ color: 'rgb(28, 110, 164)' }}>{properties.length}</span> Properties Available
               </h2>
               
               <div className="relative">

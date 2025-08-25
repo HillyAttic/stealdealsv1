@@ -371,7 +371,7 @@ function EditPlotContent({ plotId }: { plotId: string }) {
     <div className="p-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center">
-          <BsMenuUp className="text-2xl text-blue-900 mr-3" />
+          <BsMenuUp className="text-2xl mr-3" style={{ color: 'rgb(28, 110, 164)' }} />
           <h1 className="text-2xl font-bold text-gray-800">Edit Plot Project</h1>
         </div>
         

@@ -216,7 +216,7 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-600 mb-1">Location</label>
                   <div className="flex items-center text-gray-800">
-                    <FaMapMarkerAlt className="mr-2 text-blue-900" />
+                    <FaMapMarkerAlt className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
                     <span>{plot.location}</span>
                   </div>
                 </div>
@@ -237,7 +237,7 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-600 mb-1">Plot Size Range</label>
                   <div className="flex items-center text-gray-800">
-                    <FaRulerCombined className="mr-2 text-blue-900" />
+                    <FaRulerCombined className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
                     <span>{getPlotSizeDisplay()}</span>
                   </div>
                 </div>

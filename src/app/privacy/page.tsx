@@ -36,11 +36,11 @@ export default function PrivacyPolicyPage() {
             {/* Introduction */}
             <div className="mb-8 md:mb-12">
               <p className="text-gray-600 text-sm md:text-lg leading-relaxed mb-4 md:mb-6">
-                This Privacy Policy explains how Steal Deals ("we," "our," or "us") collects, uses, stores, and protects your personal information when you use our website <a href="https://stealdeals.co.in" className="text-blue-900 hover:underline break-all">https://stealdeals.co.in</a> and related services. By using our Services, you agree to the practices described in this Privacy Policy. If you do not agree, please discontinue use of our Services.
+                This Privacy Policy explains how Steal Deals ("we," "our," or "us") collects, uses, stores, and protects your personal information when you use our website <a href="https://stealdeals.co.in" className="hover:underline break-all" style={{ color: 'rgb(28, 110, 164)' }}>https://stealdeals.co.in</a> and related services. By using our Services, you agree to the practices described in this Privacy Policy. If you do not agree, please discontinue use of our Services.
               </p>
               <div className="bg-blue-50 border-l-4 border-blue-900 p-4 md:p-6 rounded-r-lg">
                 <p className="text-gray-700 font-medium text-sm md:text-base">
-                  For any questions or concerns, you can contact us at <a href="mailto:hello@stealdeals.co.in" className="text-blue-900 hover:underline font-semibold break-all">hello@stealdeals.co.in</a>.
+                  For any questions or concerns, you can contact us at <a href="mailto:hello@stealdeals.co.in" className="hover:underline font-semibold break-all" style={{ color: 'rgb(28, 110, 164)' }}>hello@stealdeals.co.in</a>.
                 </p>
               </div>
             </div>
@@ -49,7 +49,7 @@ export default function PrivacyPolicyPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">1</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>1</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Information We Collect</h2>
               </div>
@@ -101,7 +101,7 @@ export default function PrivacyPolicyPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">2</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>2</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">How We Process Your Information</h2>
               </div>
@@ -128,7 +128,7 @@ export default function PrivacyPolicyPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">3</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>3</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Sharing of Information</h2>
               </div>
@@ -152,7 +152,7 @@ export default function PrivacyPolicyPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">4</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>4</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Social Logins</h2>
               </div>
@@ -167,7 +167,7 @@ export default function PrivacyPolicyPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">5</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>5</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Data Retention</h2>
               </div>
@@ -185,7 +185,7 @@ export default function PrivacyPolicyPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">6</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>6</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Data Security</h2>
               </div>
@@ -210,7 +210,7 @@ export default function PrivacyPolicyPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">7</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>7</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Children's Privacy</h2>
               </div>
@@ -230,7 +230,7 @@ export default function PrivacyPolicyPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">8</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>8</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Your Privacy Rights</h2>
               </div>
@@ -258,7 +258,7 @@ export default function PrivacyPolicyPage() {
                 </div>
                 <div className="bg-blue-50 border-l-4 border-blue-900 p-4 md:p-6 rounded-r-lg">
                   <p className="text-gray-700 text-sm md:text-base">
-                    To exercise these rights, contact us at <a href="mailto:hello@stealdeals.co.in" className="text-blue-900 hover:underline font-semibold break-all">hello@stealdeals.co.in</a>.
+                    To exercise these rights, contact us at <a href="mailto:hello@stealdeals.co.in" className="hover:underline font-semibold break-all" style={{ color: 'rgb(28, 110, 164)' }}>hello@stealdeals.co.in</a>.
                   </p>
                 </div>
               </div>
@@ -268,7 +268,7 @@ export default function PrivacyPolicyPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">9</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>9</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Do-Not-Track (DNT)</h2>
               </div>
@@ -283,7 +283,7 @@ export default function PrivacyPolicyPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">10</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>10</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Policy Updates</h2>
               </div>
@@ -298,7 +298,7 @@ export default function PrivacyPolicyPage() {
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 md:p-8 rounded-xl border border-blue-200 mb-8 md:mb-12">
               <div className="flex items-center justify-center md:justify-start mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">11</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>11</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Contact Information</h2>
               </div>
@@ -307,7 +307,7 @@ export default function PrivacyPolicyPage() {
                   If you have questions or concerns about this Privacy Policy, you may contact us at:
                 </p>
                 <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-blue-100 text-center">
-                  <h3 className="text-lg md:text-xl font-bold text-blue-900 mb-4 md:mb-6">Steal Deals</h3>
+                  <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6" style={{ color: 'rgb(28, 110, 164)' }}>Steal Deals</h3>
                   <div className="space-y-4 md:space-y-6 max-w-sm mx-auto">
                     <div className="flex flex-col items-center md:flex-row md:items-start md:text-left text-center">
                       <FaMapMarkerAlt className="text-blue-600 mb-2 md:mb-0 md:mr-3 md:mt-1 flex-shrink-0" />
@@ -325,7 +325,7 @@ export default function PrivacyPolicyPage() {
                       <FaEnvelope className="text-blue-600 mb-2 md:mb-0 md:mr-3 flex-shrink-0" />
                       <div>
                         <p className="text-gray-700 font-medium text-sm md:text-base mb-1">Email:</p>
-                        <a href="mailto:hello@stealdeals.co.in" className="text-blue-900 hover:underline font-semibold text-sm md:text-base break-all">
+                        <a href="mailto:hello@stealdeals.co.in" className="hover:underline font-semibold text-sm md:text-base break-all" style={{ color: 'rgb(28, 110, 164)' }}>
                           hello@stealdeals.co.in
                         </a>
                       </div>
@@ -339,7 +339,7 @@ export default function PrivacyPolicyPage() {
             <div className="mb-8 md:mb-12">
               <div className="flex items-center mb-4 md:mb-6">
                 <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="text-blue-900 font-bold text-sm md:text-base">12</span>
+                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>12</span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold text-gray-800">Review, Update, or Delete Your Data</h2>
               </div>
@@ -349,7 +349,7 @@ export default function PrivacyPolicyPage() {
                     <FaUserShield className="text-purple-600 mr-2 md:mr-3 mt-1 flex-shrink-0" />
                     <div>
                       <p className="text-gray-600 leading-relaxed text-sm md:text-base">
-                        You may request to review, update, or delete the personal information we hold about you by submitting a Data Subject Access Request (DSAR) or contacting us directly at <a href="mailto:hello@stealdeals.co.in" className="text-blue-900 hover:underline font-semibold break-all">hello@stealdeals.co.in</a>.
+                        You may request to review, update, or delete the personal information we hold about you by submitting a Data Subject Access Request (DSAR) or contacting us directly at <a href="mailto:hello@stealdeals.co.in" className="hover:underline font-semibold break-all" style={{ color: 'rgb(28, 110, 164)' }}>hello@stealdeals.co.in</a>.
                       </p>
                     </div>
                   </div>
@@ -374,7 +374,8 @@ export default function PrivacyPolicyPage() {
               <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
                 <a 
                   href="mailto:hello@stealdeals.co.in" 
-                  className="bg-white text-blue-900 hover:bg-blue-50 py-2 md:py-3 px-6 md:px-8 rounded-md font-semibold transition-colors inline-flex items-center justify-center text-sm md:text-base"
+                  className="bg-white hover:bg-blue-50 py-2 md:py-3 px-6 md:px-8 rounded-md font-semibold transition-colors inline-flex items-center justify-center text-sm md:text-base"
+                 style={{ color: 'rgb(28, 110, 164)' }}
                 >
                   <FaEnvelope className="mr-2" />
                   Contact Us

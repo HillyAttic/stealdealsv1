@@ -118,28 +118,28 @@ export function PropertyCard({
       </div>
       
       <div className="p-5">
-        <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-900 transition-colors">
+        <h3 className="text-xl font-bold text-gray-800 mb-2 transition-colors" style={{ '&:hover': { color: 'rgb(28, 110, 164)' } }}>
           {property.location || property.title || 'Property'}
         </h3>
         
         {/* Location Details */}
         <div className="bg-blue-50 p-3 rounded-md mb-3">
-          <h4 className="font-semibold text-blue-900 mb-2 border-b border-blue-200 pb-1">Location Details</h4>
+          <h4 className="font-semibold mb-2 border-b border-blue-200 pb-1" style={{ color: 'rgb(28, 110, 164)' }}>Location Details</h4>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center text-sm">
-              <span className="text-blue-900 font-medium mr-1">State:</span>
+              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>State:</span>
               <span className="text-gray-800">{property.state || 'N/A'}</span>
             </div>
             <div className="flex items-center text-sm">
-              <span className="text-blue-900 font-medium mr-1">City:</span>
+              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>City:</span>
               <span className="text-gray-800">{property.city || 'N/A'}</span>
             </div>
             <div className="flex items-center text-sm">
-              <span className="text-blue-900 font-medium mr-1">District:</span>
+              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>District:</span>
               <span className="text-gray-800">{property.district || 'N/A'}</span>
             </div>
             <div className="flex items-center text-sm">
-              <span className="text-blue-900 font-medium mr-1">Sub-District:</span>
+              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>Sub-District:</span>
               <span className="text-gray-800">{property.subDistrict || 'N/A'}</span>
             </div>
           </div>

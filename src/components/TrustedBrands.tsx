@@ -126,8 +126,8 @@ const TrustedBrands = () => {
     <section className="py-20 bg-gradient-to-r from-blue-50 to-blue-150">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-blue-900 mb-4">Trusted By Leading Brands</h2>
-          <div className="w-32 h-1.5 bg-blue-600 mx-auto rounded-full"></div>
+          <h2 className="text-4xl font-bold mb-4" style={{ color: 'rgb(28, 110, 164)' }}>Trusted By Leading Brands</h2>
+          <div className="w-32 h-1.5 mx-auto rounded-full" style={{ backgroundColor: 'rgb(28, 110, 164)' }}></div>
         </div>
         
         {/* Marquee for all screen sizes */}

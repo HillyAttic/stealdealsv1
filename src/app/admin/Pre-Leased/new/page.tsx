@@ -278,7 +278,7 @@ function NewPreLeasedPropertyContent() {
       <div className="border p-4 rounded">
         <div className="card-title d-flex align-items-center flex justify-between mb-4">
           <div className="flex items-center">
-            <h5 className="mb-0 text-xl font-bold text-blue-900">Pre-Leased Inventory</h5>
+            <h5 className="mb-0 text-xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>Pre-Leased Inventory</h5>
           </div>
           <div>
             <button 

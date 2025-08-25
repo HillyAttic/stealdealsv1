@@ -307,7 +307,7 @@ export default function ActivityHistory({ className = '' }: ActivityHistoryProps
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-blue-600">Total Sessions</p>
-                  <p className="text-2xl font-bold text-blue-900">
+                  <p className="text-2xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>
                     {activityData.engagementMetrics.totalSessions}
                   </p>
                 </div>
