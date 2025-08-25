@@ -165,19 +165,21 @@ export default function Home() {
                   <p className="text-white text-xl md:text-2xl mb-10 font-light leading-relaxed animate-slideUp" style={{ animationDelay: '0.4s' }}>
                     Lease with Confidence, <span className="text-blue-300">Grow with Ease</span>
                   </p>
-                  <div className="flex gap-4 justify-center animate-slideUp" style={{ animationDelay: '0.6s' }}>
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center animate-slideUp" style={{ animationDelay: '0.6s' }}>
                     <Link 
-                      href="/inventory" 
-                      className="group inline-flex items-center bg-blue-900 hover:bg-blue-800 text-white py-3 px-8 rounded-md text-lg font-medium transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20"
+                      href="/franchise" 
+                      className="group inline-flex items-center justify-center bg-blue-900 hover:bg-blue-800 text-white py-2.5 px-4 sm:py-3 sm:px-8 rounded-md text-sm sm:text-lg font-medium transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20"
                     >
-                      View all listings
+                      <span className="hidden sm:inline">View all Franchises</span>
+                      <span className="sm:hidden">All Franchises</span>
                       <FaChevronRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
                     </Link>
                     <Link 
-                      href="/contact" 
-                      className="inline-flex items-center bg-transparent border-2 border-white text-white py-3 px-8 rounded-md text-lg font-medium transition-all duration-300 hover:bg-white/10"
+                      href="/plots" 
+                      className="inline-flex items-center justify-center bg-transparent border-2 border-white text-white py-2.5 px-4 sm:py-3 sm:px-8 rounded-md text-sm sm:text-lg font-medium transition-all duration-300 hover:bg-white/10"
                     >
-                      Contact Us
+                      <span className="hidden sm:inline">View all Plots</span>
+                      <span className="sm:hidden">View all Plots</span>
                     </Link>
                   </div>
                 </div>
@@ -612,37 +614,37 @@ export default function Home() {
                 Our expert team is ready to guide you through every step of your investment journey.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch">
                 <Link 
                   href="/contact" 
-                  className="group inline-flex items-center bg-white text-[rgb(21,77,113)] px-8 py-4 rounded-lg text-lg font-bold hover:bg-white/90 hover:text-[rgb(28,110,164)] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                  className="group flex-1 inline-flex items-center justify-center bg-white text-[rgb(21,77,113)] px-6 py-3 sm:px-8 sm:py-4 rounded-lg text-base sm:text-lg font-bold hover:bg-white/90 hover:text-[rgb(28,110,164)] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 min-w-0"
                 >
-                  <FaPhone className="mr-3 group-hover:animate-pulse" />
-                  Schedule Consultation
-                  <FaArrowRight className="ml-3 transform group-hover:translate-x-1 transition-transform duration-300" />
+                  <FaPhone className="mr-2 sm:mr-3 group-hover:animate-pulse flex-shrink-0" />
+                  <span className="truncate">Schedule Consultation</span>
+                  <FaArrowRight className="ml-2 sm:ml-3 transform group-hover:translate-x-1 transition-transform duration-300 flex-shrink-0" />
                 </Link>
                 
                 <Link 
                   href="/inventory" 
-                  className="inline-flex items-center bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-white hover:text-[rgb(21,77,113)] transition-all duration-300"
+                  className="flex-1 inline-flex items-center justify-center bg-transparent border-2 border-white text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg text-base sm:text-lg font-bold hover:bg-white hover:text-[rgb(21,77,113)] transition-all duration-300 min-w-0"
                 >
-                  <FaListUl className="mr-3" />
-                  Browse Properties
+                  <FaListUl className="mr-2 sm:mr-3 flex-shrink-0" />
+                  <span className="truncate">Browse Properties</span>
                 </Link>
               </div>
               
-              <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+              <div className="mt-12 grid grid-cols-3 gap-4 sm:gap-8 text-center">
                 <div className="text-white">
-                  <p className="text-3xl font-bold mb-2">500+</p>
-                  <p className="text-white/80">Properties Listed</p>
+                  <p className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">500+</p>
+                  <p className="text-white/80 text-xs sm:text-base">Properties Listed</p>
                 </div>
                 <div className="text-white">
-                  <p className="text-3xl font-bold mb-2">1000+</p>
-                  <p className="text-white/80">Happy Clients</p>
+                  <p className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">1000+</p>
+                  <p className="text-white/80 text-xs sm:text-base">Happy Clients</p>
                 </div>
                 <div className="text-white">
-                  <p className="text-3xl font-bold mb-2">15+</p>
-                  <p className="text-white/80">Years Experience</p>
+                  <p className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">15+</p>
+                  <p className="text-white/80 text-xs sm:text-base">Years Experience</p>
                 </div>
               </div>
             </div>

@@ -128,8 +128,21 @@ const Header = () => {
                         <Link
                           href={item.path}
                           className={`relative font-medium text-lg px-2 py-1 flex items-center justify-center whitespace-nowrap
-                            text-blue-900 hover:text-blue-700 font-['cooper black'] tracking-wide
-                            transition-all duration-300 ${pathname === item.path ? 'text-blue-700 font-semibold after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-100 after:transition-transform after:duration-300' : 'after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-0 after:transition-transform after:duration-300 hover:after:scale-x-100'}`}
+                            font-['cooper black'] tracking-wide
+                            transition-all duration-300 ${pathname === item.path ? 'font-semibold after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-100 after:transition-transform after:duration-300' : 'after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-0 after:transition-transform after:duration-300 hover:after:scale-x-100'}`}
+                          style={{
+                            color: pathname === item.path ? 'rgb(21, 77, 113)' : 'rgb(28, 110, 164)'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (pathname !== item.path) {
+                              e.currentTarget.style.color = 'rgb(21, 77, 113)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (pathname !== item.path) {
+                              e.currentTarget.style.color = 'rgb(28, 110, 164)';
+                            }
+                          }}
                         >
                           {item.name}
                         </Link>

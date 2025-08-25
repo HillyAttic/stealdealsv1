@@ -11,6 +11,7 @@ module.exports = {
         'sans': ['var(--font-jost)', 'system-ui', 'sans-serif'],
         'serif': ['ui-serif', 'Georgia', 'Cambria', 'Times New Roman', 'Times', 'serif'],
         'jost': ['var(--font-jost)', 'sans-serif'],
+        'cooper-black': ['Cooper Black', 'Arial Black', 'sans-serif'],
       },
       colors: {
         primary: {
