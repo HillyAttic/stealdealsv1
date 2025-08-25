@@ -74,12 +74,8 @@ export default function Home() {
           setVacantCount(vacantData.total || 15);
         }
         
-        // Fetch pre-leased properties count
-        const preLeasedResponse = await fetch('/api/properties?propertyType=Pre-Leased');
-        if (preLeasedResponse.ok) {
-          const preLeasedData = await preLeasedResponse.json();
-          setPreLeasedCount(preLeasedData.total || 20);
-        }
+        // Use static count for pre-leased properties to avoid unnecessary API calls
+        setPreLeasedCount(45);
       } catch (error) {
         console.error('Error fetching counts:', error);
         // Keep default values on error
@@ -205,106 +201,105 @@ export default function Home() {
             </div>
           </div>
           
-          {/* Premium features section */}
-          <div className="relative z-20 py-6 border-t shadow-lg" style={{ 
-            backgroundColor: 'rgb(28, 110, 164)',
+          {/* Premium features section - Enhanced with glassmorphism and better UX */}
+          <div className="relative z-20 py-6 overflow-hidden border-t shadow-lg" style={{ 
+            background: 'linear-gradient(135deg, rgb(28, 110, 164) 0%, rgb(21, 77, 113) 50%, rgb(51, 161, 224) 100%)',
             borderTopColor: 'rgba(21, 77, 113, 0.5)'
           }}>
-            <div className="container mx-auto px-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-white">
-                <div className="flex flex-col items-center md:flex-row md:items-center group p-2 rounded-lg transition-all duration-300"
-                  style={{
-                    transition: 'background-color 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <div className="p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 transition-all duration-300"
-                    style={{ 
-                      backgroundColor: 'rgb(21, 77, 113)'
-                    }}
-                  >
-                    <FaBuilding className="text-2xl" />
-                  </div>
-                  <div className="text-center md:text-left">
-                    <h3 className="text-lg font-bold text-white">Premium Locations</h3>
-                    <p className="text-white/80 text-sm">Prime real estate</p>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-center md:flex-row md:items-center group p-2 rounded-lg transition-all duration-300"
-                  style={{
-                    transition: 'background-color 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <div className="p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 transition-all duration-300"
-                    style={{ 
-                      backgroundColor: 'rgb(21, 77, 113)'
-                    }}
-                  >
-                    <FaHandshake className="text-2xl" />
-                  </div>
-                  <div className="text-center md:text-left">
-                    <h3 className="text-lg font-bold text-white">Expert Advisors</h3>
-                    <p className="text-white/80 text-sm">Personal guidance</p>
+            {/* Floating background elements */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute -top-5 -left-5 w-20 h-20 md:w-40 md:h-40 rounded-full opacity-20" style={{ backgroundColor: '#8CCDEB' }}></div>
+              <div className="absolute top-10 right-5 w-16 h-16 md:w-32 md:h-32 rounded-full opacity-15" style={{ backgroundColor: 'rgb(51, 161, 224)' }}></div>
+              <div className="absolute -bottom-5 left-1/3 w-24 h-24 md:w-48 md:h-48 rounded-full opacity-10" style={{ backgroundColor: 'white' }}></div>
+            </div>
+            
+            <div className="container mx-auto px-4 relative z-10">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                {/* Premium Locations */}
+                <div className="group">
+                  <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 md:p-4 transition-all duration-500 hover:bg-white/15 hover:scale-105 hover:shadow-2xl hover:border-white/30">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-xl"></div>
+                    <div className="relative z-10">
+                      <div className="mb-3">
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mx-auto mb-2 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3" style={{ 
+                          background: 'linear-gradient(135deg, rgb(28, 110, 164) 0%, rgb(21, 77, 113) 40%, rgb(28, 110, 164) 100%)',
+                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.4)'
+                        }}>
+                          <FaBuilding className="text-lg md:text-xl text-white" />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-sm md:text-lg font-bold text-white mb-1 group-hover:text-blue-100 transition-colors duration-300">Premium Locations</h3>
+                        <p className="text-white/80 text-xs md:text-sm leading-relaxed">Prime real estate</p>
+                        <div className="mt-2 w-6 h-0.5 mx-auto rounded-full transition-all duration-300 group-hover:w-8" style={{ backgroundColor: '#8CCDEB' }}></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="flex flex-col items-center md:flex-row md:items-center group p-2 rounded-lg transition-all duration-300"
-                  style={{
-                    transition: 'background-color 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <div className="p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 transition-all duration-300"
-                    style={{ 
-                      backgroundColor: 'rgb(21, 77, 113)'
-                    }}
-                  >
-                    <FaStar className="text-2xl" />
-                  </div>
-                  <div className="text-center md:text-left">
-                    <h3 className="text-lg font-bold text-white">Top Rated</h3>
-                    <p className="text-white/80 text-sm">Client satisfaction</p>
+                {/* Expert Advisors */}
+                <div className="group">
+                  <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 md:p-4 transition-all duration-500 hover:bg-white/15 hover:scale-105 hover:shadow-2xl hover:border-white/30">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-xl"></div>
+                    <div className="relative z-10">
+                      <div className="mb-3">
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mx-auto mb-2 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3" style={{ 
+                          background: 'linear-gradient(135deg, rgb(28, 110, 164) 0%, rgb(21, 77, 113) 40%, rgb(28, 110, 164) 100%)',
+                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.4)'
+                        }}>
+                          <FaHandshake className="text-lg md:text-xl text-white" />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-sm md:text-lg font-bold text-white mb-1 group-hover:text-blue-100 transition-colors duration-300">Expert Advisors</h3>
+                        <p className="text-white/80 text-xs md:text-sm leading-relaxed">Personal guidance</p>
+                        <div className="mt-2 w-6 h-0.5 mx-auto rounded-full transition-all duration-300 group-hover:w-8" style={{ backgroundColor: '#8CCDEB' }}></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="flex flex-col items-center md:flex-row md:items-center group p-2 rounded-lg transition-all duration-300"
-                  style={{
-                    transition: 'background-color 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  <div className="p-3 rounded-full mr-0 md:mr-4 mb-3 md:mb-0 transition-all duration-300"
-                    style={{ 
-                      backgroundColor: 'rgb(21, 77, 113)'
-                    }}
-                  >
-                    <FaPhone className="text-2xl" />
+                {/* Top Rated */}
+                <div className="group">
+                  <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 md:p-4 transition-all duration-500 hover:bg-white/15 hover:scale-105 hover:shadow-2xl hover:border-white/30">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-xl"></div>
+                    <div className="relative z-10">
+                      <div className="mb-3">
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mx-auto mb-2 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3" style={{ 
+                          background: 'linear-gradient(135deg, rgb(28, 110, 164) 0%, rgb(21, 77, 113) 40%, rgb(28, 110, 164) 100%)',
+                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.4)'
+                        }}>
+                          <FaStar className="text-lg md:text-xl text-white" />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-sm md:text-lg font-bold text-white mb-1 group-hover:text-blue-100 transition-colors duration-300">Top Rated</h3>
+                        <p className="text-white/80 text-xs md:text-sm leading-relaxed">Client satisfaction</p>
+                        <div className="mt-2 w-6 h-0.5 mx-auto rounded-full transition-all duration-300 group-hover:w-8" style={{ backgroundColor: '#8CCDEB' }}></div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center md:text-left">
-                    <h3 className="text-lg font-bold text-white">24/7 Support</h3>
-                    <p className="text-white/80 text-sm">Always available</p>
+                </div>
+                
+                {/* 24/7 Support */}
+                <div className="group">
+                  <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3 md:p-4 transition-all duration-500 hover:bg-white/15 hover:scale-105 hover:shadow-2xl hover:border-white/30">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-xl"></div>
+                    <div className="relative z-10">
+                      <div className="mb-3">
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mx-auto mb-2 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3" style={{ 
+                          background: 'linear-gradient(135deg, rgb(28, 110, 164) 0%, rgb(21, 77, 113) 40%, rgb(28, 110, 164) 100%)',
+                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.4)'
+                        }}>
+                          <FaPhone className="text-lg md:text-xl text-white" />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <h3 className="text-sm md:text-lg font-bold text-white mb-1 group-hover:text-blue-100 transition-colors duration-300">24/7 Support</h3>
+                        <p className="text-white/80 text-xs md:text-sm leading-relaxed">Always available</p>
+                        <div className="mt-2 w-6 h-0.5 mx-auto rounded-full transition-all duration-300 group-hover:w-8" style={{ backgroundColor: '#8CCDEB' }}></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

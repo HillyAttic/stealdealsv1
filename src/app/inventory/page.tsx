@@ -280,151 +280,53 @@ export default function InventoryPage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Fetch properties from API - handle both Firebase and local data structures
+  // Use static sample data instead of API calls to avoid unnecessary requests
   useEffect(() => {
-    const fetchProperties = async () => {
+    const loadStaticProperties = () => {
       setIsLoading(true);
-      try {
-        // Build URL with query parameters
-        const queryParams = new URLSearchParams();
-        if (selectedCategory) {
-          queryParams.append('category', selectedCategory);
-        }
-        
-        // Always add propertyType=Pre-Leased since this is the inventory page
-        queryParams.append('propertyType', 'Pre-Leased');
-        
-        const url = `/api/properties${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-        console.log('Fetching from:', url);
-        
-        // Add retry logic for better reliability
-        let retries = 3;
-        let response;
-        
-        while (retries > 0) {
-          try {
-            response = await fetch(url);
-            
-            // If successful, break out of retry loop
-            if (response.status !== 401) break;
-            
-            // If unauthorized but we have retries left, try again
-            console.log(`Authentication error (${retries} retries left), retrying...`);
-            retries--;
-            
-            // Wait a bit before retrying
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          } catch (err) {
-            console.error('Fetch attempt failed:', err);
-            retries--;
-            if (retries === 0) throw err;
-            
-            // Wait a bit before retrying
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        }
-        
-        // If we don't have a response by now, throw an error
-        if (!response) {
-          throw new Error('Failed to connect to the server');
-        }
-        
-        if (!response.ok) {
-          // For 401 errors, handle them specially
-          if (response.status === 401) {
-            console.error('Authentication error, using sample data instead');
-            setProperties(sampleProperties.map((p, index: number) => ({ 
-              originalId: p.id,
-              id: `sample-${p.id}-${index}`,
-              category: p.category, 
-              location: p.location,
-              title: p.title,
-              price: typeof p.price === 'string' ? parseInt(p.price.replace(/[^\d]/g, '')) : undefined,
-              propertyType: p.type
-            })));
-            return;
-          }
-          
-          console.error('API Error:', response.status, response.statusText);
-          throw new Error(`Failed to fetch properties: ${response.status} ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log('Received properties data:', data);
-        console.log('Total properties from API:', data.properties ? data.properties.length : 0);
-        console.log('Property types received:', data.properties ? [...new Set(data.properties.map((p: any) => p.propertyType))] : []);
-        
-        // Log some sample properties to debug
-        if (data.properties && data.properties.length > 0) {
-          console.log('Sample properties (first 3):', 
-            data.properties.slice(0, 3).map((p: any) => ({
-              id: p.id,
-              title: p.title || p.tenant,
-              propertyType: p.propertyType,
-              tenant: p.tenant,
-              category: p.category
-            }))
-          );
-        }
-        
-        // Apply filters - but we're already getting Pre-Leased properties from the API
-        let filteredProperties = data.properties || [];
-        
-        // Log the properties we've received
-        console.log(`Received ${filteredProperties.length} pre-leased properties from API`);
-        
-        // Further filter by search term if present
-        if (searchTerm) {
-          filteredProperties = filteredProperties.filter((property: any) => {
-            const propertyTitle = getPropertyTitle(property).toLowerCase();
-            const propertyLocation = property.location.toLowerCase();
-            const propertyCategory = property.category.toLowerCase();
-            const searchLower = searchTerm.toLowerCase();
-            
-            return (
-              propertyTitle.includes(searchLower) || 
-              propertyLocation.includes(searchLower) || 
-              propertyCategory.includes(searchLower) ||
-              (property.tenant && property.tenant.toLowerCase().includes(searchLower))
-            );
-          });
-        }
-        
-        console.log('Filtered properties count:', filteredProperties.length);
-        
-        // Map properties to a standard format that works with the PropertyCard component
-        const formattedProperties = filteredProperties.map((property: any, index: number) => {
-          // Create a unique ID by combining original ID with index
-          // We use the original ID (string or number) and append the index to ensure uniqueness
-          const uniqueId = `${property.id || ''}-${index}`;
-          
-          return {
-            ...property,
-            originalId: property.id, // preserve the original ID
-            id: uniqueId // use the unique generated ID for React keys
-          };
-        });
-        
-        setProperties(formattedProperties);
-      } catch (error) {
-        console.error('Error fetching properties:', error);
-        setError('Failed to load properties. Please try again later.');
-        // Use sample data as fallback by converting to match Property interface
-        setProperties(sampleProperties.map((p, index: number) => ({ 
-          originalId: p.id,
-          id: `sample-${p.id}-${index}`,
-          category: p.category, 
-          location: p.location,
-          title: p.title,
-          price: typeof p.price === 'string' ? parseInt(p.price.replace(/[^\d]/g, '')) : undefined,
-          propertyType: p.type
-        })));
-      } finally {
-        setIsLoading(false);
+      
+      // Use sample data directly without API calls
+      let filteredProperties = sampleProperties;
+      
+      // Filter by category if selected
+      if (selectedCategory) {
+        filteredProperties = filteredProperties.filter(p => 
+          p.category.toLowerCase() === selectedCategory.toLowerCase()
+        );
       }
+      
+      // Filter by search term if present
+      if (searchTerm) {
+        filteredProperties = filteredProperties.filter((property: any) => {
+          const propertyTitle = property.title.toLowerCase();
+          const propertyLocation = property.location.toLowerCase();
+          const propertyCategory = property.category.toLowerCase();
+          const searchLower = searchTerm.toLowerCase();
+          
+          return (
+            propertyTitle.includes(searchLower) || 
+            propertyLocation.includes(searchLower) || 
+            propertyCategory.includes(searchLower)
+          );
+        });
+      }
+      
+      // Map properties to match expected format
+      const formattedProperties = filteredProperties.map((property: any, index: number) => ({
+        originalId: property.id,
+        id: `static-${property.id}-${index}`,
+        category: property.category,
+        location: property.location,
+        title: property.title,
+        price: typeof property.price === 'string' ? parseInt(property.price.replace(/[^\d]/g, '')) : property.price,
+        propertyType: 'Pre-Leased'
+      }));
+      
+      setProperties(formattedProperties);
+      setIsLoading(false);
     };
     
-    fetchProperties();
+    loadStaticProperties();
   }, [selectedCategory, searchTerm]);
 
   // Get all unique categories from properties

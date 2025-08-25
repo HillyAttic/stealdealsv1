@@ -30,11 +30,18 @@ export async function GET(request: NextRequest) {
     // Filter by propertyType if specified
     const propertyType = searchParams.get('propertyType');
     if (propertyType) {
+      // Skip Pre-Leased property requests to avoid unnecessary processing
+      if (propertyType === 'Pre-Leased') {
+        console.log('Skipping Pre-Leased property request');
+        return NextResponse.json({
+          properties: [],
+          total: 0
+        });
+      }
+      
       properties = properties.filter(p => {
         console.log(`Checking property: ${p.id}, type: ${p.propertyType}, tenant: ${p.tenant || 'none'}`);
-        return p.propertyType === propertyType || 
-               // For Pre-Leased, also include properties with tenants
-               (propertyType === 'Pre-Leased' && p.tenant && p.tenant.trim() !== '');
+        return p.propertyType === propertyType;
       });
       console.log(`After filtering by propertyType=${propertyType}: ${properties.length} properties`);
     }
