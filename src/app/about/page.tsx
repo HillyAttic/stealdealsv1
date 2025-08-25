@@ -149,56 +149,179 @@ export default function AboutPage() {
           </div>
         </section>
         
-        {/* Recognition Section */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">Industry Recognition</h2>
-              <div className="w-20 h-1 bg-primary mx-auto mb-6"></div>
-              <p className="text-gray-600">
-                Steal Deals has been honored as one of the Top Consultants for leading developers across India
+        {/* Recognition Section - Enhanced with Innovative UI/UX */}
+        <section className="py-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
+          {/* Animated Background Elements - Responsive for Mobile and Tablet */}
+          <div className="absolute inset-0">
+            <div className="absolute top-5 left-5 md:top-10 md:left-10 w-16 h-16 md:w-32 md:h-32 bg-blue-200/30 rounded-full blur-xl animate-pulse"></div>
+            <div className="absolute top-20 right-10 md:top-40 md:right-20 w-12 h-12 md:w-24 md:h-24 bg-purple-200/30 rounded-full blur-lg animate-bounce"></div>
+            <div className="absolute bottom-10 left-1/4 md:bottom-20 w-20 h-20 md:w-40 md:h-40 bg-indigo-200/20 rounded-full blur-2xl animate-pulse"></div>
+            <div className="absolute bottom-5 right-5 md:bottom-10 md:right-10 w-14 h-14 md:w-28 md:h-28 bg-pink-200/30 rounded-full blur-xl animate-bounce"></div>
+          </div>
+
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="text-center max-w-4xl mx-auto mb-20">
+              {/* Premium Badge */}
+              <div className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full text-sm font-semibold mb-6 shadow-lg">
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Industry Recognition & Awards
+              </div>
+              
+              <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-800 via-blue-800 to-purple-800 bg-clip-text text-transparent mb-6">
+                Trusted Partners
+              </h2>
+              <div className="w-32 h-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 mx-auto rounded-full mb-8 shadow-lg"></div>
+              <p className="text-xl text-gray-600 leading-relaxed">
+                Recognized by India's leading real estate developers as their
+                <span className="font-semibold text-blue-600"> preferred consulting partner</span>
               </p>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-all">
-                <div className="bg-primary-50 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
-                  <FaBuilding className="text-primary text-2xl" />
+
+            {/* Enhanced Cards Grid with Equal Heights */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 perspective-1000">
+              {/* Hero Homes Card */}
+              <div className="group relative transform-gpu transition-all duration-500 hover:scale-105 hover:-translate-y-4 h-80">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-500"></div>
+                <div className="relative bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 h-full flex flex-col justify-between">
+                  {/* Floating Logo Container */}
+                  <div className="relative mb-8">
+                    <div className="w-24 h-24 mx-auto rounded-xl overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center p-3 shadow-lg group-hover:shadow-xl transition-all duration-500 transform group-hover:rotate-6">
+                      <img 
+                        src="https://play-lh.googleusercontent.com/Ku2Q0NmJHJ1gvPS4zq-1AcxnHTvzlL3VJRk9OnsIZIkGbmegJOfyXt19QbdmqOZeAJ4" 
+                        alt="Hero Homes Logo" 
+                        className="w-full h-full object-contain filter group-hover:brightness-110 transition-all duration-500"
+                      />
+                    </div>
+                    {/* Animated Ring */}
+                    <div className="absolute inset-0 rounded-xl border-2 border-blue-200 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"></div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center group-hover:text-blue-600 transition-colors duration-300">
+                    Hero Homes
+                  </h3>
+                  <p className="text-gray-600 text-center leading-relaxed">
+                    Recognized as a trusted consultant partner for premium residential projects
+                  </p>
+                  
+                  {/* Achievement Badge */}
+                  <div className="mt-2 flex justify-center">
+                    <span className="px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 text-sm font-semibold rounded-full">
+                      Premium Partner
+                    </span>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Hero Homes</h3>
-                <p className="text-gray-600 text-center">
-                  Recognized as a trusted consultant partner for premium residential projects
-                </p>
               </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-all">
-                <div className="bg-secondary-50 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
-                  <FaLeaf className="text-secondary text-2xl" />
+
+              {/* Hero Earth Card */}
+              <div className="group relative transform-gpu transition-all duration-500 hover:scale-105 hover:-translate-y-4 h-80">
+                <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-blue-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-500"></div>
+                <div className="relative bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 h-full flex flex-col justify-between">
+                  <div className="relative mb-8">
+                    <div className="w-24 h-24 mx-auto rounded-xl overflow-hidden bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-3 shadow-lg group-hover:shadow-xl transition-all duration-500 transform group-hover:rotate-6">
+                      <img 
+                        src="https://i.ytimg.com/vi/UBb5g35LdPI/maxresdefault.jpg" 
+                        alt="Hero Earth Logo" 
+                        className="w-full h-full object-contain filter group-hover:brightness-110 transition-all duration-500"
+                      />
+                    </div>
+                    <div className="absolute inset-0 rounded-xl border-2 border-green-200 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"></div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center group-hover:text-green-600 transition-colors duration-300">
+                    Hero Earth
+                  </h3>
+                  <p className="text-gray-600 text-center leading-relaxed">
+                    Top consultant for sustainable and eco-friendly development projects
+                  </p>
+                  
+                  <div className="mt-2 flex justify-center">
+                    <span className="px-4 py-2 bg-gradient-to-r from-green-100 to-blue-100 text-green-700 text-sm font-semibold rounded-full">
+                      Eco Partner
+                    </span>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Hero Earth</h3>
-                <p className="text-gray-600 text-center">
-                  Top consultant for sustainable and eco-friendly development projects
-                </p>
               </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-all">
-                <div className="bg-accent-50 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
-                  <FaBuilding className="text-accent text-2xl" />
+
+              {/* Spaze Group Card */}
+              <div className="group relative transform-gpu transition-all duration-500 hover:scale-105 hover:-translate-y-4 h-80">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-500"></div>
+                <div className="relative bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 h-full flex flex-col justify-between">
+                  <div className="relative mb-8">
+                    <div className="w-24 h-24 mx-auto rounded-xl overflow-hidden bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-3 shadow-lg group-hover:shadow-xl transition-all duration-500 transform group-hover:rotate-6">
+                      <img 
+                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRjhJTHizESz6tcC-64bB3BMhoL1GnxPMXRkw&s" 
+                        alt="Spaze Group Logo" 
+                        className="w-full h-full object-contain filter group-hover:brightness-110 transition-all duration-500"
+                      />
+                    </div>
+                    <div className="absolute inset-0 rounded-xl border-2 border-purple-200 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"></div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center group-hover:text-purple-600 transition-colors duration-300">
+                    Spaze Group
+                  </h3>
+                  <p className="text-gray-600 text-center leading-relaxed">
+                    Preferred partner for commercial and mixed-use developments in the NCR
+                  </p>
+                  
+                  <div className="mt-2 flex justify-center">
+                    <span className="px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-sm font-semibold rounded-full">
+                      NCR Leader
+                    </span>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Spaze Group</h3>
-                <p className="text-gray-600 text-center">
-                  Preferred partner for commercial and mixed-use developments in the NCR region
-                </p>
               </div>
-              
-              <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-xl transition-all">
-                <div className="bg-highlight/20 w-16 h-16 rounded-full flex items-center justify-center mb-6 mx-auto">
-                  <FaBuilding className="text-primary text-2xl" />
+
+              {/* Omaxe Group Card */}
+              <div className="group relative transform-gpu transition-all duration-500 hover:scale-105 hover:-translate-y-4 h-80">
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-red-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-500"></div>
+                <div className="relative bg-white/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-500 h-full flex flex-col justify-between">
+                  <div className="relative mb-8">
+                    <div className="w-24 h-24 mx-auto rounded-xl overflow-hidden bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-3 shadow-lg group-hover:shadow-xl transition-all duration-500 transform group-hover:rotate-6">
+                      <img 
+                        src="https://media.licdn.com/dms/image/v2/C560BAQFT-Y1k4tR72Q/company-logo_200_200/company-logo_200_200/0/1630604507827/omaxe_limited_logo?e=2147483647&v=beta&t=_WpxKrOEY80a1jc39SXm9LZzYDnLElykebxkX9-fBa8" 
+                        alt="Omaxe Group Logo" 
+                        className="w-full h-full object-contain filter group-hover:brightness-110 transition-all duration-500"
+                      />
+                    </div>
+                    <div className="absolute inset-0 rounded-xl border-2 border-orange-200 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500"></div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center group-hover:text-orange-600 transition-colors duration-300">
+                    Omaxe Group
+                  </h3>
+                  <p className="text-gray-600 text-center leading-relaxed">
+                    Trusted consultant for residential and commercial projects across multiple cities
+                  </p>
+                  
+                  <div className="mt-2 flex justify-center">
+                    <span className="px-4 py-2 bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 text-sm font-semibold rounded-full">
+                      Multi-City
+                    </span>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">Omaxe Group</h3>
-                <p className="text-gray-600 text-center">
-                  Trusted consultant for residential and commercial projects across multiple cities
-                </p>
+              </div>
+            </div>
+
+            {/* Bottom Stats Section */}
+            <div className="mt-16 text-center">
+              <div className="inline-flex items-center justify-center space-x-8 bg-white/60 backdrop-blur-sm rounded-2xl px-8 py-6 shadow-xl">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-gray-700 font-semibold">Active Partnerships</span>
+                </div>
+                <div className="w-px h-8 bg-gray-300"></div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-gray-700 font-semibold">Trusted Since 2008</span>
+                </div>
+                <div className="w-px h-8 bg-gray-300"></div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+                  <span className="text-gray-700 font-semibold">Pan-India Presence</span>
+                </div>
               </div>
             </div>
           </div>
