@@ -11,6 +11,7 @@ import AuthModal from '../components/auth/AuthModal';
 import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaBuilding, FaUsers, FaStar, FaCheck, FaClipboardList, FaSearch, FaListUl, FaHome } from 'react-icons/fa';
 import { FaUtensils, FaHotel, FaStore, FaArrowRight, FaQuoteLeft, FaChevronRight, FaHandshake, FaPhone, FaEnvelope, FaChartLine } from 'react-icons/fa';
 import TrustedBrands from '@/components/TrustedBrands';
+import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 
 // Component to handle search params with Suspense boundary
 function SearchParamsHandler({ setShowAuthModal }: { setShowAuthModal: (show: boolean) => void }) {
@@ -711,6 +712,9 @@ export default function Home() {
             onClose={() => setShowAuthModal(false)} 
           />
         )}
+        
+        {/* Scroll to Bottom Button */}
+        <ScrollToBottom showProgress={true} />
       </ClientOnly>
     </main>
   );

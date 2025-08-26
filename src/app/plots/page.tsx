@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ClientOnly from '@/components/ClientOnly';
 import { PlotCard, PlotModal } from '@/components/plots';
+import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { FaSearch, FaFilter, FaBuilding, FaChevronDown } from 'react-icons/fa';
 import { Plot } from '@/lib/firebase';
 
@@ -336,7 +337,7 @@ export default function PlotsPage() {
                       >
                         <PlotCard
                           plot={plot}
-                          linkPath={null} // Prevent default link behavior, use click handler instead
+                          linkPath={null} // Explicitly prevent link behavior, use click handler instead
                           showWishlist={true}
                         />
                       </div>
@@ -354,6 +355,9 @@ export default function PlotsPage() {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
         />
+        
+        {/* Scroll to Bottom Button */}
+        <ScrollToBottom showProgress={true} />
         
         <Footer />
       </ClientOnly>

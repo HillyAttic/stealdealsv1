@@ -133,7 +133,7 @@ function NewVacantPropertyContent() {
     facing: '',
     superArea: '',
     carpetArea: '',
-    propertyType: 'Vacant', // Default to Vacant
+    propertyType: '', // Allow user to select property type
     reference: '',
     contactRef: '',
     rent: '',
@@ -251,7 +251,7 @@ function NewVacantPropertyContent() {
       // Prepare property data with all fields
       const propertyData = {
         ...formData,
-        propertyType: 'Vacant', 
+        propertyType: formData.propertyType, 
         image: formData.image || 'https://images.pexels.com/photos/260931/pexels-photo-260931.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
         rent: formData.rent ? Number(formData.rent) : 0,
         createdAt: Date.now(),
@@ -413,7 +413,7 @@ function NewVacantPropertyContent() {
               </select>
             </div>
             
-            <label htmlFor="subDistrict" className="text-gray-700 ml-2">Sub-District</label>
+            <label htmlFor="subDistrict" className="text-gray-700 ml-2">Status</label>
             <div className="position-relative">
               <select 
                 id="subDistrict"

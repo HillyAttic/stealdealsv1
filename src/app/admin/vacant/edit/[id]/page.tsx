@@ -130,7 +130,7 @@ function EditVacantPropertyContent() {
       // Ensure propertyType is preserved and imageUrl is converted to image
       const updatedProperty = {
         ...property,
-        propertyType: property.propertyType || 'vacant',
+        propertyType: property.propertyType,
         updatedAt: new Date().toISOString()
       };
       
@@ -243,7 +243,7 @@ function EditVacantPropertyContent() {
                     />
                   </div>
                   <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sub-District</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                     <input
                       type="text"
                       name="subDistrict"
@@ -314,7 +314,7 @@ function EditVacantPropertyContent() {
                     <input
                       type="text"
                       name="propertyType"
-                      value={property.propertyType || 'vacant'}
+                      value={property.propertyType || ''}
                       onChange={handleInputChange}
                       className="w-full p-2 border border-gray-300 rounded bg-gray-100 text-gray-800"
                       readOnly

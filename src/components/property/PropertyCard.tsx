@@ -143,7 +143,7 @@ export function PropertyCard({
                 <span className="text-gray-800 truncate">{property.district || 'N/A'}</span>
               </div>
               <div className="flex items-center text-xs">
-                <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>Sub-District:</span>
+                <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>Status:</span>
                 <span className="text-gray-800 truncate">{property.subDistrict || 'N/A'}</span>
               </div>
             </div>

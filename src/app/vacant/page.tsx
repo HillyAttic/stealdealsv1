@@ -9,6 +9,7 @@ import ClientOnly from '@/components/ClientOnly';
 import PropertyImage from '@/components/PropertyImage';
 import { PropertyCard } from '@/components/property';
 import { VacantModal } from '@/components/vacant';
+import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { FaSearch, FaFilter, FaBuilding, FaMapMarkerAlt, FaRulerCombined, FaChevronDown, FaChevronUp, FaSort, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
 import { database, Property, vacantPropertiesRef } from '@/lib/firebase';
 import { ref, onValue } from 'firebase/database';
@@ -553,6 +554,9 @@ export default function VacantPropertiesPage() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
       />
+      
+      {/* Scroll to Bottom Button */}
+      <ScrollToBottom showProgress={true} />
     </main>
   );
 } 

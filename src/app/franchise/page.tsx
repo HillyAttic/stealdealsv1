@@ -6,6 +6,7 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import { FaMapMarkerAlt, FaSearch, FaFilter, FaChevronDown, FaBuilding, FaMoneyBillWave, FaUsers, FaHandshake, FaStar, FaBriefcase, FaChartLine } from 'react-icons/fa';
 import { FranchiseCard, FranchiseModal, FranchiseContactModal } from '@/components/franchise';
+import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import ClientOnly from '../../components/ClientOnly';
 import Image from 'next/image';
 
@@ -646,6 +647,9 @@ export default function FranchisePage() {
           isOpen={isContactModalOpen}
           onClose={handleCloseContactModal}
         />
+        
+        {/* Scroll to Bottom Button */}
+        <ScrollToBottom showProgress={true} />
         
         <Footer />
       </ClientOnly>

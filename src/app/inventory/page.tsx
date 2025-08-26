@@ -7,6 +7,7 @@ import Footer from '../../components/Footer';
 import { FaBed, FaBath, FaRulerCombined, FaHeart, FaMapMarkerAlt, FaSearch, FaFilter, FaChevronDown } from 'react-icons/fa';
 import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
+import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import ClientOnly from '../../components/ClientOnly';
 import { getPreleasedProperties } from '@/lib/firebase';
 
@@ -183,7 +184,7 @@ const PropertyCard = ({ property, onAuthRequired }: { property: any; onAuthRequi
       </div>
       
       <div className="p-5">
-        <h3 className="text-xl font-bold text-gray-800 mb-2 transition-colors" style={{ '&:hover': { color: 'rgb(28, 110, 164)' } }}>
+        <h3 className="text-xl font-bold text-gray-800 mb-2 transition-colors hover:text-blue-600">
           {getPropertyTitle(property)}
         </h3>
         <p className="text-gray-600 mb-3 flex items-center text-sm">
@@ -497,6 +498,9 @@ export default function InventoryPage() {
           title="Sign in to save properties"
           feature="wishlist"
         />
+        
+        {/* Scroll to Bottom Button */}
+        <ScrollToBottom showProgress={true} />
       </ClientOnly>
     </main>
   );

@@ -216,7 +216,7 @@ export function PlotCard({
 
   return (
     <>
-      {linkPath !== null ? (
+      {linkPath !== undefined && linkPath !== null ? (
         <Link href={getHref()}>
           <CardContent />
         </Link>

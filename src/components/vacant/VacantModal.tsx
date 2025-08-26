@@ -418,8 +418,15 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
 
   // Format currency using Indian format (lakhs, crores)
   const formatCurrency = (value: number | string | undefined): string => {
-    if (value === undefined || value === null) return '-';
-    const numValue = typeof value === 'string' ? Number(value) : value;
+    if (value === undefined || value === null || value === '') return '-';
+    
+    // Clean the value - remove any non-numeric characters except decimal point
+    let cleanValue = typeof value === 'string' ? value.replace(/[^0-9.]/g, '') : value.toString();
+    const numValue = parseFloat(cleanValue);
+    
+    // Check if the result is a valid number
+    if (isNaN(numValue) || numValue === 0) return '-';
+    
     return `₹${numValue.toLocaleString('en-IN')}`;
   };
 
@@ -556,7 +563,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                       <p className="font-semibold text-gray-800">{property.district || 'Not specified'}</p>
                     </div>
                     <div className="bg-white p-3 rounded-lg">
-                      <h5 className="text-gray-500 text-sm uppercase mb-1">Sub-District</h5>
+                      <h5 className="text-gray-500 text-sm uppercase mb-1">Status</h5>
                       <p className="font-semibold text-gray-800">{property.subDistrict || 'Not specified'}</p>
                     </div>
                   </div>
