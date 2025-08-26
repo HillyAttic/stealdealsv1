@@ -304,8 +304,8 @@ export default function VacantPropertiesPage() {
                     onChange={(e) => handleCategoryChange(e.target.value)}
                   >
                     <option value="">All Categories</option>
-                    {categories.map(category => (
-                      <option key={category} value={category}>{category}</option>
+                    {categories.map((category, index) => (
+                      <option key={`category-${category}-${index}`} value={category}>{category}</option>
                     ))}
                   </select>
                   <FaFilter className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -318,8 +318,8 @@ export default function VacantPropertiesPage() {
                     onChange={(e) => handleCityChange(e.target.value)}
                   >
                     <option value="">All Cities</option>
-                    {cities.map(city => (
-                      <option key={city} value={city}>{city}</option>
+                    {cities.map((city, index) => (
+                      <option key={`city-${city}-${index}`} value={city}>{city}</option>
                     ))}
                   </select>
                   <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -384,8 +384,8 @@ export default function VacantPropertiesPage() {
                       onChange={(e) => handlePropertyTypeChange(e.target.value)}
                     >
                       <option value="">All Types</option>
-                      {propertyTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
+                      {propertyTypes.map((type, index) => (
+                        <option key={`type-${type}-${index}`} value={type}>{type}</option>
                       ))}
                     </select>
                   </div>
@@ -528,9 +528,9 @@ export default function VacantPropertiesPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {sortedProperties.map((property) => (
+                    {sortedProperties.map((property, index) => (
                       <PropertyCard
-                        key={property.id}
+                        key={property.id ? `property-${property.id}` : `property-index-${index}`}
                         property={property}
                         linkPath={null}
                         showWishlist={true}

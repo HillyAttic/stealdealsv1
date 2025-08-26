@@ -668,32 +668,32 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                   <h4 className="text-sm font-medium mb-3 text-purple-800">Property Features & Amenities</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {property.category && (
-                      <div className="bg-white p-2 rounded text-center">
+                      <div key="feature-category" className="bg-white p-2 rounded text-center">
                         <p className="text-xs text-gray-700">{property.category}</p>
                       </div>
                     )}
                     {property.floor && (
-                      <div className="bg-white p-2 rounded text-center">
+                      <div key="feature-floor" className="bg-white p-2 rounded text-center">
                         <p className="text-xs text-gray-700">{property.floor} Floor</p>
                       </div>
                     )}
                     {property.facing && (
-                      <div className="bg-white p-2 rounded text-center">
+                      <div key="feature-facing" className="bg-white p-2 rounded text-center">
                         <p className="text-xs text-gray-700">{property.facing} Facing</p>
                       </div>
                     )}
                     {property.reference === 'Ready to Move-In' && (
-                      <div className="bg-white p-2 rounded text-center">
+                      <div key="feature-ready" className="bg-white p-2 rounded text-center">
                         <p className="text-xs text-green-600">Ready to Move-In</p>
                       </div>
                     )}
                     {(property.superArea || property.carpetArea) && (
-                      <div className="bg-white p-2 rounded text-center">
+                      <div key="feature-area" className="bg-white p-2 rounded text-center">
                         <p className="text-xs text-gray-700">Spacious Area</p>
                       </div>
                     )}
                     {property.propertyType && (
-                      <div className="bg-white p-2 rounded text-center">
+                      <div key="feature-type" className="bg-white p-2 rounded text-center">
                         <p className="text-xs text-gray-700">{property.propertyType}</p>
                       </div>
                     )}
