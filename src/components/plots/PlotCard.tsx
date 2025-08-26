@@ -134,7 +134,7 @@ export function PlotCard({
       <div className="p-5 flex-1 flex flex-col">
         {/* Project and Developer - Clean display without labels */}
         <div className="mb-4">
-          <h3 className="text-xl font-bold text-gray-900 mb-2 transition-colors leading-tight" style={{ '&:hover': { color: 'rgb(28, 110, 164)' } }}>
+          <h3 className="text-xl font-bold text-gray-900 mb-2 transition-colors leading-tight hover:text-blue-600">
             {plot.project || 'Project Name Not Available'}
           </h3>
           <p className="text-base text-gray-600 font-medium">
