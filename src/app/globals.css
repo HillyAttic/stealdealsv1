@@ -321,3 +321,16 @@ body {
     background-color: rgba(255, 255, 255, 0.3) !important;
   }
 }
+
+/* Hide header when modal is open */
+body.modal-open header {
+  display: none !important;
+}
+
+/* Line clamp utilities for text truncation */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}

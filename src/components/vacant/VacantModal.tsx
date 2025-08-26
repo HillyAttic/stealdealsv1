@@ -76,7 +76,7 @@ function VacantContactModal({ property, isOpen, onClose }: VacantContactModalPro
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center z-[1005] p-4" 
+      className="fixed inset-0 flex items-center justify-center z-[1100] p-4" 
       style={{
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
@@ -370,11 +370,13 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      document.body.classList.add('modal-open'); // Add class to hide header
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
+      document.body.classList.remove('modal-open'); // Remove class to show header
     };
   }, [isOpen, onClose]);
 
@@ -440,7 +442,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
   return (
     <>
       <div 
-        className="fixed inset-0 flex items-center justify-center z-50 p-4" 
+        className="fixed inset-0 flex items-center justify-center z-[1100] p-4" 
         style={{
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
@@ -492,111 +494,207 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Left Column - Property Details */}
-              <div>
-                <h3 className="text-xl font-bold text-gray-800 mb-6">Property Details</h3>
+              <div className="lg:col-span-2">
+                <h3 className="text-lg font-medium text-gray-800 mb-4">Complete Property Details</h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {property.floor && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="text-gray-500 text-sm uppercase mb-2">Floor</h4>
+                {/* Basic Property Information */}
+                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                  <h4 className="text-sm font-medium mb-3" style={{ color: 'rgb(28, 110, 164)' }}>Basic Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white p-3 rounded-lg">
+                      <h5 className="text-gray-500 text-sm uppercase mb-1">Property Category</h5>
+                      <p className="font-semibold text-gray-800">{property.category || 'Not specified'}</p>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg">
+                      <h5 className="text-gray-500 text-sm uppercase mb-1">Property Type</h5>
+                      <p className="font-semibold text-gray-800">{property.propertyType || 'Not specified'}</p>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg">
+                      <h5 className="text-gray-500 text-sm uppercase mb-1">Floor</h5>
                       <div className="flex items-center">
-                        <FaBuilding className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
-                        <span className="text-lg font-semibold">{property.floor}</span>
+                        <FaBuilding className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
+                        <p className="font-semibold text-gray-800">{property.floor || 'Not specified'}</p>
                       </div>
                     </div>
-                  )}
-                  
-                  {property.superArea && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="text-gray-500 text-sm uppercase mb-2">Super Area</h4>
-                      <div className="flex items-center">
-                        <FaRulerCombined className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
-                        <span className="text-lg font-semibold">{property.superArea} Sq.Ft</span>
-                      </div>
+                    <div className="bg-white p-3 rounded-lg">
+                      <h5 className="text-gray-500 text-sm uppercase mb-1">Facing</h5>
+                      <p className="font-semibold text-gray-800">{property.facing || 'Not specified'}</p>
                     </div>
-                  )}
-                  
-                  {property.carpetArea && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="text-gray-500 text-sm uppercase mb-2">Carpet Area</h4>
-                      <div className="flex items-center">
-                        <FaRulerCombined className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
-                        <span className="text-lg font-semibold">{property.carpetArea} Sq.Ft</span>
-                      </div>
+                    <div className="bg-white p-3 rounded-lg">
+                      <h5 className="text-gray-500 text-sm uppercase mb-1">Reference</h5>
+                      <p className="font-semibold text-gray-800">{property.reference || 'Not specified'}</p>
                     </div>
-                  )}
-                  
-                  {property.rent && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="text-gray-500 text-sm uppercase mb-2">Rent</h4>
-                      <div className="flex items-center">
-                        <FaRupeeSign className="mr-2 text-xl" style={{ color: 'rgb(28, 110, 164)' }} />
-                        <span className="text-lg font-semibold">{formatCurrency(property.rent)}/month</span>
-                      </div>
+                    <div className="bg-white p-3 rounded-lg">
+                      <h5 className="text-gray-500 text-sm uppercase mb-1">Contact Person</h5>
+                      <p className="font-semibold text-gray-800">{property.contactName || 'Not specified'}</p>
                     </div>
-                  )}
+                  </div>
                 </div>
 
-                {/* Additional details */}
-                <div className="border-t border-gray-200 pt-6">
-                  <h4 className="text-lg font-bold mb-4">Additional Information</h4>
-                  
+                {/* Location Information */}
+                <div className="bg-green-50 p-4 rounded-lg mb-4">
+                  <h4 className="text-sm font-medium mb-3 text-green-800">Location Information</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {property.facing && (
-                      <div>
-                        <h5 className="text-gray-500 mb-1 text-sm">Facing</h5>
-                        <p className="font-medium">{property.facing}</p>
+                    <div className="bg-white p-3 rounded-lg">
+                      <h5 className="text-gray-500 text-sm uppercase mb-1">State</h5>
+                      <div className="flex items-center">
+                        <FaMapMarkerAlt className="mr-2 text-green-600" />
+                        <p className="font-semibold text-gray-800">{property.state || 'Not specified'}</p>
+                      </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg">
+                      <h5 className="text-gray-500 text-sm uppercase mb-1">City</h5>
+                      <div className="flex items-center">
+                        <FaMapMarkerAlt className="mr-2 text-green-600" />
+                        <p className="font-semibold text-gray-800">{property.city || 'Not specified'}</p>
+                      </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg">
+                      <h5 className="text-gray-500 text-sm uppercase mb-1">District</h5>
+                      <p className="font-semibold text-gray-800">{property.district || 'Not specified'}</p>
+                    </div>
+                    <div className="bg-white p-3 rounded-lg">
+                      <h5 className="text-gray-500 text-sm uppercase mb-1">Sub-District</h5>
+                      <p className="font-semibold text-gray-800">{property.subDistrict || 'Not specified'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Area & Measurements */}
+                <div className="bg-yellow-50 p-4 rounded-lg mb-4">
+                  <h4 className="text-sm font-medium mb-3 text-yellow-800">Area & Measurements</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {property.superArea && (
+                      <div className="bg-white p-3 rounded-lg">
+                        <h5 className="text-gray-500 text-sm uppercase mb-1">Super Area</h5>
+                        <div className="flex items-center">
+                          <FaRulerCombined className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
+                          <p className="font-semibold text-gray-800">{property.superArea} Sq.Ft</p>
+                        </div>
                       </div>
                     )}
                     
-                    {property.propertyType && (
-                      <div>
-                        <h5 className="text-gray-500 mb-1 text-sm">Property Type</h5>
-                        <p className="font-medium">{property.propertyType}</p>
-                      </div>
-                    )}
-                    
-                    {property.district && (
-                      <div>
-                        <h5 className="text-gray-500 mb-1 text-sm">District</h5>
-                        <p className="font-medium">{property.district}</p>
-                      </div>
-                    )}
-                    
-                    {property.subDistrict && (
-                      <div>
-                        <h5 className="text-gray-500 mb-1 text-sm">Sub-District</h5>
-                        <p className="font-medium">{property.subDistrict}</p>
+                    {property.carpetArea && (
+                      <div className="bg-white p-3 rounded-lg">
+                        <h5 className="text-gray-500 text-sm uppercase mb-1">Carpet Area</h5>
+                        <div className="flex items-center">
+                          <FaRulerCombined className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
+                          <p className="font-semibold text-gray-800">{property.carpetArea} Sq.Ft</p>
+                        </div>
                       </div>
                     )}
                     
                     {property.length && (
-                      <div>
-                        <h5 className="text-gray-500 mb-1 text-sm">Length</h5>
-                        <p className="font-medium">{property.length}</p>
+                      <div className="bg-white p-3 rounded-lg">
+                        <h5 className="text-gray-500 text-sm uppercase mb-1">Length</h5>
+                        <div className="flex items-center">
+                          <FaRulerCombined className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
+                          <p className="font-semibold text-gray-800">{property.length} ft</p>
+                        </div>
                       </div>
                     )}
                     
                     {property.width && (
-                      <div>
-                        <h5 className="text-gray-500 mb-1 text-sm">Width</h5>
-                        <p className="font-medium">{property.width}</p>
+                      <div className="bg-white p-3 rounded-lg">
+                        <h5 className="text-gray-500 text-sm uppercase mb-1">Width</h5>
+                        <div className="flex items-center">
+                          <FaRulerCombined className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
+                          <p className="font-semibold text-gray-800">{property.width} ft</p>
+                        </div>
                       </div>
                     )}
                     
                     {property.height && (
-                      <div>
-                        <h5 className="text-gray-500 mb-1 text-sm">Height</h5>
-                        <p className="font-medium">{property.height}</p>
+                      <div className="bg-white p-3 rounded-lg">
+                        <h5 className="text-gray-500 text-sm uppercase mb-1">Height</h5>
+                        <div className="flex items-center">
+                          <FaRulerCombined className="mr-2" style={{ color: 'rgb(28, 110, 164)' }} />
+                          <p className="font-semibold text-gray-800">{property.height} ft</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Financial Information */}
+                <div className="bg-red-50 p-4 rounded-lg mb-6">
+                  <h4 className="text-sm font-medium mb-3 text-red-800">Financial Details</h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    {property.rent && (
+                      <div className="bg-white p-3 rounded">
+                        <h5 className="text-gray-500 text-xs uppercase mb-1">Monthly Rent</h5>
+                        <div className="flex items-center">
+                          <FaRupeeSign className="mr-2 text-sm" style={{ color: 'rgb(28, 110, 164)' }} />
+                          <div>
+                            <p className="text-lg font-medium text-gray-800">{formatCurrency(property.rent)}</p>
+                            <p className="text-xs text-gray-600">per month</p>
+                          </div>
+                        </div>
                       </div>
                     )}
                     
-                    {property.reference && (
-                      <div>
-                        <h5 className="text-gray-500 mb-1 text-sm">Reference</h5>
-                        <p className="font-medium">{property.reference}</p>
+                    {property.price && (
+                      <div className="bg-white p-3 rounded">
+                        <h5 className="text-gray-500 text-xs uppercase mb-1">Total Price</h5>
+                        <div className="flex items-center">
+                          <FaRupeeSign className="mr-2 text-sm" style={{ color: 'rgb(28, 110, 164)' }} />
+                          <div>
+                            <p className="text-lg font-medium text-gray-800">{formatCurrency(property.price)}</p>
+                            <p className="text-xs text-gray-600">one-time payment</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {property.askingPrice && (
+                      <div className="bg-white p-3 rounded">
+                        <h5 className="text-gray-500 text-xs uppercase mb-1">Asking Price</h5>
+                        <div className="flex items-center">
+                          <FaRupeeSign className="mr-2 text-sm" style={{ color: 'rgb(28, 110, 164)' }} />
+                          <div>
+                            <p className="text-lg font-medium text-gray-800">{formatCurrency(property.askingPrice)}</p>
+                            <p className="text-xs text-gray-600">negotiable</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Property Features */}
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <h4 className="text-sm font-medium mb-3 text-purple-800">Property Features & Amenities</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {property.category && (
+                      <div className="bg-white p-2 rounded text-center">
+                        <p className="text-xs text-gray-700">{property.category}</p>
+                      </div>
+                    )}
+                    {property.floor && (
+                      <div className="bg-white p-2 rounded text-center">
+                        <p className="text-xs text-gray-700">{property.floor} Floor</p>
+                      </div>
+                    )}
+                    {property.facing && (
+                      <div className="bg-white p-2 rounded text-center">
+                        <p className="text-xs text-gray-700">{property.facing} Facing</p>
+                      </div>
+                    )}
+                    {property.reference === 'Ready to Move-In' && (
+                      <div className="bg-white p-2 rounded text-center">
+                        <p className="text-xs text-green-600">Ready to Move-In</p>
+                      </div>
+                    )}
+                    {(property.superArea || property.carpetArea) && (
+                      <div className="bg-white p-2 rounded text-center">
+                        <p className="text-xs text-gray-700">Spacious Area</p>
+                      </div>
+                    )}
+                    {property.propertyType && (
+                      <div className="bg-white p-2 rounded text-center">
+                        <p className="text-xs text-gray-700">{property.propertyType}</p>
                       </div>
                     )}
                   </div>
@@ -606,44 +704,85 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
               {/* Right Column - Contact Section */}
               <div>
                 <div 
-                  className="rounded-xl p-6 text-white h-full flex flex-col"
+                  className="rounded-lg p-4 text-white sticky top-6"
                   style={{
                     background: 'linear-gradient(to right, #154D71, #1C6EA4)'
                   }}
                 >
-                  <h3 className="text-xl font-bold mb-4">Interested in this property?</h3>
-                  <p className="mb-6 text-white/90">
-                    Contact us today to schedule a viewing or learn more about this vacant property.
-                  </p>
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-medium mb-2">Interested in this property?</h3>
+                    <p className="text-white/90 text-sm">
+                      Contact us today to schedule a viewing or get detailed information about this vacant property.
+                    </p>
+                  </div>
                   
-                  <div className="space-y-4 mt-auto">
+                  {/* Quick Property Summary */}
+                  <div className="bg-white/10 p-3 rounded mb-4">
+                    <h4 className="text-sm font-medium mb-3 text-white">Quick Summary</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-white/80">Location:</span>
+                        <span className="text-white font-medium">{property.city}</span>
+                      </div>
+                      {property.superArea && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-white/80">Area:</span>
+                          <span className="text-white font-medium">{property.superArea} Sq.Ft</span>
+                        </div>
+                      )}
+                      {property.rent && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-white/80">Rent:</span>
+                          <span className="text-white font-medium">{formatCurrency(property.rent)}/mo</span>
+                        </div>
+                      )}
+                      {property.floor && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-white/80">Floor:</span>
+                          <span className="text-white font-medium">{property.floor}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
                     <button 
                       onClick={handleContactClick}
-                      className="w-full flex items-center justify-center gap-3 bg-white hover:bg-blue-50 transition-colors py-3 px-6 rounded-lg font-semibold"
+                      className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 transition-colors py-2 px-4 rounded font-medium text-sm"
                      style={{ color: 'rgb(28, 110, 164)' }}
                     >
-                      <FaEnvelope className="text-lg" />
+                      <FaEnvelope className="text-sm" />
                       Request Information
                     </button>
                     
                     <a 
                       href="tel:+919999999999" 
                       onClick={handlePhoneClick}
-                      className="w-full flex items-center justify-center gap-3 border-2 border-white text-white hover:bg-white/10 transition-colors py-3 px-6 rounded-lg font-semibold"
+                      className="w-full flex items-center justify-center gap-2 border border-white text-white hover:bg-white/10 transition-colors py-2 px-4 rounded font-medium text-sm"
                     >
-                      <FaPhone className="text-lg" />
+                      <FaPhone className="text-sm" />
                       Call Now
                     </a>
                   </div>
                   
                   {/* Contact Info */}
-                  <div className="mt-6 pt-4 border-t border-white/20">
-                    <p className="text-white/80 text-sm">
-                      <strong>Available:</strong> Ready for immediate viewing
-                    </p>
-                    <p className="text-white/80 text-sm mt-1">
-                      <strong>Response Time:</strong> Within 24 hours
-                    </p>
+                  <div className="mt-4 pt-4 border-t border-white/20">
+                    <div className="space-y-2 text-sm text-white/80">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">Available:</span>
+                        <span>{property.reference || 'Ready for viewing'}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">Response:</span>
+                        <span>Within 24 hours</span>
+                      </div>
+                      {property.contactName && (
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Contact:</span>
+                          <span className="capitalize">{property.contactName}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

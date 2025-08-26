@@ -38,13 +38,15 @@ interface PropertyCardProps {
   linkPath?: string | null;
   className?: string;
   showWishlist?: boolean;
+  onClick?: () => void;
 }
 
 export function PropertyCard({ 
   property, 
   linkPath,
   className = '',
-  showWishlist = true
+  showWishlist = true,
+  onClick
 }: PropertyCardProps) {
   // Memoized callback to prevent unnecessary re-renders
   const handleAuthRequired = useCallback(() => {
@@ -84,9 +86,9 @@ export function PropertyCard({
   };
 
   const CardContent = () => (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 group border border-gray-200 h-full ${className}`}>
-      <div className="relative">
-        <div className="h-64 relative overflow-hidden">
+    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 group border border-gray-200 h-full flex flex-col ${className}`}>
+      <div className="relative flex-shrink-0">
+        <div className="h-40 relative overflow-hidden">
           <PropertyImage 
             src={property.image} 
             alt={property.location || property.title || 'Property'}
@@ -117,103 +119,129 @@ export function PropertyCard({
         </div>
       </div>
       
-      <div className="p-5">
-        <h3 className="text-xl font-bold text-gray-800 mb-2 transition-colors" style={{ '&:hover': { color: 'rgb(28, 110, 164)' } }}>
+      <div className="p-3 flex flex-col flex-grow">
+        <h3 className="text-sm font-bold text-gray-800 mb-2 transition-colors hover:text-blue-600 flex-shrink-0 h-10 overflow-hidden line-clamp-2 leading-tight">
           {property.location || property.title || 'Property'}
         </h3>
         
-        {/* Location Details */}
-        <div className="bg-blue-50 p-3 rounded-md mb-3">
-          <h4 className="font-semibold mb-2 border-b border-blue-200 pb-1" style={{ color: 'rgb(28, 110, 164)' }}>Location Details</h4>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center text-sm">
-              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>State:</span>
-              <span className="text-gray-800">{property.state || 'N/A'}</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>City:</span>
-              <span className="text-gray-800">{property.city || 'N/A'}</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>District:</span>
-              <span className="text-gray-800">{property.district || 'N/A'}</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>Sub-District:</span>
-              <span className="text-gray-800">{property.subDistrict || 'N/A'}</span>
+        {/* Content container that grows to fill space */}
+        <div className="flex-grow space-y-2">
+          {/* Location Details */}
+          <div className="bg-blue-50 p-2 rounded-md">
+            <h4 className="font-semibold mb-1 border-b border-blue-200 pb-1 text-xs" style={{ color: 'rgb(28, 110, 164)' }}>Location Details</h4>
+            <div className="grid grid-cols-2 gap-1">
+              <div className="flex items-center text-xs">
+                <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>State:</span>
+                <span className="text-gray-800 truncate">{property.state || 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>City:</span>
+                <span className="text-gray-800 truncate">{property.city || 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>District:</span>
+                <span className="text-gray-800 truncate">{property.district || 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="font-medium mr-1" style={{ color: 'rgb(28, 110, 164)' }}>Sub-District:</span>
+                <span className="text-gray-800 truncate">{property.subDistrict || 'N/A'}</span>
+              </div>
             </div>
           </div>
-        </div>
-        
-        {/* Unit Details */}
-        <div className="bg-yellow-50 p-3 rounded-md mb-3">
-          <h4 className="font-semibold text-yellow-800 mb-2 border-b border-yellow-200 pb-1">Unit Details</h4>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center text-sm">
-              <span className="text-yellow-800 font-medium mr-1">Category:</span>
-              <span className="text-gray-800">{property.category || 'N/A'}</span>
+          
+          {/* Unit Details */}
+          <div className="bg-yellow-50 p-2 rounded-md">
+            <h4 className="font-semibold text-yellow-800 mb-1 border-b border-yellow-200 pb-1 text-xs">Unit Details</h4>
+            <div className="grid grid-cols-2 gap-1">
+              <div className="flex items-center text-xs">
+                <span className="text-yellow-800 font-medium mr-1">Category:</span>
+                <span className="text-gray-800 truncate">{property.category || 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="text-yellow-800 font-medium mr-1">Floor:</span>
+                <span className="text-gray-800 truncate">{property.floor || 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="text-yellow-800 font-medium mr-1">Facing:</span>
+                <span className="text-gray-800 truncate">{property.facing || 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="text-yellow-800 font-medium mr-1">Property Type:</span>
+                <span className="text-gray-800 truncate">{property.propertyType || 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="text-yellow-800 font-medium mr-1">Ref:</span>
+                <span className="text-gray-800 truncate">{property.reference || 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="text-yellow-800 font-medium mr-1">Contact:</span>
+                <span className="text-gray-800 truncate">{property.contactName || 'N/A'}</span>
+              </div>
             </div>
-            <div className="flex items-center text-sm">
-              <span className="text-yellow-800 font-medium mr-1">Floor:</span>
-              <span className="text-gray-800">{property.floor || 'N/A'}</span>
+          </div>
+
+          {/* Area Details */}
+          <div className="bg-green-50 p-2 rounded-md">
+            <h4 className="font-semibold text-green-800 mb-1 border-b border-green-200 pb-1 text-xs">Area Details</h4>
+            <div className="grid grid-cols-2 gap-1">
+              <div className="flex items-center text-xs">
+                <span className="text-green-800 font-medium mr-1">Super Area:</span>
+                <span className="text-gray-800 truncate">{property.superArea ? `${property.superArea} sq.ft.` : 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="text-green-800 font-medium mr-1">Carpet Area:</span>
+                <span className="text-gray-800 truncate">{property.carpetArea ? `${property.carpetArea} sq.ft.` : 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="text-green-800 font-medium mr-1">Length:</span>
+                <span className="text-gray-800 truncate">{property.length ? `${property.length} ft` : 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="text-green-800 font-medium mr-1">Width:</span>
+                <span className="text-gray-800 truncate">{property.width ? `${property.width} ft` : 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="text-green-800 font-medium mr-1">Height:</span>
+                <span className="text-gray-800 truncate">{property.height ? `${property.height} ft` : 'N/A'}</span>
+              </div>
             </div>
-            <div className="flex items-center text-sm">
-              <span className="text-yellow-800 font-medium mr-1">Facing:</span>
-              <span className="text-gray-800">{property.facing || 'N/A'}</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <span className="text-yellow-800 font-medium mr-1">Property Type:</span>
-              <span className="text-gray-800">{property.propertyType || 'N/A'}</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <span className="text-yellow-800 font-medium mr-1">Ref:</span>
-              <span className="text-gray-800">{property.reference || 'N/A'}</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <span className="text-yellow-800 font-medium mr-1">Contact:</span>
-              <span className="text-gray-800">{property.contactName || 'N/A'}</span>
+          </div>
+
+          {/* Financial Details */}
+          <div className="bg-red-50 p-2 rounded-md">
+            <h4 className="font-semibold text-red-800 mb-1 border-b border-red-200 pb-1 text-xs">Financial Details</h4>
+            <div className="flex items-center text-sm font-bold">
+              <span className="text-red-800 mr-2">
+                {property.rent ? 'Rent:' : 'Price:'}
+              </span>
+              <span className="text-gray-800">
+                {getDisplayPrice() ? `${formatCurrency(getDisplayPrice())}${getPriceLabel()}` : 'Not available'}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Area Details */}
-        <div className="bg-green-50 p-3 rounded-md mb-3">
-          <h4 className="font-semibold text-green-800 mb-2 border-b border-green-200 pb-1">Area Details</h4>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center text-sm">
-              <span className="text-green-800 font-medium mr-1">Super Area:</span>
-              <span className="text-gray-800">{property.superArea ? `${property.superArea} sq.ft.` : 'N/A'}</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <span className="text-green-800 font-medium mr-1">Carpet Area:</span>
-              <span className="text-gray-800">{property.carpetArea ? `${property.carpetArea} sq.ft.` : 'N/A'}</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <span className="text-green-800 font-medium mr-1">Length:</span>
-              <span className="text-gray-800">{property.length ? `${property.length} ft` : 'N/A'}</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <span className="text-green-800 font-medium mr-1">Width:</span>
-              <span className="text-gray-800">{property.width ? `${property.width} ft` : 'N/A'}</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <span className="text-green-800 font-medium mr-1">Height:</span>
-              <span className="text-gray-800">{property.height ? `${property.height} ft` : 'N/A'}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Financial Details */}
-        <div className="bg-red-50 p-3 rounded-md">
-          <h4 className="font-semibold text-red-800 mb-2 border-b border-red-200 pb-1">Financial Details</h4>
-          <div className="flex items-center text-lg font-bold">
-            <span className="text-red-800 mr-2">
-              {property.rent ? 'Rent:' : 'Price:'}
-            </span>
-            <span className="text-gray-800">
-              {getDisplayPrice() ? `${formatCurrency(getDisplayPrice())}${getPriceLabel()}` : 'Not available'}
-            </span>
-          </div>
+        {/* View More Button - Always at bottom */}
+        <div className="mt-3 flex-shrink-0">
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onClick) onClick();
+            }}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center text-xs"
+            style={{
+              backgroundColor: 'rgb(28, 110, 164)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgb(21, 77, 113)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgb(28, 110, 164)';
+            }}
+          >
+            View More Details
+          </button>
         </div>
       </div>
     </div>
