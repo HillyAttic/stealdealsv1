@@ -12,7 +12,7 @@ interface SmartScrollButtonProps {
   showProgress?: boolean;
 }
 
-export function ScrollToBottom({ 
+export function SmartScrollButton({ 
   showAfterScroll = 300,
   className = '',
   showProgress = false
