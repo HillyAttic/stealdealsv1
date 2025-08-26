@@ -10,11 +10,8 @@ export async function GET(request: NextRequest) {
     const featured = searchParams.get('featured');
     const limit = parseInt(searchParams.get('limit') || '50');
     
-    console.log('Query params:', { category, featured, limit });
-    
     // Fetch all properties from Firebase
     let properties = await getAllProperties();
-    console.log('GET /api/properties - Properties fetched from Firebase:', properties.length);
     
     // Apply filters
     if (category) {
@@ -40,16 +37,12 @@ export async function GET(request: NextRequest) {
       }
       
       properties = properties.filter(p => {
-        console.log(`Checking property: ${p.id}, type: ${p.propertyType}, tenant: ${p.tenant || 'none'}`);
         return p.propertyType === propertyType;
       });
-      console.log(`After filtering by propertyType=${propertyType}: ${properties.length} properties`);
     }
     
     // Apply limit
     const paginatedProperties = properties.slice(0, limit);
-    
-    console.log('Returning properties:', paginatedProperties.length);
     
     // Make sure we always return a valid properties array
     return NextResponse.json({

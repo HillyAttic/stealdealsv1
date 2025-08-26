@@ -3,433 +3,384 @@
 import React from 'react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import { FaFileContract, FaGavel, FaEnvelope, FaMapMarkerAlt, FaUserShield, FaShieldAlt, FaGlobe, FaExclamationTriangle } from 'react-icons/fa';
+import { FaFileContract, FaEnvelope, FaMapMarkerAlt, FaUserCheck, FaGavel, FaGlobe } from 'react-icons/fa';
 import ClientOnly from '../../components/ClientOnly';
 
-export default function TermsPage() {
+export default function TermsOfServicePage() {
   return (
     <main className="min-h-screen flex flex-col">
       <ClientOnly>
         <Header />
         
         {/* Hero Section */}
-        <div className="bg-gradient-to-r from-blue-900 to-blue-700 py-12 md:py-20 px-4">
-          <div className="container mx-auto text-center">
-            <div className="bg-blue-800 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 mx-auto">
-              <FaFileContract className="text-white text-lg md:text-2xl" />
+        <div className="relative bg-gradient-to-br from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)] text-white py-12 sm:py-16 md:py-20">
+          {/* Animated Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[rgb(21,77,113)]/50 via-transparent to-[rgb(51,161,224)]/50 animate-pulse"></div>
+          
+          {/* Decorative Elements - Responsive positioning and sizes */}
+          <div className="absolute top-6 left-4 sm:top-10 sm:left-10 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-white/10 rounded-full animate-pulse"></div>
+          <div className="absolute top-20 right-6 sm:top-32 sm:right-16 w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-white/5 rounded-full animate-bounce"></div>
+          <div className="absolute bottom-10 left-1/4 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-white/10 rounded-full animate-pulse"></div>
+          
+          <div className="container mx-auto px-4 text-center relative z-10">
+            <div className="max-w-4xl mx-auto">
+              <FaFileContract className="text-3xl sm:text-4xl md:text-5xl mx-auto mb-4 sm:mb-6 text-[#8CCDEB]" />
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 px-2">
+                <span className="bg-gradient-to-r from-white via-[#8CCDEB] to-white bg-clip-text text-transparent">
+                  Terms of Service
+                </span>
+              </h1>
+              
+              {/* Animated Divider - Mobile optimized */}
+              <div className="flex items-center justify-center mb-4 sm:mb-6 space-x-1 sm:space-x-2">
+                <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-gradient-to-r from-transparent to-[#8CCDEB] animate-pulse"></div>
+                <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 bg-[#8CCDEB] rounded-full animate-bounce"></div>
+                <div className="h-0.5 sm:h-1 w-16 sm:w-24 bg-gradient-to-r from-[#8CCDEB] to-transparent animate-pulse"></div>
+                <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 bg-[#8CCDEB] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-gradient-to-r from-[#8CCDEB] to-transparent animate-pulse"></div>
+              </div>
+              
+              <p className="text-base sm:text-lg md:text-xl text-gray-200 mb-3 sm:mb-4 px-2 leading-relaxed">
+                Please read these terms carefully before using our services and platform.
+              </p>
+              <p className="text-xs sm:text-sm text-gray-300 px-2">
+                Last Updated: January 01, 2025
+              </p>
             </div>
-            <h1 className="text-2xl md:text-4xl font-bold text-white mb-4 md:mb-6">Terms and Conditions</h1>
-            <div className="w-16 md:w-24 h-1 bg-yellow-500 mx-auto mb-4 md:mb-6"></div>
-            <p className="text-blue-100 max-w-3xl mx-auto text-base md:text-lg px-2">
-              Please read these terms and conditions carefully before using our services. By using Steal Deals, you agree to these terms.
-            </p>
-            <p className="text-blue-200 mt-3 md:mt-4 text-xs md:text-sm">
-              Last Updated: April 01, 2025
-            </p>
           </div>
         </div>
         
-        {/* Terms Content */}
-        <section className="py-8 md:py-16 bg-white">
-          <div className="container mx-auto px-4 max-w-4xl">
+        {/* Terms of Service Content */}
+        <section className="py-4 sm:py-6 md:py-8">
+          <div className="container mx-auto px-3 sm:px-4">
             
             {/* Introduction */}
-            <div className="mb-8 md:mb-12">
-              <p className="text-gray-600 text-sm md:text-lg leading-relaxed mb-4 md:mb-6">
-                Welcome to Steal Deals ("we," "us," "our," "Steal Deals"). By accessing or using our website located at <a href="https://stealdeals.co.in" className="hover:underline break-all" style={{ color: 'rgb(28, 110, 164)' }}>https://stealdeals.co.in</a> (the "Site") and any related services (collectively, the "Services"), you ("you," "your," "user") agree to be bound by these Terms and Conditions ("Terms").
-              </p>
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 md:p-6 rounded-r-lg">
-                <div className="flex items-start">
-                  <FaExclamationTriangle className="text-red-500 mr-2 md:mr-3 mt-1 flex-shrink-0" />
-                  <p className="text-gray-700 font-medium text-sm md:text-base">
-                    If you do not agree to all of these Terms, you are expressly prohibited from using the Site and Services and must discontinue use immediately.
-                  </p>
+            <div className="bg-white p-3 sm:p-4 md:p-8 rounded-lg shadow-md mb-4 sm:mb-6 md:mb-8">
+              <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 md:mb-6 flex flex-col sm:flex-row sm:items-center">
+                <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                  <FaFileContract className="text-sm sm:text-lg md:text-xl" style={{color: 'rgb(28, 110, 164)'}} />
                 </div>
+                Introduction
+              </h2>
+              <p className="text-gray-600 text-xs sm:text-sm md:text-lg leading-relaxed mb-3 sm:mb-4 md:mb-6">
+                These Terms of Service ("Terms") govern your use of the <span className="font-semibold" style={{color: 'rgb(28, 110, 164)'}}>Steal Deals</span> website and services ("Services"). By accessing or using our Services, you agree to be bound by these Terms. If you do not agree with any part of these Terms, you may not access or use our Services.
+              </p>
+              <div className="border-l-4 p-2 sm:p-3 md:p-6 rounded-r-lg" style={{backgroundColor: 'rgba(28, 110, 164, 0.05)', borderColor: 'rgb(28, 110, 164)'}}>
+                <p className="text-gray-700 font-medium flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm md:text-base">
+                  <FaEnvelope className="mr-0 sm:mr-3 mb-1 sm:mb-0 w-fit" style={{color: 'rgb(28, 110, 164)'}} />
+                  For any questions about these Terms, contact us at <a href="mailto:hello@stealdeals.co.in" className="hover:underline font-semibold break-all" style={{ color: 'rgb(28, 110, 164)' }}>hello@stealdeals.co.in</a>.
+                </p>
               </div>
             </div>
 
             {/* Section 1: Acceptance of Terms */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>1</span>
+            <div className="bg-white p-3 sm:p-4 md:p-8 rounded-lg shadow-md mb-4 sm:mb-6 md:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                  <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>1</span>
                 </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Acceptance of Terms</h2>
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">Acceptance of Terms</h2>
               </div>
-              <div className="ml-11 md:ml-14">
-                <p className="text-gray-600 mb-4 md:mb-6 leading-relaxed text-sm md:text-base">
-                  These Terms constitute a legally binding agreement between you and Steal Deals. We reserve the right to modify these Terms at any time. Any changes will be effective immediately upon posting on the Site.
+              <div className="space-y-3 sm:space-y-4 md:space-y-6">
+                <p className="text-gray-600 leading-relaxed text-xs sm:text-sm md:text-lg">
+                  By accessing and using our website, you acknowledge that you have read, understood, and agree to be bound by these Terms:
                 </p>
-                <div className="bg-yellow-50 border border-yellow-200 p-4 md:p-6 rounded-lg">
-                  <p className="text-gray-700 text-sm md:text-base font-medium">
-                    Your continued use of the Services after changes are posted constitutes your acceptance of the modified Terms.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 2: Definitions */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>2</span>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Definitions</h2>
-              </div>
-              <div className="ml-11 md:ml-14">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">"Content"</h4>
-                    <p className="text-gray-600 text-sm md:text-base">All text, graphics, interfaces, photographs, trademarks, logos, sounds, music, artwork, product descriptions, and deal information.</p>
-                  </div>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">"User Account"</h4>
-                    <p className="text-gray-600 text-sm md:text-base">The account you create to access certain features of our Services.</p>
-                  </div>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">"User Content"</h4>
-                    <p className="text-gray-600 text-sm md:text-base">Content that you submit or post to the Site, such as comments, reviews, or deal submissions.</p>
-                  </div>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">"Third-Party Links"</h4>
-                    <p className="text-gray-600 text-sm md:text-base">Links on our Site that direct you to external websites, including online retailers.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 3: User Accounts */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>3</span>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">User Accounts</h2>
-              </div>
-              <div className="ml-11 md:ml-14">
-                <p className="text-gray-600 mb-4 md:mb-6 leading-relaxed text-sm md:text-base">
-                  To access certain features, you may be required to register for an account. You agree to:
-                </p>
-                <ul className="list-disc pl-4 md:pl-6 text-gray-600 mb-4 md:mb-6 space-y-1 md:space-y-2 text-sm md:text-base">
-                  <li>Provide accurate, current, and complete information during registration</li>
-                  <li>Maintain and promptly update your account information to keep it accurate</li>
-                  <li>Maintain the security of your password and accept all risks of unauthorized access</li>
-                  <li>Notify us immediately of any unauthorized use of your account</li>
-                  <li>Be responsible for all activities that occur under your account</li>
+                <ul className="list-disc pl-3 sm:pl-4 md:pl-6 text-gray-600 space-y-0.5 sm:space-y-1 md:space-y-2 text-xs sm:text-sm md:text-lg">
+                  <li>You are at least 18 years old or have parental consent</li>
+                  <li>You have the legal capacity to enter into these Terms</li>
+                  <li>You will comply with all applicable laws and regulations</li>
+                  <li>You understand that these Terms may be updated from time to time</li>
                 </ul>
-                <div className="bg-red-50 border border-red-200 p-4 md:p-6 rounded-lg">
-                  <p className="text-gray-700 text-sm md:text-base">
-                    <strong>Important:</strong> We reserve the right to suspend or terminate your account, refuse service, or remove/edit content at our sole discretion for any reason, including if we believe you have violated these Terms.
+
+                <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 md:gap-6">
+                  <div className="p-3 sm:p-4 md:p-6 rounded-lg" style={{backgroundColor: 'rgba(28, 110, 164, 0.05)'}}>
+                    <h4 className="font-semibold text-gray-800 mb-1.5 sm:mb-2 md:mb-3 text-xs sm:text-sm md:text-lg">Legal Agreement:</h4>
+                    <p className="text-gray-600 text-xs md:text-base leading-relaxed">
+                      These Terms constitute a legally binding agreement between you and Steal Deals.
+                    </p>
+                  </div>
+                  <div className="p-3 sm:p-4 md:p-6 rounded-lg" style={{backgroundColor: 'rgba(28, 110, 164, 0.05)'}}>
+                    <h4 className="font-semibold text-gray-800 mb-1.5 sm:mb-2 md:mb-3 text-xs sm:text-sm md:text-lg">Updates and Changes:</h4>
+                    <p className="text-gray-600 text-xs md:text-base leading-relaxed">
+                      We reserve the right to modify these Terms at any time. Continued use constitutes acceptance.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border border-yellow-200 p-3 sm:p-4 md:p-6 rounded-lg" style={{backgroundColor: 'rgba(255, 193, 7, 0.05)'}}>
+                  <h4 className="font-semibold text-gray-800 mb-1.5 sm:mb-2 md:mb-3 flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm md:text-lg">
+                    <FaUserCheck className="mr-0 sm:mr-3 mb-1 sm:mb-0 w-fit text-sm sm:text-base" style={{color: 'rgb(28, 110, 164)'}} />
+                    User Responsibility:
+                  </h4>
+                  <p className="text-gray-600 text-xs md:text-base leading-relaxed">
+                    You are responsible for regularly reviewing these Terms and staying informed of any updates or changes that may affect your use of our Services.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Section 4: Intellectual Property Rights */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>4</span>
+            {/* Section 2: Use of Services */}
+            <div className="bg-white p-3 sm:p-4 md:p-8 rounded-lg shadow-md mb-4 sm:mb-6 md:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                  <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>2</span>
                 </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Intellectual Property Rights</h2>
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">Use of Services</h2>
               </div>
-              <div className="ml-11 md:ml-14">
-                <p className="text-gray-600 mb-4 md:mb-6 leading-relaxed text-sm md:text-base">
-                  Unless otherwise indicated, the Site and all Content are our proprietary property and are protected by copyright, trademark, and other intellectual property laws.
+              <div className="space-y-2 sm:space-y-3 md:space-y-4">
+                <p className="text-gray-600 leading-relaxed text-xs sm:text-sm md:text-lg">
+                  You may use our Services for the following permitted purposes:
                 </p>
-                
-                <div className="bg-green-50 border border-green-200 p-4 md:p-6 rounded-lg mb-4 md:mb-6">
-                  <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Our License to You:</h4>
-                  <p className="text-gray-600 text-sm md:text-base">
-                    We grant you a limited, non-exclusive, non-transferable, revocable license to access and use the Site and Content for your personal, non-commercial use.
-                  </p>
-                </div>
-
-                <div className="bg-red-50 border border-red-200 p-4 md:p-6 rounded-lg">
-                  <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Prohibited Use - You may not:</h4>
-                  <ul className="text-gray-600 text-sm md:text-base space-y-1">
-                    <li>• Republish, sell, rent, or sub-license material from the Site</li>
-                    <li>• Reproduce, duplicate, copy, or exploit Content for commercial purpose</li>
-                    <li>• Modify, create derivative works of, or reverse engineer any part of the Site</li>
-                    <li>• Use our trademarks, logos, or branding without prior written consent</li>
-                    <li>• Use data mining, robots, or similar data gathering tools on the Site</li>
+                <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 md:gap-6">
+                  <ul className="list-disc pl-3 sm:pl-4 md:pl-6 text-gray-600 space-y-0.5 sm:space-y-1 md:space-y-2 text-xs md:text-base">
+                    <li>Browse and search for real estate properties</li>
+                    <li>Contact property owners or agents</li>
+                    <li>Create and maintain user accounts</li>
+                    <li>Access property listings and information</li>
+                  </ul>
+                  <ul className="list-disc pl-3 sm:pl-4 md:pl-6 text-gray-600 space-y-0.5 sm:space-y-1 md:space-y-2 text-xs md:text-base">
+                    <li>Receive updates and notifications</li>
+                    <li>Use our customer support services</li>
+                    <li>Participate in community features</li>
                   </ul>
                 </div>
               </div>
             </div>
 
-            {/* Section 5: User Conduct and Responsibilities */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>5</span>
+            {/* Section 3: User Accounts and Responsibilities */}
+            <div className="bg-white p-3 sm:p-4 md:p-8 rounded-lg shadow-md mb-4 sm:mb-6 md:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                  <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>3</span>
                 </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">User Conduct and Responsibilities</h2>
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">User Accounts and Responsibilities</h2>
               </div>
-              <div className="ml-11 md:ml-14">
-                <p className="text-gray-600 mb-4 md:mb-6 leading-relaxed text-sm md:text-base">
-                  You agree to use the Site and Services only for lawful purposes and in a way that does not infringe the rights of, restrict, or inhibit anyone else's use and enjoyment of the Site.
+              <div className="space-y-2 sm:space-y-3 md:space-y-4">
+                <p className="text-gray-600 leading-relaxed text-xs sm:text-sm md:text-lg">
+                  When you create an account with us, you must provide accurate and complete information:
                 </p>
-                
-                <div className="bg-orange-50 border border-orange-200 p-4 md:p-6 rounded-lg">
-                  <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Prohibited behavior includes:</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <ul className="text-gray-600 text-sm md:text-base space-y-1">
-                      <li>• Harassing, insulting, or causing distress to any other user</li>
-                      <li>• Posting unlawful, defamatory, obscene, or offensive content</li>
-                      <li>• Uploading content with viruses or malicious code</li>
-                    </ul>
-                    <ul className="text-gray-600 text-sm md:text-base space-y-1">
-                      <li>• Disrupting or interfering with our Services or servers</li>
-                      <li>• Impersonating any person or entity</li>
-                      <li>• Attempting unauthorized access to accounts or systems</li>
-                    </ul>
-                  </div>
+                <div className="border border-red-200 p-3 sm:p-4 md:p-6 rounded-lg" style={{backgroundColor: 'rgba(239, 68, 68, 0.05)'}}>
+                  <h4 className="font-semibold text-gray-800 mb-1.5 sm:mb-2 md:mb-3 flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm md:text-lg">
+                    <FaGavel className="mr-0 sm:mr-3 mb-1 sm:mb-0 w-fit text-sm sm:text-base" style={{color: 'rgb(28, 110, 164)'}} />
+                    Account Security:
+                  </h4>
+                  <p className="text-gray-600 text-xs md:text-base leading-relaxed">
+                    You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Section 6: User-Generated Content */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>6</span>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">User-Generated Content</h2>
-              </div>
-              <div className="ml-11 md:ml-14">
-                <p className="text-gray-600 mb-4 md:mb-6 leading-relaxed text-sm md:text-base">
-                  The Site may include features that allow you to post comments, reviews, or submit deals.
-                </p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
-                  <div className="bg-blue-50 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Ownership:</h4>
-                    <p className="text-gray-600 text-sm md:text-base">You retain ownership of any intellectual property rights in the User Content you submit.</p>
+            {/* Sections 4-10: Combined Card Layout */}
+            <div className="bg-white p-3 sm:p-4 md:p-8 rounded-lg shadow-md mb-4 sm:mb-6 md:mb-8">
+              <div className="space-y-6 sm:space-y-8 md:space-y-12">
+                {/* Section 4: Prohibited Uses */}
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                    <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                      <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>4</span>
+                    </div>
+                    <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">Prohibited Uses</h2>
                   </div>
-                  <div className="bg-purple-50 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">License to Us:</h4>
-                    <p className="text-gray-600 text-sm md:text-base">You grant us a worldwide, perpetual, irrevocable, royalty-free license to use, reproduce, modify, and distribute such content.</p>
-                  </div>
+                  <p className="text-gray-600 leading-relaxed text-xs sm:text-sm md:text-lg ml-0 md:ml-16">
+                    You may not use our Services for any unlawful purpose or in any way that could damage, disable, overburden, or impair our Services. Prohibited activities include but are not limited to fraud, harassment, spamming, or attempting to gain unauthorized access to our systems.
+                  </p>
                 </div>
 
-                <div className="bg-yellow-50 border border-yellow-200 p-4 md:p-6 rounded-lg">
-                  <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Your Warranties - You represent and warrant that:</h4>
-                  <ul className="text-gray-600 text-sm md:text-base space-y-1">
-                    <li>• You own or control all rights to the User Content</li>
-                    <li>• The User Content is accurate and not misleading</li>
-                    <li>• The User Content does not violate these Terms or any third-party rights</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+                <hr className="border-gray-200" />
 
-            {/* Section 7: Third-Party Links and Deal Information */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>7</span>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Third-Party Links and Deal Information</h2>
-              </div>
-              <div className="ml-11 md:ml-14">
-                <p className="text-gray-600 mb-4 md:mb-6 leading-relaxed text-sm md:text-base">
-                  Our Service primarily functions as a deal aggregator.
-                </p>
-                
-                <div className="space-y-4">
-                  <div className="bg-red-50 border border-red-200 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">No Endorsement:</h4>
-                    <p className="text-gray-600 text-sm md:text-base">
-                      The inclusion of any link to a third-party website (e.g., Amazon, Flipkart, etc.) does not imply endorsement by Steal Deals. We have no control over and assume no responsibility for the content, privacy policies, or practices of any third-party sites.
-                    </p>
+                {/* Section 5: Intellectual Property */}
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                    <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                      <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>5</span>
+                    </div>
+                    <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">Intellectual Property</h2>
                   </div>
-                  
-                  <div className="bg-orange-50 border border-orange-200 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Deal Accuracy:</h4>
-                    <p className="text-gray-600 text-sm md:text-base">
-                      We strive to provide accurate and current deal information. However, we do not guarantee the accuracy, completeness, or availability of any deal, coupon code, or price listed. Prices and availability are set by the retailers and are subject to change without notice.
+                  <div className="ml-0 md:ml-16 space-y-2 sm:space-y-3 md:space-y-4">
+                    <p className="text-gray-600 leading-relaxed text-xs sm:text-sm md:text-lg">
+                      All content on our website, including text, graphics, logos, images, and software, is the property of Steal Deals or its licensors and is protected by copyright and other intellectual property laws.
                     </p>
-                  </div>
-                  
-                  <div className="bg-blue-50 border border-blue-200 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Your Responsibility:</h4>
-                    <p className="text-gray-600 text-sm md:text-base">
-                      You acknowledge that any transactions you enter into with a third-party retailer are solely between you and that retailer. Steal Deals is not a party to such transactions and shall have no liability whatsoever in relation to such transactions.
+                    <p className="text-gray-600 leading-relaxed text-xs md:text-base">
+                      You may not reproduce, distribute, modify, or create derivative works from our content without explicit written permission.
                     </p>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Section 8: Disclaimer of Warranties; Limitation of Liability */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>8</span>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Disclaimer of Warranties; Limitation of Liability</h2>
-              </div>
-              <div className="ml-11 md:ml-14">
-                <div className="bg-red-50 border-l-4 border-red-500 p-4 md:p-6 rounded-r-lg mb-4 md:mb-6">
-                  <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">"As Is" Basis:</h4>
-                  <p className="text-gray-600 text-sm md:text-base">
-                    YOUR USE OF THE SITE AND SERVICES IS AT YOUR SOLE RISK. THE SITE AND ALL CONTENT ARE PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT ANY WARRANTIES OF ANY KIND.
-                  </p>
-                </div>
+                <hr className="border-gray-200" />
 
-                <div className="bg-yellow-50 border border-yellow-200 p-4 md:p-6 rounded-lg mb-4 md:mb-6">
-                  <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">No Guarantees:</h4>
-                  <p className="text-gray-600 text-sm md:text-base">
-                    We do not guarantee that the Site will be uninterrupted, secure, or error-free; that defects will be corrected; or that the Site is free of viruses or other harmful components.
-                  </p>
-                </div>
-
-                <div className="bg-orange-50 border border-orange-200 p-4 md:p-6 rounded-lg">
-                  <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Limitation of Liability:</h4>
-                  <p className="text-gray-600 text-sm md:text-base mb-3">
-                    TO THE FULLEST EXTENT PERMITTED BY LAW, STEAL DEALS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO:
-                  </p>
-                  <ul className="text-gray-600 text-sm md:text-base space-y-1">
-                    <li>• Loss of profits, data, use, goodwill, or other intangible losses</li>
-                    <li>• Your access to or use of or inability to access or use the Services</li>
-                    <li>• Any conduct or content of any third party on the Services</li>
-                    <li>• Any unauthorized access to or use of our servers and/or personal information</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 9: Indemnification */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>9</span>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Indemnification</h2>
-              </div>
-              <div className="ml-11 md:ml-14">
-                <div className="bg-purple-50 border border-purple-200 p-4 md:p-6 rounded-lg">
-                  <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                    You agree to defend, indemnify, and hold harmless Steal Deals and its licensors, suppliers, officers, directors, employees, and agents from and against any claims, liabilities, damages, judgments, awards, losses, costs, expenses, or fees (including reasonable attorneys' fees) arising out of or relating to your violation of these Terms or your use of the Site.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 10: Termination */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>10</span>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Termination</h2>
-              </div>
-              <div className="ml-11 md:ml-14">
-                <div className="bg-red-50 border border-red-200 p-4 md:p-6 rounded-lg">
-                  <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-3">
-                    We may terminate or suspend your account and bar access to the Services immediately, without prior notice or liability, under our sole discretion, for any reason whatsoever and without limitation, including a breach of the Terms.
-                  </p>
-                  <p className="text-gray-600 text-sm md:text-base font-medium">
-                    Upon termination, your right to use the Services will cease immediately.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Section 11: Governing Law and Dispute Resolution */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>11</span>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Governing Law and Dispute Resolution</h2>
-              </div>
-              <div className="ml-11 md:ml-14">
-                <div className="space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 p-4 md:p-6 rounded-lg">
-                    <div className="flex items-start">
-                      <FaGavel className="text-blue-600 mr-2 md:mr-3 mt-1 flex-shrink-0" />
-                      <div>
-                        <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Governing Law:</h4>
-                        <p className="text-gray-600 text-sm md:text-base">
-                          These Terms shall be governed by and construed in accordance with the laws of India, without regard to its conflict of law provisions.
-                        </p>
+                {/* Section 6: Property Listings */}
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                    <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                      <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>6</span>
+                    </div>
+                    <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">Property Listings</h2>
+                  </div>
+                  <div className="ml-0 md:ml-16">
+                    <div className="border p-3 sm:p-4 md:p-6 rounded-lg" style={{backgroundColor: 'rgba(28, 110, 164, 0.05)', borderColor: 'rgba(28, 110, 164, 0.2)'}}>
+                      <div className="flex flex-col sm:flex-row sm:items-start">
+                        <FaGlobe className="mr-0 sm:mr-3 mb-1.5 sm:mb-0 sm:mt-1 flex-shrink-0 w-fit text-sm sm:text-base" style={{color: 'rgb(28, 110, 164)'}} />
+                        <div>
+                          <p className="text-gray-600 mb-2 sm:mb-3 md:mb-4 leading-relaxed text-xs md:text-base">
+                            We provide a platform for property listings but do not guarantee the accuracy, completeness, or reliability of any property information. All transactions are between users and property owners.
+                          </p>
+                          <p className="text-gray-600 leading-relaxed text-xs md:text-base">
+                            Users are responsible for verifying all property details before making any commitments or transactions.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="bg-green-50 border border-green-200 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Dispute Resolution:</h4>
-                    <p className="text-gray-600 text-sm md:text-base">
-                      Any dispute shall be first attempted to be resolved amicably through negotiation. If the dispute cannot be resolved within thirty (30) days, it shall be referred to arbitration in Noida, Uttar Pradesh, India, in accordance with the Arbitration and Conciliation Act, 1996.
-                    </p>
-                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Section 12: Miscellaneous */}
-            <div className="mb-8 md:mb-12">
-              <div className="flex items-center mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>12</span>
+                <hr className="border-gray-200" />
+
+                {/* Section 7: User Content */}
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                    <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                      <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>7</span>
+                    </div>
+                    <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">User Content</h2>
+                  </div>
+                  <div className="ml-0 md:ml-16">
+                    <div className="border border-orange-200 p-3 sm:p-4 md:p-6 rounded-lg" style={{backgroundColor: 'rgba(251, 146, 60, 0.05)'}}>
+                      <p className="text-gray-600 mb-2 sm:mb-3 md:mb-4 leading-relaxed text-xs md:text-base">
+                        By submitting content to our platform, you grant us a non-exclusive, worldwide, royalty-free license to use, reproduce, modify, and distribute such content in connection with our Services.
+                      </p>
+                      <p className="text-gray-600 leading-relaxed text-xs md:text-base">
+                        You warrant that you own or have the necessary rights to submit such content and that it does not violate any third-party rights.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Miscellaneous</h2>
-              </div>
-              <div className="ml-11 md:ml-14">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Severability:</h4>
-                    <p className="text-gray-600 text-sm md:text-base">If any provision is held invalid, the remaining provisions will remain in effect.</p>
+
+                <hr className="border-gray-200" />
+
+                {/* Section 8: Disclaimers and Limitations */}
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                    <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                      <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>8</span>
+                    </div>
+                    <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">Disclaimers and Limitations</h2>
                   </div>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">Entire Agreement:</h4>
-                    <p className="text-gray-600 text-sm md:text-base">These Terms constitute the entire agreement between you and Steal Deals.</p>
+                  <div className="ml-0 md:ml-16 space-y-3 sm:space-y-4 md:space-y-6">
+                    <p className="text-gray-600 leading-relaxed text-xs sm:text-sm md:text-lg">
+                      Our Services are provided on an "as is" and "as available" basis. We disclaim all warranties:
+                    </p>
+                    <div className="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2 md:gap-4">
+                      <div className="p-2.5 sm:p-3 md:p-4 rounded-lg" style={{backgroundColor: 'rgba(34, 197, 94, 0.05)'}}>
+                        <h4 className="font-semibold text-gray-800 mb-1 md:mb-2 text-xs md:text-base">No Warranties</h4>
+                        <p className="text-gray-600 text-xs md:text-sm leading-relaxed">We make no express or implied warranties about our Services</p>
+                      </div>
+                      <div className="p-2.5 sm:p-3 md:p-4 rounded-lg" style={{backgroundColor: 'rgba(34, 197, 94, 0.05)'}}>
+                        <h4 className="font-semibold text-gray-800 mb-1 md:mb-2 text-xs md:text-base">Limited Liability</h4>
+                        <p className="text-gray-600 text-xs md:text-sm leading-relaxed">Our liability is limited to the maximum extent permitted by law</p>
+                      </div>
+                    </div>
+                    <div className="border-l-4 p-2 sm:p-3 md:p-6 rounded-r-lg" style={{backgroundColor: 'rgba(28, 110, 164, 0.05)', borderColor: 'rgb(28, 110, 164)'}}>
+                      <p className="text-gray-700 text-xs md:text-base flex flex-col sm:flex-row sm:items-center leading-relaxed">
+                        <FaGavel className="mr-0 sm:mr-3 mb-1 sm:mb-0 w-fit text-sm sm:text-base" style={{color: 'rgb(28, 110, 164)'}} />
+                        We shall not be liable for any indirect, incidental, or consequential damages arising from your use of our Services.
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-gray-50 p-4 md:p-6 rounded-lg">
-                    <h4 className="font-semibold text-gray-800 mb-2 md:mb-3 text-sm md:text-base">No Waiver:</h4>
-                    <p className="text-gray-600 text-sm md:text-base">Our failure to enforce any right will not be considered a waiver of those rights.</p>
+                </div>
+
+                <hr className="border-gray-200" />
+
+                {/* Section 9: Termination */}
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                    <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                      <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>9</span>
+                    </div>
+                    <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">Termination</h2>
                   </div>
+                  <p className="text-gray-600 leading-relaxed text-xs sm:text-sm md:text-lg ml-0 md:ml-16">
+                    We may terminate or suspend your account and access to our Services immediately, without prior notice, for any breach of these Terms. You may also terminate your account at any time by contacting us.
+                  </p>
+                </div>
+
+                <hr className="border-gray-200" />
+
+                {/* Section 10: Governing Law */}
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                    <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                      <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>10</span>
+                    </div>
+                    <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">Governing Law</h2>
+                  </div>
+                  <p className="text-gray-600 leading-relaxed text-xs sm:text-sm md:text-lg ml-0 md:ml-16">
+                    These Terms shall be governed by and construed in accordance with the laws of India. Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts in Noida, Uttar Pradesh.
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Contact Information Section */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 md:p-8 rounded-xl border border-blue-200 mb-8 md:mb-12">
-              <div className="flex items-center justify-center md:justify-start mb-4 md:mb-6">
-                <div className="bg-blue-100 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                  <span className="font-bold text-sm md:text-base" style={{ color: 'rgb(28, 110, 164)' }}>13</span>
+            <div className="bg-white p-3 sm:p-4 md:p-8 rounded-lg shadow-md mb-4 sm:mb-6 md:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                  <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>11</span>
                 </div>
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800">Contact Information</h2>
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">Contact Information</h2>
               </div>
-              <div className="text-center md:text-left md:ml-14">
-                <p className="text-gray-600 mb-4 md:mb-6 leading-relaxed text-sm md:text-base">
-                  If you have any questions about these Terms, please contact us at:
+              <div className="ml-0 md:ml-16">
+                <p className="text-gray-600 mb-3 sm:mb-4 md:mb-6 leading-relaxed text-xs sm:text-sm md:text-lg">
+                  If you have questions or concerns about these Terms of Service, you may contact us at:
                 </p>
-                <div className="bg-white p-4 md:p-6 rounded-lg shadow-sm border border-blue-100 text-center">
-                  <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6" style={{ color: 'rgb(28, 110, 164)' }}>Steal Deals</h3>
-                  <div className="space-y-4 md:space-y-6 max-w-sm mx-auto">
-                    <div className="flex flex-col items-center md:flex-row md:items-start md:text-left text-center">
-                      <FaMapMarkerAlt className="text-blue-600 mb-2 md:mb-0 md:mr-3 md:mt-1 flex-shrink-0" />
+                <div className="bg-gradient-to-r p-3 sm:p-4 md:p-8 rounded-xl border" style={{background: 'linear-gradient(to right, rgba(28, 110, 164, 0.05), rgba(51, 161, 224, 0.05))', borderColor: 'rgba(28, 110, 164, 0.2)'}}>
+                  <h3 className="text-base sm:text-lg md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6 text-center" style={{ color: 'rgb(28, 110, 164)' }}>Steal Deals</h3>
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 md:gap-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start">
+                      <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                        <FaMapMarkerAlt className="text-sm sm:text-lg md:text-xl" style={{color: 'rgb(28, 110, 164)'}} />
+                      </div>
                       <div>
-                        <p className="text-gray-700 font-medium text-sm md:text-base mb-1">Address:</p>
-                        <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                          Ofis Square, The Iconic Corenthum<br/>
-                          Noida Sector - 62<br/>
-                          Noida, Uttar Pradesh 201301<br/>
-                          India
+                        <h4 className="font-semibold text-gray-800 mb-1 md:mb-2 text-xs sm:text-sm md:text-lg">Office Address</h4>
+                        <p className="text-gray-600 leading-relaxed text-xs md:text-base">
+                          2nd Floor, Block A, Ofis Square,<br/>
+                          The Iconic Corenthum, Noida Sector - 62,<br/>
+                          Uttar Pradesh - 201301, India
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-col items-center md:flex-row md:items-center md:text-left text-center">
-                      <FaEnvelope className="text-blue-600 mb-2 md:mb-0 md:mr-3 flex-shrink-0" />
+                    <div className="flex flex-col sm:flex-row sm:items-start">
+                      <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                        <FaEnvelope className="text-sm sm:text-lg md:text-xl" style={{color: 'rgb(28, 110, 164)'}} />
+                      </div>
                       <div>
-                        <p className="text-gray-700 font-medium text-sm md:text-base mb-1">Email:</p>
-                        <a href="mailto:hello@stealdeals.co.in" className="hover:underline font-semibold text-sm md:text-base break-all" style={{ color: 'rgb(28, 110, 164)' }}>
+                        <h4 className="font-semibold text-gray-800 mb-1 md:mb-2 text-xs sm:text-sm md:text-lg">Email Address</h4>
+                        <a href="mailto:hello@stealdeals.co.in" className="hover:underline font-semibold break-all text-xs sm:text-sm md:text-lg" style={{ color: 'rgb(28, 110, 164)' }}>
                           hello@stealdeals.co.in
                         </a>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 12: Changes to Terms */}
+            <div className="bg-white p-3 sm:p-4 md:p-8 rounded-lg shadow-md mb-4 sm:mb-6 md:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-4 md:mb-6">
+                <div className="p-1.5 sm:p-2 md:p-3 rounded-full mr-0 sm:mr-4 mb-2 sm:mb-0 w-fit" style={{backgroundColor: 'rgba(28, 110, 164, 0.1)'}}>
+                  <span className="font-bold text-sm sm:text-lg md:text-xl" style={{ color: 'rgb(28, 110, 164)' }}>12</span>
+                </div>
+                <h2 className="text-base sm:text-lg md:text-2xl font-bold text-gray-800">Changes to Terms</h2>
+              </div>
+              <div className="ml-0 md:ml-16">
+                <div className="border border-purple-200 p-3 sm:p-4 md:p-6 rounded-lg" style={{backgroundColor: 'rgba(147, 51, 234, 0.05)'}}>
+                  <div className="flex flex-col sm:flex-row sm:items-start">
+                    <FaUserCheck className="mr-0 sm:mr-3 mb-1.5 sm:mb-0 sm:mt-1 flex-shrink-0 w-fit text-sm sm:text-base" style={{color: 'rgb(28, 110, 164)'}} />
+                    <div>
+                      <p className="text-gray-600 leading-relaxed text-xs md:text-base">
+                        We reserve the right to modify or replace these Terms at any time. If a revision is material, we will provide at least 30 days notice prior to any new terms taking effect. By continuing to access or use our Service after any revisions become effective, you agree to be bound by the revised terms.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -440,30 +391,46 @@ export default function TermsPage() {
         </section>
         
         {/* CTA Section */}
-        <section className="py-8 md:py-16 bg-blue-900 text-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center">
-              <div className="bg-blue-800 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-4 md:mb-6 mx-auto">
-                <FaFileContract className="text-white text-lg md:text-2xl" />
+        <section className="py-12 sm:py-16" style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))'}}>
+          <div className="container mx-auto px-3 sm:px-4">
+            <div className="max-w-4xl mx-auto text-center">
+              <div className="bg-white/10 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mb-4 sm:mb-6 mx-auto backdrop-blur-sm">
+                <FaFileContract className="text-white text-xl sm:text-2xl md:text-3xl" />
               </div>
-              <h2 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">Questions About Our Terms?</h2>
-              <p className="text-blue-100 mb-6 md:mb-8 text-sm md:text-lg px-2">
-                We're here to help clarify any aspect of our Terms and Conditions. Feel free to reach out if you have any questions or concerns.
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-white leading-tight px-2">
+                <span className="bg-gradient-to-r from-white via-[#8CCDEB] to-white bg-clip-text text-transparent">Questions About Our Terms?</span>
+              </h2>
+              
+              {/* Animated Divider - Mobile optimized */}
+              <div className="flex items-center justify-center mb-4 sm:mb-6">
+                <div className="w-4 sm:w-6 h-0.5 bg-white/30 rounded-full"></div>
+                <div className="w-8 sm:w-12 h-0.5 sm:h-1 bg-gradient-to-r from-white/60 via-[#8CCDEB] to-white/60 rounded-full mx-2 sm:mx-3 shadow-lg"></div>
+                <div className="w-4 sm:w-6 h-0.5 bg-white/30 rounded-full"></div>
+              </div>
+              
+              <p className="text-white/90 mb-6 sm:mb-8 text-base sm:text-lg md:text-xl leading-relaxed font-medium px-3 sm:px-4">
+                We're committed to ensuring these terms are clear and fair.
+                <span className="bg-gradient-to-r from-white to-[#8CCDEB] bg-clip-text text-transparent font-semibold"> Legal clarity</span> helps build trust.
+                If you have any questions or concerns, don't hesitate to reach out.
               </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
+              <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
                 <a 
                   href="mailto:hello@stealdeals.co.in" 
-                  className="bg-white hover:bg-blue-50 py-2 md:py-3 px-6 md:px-8 rounded-md font-semibold transition-colors inline-flex items-center justify-center text-sm md:text-base"
-                 style={{ color: 'rgb(28, 110, 164)' }}
+                  className="bg-white text-white font-medium py-2.5 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 inline-flex items-center justify-center text-sm sm:text-base"
+                  style={{color: 'rgb(28, 110, 164)'}}
+                  onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255, 255, 255, 0.95)'}
+                  onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'white'}
                 >
-                  <FaEnvelope className="mr-2" />
+                  <FaEnvelope className="mr-1.5 sm:mr-2 text-sm sm:text-base" />
                   Contact Us
                 </a>
                 <a 
                   href="/contact" 
-                  className="bg-transparent border-2 border-white text-white hover:bg-white/10 py-2 md:py-3 px-6 md:px-8 rounded-md font-semibold transition-colors inline-flex items-center justify-center text-sm md:text-base"
+                  className="bg-transparent border-2 border-white text-white font-medium py-2.5 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 inline-flex items-center justify-center text-sm sm:text-base"
+                  onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+                  onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'}
                 >
-                  <FaGlobe className="mr-2" />
+                  <FaGlobe className="mr-1.5 sm:mr-2 text-sm sm:text-base" />
                   Visit Contact Page
                 </a>
               </div>

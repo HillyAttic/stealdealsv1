@@ -134,40 +134,19 @@ export default function AboutPage() {
                     </h4>
                     
                     <div className="space-y-4">
-                      <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border-l-4 border-[rgb(21,77,113)]">
-                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                          <svg className="w-4 h-4 text-[rgb(21,77,113)]" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-[rgb(21,77,113)]">Franchise Consulting</span>
-                          <span className="text-gray-600"> - Helping you invest in and grow top-performing franchises across India, whether in retail, food & beverage, or emerging sectors.</span>
-                        </div>
+                      <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-[rgb(21,77,113)]">
+                        <span className="font-semibold text-[rgb(21,77,113)]">Franchise Consulting</span>
+                        <span className="text-gray-600"> - Helping you invest in and grow top-performing franchises across India, whether in retail, food & beverage, or emerging sectors.</span>
                       </div>
                       
-                      <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border-l-4 border-[rgb(21,77,113)]">
-                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                          <svg className="w-4 h-4 text-[rgb(21,77,113)]" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-[rgb(21,77,113)]">Leasing Solutions</span>
-                          <span className="text-gray-600"> - Curating the perfect spaces for national and regional brands, ensuring high-visibility, high-footfall locations across urban markets.</span>
-                        </div>
+                      <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-[rgb(21,77,113)]">
+                        <span className="font-semibold text-[rgb(21,77,113)]">Leasing Solutions</span>
+                        <span className="text-gray-600"> - Curating the perfect spaces for national and regional brands, ensuring high-visibility, high-footfall locations across urban markets.</span>
                       </div>
                       
-                      <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border-l-4 border-[rgb(21,77,113)]">
-                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                          <svg className="w-4 h-4 text-[rgb(21,77,113)]" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4zM18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-[rgb(21,77,113)]">Real Estate Investments</span>
-                          <span className="text-gray-600"> - Offering handpicked pre-leased commercial assets and plots (residential, commercial, industrial) in Delhi NCR that ensure stable, long-term returns.</span>
-                        </div>
+                      <div className="p-4 bg-gray-50 rounded-lg border-l-4 border-[rgb(21,77,113)]">
+                        <span className="font-semibold text-[rgb(21,77,113)]">Real Estate Investments</span>
+                        <span className="text-gray-600"> - Offering handpicked pre-leased commercial assets and plots (residential, commercial, industrial) in Delhi NCR that ensure stable, long-term returns.</span>
                       </div>
                     </div>
                   </div>

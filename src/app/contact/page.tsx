@@ -34,15 +34,31 @@ export default function ContactPage() {
         <Header />
 
         {/* Page Header */}
-        <section className="py-20 relative overflow-hidden" style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))'}}>
+        <section className="py-16 md:py-20 relative overflow-hidden" style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))'}}>
+          {/* Animated Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[rgb(21,77,113)]/50 via-transparent to-[rgb(51,161,224)]/50 animate-pulse"></div>
           <div className="absolute top-0 right-0 w-1/2 h-full bg-white/5 clip-path-diagonal"></div>
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full"></div>
           <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 rounded-full"></div>
           <div className="container mx-auto px-4 relative z-10">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-white mb-4">Contact Us</h1>
-              <p className="text-blue-100 max-w-2xl mx-auto text-lg">
-                Get in touch with our team for any inquiries or assistance
+            <div className="text-center max-w-4xl mx-auto">
+              {/* Enhanced Main Heading */}
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+                <span className="bg-gradient-to-r from-white via-[#8CCDEB] to-white bg-clip-text text-transparent">Contact Us</span>
+              </h1>
+              
+              {/* Animated Divider */}
+              <div className="flex items-center justify-center mb-6">
+                <div className="w-6 h-0.5 bg-white/30 rounded-full"></div>
+                <div className="w-12 h-1 bg-gradient-to-r from-white/60 via-[#8CCDEB] to-white/60 rounded-full mx-3 shadow-lg"></div>
+                <div className="w-6 h-0.5 bg-white/30 rounded-full"></div>
+              </div>
+              
+              {/* Enhanced Description */}
+              <p className="text-white/90 max-w-3xl mx-auto text-lg md:text-xl leading-relaxed font-medium">
+                <span className="text-[#8CCDEB] font-bold">Steal Deals</span> - Your trusted partner for
+                <span className="bg-gradient-to-r from-white to-[#8CCDEB] bg-clip-text text-transparent font-semibold"> real estate investment</span>, 
+                leasing, and development
               </p>
             </div>
           </div>
