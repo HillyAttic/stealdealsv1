@@ -94,11 +94,12 @@ function EditVacantPropertyContent() {
         if (snapshot.exists()) {
           const propertyData = snapshot.val();
           setProperty({
-            id: propertyId,
-            ...propertyData
+            ...propertyData,
+            id: propertyId // Ensure we always have the Firebase key as the ID
           });
+          console.log(`Property loaded: ${propertyId}`);
         } else {
-          setError('Property not found');
+          setError(`Property with ID "${propertyId}" not found in database`);
         }
       } catch (err: any) {
         console.error('Error loading property:', err);
@@ -130,8 +131,8 @@ function EditVacantPropertyContent() {
       // Ensure propertyType is preserved and imageUrl is converted to image
       const updatedProperty = {
         ...property,
-        propertyType: property.propertyType,
-        updatedAt: new Date().toISOString()
+        propertyType: property.propertyType || 'Vacant', // Ensure it's always set
+        updatedAt: Date.now() // Use timestamp instead of ISO string for consistency
       };
       
       // Convert imageUrl to image if needed
@@ -143,9 +144,23 @@ function EditVacantPropertyContent() {
       // Remove the id field as it's not stored in the Firebase object
       const { id, ...propertyToSave } = updatedProperty;
       
-      // Update the property in Firebase
-      const propertyRef = child(vacantPropertiesRef, propertyId);
-      await update(propertyRef, propertyToSave);
+      // Update the property in Firebase - try vacant properties first, then legacy
+      let propertyRef = child(vacantPropertiesRef, propertyId);
+      let legacyRef = ref(database, `properties/${propertyId}`);
+      
+      // Check if exists in vacant properties
+      const vacantSnapshot = await get(propertyRef);
+      if (vacantSnapshot.exists()) {
+        await update(propertyRef, propertyToSave);
+      } else {
+        // Try updating in legacy location
+        const legacySnapshot = await get(legacyRef);
+        if (legacySnapshot.exists()) {
+          await update(legacyRef, propertyToSave);
+        } else {
+          throw new Error('Property not found in database');
+        }
+      }
       
       toast.success('Property updated successfully');
       router.push('/admin/vacant');

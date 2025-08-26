@@ -1,5 +1,8 @@
 import { AuthErrorCodes } from '@/types/auth';
 
+// Re-export AuthErrorCodes for easier importing
+export { AuthErrorCodes };
+
 export interface AuthErrorDetails {
   code: AuthErrorCodes;
   message: string;

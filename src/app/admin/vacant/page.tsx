@@ -62,9 +62,10 @@ function VacantPropertiesContent() {
           if (snapshot.exists()) {
             const propertiesList: Property[] = [];
             snapshot.forEach((childSnapshot) => {
+              const propertyData = childSnapshot.val();
               const property = { 
-                id: childSnapshot.key, 
-                ...childSnapshot.val() 
+                ...propertyData,
+                id: childSnapshot.key || propertyData.id || ''
               };
               propertiesList.push(property as Property);
             });
@@ -85,11 +86,11 @@ function VacantPropertiesContent() {
           if (snapshot.exists()) {
             const legacyProperties: Property[] = [];
             snapshot.forEach((childSnapshot) => {
-              const property = childSnapshot.val();
-              if (property.propertyType === 'Vacant') {
+              const propertyData = childSnapshot.val();
+              if (propertyData.propertyType === 'Vacant') {
                 legacyProperties.push({
-                  id: childSnapshot.key,
-                  ...property
+                  ...propertyData,
+                  id: childSnapshot.key || propertyData.id || ''
                 } as Property);
               }
             });
@@ -141,12 +142,17 @@ function VacantPropertiesContent() {
 
   // Handle delete property
   const handleDelete = async (id: string) => {
-    if (!id) return;
+    if (!id) {
+      setError('Cannot delete property: Missing property ID');
+      setDeleteConfirm(null);
+      return;
+    }
     
     try {
       // Delete from Firebase using the deleteProperty helper function
       await deleteProperty(id, 'Vacant');
       setDeleteConfirm(null);
+      setError(''); // Clear any previous errors
     } catch (err: any) {
       console.error('Delete error:', err);
       setError(err.message || 'Failed to delete property');
@@ -243,7 +249,7 @@ function VacantPropertiesContent() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredProperties.map((property, index) => (
-                      <tr key={property.id} className="hover:bg-gray-50">
+                      <tr key={property.id ? `property-${property.id}` : `index-${index}`} className="hover:bg-gray-50">
                         <td className="w-12 px-2 py-2 text-sm text-gray-900">
                           <span className="font-mono text-xs text-gray-500">
                             V{String(index + 1).padStart(3, '0')}
@@ -267,7 +273,7 @@ function VacantPropertiesContent() {
                             {property.superArea || property.carpetArea || '-'}
                           </div>
                           {property.floor && (
-                            <div className="text-xs text-gray-400 truncate" title={`Floor: ${property.floor}`}>
+                            <div key={`floor-${property.id || index}`} className="text-xs text-gray-400 truncate" title={`Floor: ${property.floor}`}>
                               Floor: {property.floor}
                             </div>
                           )}
@@ -287,7 +293,7 @@ function VacantPropertiesContent() {
                             {property.contactName || '-'}
                           </div>
                           {property.reference && (
-                            <div className="text-xs text-gray-400 truncate" title={`Ref: ${property.reference}`}>
+                            <div key={`ref-${property.id || index}`} className="text-xs text-gray-400 truncate" title={`Ref: ${property.reference}`}>
                               Ref: {property.reference}
                             </div>
                           )}
@@ -302,19 +308,29 @@ function VacantPropertiesContent() {
                             >
                               <FaEye className="text-xs" />
                             </Link>
-                            <Link
-                              href={`/admin/vacant/edit/${property.id}`}
-                              className="text-yellow-600 hover:text-yellow-900 p-0.5"
-                              title="Edit Property"
-                            >
-                              <FaPencilAlt className="text-xs" />
-                            </Link>
+                            {property.id ? (
+                              <Link
+                                href={`/admin/vacant/edit/${property.id}`}
+                                className="text-yellow-600 hover:text-yellow-900 p-0.5"
+                                title="Edit Property"
+                              >
+                                <FaPencilAlt className="text-xs" />
+                              </Link>
+                            ) : (
+                              <span
+                                className="text-yellow-600 opacity-50 p-0.5 cursor-not-allowed"
+                                title="Cannot edit: Missing property ID"
+                              >
+                                <FaPencilAlt className="text-xs" />
+                              </span>
+                            )}
                             <button
                               onClick={() => setDeleteConfirm(property.id || null)}
                               className="text-red-600 hover:text-red-900 p-0.5"
-                              title="Delete Property"
+                              title={property.id ? "Delete Property" : "Cannot delete: Missing ID"}
+                              disabled={!property.id}
                             >
-                              <FaTrash className="text-xs" />
+                              <FaTrash className={`text-xs ${!property.id ? 'opacity-50' : ''}`} />
                             </button>
                           </div>
                         </td>
