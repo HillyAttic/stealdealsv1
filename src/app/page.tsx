@@ -676,7 +676,7 @@ export default function Home() {
                 </Link>
                 
                 <Link 
-                  href="/inventory" 
+                  href="/franchise" 
                   className="flex-1 inline-flex items-center justify-center bg-transparent border-2 border-white text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg text-base sm:text-lg font-bold hover:bg-white hover:text-[rgb(21,77,113)] transition-all duration-300 min-w-0"
                 >
                   <FaListUl className="mr-2 sm:mr-3 flex-shrink-0" />

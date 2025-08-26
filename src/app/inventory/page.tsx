@@ -8,6 +8,7 @@ import { FaBed, FaBath, FaRulerCombined, FaHeart, FaMapMarkerAlt, FaSearch, FaFi
 import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
 import ClientOnly from '../../components/ClientOnly';
+import { getPreleasedProperties } from '@/lib/firebase';
 
 // Property interface reflecting the structure from API
 interface Property {
@@ -280,53 +281,55 @@ export default function InventoryPage() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Use static sample data instead of API calls to avoid unnecessary requests
+  // Fetch preleased properties from Firebase
   useEffect(() => {
-    const loadStaticProperties = () => {
+    const loadPreleasedProperties = async () => {
       setIsLoading(true);
+      setError('');
       
-      // Use sample data directly without API calls
-      let filteredProperties = sampleProperties;
-      
-      // Filter by category if selected
-      if (selectedCategory) {
-        filteredProperties = filteredProperties.filter(p => 
-          p.category.toLowerCase() === selectedCategory.toLowerCase()
-        );
-      }
-      
-      // Filter by search term if present
-      if (searchTerm) {
-        filteredProperties = filteredProperties.filter((property: any) => {
-          const propertyTitle = property.title.toLowerCase();
-          const propertyLocation = property.location.toLowerCase();
-          const propertyCategory = property.category.toLowerCase();
-          const searchLower = searchTerm.toLowerCase();
-          
-          return (
-            propertyTitle.includes(searchLower) || 
-            propertyLocation.includes(searchLower) || 
-            propertyCategory.includes(searchLower)
+      try {
+        // Fetch preleased properties from Firebase
+        const firebaseProperties = await getPreleasedProperties();
+        
+        // Apply filters
+        let filteredProperties = firebaseProperties;
+        
+        // Filter by category if selected
+        if (selectedCategory) {
+          filteredProperties = filteredProperties.filter(p => 
+            p.category?.toLowerCase() === selectedCategory.toLowerCase()
           );
-        });
+        }
+        
+        // Filter by search term if present
+        if (searchTerm) {
+          filteredProperties = filteredProperties.filter((property: any) => {
+            const propertyTitle = (property.title || getPropertyTitle(property)).toLowerCase();
+            const propertyLocation = property.location?.toLowerCase() || '';
+            const propertyCategory = property.category?.toLowerCase() || '';
+            const propertyTenant = property.tenant?.toLowerCase() || '';
+            const searchLower = searchTerm.toLowerCase();
+            
+            return (
+              propertyTitle.includes(searchLower) || 
+              propertyLocation.includes(searchLower) || 
+              propertyCategory.includes(searchLower) ||
+              propertyTenant.includes(searchLower)
+            );
+          });
+        }
+        
+        setProperties(filteredProperties);
+      } catch (err) {
+        console.error('Error fetching preleased properties:', err);
+        setError('Failed to load properties. Please try again later.');
+        setProperties([]);
+      } finally {
+        setIsLoading(false);
       }
-      
-      // Map properties to match expected format
-      const formattedProperties = filteredProperties.map((property: any, index: number) => ({
-        originalId: property.id,
-        id: `static-${property.id}-${index}`,
-        category: property.category,
-        location: property.location,
-        title: property.title,
-        price: typeof property.price === 'string' ? parseInt(property.price.replace(/[^\d]/g, '')) : property.price,
-        propertyType: 'Pre-Leased'
-      }));
-      
-      setProperties(formattedProperties);
-      setIsLoading(false);
     };
     
-    loadStaticProperties();
+    loadPreleasedProperties();
   }, [selectedCategory, searchTerm]);
 
   // Get all unique categories from properties
