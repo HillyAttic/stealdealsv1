@@ -42,25 +42,32 @@ const Footer = () => {
             <h3 className="text-lg font-bold mb-6 text-[rgb(28,110,164)]">Quick Links</h3>
             <ul className="space-y-3">
               <li>
+                <Link href="/" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li>
                 <Link href="/about" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
                   About Us
                 </Link>
               </li>
-              <li>
-                <Link href="/properties" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
-                  Properties
+                <li>
+                <Link href="/vacant" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
+                  Vacant
                 </Link>
               </li>
               <li>
-                <Link href="/agents" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
-                  Our Agents
+                <Link href="/plots" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
+                  View Plots
                 </Link>
               </li>
+      
               <li>
-                <Link href="/blog" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
-                  Blog & News
+                <Link href="/franchise" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
+                  Franchise
                 </Link>
               </li>
+              
               <li>
                 <Link href="/contact" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
                   Contact Us
