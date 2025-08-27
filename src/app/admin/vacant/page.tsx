@@ -233,8 +233,8 @@ function VacantPropertiesContent() {
             </div>
           ) : (
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="overflow-hidden"> {/* Removed overflow-x-auto to prevent horizontal scroll */}
-                <table className="w-full divide-y divide-gray-200 table-fixed"> {/* Changed to table-fixed and w-full */}
+              <div className="overflow-hidden">
+                <table className="w-full divide-y divide-gray-200 table-fixed">
                   <thead className="table-light">
                     <tr>
                       <th className="w-12 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PID</th>

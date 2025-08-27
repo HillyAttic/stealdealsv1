@@ -330,13 +330,7 @@ export default function VacantPropertyDetails() {
                             <p className="font-medium">{property.height}</p>
                           </div>
                         )}
-                        
-                        {property.reference && (
-                          <div>
-                            <h3 className="text-gray-500 mb-1">Reference</h3>
-                            <p className="font-medium">{property.reference}</p>
-                          </div>
-                        )}
+
                       </div>
                     </div>
                   </div>

@@ -223,8 +223,8 @@ export default function Home() {
                     <div className="relative z-10">
                       <div className="mb-3">
                         <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mx-auto mb-2 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3" style={{ 
-                          background: 'linear-gradient(135deg, rgb(28, 110, 164) 0%, rgb(21, 77, 113) 40%, rgb(28, 110, 164) 100%)',
-                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.4)'
+                          background: 'linear-gradient(135deg, rgba(28, 110, 164, 0.6) 0%, rgba(21, 77, 113, 0.5) 40%, rgba(28, 110, 164, 0.6) 100%)',
+                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.2)'
                         }}>
                           <FaBuilding className="text-lg md:text-xl text-white" />
                         </div>
@@ -245,8 +245,8 @@ export default function Home() {
                     <div className="relative z-10">
                       <div className="mb-3">
                         <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mx-auto mb-2 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3" style={{ 
-                          background: 'linear-gradient(135deg, rgb(28, 110, 164) 0%, rgb(21, 77, 113) 40%, rgb(28, 110, 164) 100%)',
-                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.4)'
+                          background: 'linear-gradient(135deg, rgba(28, 110, 164, 0.6) 0%, rgba(21, 77, 113, 0.5) 40%, rgba(28, 110, 164, 0.6) 100%)',
+                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.2)'
                         }}>
                           <FaHandshake className="text-lg md:text-xl text-white" />
                         </div>
@@ -267,8 +267,8 @@ export default function Home() {
                     <div className="relative z-10">
                       <div className="mb-3">
                         <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mx-auto mb-2 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3" style={{ 
-                          background: 'linear-gradient(135deg, rgb(28, 110, 164) 0%, rgb(21, 77, 113) 40%, rgb(28, 110, 164) 100%)',
-                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.4)'
+                          background: 'linear-gradient(135deg, rgba(28, 110, 164, 0.6) 0%, rgba(21, 77, 113, 0.5) 40%, rgba(28, 110, 164, 0.6) 100%)',
+                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.2)'
                         }}>
                           <FaStar className="text-lg md:text-xl text-white" />
                         </div>
@@ -289,8 +289,8 @@ export default function Home() {
                     <div className="relative z-10">
                       <div className="mb-3">
                         <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mx-auto mb-2 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3" style={{ 
-                          background: 'linear-gradient(135deg, rgb(28, 110, 164) 0%, rgb(21, 77, 113) 40%, rgb(28, 110, 164) 100%)',
-                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.4)'
+                          background: 'linear-gradient(135deg, rgba(28, 110, 164, 0.6) 0%, rgba(21, 77, 113, 0.5) 40%, rgba(28, 110, 164, 0.6) 100%)',
+                          boxShadow: '0 4px 15px rgba(28, 110, 164, 0.2)'
                         }}>
                           <FaPhone className="text-lg md:text-xl text-white" />
                         </div>

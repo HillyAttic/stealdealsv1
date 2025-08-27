@@ -157,7 +157,7 @@ const Header = () => {
             <div className="hidden md:flex items-center space-x-3 flex-shrink-0 ml-4">
               <SignedOut>
                 <SignInButton mode="modal">
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                  <button className="flex items-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ backgroundColor: 'rgb(28, 110, 164)' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgb(21, 77, 113)'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgb(28, 110, 164)'; }}>
                     <Image
                       src="https://cdn-icons-png.flaticon.com/512/17468/17468741.png"
                       alt="User"
@@ -242,12 +242,12 @@ const Header = () => {
               <SignedOut>
                 <SignInButton mode="modal">
                   <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors duration-200"
-                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+                    style={{ backgroundColor: 'rgb(28, 110, 164)' }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                      e.currentTarget.style.backgroundColor = 'rgb(21, 77, 113)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                      e.currentTarget.style.backgroundColor = 'rgb(28, 110, 164)';
                     }}
                   >
                     <Image

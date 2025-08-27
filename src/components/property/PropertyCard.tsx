@@ -169,14 +169,7 @@ export function PropertyCard({
                 <span className="text-yellow-800 font-medium mr-1">Property Type:</span>
                 <span className="text-gray-800 truncate">{property.propertyType || 'N/A'}</span>
               </div>
-              <div className="flex items-center text-xs">
-                <span className="text-yellow-800 font-medium mr-1">Ref:</span>
-                <span className="text-gray-800 truncate">{property.reference || 'N/A'}</span>
-              </div>
-              <div className="flex items-center text-xs">
-                <span className="text-yellow-800 font-medium mr-1">Contact:</span>
-                <span className="text-gray-800 truncate">{property.contactName || 'N/A'}</span>
-              </div>
+
             </div>
           </div>
 

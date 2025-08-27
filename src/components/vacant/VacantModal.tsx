@@ -529,14 +529,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                       <h5 className="text-gray-500 text-sm uppercase mb-1">Facing</h5>
                       <p className="font-semibold text-gray-800">{property.facing || 'Not specified'}</p>
                     </div>
-                    <div className="bg-white p-3 rounded-lg">
-                      <h5 className="text-gray-500 text-sm uppercase mb-1">Reference</h5>
-                      <p className="font-semibold text-gray-800">{property.reference || 'Not specified'}</p>
-                    </div>
-                    <div className="bg-white p-3 rounded-lg">
-                      <h5 className="text-gray-500 text-sm uppercase mb-1">Contact Person</h5>
-                      <p className="font-semibold text-gray-800">{property.contactName || 'Not specified'}</p>
-                    </div>
+
                   </div>
                 </div>
 
@@ -777,18 +770,13 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                     <div className="space-y-2 text-sm text-white/80">
                       <div className="flex items-center justify-between">
                         <span className="font-medium">Available:</span>
-                        <span>{property.reference || 'Ready for viewing'}</span>
+                        <span>Ready for viewing</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="font-medium">Response:</span>
                         <span>Within 24 hours</span>
                       </div>
-                      {property.contactName && (
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">Contact:</span>
-                          <span className="capitalize">{property.contactName}</span>
-                        </div>
-                      )}
+
                     </div>
                   </div>
                 </div>

@@ -114,7 +114,7 @@ export default function AboutPage() {
                 <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)] bg-clip-text text-transparent mb-8 leading-tight">
                   STEAL DEALS
                 </h2>
-                <div className="w-32 h-2 bg-gradient-to-r from-[rgb(21,77,113)] via-[rgb(28,110,164)] to-[rgb(51,161,224)] rounded-full mb-8 shadow-lg"></div>
+
                 
                 <h3 className="text-2xl font-bold text-transparent bg-gradient-to-r from-[rgb(28,110,164)] to-[rgb(51,161,224)] bg-clip-text mb-6">
                   Empowering Investments. Enabling Growth.
