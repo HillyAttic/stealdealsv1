@@ -21,10 +21,14 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
   const plotId = plot?.id || `plot-${plot?.project?.replace(/\s+/g, '-').toLowerCase()}`;
 
   // Gated content state
-  const { isContentUnlocked, unlockContent } = useGatedContent('plot');
+  const { isContentUnlocked, isContentLoading, getContentState, unlockContent } = useGatedContent('plot');
   const [showGatedModal, setShowGatedModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  
+  // Get the current state of this plot's content
+  const contentState = plot ? getContentState(plotId) : 'locked';
   const isUnlocked = plot ? isContentUnlocked(plotId) : false;
+  const isLoading = plot ? isContentLoading(plotId) : false;
 
   // Reset image index when plot changes
   useEffect(() => {
@@ -318,27 +322,31 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
                 <div>
                   <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
                     <span className={`px-3 py-1 rounded-full text-sm mr-3 ${
-                      isUnlocked 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-orange-600 text-white'
+                      isLoading 
+                        ? 'bg-gray-600 text-white'
+                        : isUnlocked 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-orange-600 text-white'
                     }`}>
-                      {isUnlocked ? '📁' : '🔒'}
+                      {isLoading ? '⏳' : isUnlocked ? '📁' : '🔒'}
                     </span>
                     Downloads
                   </h3>
                   
                   {/* Enhanced Download Card with Blue Theme - Same height as Investment Details */}
                   <div className={`relative p-6 rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 h-[280px] flex flex-col ${
-                    isUnlocked 
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
-                      : 'bg-gradient-to-r from-orange-500 to-red-600'
+                    isLoading 
+                      ? 'bg-gradient-to-r from-gray-500 to-gray-600' 
+                      : isUnlocked 
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
+                        : 'bg-gradient-to-r from-orange-500 to-red-600'
                   }`}>
                     {/* Decorative elements */}
                     <div className={`absolute top-0 right-0 w-20 h-20 rounded-full opacity-20 -mt-10 -mr-10 ${
-                      isUnlocked ? 'bg-blue-400' : 'bg-orange-400'
+                      isLoading ? 'bg-gray-400' : isUnlocked ? 'bg-blue-400' : 'bg-orange-400'
                     }`}></div>
                     <div className={`absolute bottom-0 left-0 w-16 h-16 rounded-full opacity-20 -mb-8 -ml-8 ${
-                      isUnlocked ? 'bg-blue-700' : 'bg-red-700'
+                      isLoading ? 'bg-gray-700' : isUnlocked ? 'bg-blue-700' : 'bg-red-700'
                     }`}></div>
                     
                     {/* Content */}
@@ -346,31 +354,37 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
                       <div className="flex items-start justify-between mb-3">
                         <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
                           <span className="text-white text-xs font-medium uppercase tracking-wider">
-                            {isUnlocked ? 'AVAILABLE NOW' : 'UNLOCK REQUIRED'}
+                            {isLoading ? 'LOADING...' : isUnlocked ? 'AVAILABLE NOW' : 'UNLOCK REQUIRED'}
                           </span>
                         </div>
                         <div className={`px-3 py-1 rounded-full text-xs font-bold animate-pulse ${
-                          isUnlocked 
-                            ? 'bg-green-400 text-blue-800' 
-                            : 'bg-yellow-400 text-red-800'
+                          isLoading 
+                            ? 'bg-gray-400 text-gray-800'
+                            : isUnlocked 
+                              ? 'bg-green-400 text-blue-800' 
+                              : 'bg-yellow-400 text-red-800'
                         }`}>
-                          {isUnlocked ? 'READY!' : 'LOCKED!'}
+                          {isLoading ? 'LOADING' : isUnlocked ? 'READY!' : 'LOCKED!'}
                         </div>
                       </div>
                       
                       <div className="flex-1 flex flex-col justify-center">
                         <p className="text-white font-bold text-lg leading-relaxed mb-4">
-                          {isUnlocked 
-                            ? 'Download complete investor discovery kit with brochures & videos'
-                            : 'Submit your details to unlock exclusive investor discovery kit'
+                          {isLoading 
+                            ? 'Loading investor discovery kit status...'
+                            : isUnlocked 
+                              ? 'Download complete investor discovery kit with brochures & videos'
+                              : 'Submit your details to unlock exclusive investor discovery kit'
                           }
                         </p>
                         
                         <div className="flex items-center text-blue-100 text-sm mb-6">
                           <span className="inline-block w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
-                          {isUnlocked 
-                            ? 'Instant download access available'
-                            : 'Quick form submission required'
+                          {isLoading 
+                            ? 'Loading access status...'
+                            : isUnlocked 
+                              ? 'Instant download access available'
+                              : 'Quick form submission required'
                           }
                         </div>
                       </div>
@@ -378,22 +392,32 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
                       {/* Call to action section */}
                       <div className="mt-auto pt-3 border-t border-white/30">
                         <p className="text-white/90 text-sm font-medium mb-3">
-                          <strong>{isUnlocked ? 'Click below:' : 'Get Access:'}:</strong> {isUnlocked 
-                            ? 'Instant access to all materials'
-                            : 'Fill the form to unlock premium investment materials'
+                          <strong>{isLoading ? 'Loading:' : isUnlocked ? 'Click below:' : 'Get Access:'}:</strong> {isLoading 
+                            ? 'Please wait while we load your access status'
+                            : isUnlocked 
+                              ? 'Instant access to all materials'
+                              : 'Fill the form to unlock premium investment materials'
                           }
                         </p>
                         
                         {/* Enhanced Download Button */}
                         <button
                           onClick={handleInvestorKitClick}
-                          className={`w-full flex justify-center items-center py-3 px-6 rounded-lg font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 ${
-                            isUnlocked 
-                              ? 'bg-white text-blue-600 hover:bg-blue-50' 
-                              : 'bg-white text-orange-600 hover:bg-orange-50'
+                          disabled={isLoading}
+                          className={`w-full flex justify-center items-center py-3 px-6 rounded-lg font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none ${
+                            isLoading 
+                              ? 'bg-white text-gray-600'
+                              : isUnlocked 
+                                ? 'bg-white text-blue-600 hover:bg-blue-50' 
+                                : 'bg-white text-orange-600 hover:bg-orange-50'
                           }`}
                         >
-                          {isUnlocked ? (
+                          {isLoading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-600 mr-3"></div>
+                              Loading...
+                            </>
+                          ) : isUnlocked ? (
                             <>
                               <FaDownload className="mr-3 text-xl" />
                               Download Discovery Kit
@@ -468,27 +492,31 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
               <div className="mb-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
                   <span className={`px-3 py-1 rounded-full text-sm mr-3 ${
-                    isUnlocked 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-orange-600 text-white'
+                    isLoading 
+                      ? 'bg-gray-600 text-white'
+                      : isUnlocked 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-orange-600 text-white'
                   }`}>
-                    {isUnlocked ? '📁' : '🔒'}
+                    {isLoading ? '⏳' : isUnlocked ? '📁' : '🔒'}
                   </span>
                   Downloads
                 </h3>
                 
                 {/* Enhanced Download Card with Blue Theme - Mobile */}
                 <div className={`relative p-6 rounded-xl mb-6 shadow-lg transform hover:scale-105 transition-all duration-300 ${
-                  isUnlocked 
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
-                    : 'bg-gradient-to-r from-orange-500 to-red-600'
+                  isLoading 
+                    ? 'bg-gradient-to-r from-gray-500 to-gray-600' 
+                    : isUnlocked 
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
+                      : 'bg-gradient-to-r from-orange-500 to-red-600'
                 }`}>
                   {/* Decorative elements */}
                   <div className={`absolute top-0 right-0 w-16 h-16 rounded-full opacity-20 -mt-8 -mr-8 ${
-                    isUnlocked ? 'bg-blue-400' : 'bg-orange-400'
+                    isLoading ? 'bg-gray-400' : isUnlocked ? 'bg-blue-400' : 'bg-orange-400'
                   }`}></div>
                   <div className={`absolute bottom-0 left-0 w-12 h-12 rounded-full opacity-20 -mb-6 -ml-6 ${
-                    isUnlocked ? 'bg-blue-700' : 'bg-red-700'
+                    isLoading ? 'bg-gray-700' : isUnlocked ? 'bg-blue-700' : 'bg-red-700'
                   }`}></div>
                   
                   {/* Content */}
@@ -496,30 +524,36 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
                     <div className="flex items-start justify-between mb-3">
                       <div className="bg-white/20 backdrop-blur-sm rounded-lg px-2 py-1">
                         <span className="text-white text-xs font-medium uppercase tracking-wider">
-                          {isUnlocked ? 'AVAILABLE' : 'UNLOCK'}
+                          {isLoading ? 'LOADING' : isUnlocked ? 'AVAILABLE' : 'UNLOCK'}
                         </span>
                       </div>
                       <div className={`px-2 py-1 rounded-full text-xs font-bold animate-pulse ${
-                        isUnlocked 
-                          ? 'bg-green-400 text-blue-800' 
-                          : 'bg-yellow-400 text-red-800'
+                        isLoading 
+                          ? 'bg-gray-400 text-gray-800'
+                          : isUnlocked 
+                            ? 'bg-green-400 text-blue-800' 
+                            : 'bg-yellow-400 text-red-800'
                       }`}>
-                        {isUnlocked ? 'READY!' : 'LOCKED!'}
+                        {isLoading ? 'LOADING' : isUnlocked ? 'READY!' : 'LOCKED!'}
                       </div>
                     </div>
                     
                     <p className="text-white font-bold text-base leading-relaxed mb-2">
-                      {isUnlocked 
-                        ? 'Download investor discovery kit'
-                        : 'Submit details to unlock kit'
+                      {isLoading 
+                        ? 'Loading kit status...'
+                        : isUnlocked 
+                          ? 'Download investor discovery kit'
+                          : 'Submit details to unlock kit'
                       }
                     </p>
                     
                     <div className="flex items-center text-blue-100 text-sm">
                       <span className="inline-block w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
-                      {isUnlocked 
-                        ? 'Instant download access'
-                        : 'Quick form required'
+                      {isLoading 
+                        ? 'Loading access...'
+                        : isUnlocked 
+                          ? 'Instant download access'
+                          : 'Quick form required'
                       }
                     </div>
                     
@@ -527,13 +561,21 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
                     <div className="mt-4">
                       <button
                         onClick={handleInvestorKitClick}
-                        className={`w-full flex justify-center items-center py-3 px-4 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 ${
-                          isUnlocked 
-                            ? 'bg-white text-blue-600 hover:bg-blue-50' 
-                            : 'bg-white text-orange-600 hover:bg-orange-50'
+                        disabled={isLoading}
+                        className={`w-full flex justify-center items-center py-3 px-4 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none ${
+                          isLoading 
+                            ? 'bg-white text-gray-600'
+                            : isUnlocked 
+                              ? 'bg-white text-blue-600 hover:bg-blue-50' 
+                              : 'bg-white text-orange-600 hover:bg-orange-50'
                         }`}
                       >
-                        {isUnlocked ? (
+                        {isLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                            Loading...
+                          </>
+                        ) : isUnlocked ? (
                           <>
                             <FaDownload className="mr-2" />
                             Download Kit

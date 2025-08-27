@@ -27,10 +27,14 @@ export function PlotCard({
   const plotId = plot.id || `plot-${plot.project?.replace(/\s+/g, '-').toLowerCase()}`;
 
   // Gated content state
-  const { isContentUnlocked, unlockContent } = useGatedContent('plot');
+  const { isContentUnlocked, isContentLoading, getContentState, unlockContent } = useGatedContent('plot');
   const [showGatedModal, setShowGatedModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  
+  // Get the current state of this plot's content
+  const contentState = getContentState(plotId);
   const isUnlocked = isContentUnlocked(plotId);
+  const isLoading = isContentLoading(plotId);
 
   // Memoized callback to prevent unnecessary re-renders
   const handleAuthRequired = useCallback(() => {
@@ -167,16 +171,21 @@ export function PlotCard({
             <button
               onClick={handleInvestorKitClick}
               className={`w-full flex justify-center items-center py-2 px-4 rounded transition-all duration-300 text-white ${
-                isUnlocked 
-                  ? 'hover:shadow-lg' 
-                  : 'hover:shadow-lg'
+                isLoading 
+                  ? 'opacity-75' 
+                  : isUnlocked 
+                    ? 'hover:shadow-lg' 
+                    : 'hover:shadow-lg'
               }`}
               style={{
-                background: isUnlocked 
-                  ? '#154D71' 
-                  : 'linear-gradient(to right, #f59e0b, #dc2626)'
+                background: isLoading 
+                  ? 'linear-gradient(to right, #6b7280, #9ca3af)'
+                  : isUnlocked 
+                    ? '#154D71' 
+                    : 'linear-gradient(to right, #f59e0b, #dc2626)'
               }}
               onMouseEnter={(e) => {
+                if (isLoading) return;
                 if (isUnlocked) {
                   e.currentTarget.style.background = 'rgba(21, 77, 113, 0.9)';
                 } else {
@@ -184,14 +193,21 @@ export function PlotCard({
                 }
               }}
               onMouseLeave={(e) => {
+                if (isLoading) return;
                 if (isUnlocked) {
                   e.currentTarget.style.background = '#154D71';
                 } else {
                   e.currentTarget.style.background = 'linear-gradient(to right, #f59e0b, #dc2626)';
                 }
               }}
+              disabled={isLoading}
             >
-              {isUnlocked ? (
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Loading...
+                </>
+              ) : isUnlocked ? (
                 <>
                   <FaDownload className="mr-2" />
                   Investor Discovery Kit

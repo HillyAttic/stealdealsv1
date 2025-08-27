@@ -51,8 +51,13 @@ export function PlotGatedContentModal({ plot, isOpen, onClose, onSuccess }: Plot
     setIsSubmitting(true);
 
     try {
+      console.log('[GatedContentModal] Starting form submission...');
+      
       // Submit the form normally
       const formData = new FormData(e.currentTarget);
+      
+      // Log the form data being submitted
+      console.log('[GatedContentModal] Form data:', Object.fromEntries(formData));
       
       // Create a temporary form for submission
       const tempForm = document.createElement('form');
@@ -69,6 +74,8 @@ export function PlotGatedContentModal({ plot, isOpen, onClose, onSuccess }: Plot
         tempForm.appendChild(input);
       }
       
+      console.log('[GatedContentModal] Form created, submitting...');
+      
       // Add the form to the document and submit
       document.body.appendChild(tempForm);
       tempForm.submit();
@@ -76,11 +83,15 @@ export function PlotGatedContentModal({ plot, isOpen, onClose, onSuccess }: Plot
       // Clean up
       document.body.removeChild(tempForm);
       
-      // Call success handler immediately (don't wait for redirect)
-      onSuccess();
+      console.log('[GatedContentModal] Form submitted successfully, calling onSuccess()');
+      
+      // Call success handler after a brief delay to ensure submission started
+      setTimeout(() => {
+        onSuccess();
+      }, 500);
       
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error('[GatedContentModal] Error submitting form:', error);
       setIsSubmitting(false);
     }
   };
