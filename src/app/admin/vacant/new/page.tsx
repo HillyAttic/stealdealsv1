@@ -225,7 +225,7 @@ function NewVacantPropertyContent() {
     }
     
     if (!formData.propertyType) {
-      newErrors.propertyType = 'Property Type is required';
+      newErrors.propertyType = 'Unit Type is required';
     }
     
     if (!formData.reference) {
@@ -250,29 +250,47 @@ function NewVacantPropertyContent() {
     try {
       // Prepare property data with all fields
       const propertyData = {
-        ...formData,
-        propertyType: formData.propertyType, 
-        image: formData.image || 'https://images.pexels.com/photos/260931/pexels-photo-260931.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-        rent: formData.rent ? Number(formData.rent) : 0,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        // Ensure these fields are explicitly included
+        // Core required fields
         location: formData.location,
+        category: formData.category,
+        propertyType: 'Vacant', // This is the key field that determines the collection
+        
+        // Location fields
         state: formData.state,
         city: formData.city,
         district: formData.district,
         subDistrict: formData.subDistrict,
-        category: formData.category,
+        
+        // Unit details
         floor: formData.floor,
         facing: formData.facing,
         superArea: formData.superArea,
         carpetArea: formData.carpetArea,
+        
+        // Property specifics
+        unitType: formData.propertyType, // Store the actual property type (Independent Unit, etc.) as unitType
         reference: formData.reference,
-        contactName: formData.contactRef, // Map contactRef to contactName
+        contactName: formData.contactRef,
+        contactRef: formData.contactRef, // Keep both for compatibility
+        
+        // Measurements
         length: formData.length,
         width: formData.width,
-        height: formData.height
+        height: formData.height,
+        
+        // Financial
+        rent: formData.rent ? Number(formData.rent) : 0,
+        
+        // Media
+        image: formData.image || 'https://images.pexels.com/photos/260931/pexels-photo-260931.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+        
+        // Metadata
+        status: formData.status || 'Available',
+        createdAt: Date.now(),
+        updatedAt: Date.now()
       };
+      
+      console.log('Submitting property data:', propertyData);
       
       // Use the API endpoint with HTTP-only cookie authentication
       const response = await fetch('/api/properties', {
@@ -299,6 +317,7 @@ function NewVacantPropertyContent() {
     } catch (err: any) {
       console.error('Error saving property:', err);
       setError(err.message || 'Failed to save property');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -531,7 +550,7 @@ function NewVacantPropertyContent() {
               </div>
               
               <div className="mb-4 grid grid-cols-1 md:grid-cols-4 gap-2 items-center">
-                <label htmlFor="propertyType" className="text-gray-700">Property Type</label>
+                <label htmlFor="propertyType" className="text-gray-700">Unit Type</label>
                 <div className="position-relative">
                   <select 
                     id="propertyType"

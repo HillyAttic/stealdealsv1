@@ -81,6 +81,7 @@ export interface Property {
   contactNumber?: string;
   channel?: string;
   propertyType?: string;
+  unitType?: string; // Unit type for vacant properties (Independent Unit, Standalone Building, etc.)
   image?: string; // Image URL for the property
   
   // Additional vacant property fields

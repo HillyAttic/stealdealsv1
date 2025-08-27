@@ -120,7 +120,7 @@ function VacantContactModal({ property, isOpen, onClose }: VacantContactModalPro
             <input type="hidden" name="property_category" value={property.category} />
             <input type="hidden" name="property_rent" value={getRentDisplay()} />
             <input type="hidden" name="property_city" value={`${property.city}, ${property.state}`} />
-            <input type="hidden" name="property_type" value={property.propertyType} />
+            <input type="hidden" name="property_type" value="Vacant" />
             <input type="hidden" name="form_type" value="Vacant Property Contact Modal" />
 
             {/* Property Location (readonly) */}
@@ -416,18 +416,22 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
 
   if (!isOpen || !property) return null;
 
-  // Format currency using Indian format (lakhs, crores)
+  // Format currency using Indian format - Clean implementation to prevent extra characters
   const formatCurrency = (value: number | string | undefined): string => {
-    if (value === undefined || value === null || value === '') return '-';
+    if (!value || value === '' || value === null || value === undefined) {
+      return '-';
+    }
     
-    // Clean the value - remove any non-numeric characters except decimal point
-    let cleanValue = typeof value === 'string' ? value.replace(/[^0-9.]/g, '') : value.toString();
-    const numValue = parseFloat(cleanValue);
+    // Convert to number, handling both string and number inputs
+    const numericValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) : Number(value);
     
-    // Check if the result is a valid number
-    if (isNaN(numValue) || numValue === 0) return '-';
+    // Return dash for invalid numbers
+    if (isNaN(numericValue) || numericValue === 0) {
+      return '-';
+    }
     
-    return `₹${numValue.toLocaleString('en-IN')}`;
+    // Simple, clean formatting
+    return `₹${numericValue.toLocaleString('en-IN')}`;
   };
 
   // Track contact inquiry
@@ -516,7 +520,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                     </div>
                     <div className="bg-white p-3 rounded-lg">
                       <h5 className="text-gray-500 text-sm uppercase mb-1">Property Type</h5>
-                      <p className="font-semibold text-gray-800">{property.propertyType || 'Not specified'}</p>
+                      <p className="font-semibold text-gray-800">Vacant</p>
                     </div>
                     <div className="bg-white p-3 rounded-lg">
                       <h5 className="text-gray-500 text-sm uppercase mb-1">Floor</h5>
@@ -557,7 +561,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                     </div>
                     <div className="bg-white p-3 rounded-lg">
                       <h5 className="text-gray-500 text-sm uppercase mb-1">Status</h5>
-                      <p className="font-semibold text-gray-800">{property.subDistrict || 'Not specified'}</p>
+                      <p className="font-semibold text-gray-800">{property.propertyStatus || 'Available'}</p>
                     </div>
                   </div>
                 </div>
@@ -635,31 +639,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                       </div>
                     )}
                     
-                    {property.price && (
-                      <div className="bg-white p-3 rounded">
-                        <h5 className="text-gray-500 text-xs uppercase mb-1">Total Price</h5>
-                        <div className="flex items-center">
-                          <FaRupeeSign className="mr-2 text-sm" style={{ color: 'rgb(28, 110, 164)' }} />
-                          <div>
-                            <p className="text-lg font-medium text-gray-800">{formatCurrency(property.price)}</p>
-                            <p className="text-xs text-gray-600">one-time payment</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                     
-                    {property.askingPrice && (
-                      <div className="bg-white p-3 rounded">
-                        <h5 className="text-gray-500 text-xs uppercase mb-1">Asking Price</h5>
-                        <div className="flex items-center">
-                          <FaRupeeSign className="mr-2 text-sm" style={{ color: 'rgb(28, 110, 164)' }} />
-                          <div>
-                            <p className="text-lg font-medium text-gray-800">{formatCurrency(property.askingPrice)}</p>
-                            <p className="text-xs text-gray-600">negotiable</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -692,9 +672,9 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                         <p className="text-xs text-gray-700">Spacious Area</p>
                       </div>
                     )}
-                    {property.propertyType && (
+                    {(property.unitType || property.propertyType) && (
                       <div key="feature-type" className="bg-white p-2 rounded text-center">
-                        <p className="text-xs text-gray-700">{property.propertyType}</p>
+                        <p className="text-xs text-gray-700">{property.unitType || property.propertyType}</p>
                       </div>
                     )}
                   </div>
