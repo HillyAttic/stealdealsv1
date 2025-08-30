@@ -155,6 +155,32 @@ export function UserDetails({ user, onClose }: UserDetailsProps) {
     }
   };
 
+  // Get franchise investment display following the specification
+  const getFranchiseInvestmentDisplay = (item: WishlistItem): string => {
+    // Check if this is a franchise property
+    if (!item.type?.toLowerCase().includes('franchise')) {
+      return item.price || 'Price on Request';
+    }
+
+    // Fallback to specific franchise investment ranges based on property name/type
+    const propertyName = item.title?.toLowerCase() || '';
+    
+    if (propertyName.includes('kidzee') || propertyName.includes('little leaders')) {
+      return 'Total Investment\n₹20 LACS - ₹25 LACS';
+    } else if (propertyName.includes('dominos') || propertyName.includes('subway')) {
+      return 'Total Investment\n₹25 LACS - ₹35 LACS';
+    } else if (propertyName.includes('cafe') || propertyName.includes('coffee')) {
+      return 'Total Investment\n₹15 LACS - ₹30 LACS';
+    } else if (propertyName.includes('salon') || propertyName.includes('spa')) {
+      return 'Total Investment\n₹10 LACS - ₹20 LACS';
+    } else if (propertyName.includes('gym') || propertyName.includes('fitness')) {
+      return 'Total Investment\n₹20 LACS - ₹40 LACS';
+    } else {
+      // Default franchise investment range
+      return 'Total Investment\n₹20 LACS - ₹25 LACS';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -407,10 +433,21 @@ export function UserDetails({ user, onClose }: UserDetailsProps) {
                       />
                       <h4 className="font-medium text-gray-900 mb-1">{item.title}</h4>
                       <p className="text-sm text-gray-600 mb-2">{item.location}</p>
-                      <p className="font-semibold text-blue-600 mb-2">{item.price}</p>
-                      <div className="flex justify-between text-xs text-gray-500">
-                        <span>{item.bedrooms} bed, {item.bathrooms} bath</span>
-                        <span>{item.area}</span>
+                      <div className="mb-2">
+                        {item.type?.toLowerCase().includes('franchise') ? (
+                          <div className="text-blue-600">
+                            {getFranchiseInvestmentDisplay(item).split('\n').map((line, index) => (
+                              <div key={index} className={index === 0 ? 'text-xs font-normal' : 'font-semibold'}>
+                                {line}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="font-semibold text-blue-600">{item.price}</p>
+                        )}
+                      </div>
+                      <div className="flex justify-end text-xs text-gray-500">
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">{item.type}</span>
                       </div>
                       <p className="text-xs text-gray-400 mt-2">
                         Added: {formatDate(item.addedAt)}

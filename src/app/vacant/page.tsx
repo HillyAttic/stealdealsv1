@@ -535,7 +535,7 @@ export default function VacantPropertiesPage() {
       
       {/* Vacant Property Modal */}
       <VacantModal
-        property={selectedProperty}
+        vacant={selectedProperty}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
       />

@@ -3,3 +3,18 @@
 # dependencies
 /node_modules
 
+# Next.js build output and cache
+.next/
+out/
+
+# Test files and temporary files
+test-*.js
+nul
+*.tmp
+
+# Wishlist development files (if recreated)
+src/app/admin/wishlists/
+src/app/api/admin/user-wishlists/ 
+src/app/wishlist/
+src/components/wishlist/ImprovedWishlistButton.tsx
+

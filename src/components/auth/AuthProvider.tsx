@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { clientSession } from '@/lib/auth/client-session';
 import { SessionData } from '@/lib/auth/session';
+import AuthModal from './AuthModal';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -12,6 +13,8 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string; user?: SessionData['user'] }>;
   logout: () => Promise<{ success: boolean; error?: string }>;
   refreshSession: () => Promise<boolean>;
+  openAuthModal: (options?: { defaultTab?: 'signin' | 'signup'; onSuccess?: () => void; redirectPath?: string }) => void;
+  closeAuthModal: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +35,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<SessionData['user'] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Auth modal state
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalOptions, setAuthModalOptions] = useState<{
+    defaultTab?: 'signin' | 'signup';
+    onSuccess?: () => void;
+    redirectPath?: string;
+  }>({});
 
   // Initialize authentication state
   useEffect(() => {
@@ -346,6 +357,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // Auth modal functions
+  const openAuthModal = (options: {
+    defaultTab?: 'signin' | 'signup';
+    onSuccess?: () => void;
+    redirectPath?: string;
+  } = {}) => {
+    setAuthModalOptions(options);
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+    setAuthModalOptions({});
+  };
+
+  const handleAuthModalSuccess = (user: any) => {
+    closeAuthModal();
+    authModalOptions.onSuccess?.();
+  };
+
   const value: AuthContextType = {
     isAuthenticated,
     user,
@@ -353,12 +384,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     register,
     logout,
-    refreshSession
+    refreshSession,
+    openAuthModal,
+    closeAuthModal
   };
 
   return (
     <AuthContext.Provider value={value}>
       {children}
+      
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        defaultTab={authModalOptions.defaultTab}
+        onSuccess={handleAuthModalSuccess}
+        redirectPath={authModalOptions.redirectPath}
+      />
     </AuthContext.Provider>
   );
 }

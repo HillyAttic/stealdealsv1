@@ -406,7 +406,7 @@ export default function VacantPropertyDetails() {
                       Contact Us
                     </Link>
                     <Link 
-                      href="tel:+919999999999" 
+                      href="tel:+919630403080" 
                       onClick={handlePhoneClick}
                       className="flex items-center justify-center gap-2 border border-white text-white hover:bg-white/10 transition-colors py-3 px-6 rounded-md font-medium"
                     >
