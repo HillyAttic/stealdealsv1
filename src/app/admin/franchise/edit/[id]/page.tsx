@@ -7,7 +7,7 @@ import ClientOnly from '@/components/ClientOnly';
 import Link from 'next/link';
 import { BsMenuUp, BsSave } from 'react-icons/bs';
 import { toast, Toaster } from 'react-hot-toast';
-import { franchisePropertiesRef, database } from '@/lib/firebase';
+import { franchisePropertiesRef, migratedFranchiseRef, database } from '@/lib/firebase';
 import { ref, get, child, update } from 'firebase/database';
 
 export default function EditFranchisePage() {
@@ -82,24 +82,69 @@ function EditFranchiseContent() {
     
     const fetchFranchise = async () => {
       try {
-        // Try to get from franchiseProperties
-        let franchiseRef = child(franchisePropertiesRef, franchiseId);
-        let snapshot = await get(franchiseRef);
+        let franchiseData = null;
+        let foundInCollection = '';
+        
+        // Try migrated collection first
+        console.log('Checking migrated franchise collection for ID:', franchiseId);
+        let snapshot = await get(child(migratedFranchiseRef, franchiseId));
         
         if (snapshot.exists()) {
-          const franchiseData = snapshot.val();
-          console.log('Fetched franchise data:', franchiseData);
+          franchiseData = snapshot.val();
+          foundInCollection = 'migrated';
+          console.log('Found franchise in migrated collection:', franchiseData);
+          
+          // Handle migrated structure - extract from franchiseDetails if nested
+          if (franchiseData.franchiseDetails) {
+            const details = franchiseData.franchiseDetails;
+            franchiseData = {
+              ...franchiseData,
+              // Map nested fields to root level for form compatibility
+              brand: franchiseData.title || franchiseData.name || details.name || details.brand || '',
+              industry: details.industry || franchiseData.industry || '',
+              segment: details.segment || franchiseData.segment || '',
+              model: details.model || franchiseData.model || '',
+              minArea: details.minArea || franchiseData.minArea || '',
+              maxArea: details.maxArea || franchiseData.maxArea || '',
+              minInvestment: details.minInvestment || franchiseData.minInvestment || '',
+              maxInvestment: details.maxInvestment || franchiseData.maxInvestment || '',
+              royalty: details.royalty || franchiseData.royalty || '',
+              establishmentYear: details.establishmentYear || franchiseData.establishmentYear || '',
+              franchiseStartedYear: details.franchiseStartedYear || franchiseData.franchiseStartedYear || '',
+              numberOutlets: details.numberOfOutlets || details.numberOutlets || franchiseData.numberOutlets || '',
+              minPaybackPeriod: details.minPaybackPeriod || franchiseData.minPaybackPeriod || '',
+              maxPaybackPeriod: details.maxPaybackPeriod || franchiseData.maxPaybackPeriod || '',
+              headquarter: details.headquarter || franchiseData.headquarter || franchiseData.location || '',
+              remarks: franchiseData.description || details.remarks || franchiseData.remarks || '',
+              image: franchiseData.images?.[0] || franchiseData.image || ''
+            };
+          }
+        } else {
+          // Fallback to legacy collection
+          console.log('Checking legacy franchise collection for ID:', franchiseId);
+          snapshot = await get(child(franchisePropertiesRef, franchiseId));
+          
+          if (snapshot.exists()) {
+            franchiseData = snapshot.val();
+            foundInCollection = 'legacy';
+            console.log('Found franchise in legacy collection:', franchiseData);
+          }
+        }
+        
+        if (franchiseData) {
+          console.log(`Fetched franchise data from ${foundInCollection} collection:`, franchiseData);
           
           // Make sure to properly map name/brand fields for UI display
           const dataWithBrand = {
             id: franchiseId,
             ...franchiseData,
-            // Ensure brand is set to name if brand doesn't exist
-            brand: franchiseData.brand || franchiseData.name || franchiseData.product || ''
+            // Ensure brand is set consistently
+            brand: franchiseData.brand || franchiseData.name || franchiseData.product || franchiseData.title || ''
           };
           
           setFranchise(dataWithBrand);
         } else {
+          console.log('Franchise not found in any collection');
           setError('Franchise not found');
         }
       } catch (err: any) {
@@ -151,9 +196,29 @@ function EditFranchiseContent() {
       // Remove the id field as it's not stored in the Firebase object
       const { id, ...franchiseToSave } = updatedFranchise;
       
+      // Determine which collection to update - prefer migrated structure
+      let targetRef = child(migratedFranchiseRef, franchiseId);
+      
+      // Check if franchise exists in migrated collection first
+      const migratedSnapshot = await get(child(migratedFranchiseRef, franchiseId));
+      if (migratedSnapshot.exists()) {
+        console.log('Updating franchise in migrated collection');
+        targetRef = child(migratedFranchiseRef, franchiseId);
+      } else {
+        // Check legacy collection
+        const legacySnapshot = await get(child(franchisePropertiesRef, franchiseId));
+        if (legacySnapshot.exists()) {
+          console.log('Updating franchise in legacy collection');
+          targetRef = child(franchisePropertiesRef, franchiseId);
+        } else {
+          // If not found in either, create in migrated collection
+          console.log('Creating new franchise in migrated collection');
+          targetRef = child(migratedFranchiseRef, franchiseId);
+        }
+      }
+      
       // Update the franchise in Firebase
-      const franchiseRef = child(franchisePropertiesRef, franchiseId);
-      await update(franchiseRef, franchiseToSave);
+      await update(targetRef, franchiseToSave);
       
       toast.success('Franchise updated successfully');
       router.push('/admin/franchise');

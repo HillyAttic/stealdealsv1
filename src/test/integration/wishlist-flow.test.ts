@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;
 import { NextRequest } from 'next/server'
 import { POST as registerPOST } from '@/app/api/auth/user/register/route'
 import { POST as loginPOST } from '@/app/api/auth/user/login/route'
@@ -6,35 +7,35 @@ import { GET as wishlistGET, POST as wishlistPOST } from '@/app/api/user/wishlis
 import { GET as activityGET } from '@/app/api/user/activity/route'
 
 // Mock dependencies
-vi.mock('@/lib/auth/middleware', () => ({
-  requireAuth: vi.fn()
+jest.mock('@/lib/auth/middleware', () => ({
+  requireAuth: jest.fn()
 }))
 
-vi.mock('@/lib/database/mock-users', () => ({
-  createUser: vi.fn(),
-  getUserByEmail: vi.fn(),
-  updateUser: vi.fn()
+jest.mock('@/lib/database/mock-users', () => ({
+  createUser: jest.fn(),
+  getUserByEmail: jest.fn(),
+  updateUser: jest.fn()
 }))
 
-vi.mock('@/lib/database/wishlist', () => ({
-  getUserWishlist: vi.fn(),
-  addToWishlist: vi.fn(),
-  removeFromWishlist: vi.fn(),
-  isInWishlist: vi.fn()
+jest.mock('@/lib/database/wishlist', () => ({
+  getUserWishlist: jest.fn(),
+  addToWishlist: jest.fn(),
+  removeFromWishlist: jest.fn(),
+  isInWishlist: jest.fn()
 }))
 
-vi.mock('@/lib/database/activity', () => ({
-  getUserActivity: vi.fn(),
-  logActivity: vi.fn()
+jest.mock('@/lib/database/activity', () => ({
+  getUserActivity: jest.fn(),
+  logActivity: jest.fn()
 }))
 
-vi.mock('@/lib/auth/password', () => ({
-  hashPassword: vi.fn(),
-  verifyPassword: vi.fn()
+jest.mock('@/lib/auth/password', () => ({
+  hashPassword: jest.fn(),
+  verifyPassword: jest.fn()
 }))
 
-vi.mock('@/lib/auth/session', () => ({
-  createSession: vi.fn()
+jest.mock('@/lib/auth/session', () => ({
+  createSession: jest.fn()
 }))
 
 describe('Complete Wishlist Flow Integration', () => {
@@ -107,7 +108,7 @@ describe('Complete Wishlist Flow Integration', () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   describe('User Registration to Wishlist Usage Flow', () => {
@@ -117,9 +118,9 @@ describe('Complete Wishlist Flow Integration', () => {
       const { hashPassword } = await import('@/lib/auth/password')
       const { createSession } = await import('@/lib/auth/session')
 
-      vi.mocked(hashPassword).mockResolvedValue('hashed-password')
-      vi.mocked(createUser).mockResolvedValue(mockUser)
-      vi.mocked(createSession).mockReturnValue('jwt-token')
+      jest.mocked(hashPassword).mockResolvedValue('hashed-password')
+      jest.mocked(createUser).mockResolvedValue(mockUser)
+      jest.mocked(createSession).mockReturnValue('jwt-token')
 
       const registerRequest = new NextRequest('http://localhost:3000/api/auth/user/register', {
         method: 'POST',
@@ -133,7 +134,7 @@ describe('Complete Wishlist Flow Integration', () => {
 
       // Mock all required dependencies for registration
       const mockValidation = await import('@/lib/validations/auth')
-      vi.mocked(mockValidation.registerSchema.safeParse).mockReturnValue({
+      jest.mocked(mockValidation.registerSchema.safeParse).mockReturnValue({
         success: true,
         data: {
           name: 'Test User',
@@ -143,21 +144,21 @@ describe('Complete Wishlist Flow Integration', () => {
       })
 
       const mockRateLimit = await import('@/lib/security/rate-limit')
-      vi.mocked(mockRateLimit.applyAuthRateLimit).mockReturnValue({
+      jest.mocked(mockRateLimit.applyAuthRateLimit).mockReturnValue({
         allowed: true,
         remaining: 2,
         resetTime: Date.now() + 60000
       })
 
       const mockSanitization = await import('@/lib/security/sanitization')
-      vi.mocked(mockSanitization.sanitizeRegistrationData).mockReturnValue({
+      jest.mocked(mockSanitization.sanitizeRegistrationData).mockReturnValue({
         name: 'Test User',
         email: 'test@example.com',
         password: 'SecurePassword123!'
       })
 
       const { getUserByEmail } = await import('@/lib/database/mock-users')
-      vi.mocked(getUserByEmail).mockResolvedValue(null) // User doesn't exist
+      jest.mocked(getUserByEmail).mockResolvedValue(null) // User doesn't exist
 
       const registerResponse = await registerPOST(registerRequest)
       const registerData = await registerResponse.json()
@@ -168,13 +169,13 @@ describe('Complete Wishlist Flow Integration', () => {
 
       // Step 2: User adds properties to wishlist
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       const { addToWishlist, isInWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(isInWishlist).mockResolvedValue(false)
-      vi.mocked(addToWishlist).mockResolvedValue(mockWishlistItems[0])
+      jest.mocked(isInWishlist).mockResolvedValue(false)
+      jest.mocked(addToWishlist).mockResolvedValue(mockWishlistItems[0])
 
       const addWishlistRequest = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',
@@ -196,7 +197,7 @@ describe('Complete Wishlist Flow Integration', () => {
 
       // Step 3: User views their wishlist
       const { getUserWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(getUserWishlist).mockResolvedValue([
+      jest.mocked(getUserWishlist).mockResolvedValue([
         {
           ...mockWishlistItems[0],
           title: mockProperties[0].title,
@@ -221,7 +222,7 @@ describe('Complete Wishlist Flow Integration', () => {
 
       // Step 4: Verify activity was logged
       const { getUserActivity } = await import('@/lib/database/activity')
-      vi.mocked(getUserActivity).mockResolvedValue([
+      jest.mocked(getUserActivity).mockResolvedValue([
         {
           id: 'activity-1',
           userId: mockUser.id,
@@ -252,14 +253,14 @@ describe('Complete Wishlist Flow Integration', () => {
   describe('Wishlist Management Operations', () => {
     it('should handle complete wishlist CRUD operations', async () => {
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Step 1: Add first property
       const { addToWishlist, isInWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(isInWishlist).mockResolvedValue(false)
-      vi.mocked(addToWishlist).mockResolvedValue(mockWishlistItems[0])
+      jest.mocked(isInWishlist).mockResolvedValue(false)
+      jest.mocked(addToWishlist).mockResolvedValue(mockWishlistItems[0])
 
       const addRequest1 = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',
@@ -276,8 +277,8 @@ describe('Complete Wishlist Flow Integration', () => {
       expect(addResponse1.status).toBe(200)
 
       // Step 2: Add second property
-      vi.mocked(isInWishlist).mockResolvedValue(false)
-      vi.mocked(addToWishlist).mockResolvedValue(mockWishlistItems[1])
+      jest.mocked(isInWishlist).mockResolvedValue(false)
+      jest.mocked(addToWishlist).mockResolvedValue(mockWishlistItems[1])
 
       const addRequest2 = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',
@@ -294,7 +295,7 @@ describe('Complete Wishlist Flow Integration', () => {
 
       // Step 3: Get full wishlist
       const { getUserWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(getUserWishlist).mockResolvedValue([
+      jest.mocked(getUserWishlist).mockResolvedValue([
         {
           ...mockWishlistItems[0],
           title: mockProperties[0].title,
@@ -325,7 +326,7 @@ describe('Complete Wishlist Flow Integration', () => {
 
       // Step 4: Remove one property
       const { removeFromWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(removeFromWishlist).mockResolvedValue(true)
+      jest.mocked(removeFromWishlist).mockResolvedValue(true)
 
       const removeRequest = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',
@@ -344,7 +345,7 @@ describe('Complete Wishlist Flow Integration', () => {
       expect(removeData.message).toBe('Property removed from wishlist')
 
       // Step 5: Verify updated wishlist
-      vi.mocked(getUserWishlist).mockResolvedValue([
+      jest.mocked(getUserWishlist).mockResolvedValue([
         {
           ...mockWishlistItems[1],
           title: mockProperties[1].title,
@@ -369,13 +370,13 @@ describe('Complete Wishlist Flow Integration', () => {
 
     it('should handle duplicate wishlist additions', async () => {
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock property already in wishlist
       const { isInWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(isInWishlist).mockResolvedValue(true)
+      jest.mocked(isInWishlist).mockResolvedValue(true)
 
       const addRequest = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',
@@ -396,13 +397,13 @@ describe('Complete Wishlist Flow Integration', () => {
 
     it('should handle removing non-existent wishlist items', async () => {
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock property not found in wishlist
       const { removeFromWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(removeFromWishlist).mockResolvedValue(false)
+      jest.mocked(removeFromWishlist).mockResolvedValue(false)
 
       const removeRequest = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',
@@ -425,13 +426,13 @@ describe('Complete Wishlist Flow Integration', () => {
   describe('Cross-Feature Integration', () => {
     it('should integrate wishlist with user activity tracking', async () => {
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock activity logging
       const { logActivity } = await import('@/lib/database/activity')
-      vi.mocked(logActivity).mockResolvedValue({
+      jest.mocked(logActivity).mockResolvedValue({
         id: 'activity-123',
         userId: mockUser.id,
         type: 'wishlist_add',
@@ -445,8 +446,8 @@ describe('Complete Wishlist Flow Integration', () => {
 
       // Add to wishlist (should trigger activity logging)
       const { addToWishlist, isInWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(isInWishlist).mockResolvedValue(false)
-      vi.mocked(addToWishlist).mockImplementation(async (userId, propertyId, notes, priority) => {
+      jest.mocked(isInWishlist).mockResolvedValue(false)
+      jest.mocked(addToWishlist).mockImplementation(async (userId, propertyId, notes, priority) => {
         // Simulate activity logging during wishlist addition
         await logActivity(userId, 'wishlist_add', propertyId, {
           notes,
@@ -491,18 +492,18 @@ describe('Complete Wishlist Flow Integration', () => {
 
     it('should handle concurrent wishlist operations', async () => {
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       const { addToWishlist, isInWishlist } = await import('@/lib/database/wishlist')
       
       // Mock concurrent operations
-      vi.mocked(isInWishlist)
+      jest.mocked(isInWishlist)
         .mockResolvedValueOnce(false) // First check: not in wishlist
         .mockResolvedValueOnce(false) // Second check: not in wishlist
 
-      vi.mocked(addToWishlist)
+      jest.mocked(addToWishlist)
         .mockResolvedValueOnce({
           id: 'wishlist-1',
           userId: mockUser.id,

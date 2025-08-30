@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;;
 import {
   addToWishlist,
   removeFromWishlist,
@@ -11,11 +12,11 @@ import {
 import { getPropertyById } from '@/lib/firebase';
 
 // Mock Firebase
-vi.mock('@/lib/firebase', () => ({
-  getPropertyById: vi.fn()
+jest.mock('@/lib/firebase', () => ({
+  getPropertyById: jest.fn()
 }));
 
-const mockGetPropertyById = vi.mocked(getPropertyById);
+const mockGetPropertyById = jest.mocked(getPropertyById);
 
 describe('Wishlist Database Functions', () => {
   const testUserId = 'test-user-1';
@@ -31,7 +32,7 @@ describe('Wishlist Database Functions', () => {
 
   beforeEach(() => {
     // Clear all wishlists before each test
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     clearWishlist(testUserId);
     
     // Setup default mock

@@ -1,39 +1,40 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;
 import { render, screen, fireEvent, waitFor } from '@/test/utils'
 import WishlistButton from '../WishlistButton'
 import { mockUser, mockProperty, mockToast } from '@/test/utils'
 
 // Mock dependencies
-vi.mock('react-hot-toast', () => ({
+jest.mock('react-hot-toast', () => ({
   default: mockToast
 }))
 
-vi.mock('@/components/auth/AuthProvider', () => ({
-  useAuth: vi.fn()
+jest.mock('@/components/auth/AuthProvider', () => ({
+  useAuth: jest.fn()
 }))
 
 // Mock fetch for API calls
-global.fetch = vi.fn()
+global.fetch = jest.fn()
 
 describe('WishlistButton', () => {
   const mockAuthContext = {
     user: null,
     isAuthenticated: false,
-    login: vi.fn(),
-    logout: vi.fn(),
+    login: jest.fn(),
+    logout: jest.fn(),
     loading: false
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.mocked(global.fetch).mockClear()
+    jest.clearAllMocks()
+    jest.mocked(global.fetch).mockClear()
     mockAuthContext.user = null
     mockAuthContext.isAuthenticated = false
   })
 
   it('should render wishlist button for unauthenticated user', () => {
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     render(
       <WishlistButton 
@@ -52,7 +53,7 @@ describe('WishlistButton', () => {
 
   it('should show auth prompt when unauthenticated user clicks button', async () => {
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     render(
       <WishlistButton 
@@ -74,10 +75,10 @@ describe('WishlistButton', () => {
     mockAuthContext.isAuthenticated = true
 
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     // Mock successful API call
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    jest.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({
         success: true,
@@ -127,10 +128,10 @@ describe('WishlistButton', () => {
     mockAuthContext.isAuthenticated = true
 
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     // Mock successful API call
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    jest.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({
         success: true,
@@ -173,10 +174,10 @@ describe('WishlistButton', () => {
     mockAuthContext.isAuthenticated = true
 
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     // Mock delayed API call
-    vi.mocked(global.fetch).mockImplementationOnce(
+    jest.mocked(global.fetch).mockImplementationOnce(
       () => new Promise(resolve => setTimeout(resolve, 100))
     )
 
@@ -200,10 +201,10 @@ describe('WishlistButton', () => {
     mockAuthContext.isAuthenticated = true
 
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     // Mock API error
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    jest.mocked(global.fetch).mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({
         success: false,
@@ -235,10 +236,10 @@ describe('WishlistButton', () => {
     mockAuthContext.isAuthenticated = true
 
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     // Mock network error
-    vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'))
+    jest.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'))
 
     render(
       <WishlistButton 
@@ -262,10 +263,10 @@ describe('WishlistButton', () => {
     mockAuthContext.isAuthenticated = true
 
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     // Mock delayed successful API call
-    vi.mocked(global.fetch).mockImplementationOnce(
+    jest.mocked(global.fetch).mockImplementationOnce(
       () => new Promise(resolve => 
         setTimeout(() => resolve({
           ok: true,
@@ -302,10 +303,10 @@ describe('WishlistButton', () => {
     mockAuthContext.isAuthenticated = true
 
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     // Mock API failure
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    jest.mocked(global.fetch).mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({
         success: false,
@@ -339,7 +340,7 @@ describe('WishlistButton', () => {
 
   it('should support custom size prop', () => {
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     render(
       <WishlistButton 
@@ -355,7 +356,7 @@ describe('WishlistButton', () => {
 
   it('should support custom className', () => {
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     render(
       <WishlistButton 
@@ -371,7 +372,7 @@ describe('WishlistButton', () => {
 
   it('should be disabled when disabled prop is true', () => {
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     render(
       <WishlistButton 
@@ -390,10 +391,10 @@ describe('WishlistButton', () => {
     mockAuthContext.isAuthenticated = true
 
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     // Mock successful API call
-    vi.mocked(global.fetch).mockResolvedValue({
+    jest.mocked(global.fetch).mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({
         success: true,
@@ -423,7 +424,7 @@ describe('WishlistButton', () => {
 
   it('should show tooltip on hover', async () => {
     const { useAuth } = require('@/components/auth/AuthProvider')
-    vi.mocked(useAuth).mockReturnValue(mockAuthContext)
+    jest.mocked(useAuth).mockReturnValue(mockAuthContext)
 
     render(
       <WishlistButton 

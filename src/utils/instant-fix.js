@@ -1,7 +1,7 @@
 /**
  * INSTANT WISHLIST FIX
  * Copy and paste this entire script into your browser console at:
- * http://localhost:3000/dashboard/wishlist
+ * http://localhost:3000/wishlist
  * 
  * This will immediately fix your wishlist issue
  */

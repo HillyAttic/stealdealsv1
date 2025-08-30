@@ -3,23 +3,47 @@ import { requireAuth, optionalAuth } from '@/lib/auth/middleware';
 import { 
   logActivity, 
   getUserActivity, 
-  getUserPropertyViews, 
-  getUserSearchHistory, 
-  getUserEngagementMetrics 
-} from '@/lib/database/activity';
-import { activitySchema } from '@/lib/validations/auth';
+  getPaginatedUserActivity,
+  getUserActivityStats,
+  getActivityAggregation
+} from '@/lib/database/activity-optimized';
+import { activitySchema, activityQuerySchema } from '@/lib/validations/auth';
+import { RealTimeService } from '@/lib/realtime/service';
 
-// GET /api/user/activity - Get user's activity history
+// GET /api/user/activity - Get user's activity history with enhanced filtering and pagination
 export async function GET(request: NextRequest) {
   return requireAuth(request, async (authenticatedRequest) => {
     try {
       const { searchParams } = new URL(request.url);
-      const type = searchParams.get('type');
-      const limit = parseInt(searchParams.get('limit') || '50');
+      
+      // Validate query parameters (convert null to undefined for optional fields)
+      const queryValidation = activityQuerySchema.safeParse({
+        endpoint: searchParams.get('endpoint') || undefined,
+        type: searchParams.get('type') || undefined,
+        page: searchParams.get('page') || undefined,
+        limit: searchParams.get('limit') || undefined,
+        startDate: searchParams.get('startDate') || undefined,
+        endDate: searchParams.get('endDate') || undefined,
+        propertyId: searchParams.get('propertyId') || undefined,
+        groupBy: searchParams.get('groupBy') || undefined
+      });
+      
+      if (!queryValidation.success) {
+        return NextResponse.json(
+          { 
+            success: false,
+            error: 'Invalid query parameters',
+            details: queryValidation.error.errors
+          },
+          { status: 400 }
+        );
+      }
+      
+      const { endpoint, type, page, limit, startDate, endDate, propertyId, groupBy } = queryValidation.data;
       
       let data;
       
-      switch (type) {
+      switch (endpoint) {
         case 'views':
           data = await getUserPropertyViews(authenticatedRequest.user.id, limit);
           break;
@@ -29,8 +53,29 @@ export async function GET(request: NextRequest) {
         case 'engagement':
           data = await getUserEngagementMetrics(authenticatedRequest.user.id);
           break;
+        case 'stats':
+          data = await getUserActivityStats(authenticatedRequest.user.id);
+          break;
+        case 'aggregation':
+          data = await getActivityAggregation({
+            userId: authenticatedRequest.user.id,
+            startDate: startDate ? new Date(startDate) : undefined,
+            endDate: endDate ? new Date(endDate) : undefined,
+            groupBy: groupBy || 'day'
+          });
+          break;
+        case 'paginated':
         default:
-          data = await getUserActivity(authenticatedRequest.user.id, limit);
+          // Use paginated endpoint by default
+          data = await getPaginatedUserActivity(authenticatedRequest.user.id, {
+            page,
+            limit,
+            type,
+            startDate: startDate ? new Date(startDate) : undefined,
+            endDate: endDate ? new Date(endDate) : undefined,
+            propertyId
+          });
+          break;
       }
       
       return NextResponse.json({
@@ -83,6 +128,21 @@ export async function POST(request: NextRequest) {
           ipAddress,
           userAgent
         );
+        
+        // Broadcast real-time activity update
+        try {
+          const realTimeService = RealTimeService.getInstance();
+          realTimeService.broadcastActivityUpdate(
+            requestWithUser.user.id,
+            type,
+            propertyId,
+            metadata
+          );
+          console.log(`[Activity API] 📡 Real-time update broadcasted: ${type} for user ${requestWithUser.user.id}`);
+        } catch (broadcastError) {
+          console.warn(`[Activity API] ⚠️ Failed to broadcast real-time update:`, broadcastError);
+          // Don't fail the operation if broadcasting fails
+        }
         
         return NextResponse.json({
           success: true,

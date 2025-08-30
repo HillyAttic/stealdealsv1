@@ -84,24 +84,57 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
     const fetchFranchiseDetails = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/franchises/${resolvedParams.id}`);
+        setError(''); // Clear previous errors
+        
+        console.log(`[FranchiseDetail] 🔄 Fetching franchise details for ID: ${resolvedParams.id}`);
+        
+        const response = await fetch(`/api/franchises/${resolvedParams.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          cache: 'no-store' // Prevent caching issues
+        });
+        
+        console.log(`[FranchiseDetail] 📡 API Response status: ${response.status}`);
         
         if (!response.ok) {
-          throw new Error('Failed to fetch franchise details');
+          const errorText = await response.text();
+          console.error(`[FranchiseDetail] ❌ API Error: ${response.status} - ${errorText}`);
+          
+          if (response.status === 404) {
+            throw new Error(`Franchise with ID "${resolvedParams.id}" not found. Please check the URL and try again.`);
+          } else if (response.status === 500) {
+            throw new Error('Server error occurred while fetching franchise details. Please try again later.');
+          } else {
+            throw new Error(`Failed to fetch franchise details (Status: ${response.status})`);
+          }
         }
         
         const data = await response.json();
+        console.log(`[FranchiseDetail] ✅ Successfully fetched franchise:`, data.franchise?.name || 'Unknown');
+        
+        if (!data.franchise) {
+          throw new Error('Franchise data is missing from server response');
+        }
+        
         setFranchise(data.franchise);
         setIsLoading(false);
       } catch (err) {
-        console.error('Error fetching franchise details:', err);
-        setError('Failed to load franchise details.');
+        console.error('[FranchiseDetail] ❌ Error fetching franchise details:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load franchise details';
+        setError(errorMessage);
         setIsLoading(false);
       }
     };
     
     if (resolvedParams.id) {
+      console.log(`[FranchiseDetail] 🚀 Starting fetch for franchise ID: ${resolvedParams.id}`);
       fetchFranchiseDetails();
+    } else {
+      console.warn('[FranchiseDetail] ⚠️ No franchise ID provided');
+      setError('No franchise ID provided');
+      setIsLoading(false);
     }
   }, [resolvedParams.id]);
 

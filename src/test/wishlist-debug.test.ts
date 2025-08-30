@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;;
 import { JSDOM } from 'jsdom';
 
 // Mock environment
@@ -9,13 +10,13 @@ global.document = dom.window.document;
 describe('Wishlist Debug Tests', () => {
   beforeEach(() => {
     // Mock fetch
-    global.fetch = vi.fn();
+    global.fetch = jest.fn();
     // Mock localStorage
     Object.defineProperty(window, 'localStorage', {
       value: {
-        getItem: vi.fn(),
-        setItem: vi.fn(),
-        removeItem: vi.fn()
+        getItem: jest.fn(),
+        setItem: jest.fn(),
+        removeItem: jest.fn()
       },
       writable: true
     });
@@ -29,7 +30,7 @@ describe('Wishlist Debug Tests', () => {
         total: 0
       };
 
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockResponse)
@@ -54,7 +55,7 @@ describe('Wishlist Debug Tests', () => {
         error: 'Server error'
       };
 
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: false,
           status: 500,
@@ -71,7 +72,7 @@ describe('Wishlist Debug Tests', () => {
     });
 
     it('should handle network errors', async () => {
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.reject(new Error('Network error'))
       ) as any;
 
@@ -115,8 +116,8 @@ describe('Wishlist Debug Tests', () => {
   describe('Firebase Mock Tests', () => {
     it('should simulate Firebase operations', async () => {
       // Mock Firebase database operations
-      const mockGet = vi.fn(() => Promise.resolve({ exists: () => false }));
-      const mockSet = vi.fn(() => Promise.resolve());
+      const mockGet = jest.fn(() => Promise.resolve({ exists: () => false }));
+      const mockSet = jest.fn(() => Promise.resolve());
       
       // Simulate empty wishlist
       const snapshot = await mockGet();
@@ -128,7 +129,7 @@ describe('Wishlist Debug Tests', () => {
     });
 
     it('should simulate Firebase real-time listener', (done) => {
-      const mockOnValue = vi.fn((ref, callback) => {
+      const mockOnValue = jest.fn((ref, callback) => {
         // Simulate immediate callback
         setTimeout(() => {
           callback({
@@ -165,8 +166,8 @@ describe('Wishlist Debug Tests', () => {
   describe('URL and Route Tests', () => {
     it('should handle wishlist page URL', () => {
       // Mock URL
-      const url = new URL('http://localhost:3000/dashboard/wishlist');
-      expect(url.pathname).toBe('/dashboard/wishlist');
+      const url = new URL('http://localhost:3000/wishlist');
+      expect(url.pathname).toBe('/wishlist');
     });
 
     it('should handle API route URL with parameters', () => {

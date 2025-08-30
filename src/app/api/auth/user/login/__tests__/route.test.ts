@@ -1,35 +1,36 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;
 import { NextRequest } from 'next/server'
 import { POST } from '../route'
 
 // Mock dependencies
-vi.mock('@/lib/validations/auth', () => ({
+jest.mock('@/lib/validations/auth', () => ({
   loginSchema: {
-    safeParse: vi.fn()
+    safeParse: jest.fn()
   }
 }))
 
-vi.mock('@/lib/auth/password', () => ({
-  verifyPassword: vi.fn()
+jest.mock('@/lib/auth/password', () => ({
+  verifyPassword: jest.fn()
 }))
 
-vi.mock('@/lib/database/mock-users', () => ({
-  getUserByEmail: vi.fn(),
-  updateUser: vi.fn()
+jest.mock('@/lib/database/mock-users', () => ({
+  getUserByEmail: jest.fn(),
+  updateUser: jest.fn()
 }))
 
-vi.mock('@/lib/auth/session', () => ({
-  createSession: vi.fn()
+jest.mock('@/lib/auth/session', () => ({
+  createSession: jest.fn()
 }))
 
-vi.mock('@/lib/api/error-handler', () => ({
-  withErrorHandling: vi.fn((handler) => handler),
-  validateRequestBody: vi.fn(),
-  createSuccessResponse: vi.fn(),
-  logApiRequest: vi.fn()
+jest.mock('@/lib/api/error-handler', () => ({
+  withErrorHandling: jest.fn((handler) => handler),
+  validateRequestBody: jest.fn(),
+  createSuccessResponse: jest.fn(),
+  logApiRequest: jest.fn()
 }))
 
-vi.mock('@/lib/errors/auth-errors', () => ({
+jest.mock('@/lib/errors/auth-errors', () => ({
   AuthError: class AuthError extends Error {
     constructor(public code: string, message?: string) {
       super(message || code)
@@ -38,29 +39,29 @@ vi.mock('@/lib/errors/auth-errors', () => ({
   }
 }))
 
-vi.mock('@/lib/security/csrf', () => ({
-  withCSRFProtection: vi.fn((handler) => handler)
+jest.mock('@/lib/security/csrf', () => ({
+  withCSRFProtection: jest.fn((handler) => handler)
 }))
 
-vi.mock('@/lib/security/rate-limit', () => ({
-  applyAuthRateLimit: vi.fn()
+jest.mock('@/lib/security/rate-limit', () => ({
+  applyAuthRateLimit: jest.fn()
 }))
 
-vi.mock('@/lib/security/sanitization', () => ({
-  sanitizeLoginData: vi.fn()
+jest.mock('@/lib/security/sanitization', () => ({
+  sanitizeLoginData: jest.fn()
 }))
 
-vi.mock('@/lib/security/cookies', () => ({
-  setSessionCookies: vi.fn()
+jest.mock('@/lib/security/cookies', () => ({
+  setSessionCookies: jest.fn()
 }))
 
-vi.mock('@/lib/security/session-timeout', () => ({
-  updateSessionActivity: vi.fn()
+jest.mock('@/lib/security/session-timeout', () => ({
+  updateSessionActivity: jest.fn()
 }))
 
 describe('/api/auth/user/login', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   it('should login user with valid credentials', async () => {
@@ -71,7 +72,7 @@ describe('/api/auth/user/login', () => {
 
     // Mock rate limiting allows request
     const { applyAuthRateLimit } = await import('@/lib/security/rate-limit')
-    vi.mocked(applyAuthRateLimit).mockReturnValue({
+    jest.mocked(applyAuthRateLimit).mockReturnValue({
       allowed: true,
       remaining: 4,
       resetTime: Date.now() + 60000
@@ -79,11 +80,11 @@ describe('/api/auth/user/login', () => {
 
     // Mock request body validation
     const { validateRequestBody } = await import('@/lib/api/error-handler')
-    vi.mocked(validateRequestBody).mockResolvedValue(loginData)
+    jest.mocked(validateRequestBody).mockResolvedValue(loginData)
 
     // Mock sanitization
     const { sanitizeLoginData } = await import('@/lib/security/sanitization')
-    vi.mocked(sanitizeLoginData).mockReturnValue(loginData)
+    jest.mocked(sanitizeLoginData).mockReturnValue(loginData)
 
     // Mock user exists and is active
     const mockUser = {
@@ -112,19 +113,19 @@ describe('/api/auth/user/login', () => {
     }
 
     const { getUserByEmail, updateUser } = await import('@/lib/database/mock-users')
-    vi.mocked(getUserByEmail).mockResolvedValue(mockUser)
-    vi.mocked(updateUser).mockResolvedValue({
+    jest.mocked(getUserByEmail).mockResolvedValue(mockUser)
+    jest.mocked(updateUser).mockResolvedValue({
       ...mockUser,
       lastLoginAt: new Date()
     })
 
     // Mock password verification
     const { verifyPassword } = await import('@/lib/auth/password')
-    vi.mocked(verifyPassword).mockResolvedValue(true)
+    jest.mocked(verifyPassword).mockResolvedValue(true)
 
     // Mock session creation
     const { createSession } = await import('@/lib/auth/session')
-    vi.mocked(createSession).mockReturnValue('jwt-token')
+    jest.mocked(createSession).mockReturnValue('jwt-token')
 
     // Mock success response
     const { createSuccessResponse } = await import('@/lib/api/error-handler')
@@ -144,7 +145,7 @@ describe('/api/auth/user/login', () => {
       },
       message: 'Login successful'
     }))
-    vi.mocked(createSuccessResponse).mockReturnValue(mockResponse)
+    jest.mocked(createSuccessResponse).mockReturnValue(mockResponse)
 
     const request = new NextRequest('http://localhost:3000/api/auth/user/login', {
       method: 'POST',
@@ -173,7 +174,7 @@ describe('/api/auth/user/login', () => {
 
     // Mock rate limiting allows request
     const { applyAuthRateLimit } = await import('@/lib/security/rate-limit')
-    vi.mocked(applyAuthRateLimit).mockReturnValue({
+    jest.mocked(applyAuthRateLimit).mockReturnValue({
       allowed: true,
       remaining: 4,
       resetTime: Date.now() + 60000
@@ -181,15 +182,15 @@ describe('/api/auth/user/login', () => {
 
     // Mock request body validation
     const { validateRequestBody } = await import('@/lib/api/error-handler')
-    vi.mocked(validateRequestBody).mockResolvedValue(loginData)
+    jest.mocked(validateRequestBody).mockResolvedValue(loginData)
 
     // Mock sanitization
     const { sanitizeLoginData } = await import('@/lib/security/sanitization')
-    vi.mocked(sanitizeLoginData).mockReturnValue(loginData)
+    jest.mocked(sanitizeLoginData).mockReturnValue(loginData)
 
     // Mock user doesn't exist
     const { getUserByEmail } = await import('@/lib/database/mock-users')
-    vi.mocked(getUserByEmail).mockResolvedValue(null)
+    jest.mocked(getUserByEmail).mockResolvedValue(null)
 
     const request = new NextRequest('http://localhost:3000/api/auth/user/login', {
       method: 'POST',
@@ -210,7 +211,7 @@ describe('/api/auth/user/login', () => {
 
     // Mock rate limiting allows request
     const { applyAuthRateLimit } = await import('@/lib/security/rate-limit')
-    vi.mocked(applyAuthRateLimit).mockReturnValue({
+    jest.mocked(applyAuthRateLimit).mockReturnValue({
       allowed: true,
       remaining: 4,
       resetTime: Date.now() + 60000
@@ -218,11 +219,11 @@ describe('/api/auth/user/login', () => {
 
     // Mock request body validation
     const { validateRequestBody } = await import('@/lib/api/error-handler')
-    vi.mocked(validateRequestBody).mockResolvedValue(loginData)
+    jest.mocked(validateRequestBody).mockResolvedValue(loginData)
 
     // Mock sanitization
     const { sanitizeLoginData } = await import('@/lib/security/sanitization')
-    vi.mocked(sanitizeLoginData).mockReturnValue(loginData)
+    jest.mocked(sanitizeLoginData).mockReturnValue(loginData)
 
     // Mock user exists
     const mockUser = {
@@ -233,11 +234,11 @@ describe('/api/auth/user/login', () => {
     }
 
     const { getUserByEmail } = await import('@/lib/database/mock-users')
-    vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any)
+    jest.mocked(getUserByEmail).mockResolvedValue(mockUser as any)
 
     // Mock password verification fails
     const { verifyPassword } = await import('@/lib/auth/password')
-    vi.mocked(verifyPassword).mockResolvedValue(false)
+    jest.mocked(verifyPassword).mockResolvedValue(false)
 
     const request = new NextRequest('http://localhost:3000/api/auth/user/login', {
       method: 'POST',
@@ -258,7 +259,7 @@ describe('/api/auth/user/login', () => {
 
     // Mock rate limiting allows request
     const { applyAuthRateLimit } = await import('@/lib/security/rate-limit')
-    vi.mocked(applyAuthRateLimit).mockReturnValue({
+    jest.mocked(applyAuthRateLimit).mockReturnValue({
       allowed: true,
       remaining: 4,
       resetTime: Date.now() + 60000
@@ -266,11 +267,11 @@ describe('/api/auth/user/login', () => {
 
     // Mock request body validation
     const { validateRequestBody } = await import('@/lib/api/error-handler')
-    vi.mocked(validateRequestBody).mockResolvedValue(loginData)
+    jest.mocked(validateRequestBody).mockResolvedValue(loginData)
 
     // Mock sanitization
     const { sanitizeLoginData } = await import('@/lib/security/sanitization')
-    vi.mocked(sanitizeLoginData).mockReturnValue(loginData)
+    jest.mocked(sanitizeLoginData).mockReturnValue(loginData)
 
     // Mock inactive user
     const mockUser = {
@@ -281,7 +282,7 @@ describe('/api/auth/user/login', () => {
     }
 
     const { getUserByEmail } = await import('@/lib/database/mock-users')
-    vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any)
+    jest.mocked(getUserByEmail).mockResolvedValue(mockUser as any)
 
     const request = new NextRequest('http://localhost:3000/api/auth/user/login', {
       method: 'POST',
@@ -302,7 +303,7 @@ describe('/api/auth/user/login', () => {
 
     // Mock rate limiting allows request
     const { applyAuthRateLimit } = await import('@/lib/security/rate-limit')
-    vi.mocked(applyAuthRateLimit).mockReturnValue({
+    jest.mocked(applyAuthRateLimit).mockReturnValue({
       allowed: true,
       remaining: 4,
       resetTime: Date.now() + 60000
@@ -310,11 +311,11 @@ describe('/api/auth/user/login', () => {
 
     // Mock request body validation
     const { validateRequestBody } = await import('@/lib/api/error-handler')
-    vi.mocked(validateRequestBody).mockResolvedValue(loginData)
+    jest.mocked(validateRequestBody).mockResolvedValue(loginData)
 
     // Mock sanitization
     const { sanitizeLoginData } = await import('@/lib/security/sanitization')
-    vi.mocked(sanitizeLoginData).mockReturnValue(loginData)
+    jest.mocked(sanitizeLoginData).mockReturnValue(loginData)
 
     // Mock OAuth user (no password)
     const mockUser = {
@@ -326,7 +327,7 @@ describe('/api/auth/user/login', () => {
     }
 
     const { getUserByEmail } = await import('@/lib/database/mock-users')
-    vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any)
+    jest.mocked(getUserByEmail).mockResolvedValue(mockUser as any)
 
     const request = new NextRequest('http://localhost:3000/api/auth/user/login', {
       method: 'POST',
@@ -347,7 +348,7 @@ describe('/api/auth/user/login', () => {
 
     // Mock rate limiting blocks request
     const { applyAuthRateLimit } = await import('@/lib/security/rate-limit')
-    vi.mocked(applyAuthRateLimit).mockReturnValue({
+    jest.mocked(applyAuthRateLimit).mockReturnValue({
       allowed: false,
       remaining: 0,
       resetTime: Date.now() + 60000,

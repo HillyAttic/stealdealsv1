@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const featured = searchParams.get('featured');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const limit = parseInt(searchParams.get('limit') || '1000'); // Increased default limit
     
     // Fetch all properties from Firebase
     let properties = await getAllProperties();
@@ -37,7 +37,9 @@ export async function GET(request: NextRequest) {
       }
       
       properties = properties.filter(p => {
-        return p.propertyType === propertyType;
+        // Handle both the migrated structure (type field) and legacy structure (propertyType field)
+        const itemType = p.type || p.propertyType || '';
+        return itemType.toLowerCase() === propertyType.toLowerCase();
       });
     }
     
@@ -69,6 +71,30 @@ export async function POST(request: NextRequest) {
     
     // Log the incoming request body for debugging
     console.log('Received property data:', body);
+    
+    // Check if this is a request to fetch properties by IDs (for wishlist)
+    if (body.propertyIds && Array.isArray(body.propertyIds)) {
+      try {
+        console.log('Fetching properties by IDs:', body.propertyIds);
+        
+        // Fetch all properties and filter by the requested IDs
+        const allProperties = await getAllProperties();
+        const requestedProperties = allProperties.filter(property => 
+          body.propertyIds.includes(property.id)
+        );
+        
+        return NextResponse.json({
+          properties: requestedProperties,
+          total: requestedProperties.length
+        });
+      } catch (error) {
+        console.error('Error fetching properties by IDs:', error);
+        return NextResponse.json(
+          { error: 'Failed to fetch wishlist properties' },
+          { status: 500 }
+        );
+      }
+    }
     
     // Check if this is a pre-leased property or vacant property submission
     const isPreLeased = body.tenant || body.buildingName || body.propertyType === 'Pre-Leased';

@@ -1,24 +1,25 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;;
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/user/wishlist/route';
 import { clearWishlist } from '@/lib/database/wishlist';
 import { getPropertyById } from '@/lib/firebase';
 
 // Mock Firebase
-vi.mock('@/lib/firebase', () => ({
-  getPropertyById: vi.fn()
+jest.mock('@/lib/firebase', () => ({
+  getPropertyById: jest.fn()
 }));
 
 // Mock auth middleware
-vi.mock('@/lib/auth/middleware', () => ({
-  optionalAuth: vi.fn((request, handler) => {
+jest.mock('@/lib/auth/middleware', () => ({
+  optionalAuth: jest.fn((request, handler) => {
     const mockUser = { id: 'user-1', email: 'test@example.com' };
     const requestWithUser = { ...request, user: mockUser };
     return handler(requestWithUser);
   })
 }));
 
-const mockGetPropertyById = vi.mocked(getPropertyById);
+const mockGetPropertyById = jest.mocked(getPropertyById);
 
 describe('Wishlist Diagnostic Test - Reproducing User Issue', () => {
   const testUserId = 'user-1';
@@ -38,7 +39,7 @@ describe('Wishlist Diagnostic Test - Reproducing User Issue', () => {
   };
 
   beforeEach(async () => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     await clearWishlist(testUserId);
     mockGetPropertyById.mockResolvedValue(realProperty);
   });

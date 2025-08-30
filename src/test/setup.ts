@@ -1,5 +1,10 @@
+/// <reference types="./test.d.ts" />
 import '@testing-library/jest-dom'
-import { vi } from 'vitest'
+import { vi, afterEach } from 'vitest'
+import { expect } from 'vitest'
+
+// Extend Vitest's expect with jest-dom matchers
+expect.extend(require('@testing-library/jest-dom/matchers'))
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({

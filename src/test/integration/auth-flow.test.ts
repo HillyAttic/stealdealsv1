@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;
 import { NextRequest } from 'next/server'
 import { POST as registerPOST } from '@/app/api/auth/user/register/route'
 import { POST as loginPOST } from '@/app/api/auth/user/login/route'
@@ -6,9 +7,9 @@ import { POST as logoutPOST } from '@/app/api/auth/user/logout/route'
 import { GET as sessionGET } from '@/app/api/auth/session-status/route'
 
 // Mock dependencies
-vi.mock('@/lib/auth/jwt', () => ({
-  generateToken: vi.fn(() => 'mock-jwt-token'),
-  verifyToken: vi.fn(() => ({
+jest.mock('@/lib/auth/jwt', () => ({
+  generateToken: jest.fn(() => 'mock-jwt-token'),
+  verifyToken: jest.fn(() => ({
     userId: 'test-user-id',
     email: 'test@example.com',
     role: 'user',
@@ -17,9 +18,9 @@ vi.mock('@/lib/auth/jwt', () => ({
   }))
 }))
 
-vi.mock('@/lib/auth/session', () => ({
-  createSession: vi.fn(() => 'mock-session-token'),
-  getSessionFromRequest: vi.fn(() => ({
+jest.mock('@/lib/auth/session', () => ({
+  createSession: jest.fn(() => 'mock-session-token'),
+  getSessionFromRequest: jest.fn(() => ({
     user: {
       id: 'test-user-id',
       email: 'test@example.com',
@@ -28,19 +29,19 @@ vi.mock('@/lib/auth/session', () => ({
     },
     token: 'mock-token'
   })),
-  clearSession: vi.fn()
+  clearSession: jest.fn()
 }))
 
-vi.mock('bcryptjs', () => ({
-  hash: vi.fn(() => Promise.resolve('hashed-password')),
-  compare: vi.fn(() => Promise.resolve(true))
+jest.mock('bcryptjs', () => ({
+  hash: jest.fn(() => Promise.resolve('hashed-password')),
+  compare: jest.fn(() => Promise.resolve(true))
 }))
 
 // Mock user storage
 const mockUsers: any[] = []
 
-vi.mock('@/lib/db/users', () => ({
-  createUser: vi.fn((userData) => {
+jest.mock('@/lib/db/users', () => ({
+  createUser: jest.fn((userData) => {
     const user = {
       id: `user-${Date.now()}`,
       ...userData,
@@ -64,10 +65,10 @@ vi.mock('@/lib/db/users', () => ({
     mockUsers.push(user)
     return Promise.resolve(user)
   }),
-  findUserByEmail: vi.fn((email) => {
+  findUserByEmail: jest.fn((email) => {
     return Promise.resolve(mockUsers.find(u => u.email === email) || null)
   }),
-  updateUserLastLogin: vi.fn((userId) => {
+  updateUserLastLogin: jest.fn((userId) => {
     const user = mockUsers.find(u => u.id === userId)
     if (user) {
       user.lastLoginAt = new Date()
@@ -78,7 +79,7 @@ vi.mock('@/lib/db/users', () => ({
 
 describe('Authentication Flow Integration Tests', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
     mockUsers.length = 0
   })
 
@@ -196,7 +197,7 @@ describe('Authentication Flow Integration Tests', () => {
       await registerPOST(registerRequest)
 
       // Mock bcrypt to return false for wrong password
-      vi.mocked(await import('bcryptjs')).compare.mockResolvedValueOnce(false)
+      jest.mocked(await import('bcryptjs')).compare.mockResolvedValueOnce(false)
 
       // Try to login with wrong password
       const loginRequest = new NextRequest('http://localhost:3000/api/auth/user/login', {
@@ -233,7 +234,7 @@ describe('Authentication Flow Integration Tests', () => {
       expect(logoutData.message).toContain('Logged out successfully')
 
       // Verify session is cleared
-      const clearSession = vi.mocked(await import('@/lib/auth/session')).clearSession
+      const clearSession = jest.mocked(await import('@/lib/auth/session')).clearSession
       expect(clearSession).toHaveBeenCalled()
     })
   })
@@ -272,7 +273,7 @@ describe('Authentication Flow Integration Tests', () => {
 
     it('should handle invalid session tokens', async () => {
       // Mock invalid session
-      vi.mocked(await import('@/lib/auth/session')).getSessionFromRequest.mockReturnValueOnce(null)
+      jest.mocked(await import('@/lib/auth/session')).getSessionFromRequest.mockReturnValueOnce(null)
 
       const sessionRequest = new NextRequest('http://localhost:3000/api/auth/session-status', {
         method: 'GET',
@@ -293,7 +294,7 @@ describe('Authentication Flow Integration Tests', () => {
   describe('Error Handling', () => {
     it('should handle database errors during registration', async () => {
       // Mock database error
-      vi.mocked(await import('@/lib/db/users')).createUser.mockRejectedValueOnce(
+      jest.mocked(await import('@/lib/db/users')).createUser.mockRejectedValueOnce(
         new Error('Database connection failed')
       )
 
@@ -319,7 +320,7 @@ describe('Authentication Flow Integration Tests', () => {
 
     it('should handle database errors during login', async () => {
       // Mock database error
-      vi.mocked(await import('@/lib/db/users')).findUserByEmail.mockRejectedValueOnce(
+      jest.mocked(await import('@/lib/db/users')).findUserByEmail.mockRejectedValueOnce(
         new Error('Database connection failed')
       )
 

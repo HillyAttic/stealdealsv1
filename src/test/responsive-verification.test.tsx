@@ -3,7 +3,7 @@
  * Simplified test to verify responsive behavior implementation
  */
 
-import { describe, test, expect, beforeEach } from 'vitest';
+import { describe, expect, beforeEach } from '@jest/globals';;
 
 describe('Responsive Behavior Verification', () => {
   beforeEach(() => {

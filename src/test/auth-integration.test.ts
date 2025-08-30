@@ -5,26 +5,27 @@
  * including registration, login, session management, and logout.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+const vi = jest;;
 
 // Mock window and document for client-side testing
 const mockWindow = {
   localStorage: {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-    clear: vi.fn()
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+    removeItem: jest.fn(),
+    clear: jest.fn()
   },
-  addEventListener: vi.fn(),
+  addEventListener: jest.fn(),
   location: {
-    reload: vi.fn(),
+    reload: jest.fn(),
     href: ''
   }
 };
 
 const mockDocument = {
   cookie: '',
-  addEventListener: vi.fn()
+  addEventListener: jest.fn()
 };
 
 // Setup global mocks
@@ -33,7 +34,7 @@ beforeEach(() => {
   global.document = mockDocument as any;
   
   // Reset mocks
-  vi.clearAllMocks();
+  jest.clearAllMocks();
   
   // Reset document.cookie
   mockDocument.cookie = '';
@@ -43,7 +44,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  vi.clearAllMocks();
+  jest.clearAllMocks();
 });
 
 describe('Authentication Flow Integration Tests', () => {
@@ -115,7 +116,7 @@ describe('Authentication Flow Integration Tests', () => {
   describe('Authentication API Tests', () => {
     beforeEach(() => {
       // Mock fetch globally
-      global.fetch = vi.fn();
+      global.fetch = jest.fn();
     });
 
     it('should handle successful login', async () => {
@@ -237,20 +238,20 @@ describe('Authentication Flow Integration Tests', () => {
 
     beforeEach(() => {
       // Mock React hooks
-      vi.mock('react', () => ({
-        createContext: vi.fn(() => ({})),
-        useContext: vi.fn(() => mockContextValue),
-        useEffect: vi.fn(),
-        useState: vi.fn(() => [false, vi.fn()]),
+      jest.mock('react', () => ({
+        createContext: jest.fn(() => ({})),
+        useContext: jest.fn(() => mockContextValue),
+        useEffect: jest.fn(),
+        useState: jest.fn(() => [false, jest.fn()]),
       }));
 
       mockContextValue = {
         isAuthenticated: false,
         user: null,
         isLoading: false,
-        login: vi.fn(),
-        logout: vi.fn(),
-        register: vi.fn()
+        login: jest.fn(),
+        logout: jest.fn(),
+        register: jest.fn()
       };
     });
 
@@ -278,7 +279,7 @@ describe('Authentication Flow Integration Tests', () => {
 
   describe('Error Handling', () => {
     it('should handle network errors gracefully', async () => {
-      global.fetch = vi.fn().mockRejectedValueOnce(new Error('Network error'));
+      global.fetch = jest.fn().mockRejectedValueOnce(new Error('Network error'));
 
       try {
         await fetch('/api/auth/user/login', {
@@ -299,7 +300,7 @@ describe('Authentication Flow Integration Tests', () => {
         }
       };
 
-      global.fetch = vi.fn().mockResolvedValueOnce(mockResponse);
+      global.fetch = jest.fn().mockResolvedValueOnce(mockResponse);
 
       try {
         const response = await fetch('/api/auth/user/session');

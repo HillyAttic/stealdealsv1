@@ -1,6 +1,6 @@
 /**
  * EMERGENCY WISHLIST RECOVERY SCRIPT
- * Paste this in browser console at http://localhost:3000/dashboard/wishlist
+ * Paste this in browser console at http://localhost:3000/wishlist
  * This will find and restore your missing wishlist items
  */
 

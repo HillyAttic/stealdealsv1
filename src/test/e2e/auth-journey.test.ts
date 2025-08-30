@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;
 import { render, screen, fireEvent, waitFor } from '@/test/utils'
 import { mockUser, mockProperty, mockFetch, mockApiResponse, mockApiError } from '@/test/utils'
 
 // Mock the entire app flow
-vi.mock('@/components/Header', () => ({
+jest.mock('@/components/Header', () => ({
   default: () => (
     <header data-testid="header">
       <nav>
@@ -13,7 +14,7 @@ vi.mock('@/components/Header', () => ({
   )
 }))
 
-vi.mock('@/components/auth/AuthModal', () => ({
+jest.mock('@/components/auth/AuthModal', () => ({
   default: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
     isOpen ? (
       <div data-testid="auth-modal">
@@ -30,7 +31,7 @@ vi.mock('@/components/auth/AuthModal', () => ({
   )
 }))
 
-vi.mock('@/app/dashboard/page', () => ({
+jest.mock('@/app/dashboard/page', () => ({
   default: () => (
     <div data-testid="dashboard-page">
       <h1>Dashboard</h1>
@@ -54,7 +55,7 @@ vi.mock('@/app/dashboard/page', () => ({
   )
 }))
 
-vi.mock('@/components/property/PropertyCard', () => ({
+jest.mock('@/components/property/PropertyCard', () => ({
   default: ({ property, showWishlistButton = true }: { property: any; showWishlistButton?: boolean }) => (
     <div data-testid="property-card">
       <h3>{property.title}</h3>
@@ -70,17 +71,17 @@ vi.mock('@/components/property/PropertyCard', () => ({
 }))
 
 // Mock router
-const mockPush = vi.fn()
-const mockReplace = vi.fn()
+const mockPush = jest.fn()
+const mockReplace = jest.fn()
 
-vi.mock('next/navigation', () => ({
+jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
     replace: mockReplace,
-    back: vi.fn(),
-    forward: vi.fn(),
-    refresh: vi.fn(),
-    prefetch: vi.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+    prefetch: jest.fn(),
   }),
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
@@ -88,7 +89,7 @@ vi.mock('next/navigation', () => ({
 
 describe('Complete User Authentication Journey', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
     mockPush.mockClear()
     mockReplace.mockClear()
   })
@@ -133,7 +134,7 @@ describe('Complete User Authentication Journey', () => {
                       setCurrentUser(mockUser)
                       setIsAuthenticated(true)
                       setShowAuthModal(false)
-                      mockPush('/dashboard')
+                      mockPush('/wishlist')
                     }}
                   >
                     Sign Up
@@ -184,7 +185,7 @@ describe('Complete User Authentication Journey', () => {
 
       // Step 5: Verify successful registration and redirect
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard')
+        expect(mockPush).toHaveBeenCalledWith('/wishlist')
       })
 
       // Step 6: Verify user is authenticated
@@ -294,7 +295,7 @@ describe('Complete User Authentication Journey', () => {
                       setCurrentUser(mockUser)
                       setIsAuthenticated(true)
                       setShowAuthModal(false)
-                      mockPush('/dashboard')
+                      mockPush('/wishlist')
                     }}
                   >
                     Sign In
@@ -328,7 +329,7 @@ describe('Complete User Authentication Journey', () => {
 
       // Step 4: Verify successful login
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard')
+        expect(mockPush).toHaveBeenCalledWith('/wishlist')
       })
 
       await waitFor(() => {
@@ -413,7 +414,7 @@ describe('Complete User Authentication Journey', () => {
                   // Simulate Google OAuth flow
                   setCurrentUser({ ...mockUser, provider: 'google' })
                   setIsAuthenticated(true)
-                  mockPush('/dashboard')
+                  mockPush('/wishlist')
                 }}
               >
                 Sign in with Google
@@ -434,7 +435,7 @@ describe('Complete User Authentication Journey', () => {
       fireEvent.click(screen.getByTestId('google-sign-in-button'))
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard')
+        expect(mockPush).toHaveBeenCalledWith('/wishlist')
       })
 
       expect(screen.getByTestId('success-message')).toBeInTheDocument()
@@ -444,7 +445,7 @@ describe('Complete User Authentication Journey', () => {
   describe('Property Wishlist Integration', () => {
     it('should complete property browsing and wishlist flow', async () => {
       // Mock wishlist API calls
-      global.fetch = vi.fn()
+      global.fetch = jest.fn()
         .mockResolvedValueOnce(mockApiResponse({ success: true, message: 'Added to wishlist' }))
         .mockResolvedValueOnce(mockApiResponse({ success: true, message: 'Removed from wishlist' }))
 

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
-import { database, Property, vacantPropertiesRef, deleteProperty } from '@/lib/firebase';
+import { database, Property, vacantPropertiesRef, migratedVacantRef, deleteProperty } from '@/lib/firebase';
 import { ref, onValue, remove } from 'firebase/database';
 import ClientOnly from '@/components/ClientOnly';
 
@@ -53,64 +53,114 @@ function VacantPropertiesContent() {
         // Set up real-time listener
         setIsLoading(true);
         
-        // Reference to vacant properties in Realtime Database
-        const propertiesRef = vacantPropertiesRef;
-        const legacyPropertiesRef = ref(database, 'properties');
+        const allProperties = new Map<string, Property>();
         
-        // Set up listener for real-time updates
-        const vacantListener = onValue(propertiesRef, (snapshot) => {
+        // Set up listener for migrated vacant properties (primary source)
+        const migratedListener = onValue(migratedVacantRef, (snapshot) => {
+          console.log('Migrated vacant properties updated');
           if (snapshot.exists()) {
-            const propertiesList: Property[] = [];
+            snapshot.forEach((childSnapshot) => {
+              const propertyData = childSnapshot.val();
+              let property = { 
+                ...propertyData,
+                id: childSnapshot.key || propertyData.id || '',
+                source: 'migrated'
+              };
+              
+              // Handle nested structure from migration
+              if (propertyData.vacantDetails) {
+                const details = propertyData.vacantDetails;
+                property = {
+                  ...property,
+                  category: details.category || propertyData.category || 'Vacant',
+                  city: details.city || propertyData.city || '',
+                  state: details.state || propertyData.state || '',
+                  district: details.district || propertyData.district || '',
+                  floor: details.floor || propertyData.floor || '',
+                  facing: details.facing || propertyData.facing || '',
+                  carpetArea: details.carpetArea || propertyData.carpetArea || '',
+                  superArea: details.superArea || propertyData.superArea || '',
+                  rent: details.rent || propertyData.rent || propertyData.price || 0,
+                  contactName: details.contactName || propertyData.contactName || '',
+                  contactNumber: details.contactNumber || propertyData.contactNumber || '',
+                  reference: details.reference || propertyData.reference || '',
+                  propertyType: details.propertyType || propertyData.propertyType || 'Vacant'
+                };
+              }
+              
+              allProperties.set(property.id, property as Property);
+            });
+          }
+          updatePropertiesList();
+        }, (error) => {
+          console.error("Error fetching migrated properties:", error);
+          setError('Failed to load migrated properties. Please try again later.');
+          setIsLoading(false);
+        });
+        
+        // Set up listener for legacy vacant properties (fallback source)
+        const legacyVacantListener = onValue(vacantPropertiesRef, (snapshot) => {
+          console.log('Legacy vacant properties updated');
+          if (snapshot.exists()) {
             snapshot.forEach((childSnapshot) => {
               const propertyData = childSnapshot.val();
               const property = { 
                 ...propertyData,
-                id: childSnapshot.key || propertyData.id || ''
+                id: childSnapshot.key || propertyData.id || '',
+                source: 'legacy'
               };
-              propertiesList.push(property as Property);
+              
+              // Only add if not already present from migrated collection
+              if (!allProperties.has(property.id)) {
+                allProperties.set(property.id, property as Property);
+              }
             });
-            setProperties(propertiesList);
-          } else {
-            setProperties([]);
           }
-          setIsLoading(false);
+          updatePropertiesList();
         }, (error) => {
-          console.error("Error fetching properties:", error);
-          setError('Failed to load properties. Please try again later.');
-          setIsLoading(false);
+          console.error("Error fetching legacy vacant properties:", error);
         });
         
-        // Check legacy properties as well for backward compatibility
-        // Only set up this listener after the first one completes
-        const legacyListener = onValue(legacyPropertiesRef, (snapshot) => {
+        // Set up listener for general legacy properties
+        const legacyPropertiesRef = ref(database, 'properties');
+        const generalLegacyListener = onValue(legacyPropertiesRef, (snapshot) => {
+          console.log('General legacy properties updated');
           if (snapshot.exists()) {
-            const legacyProperties: Property[] = [];
             snapshot.forEach((childSnapshot) => {
               const propertyData = childSnapshot.val();
               if (propertyData.propertyType === 'Vacant') {
-                legacyProperties.push({
+                const property = {
                   ...propertyData,
-                  id: childSnapshot.key || propertyData.id || ''
-                } as Property);
+                  id: childSnapshot.key || propertyData.id || '',
+                  source: 'legacy-general'
+                };
+                
+                // Only add if not already present
+                if (!allProperties.has(property.id)) {
+                  allProperties.set(property.id, property as Property);
+                }
               }
             });
-            
-            // Combine with existing properties, avoiding duplicates
-            if (legacyProperties.length > 0) {
-              setProperties(prev => {
-                const existingIds = new Set(prev.map(p => p.id));
-                const newProperties = legacyProperties.filter(p => !existingIds.has(p.id));
-                return [...prev, ...newProperties];
-              });
-            }
           }
+          updatePropertiesList();
+        }, (error) => {
+          console.error("Error fetching general legacy properties:", error);
         });
+        
+        // Function to update the properties list from the combined map
+        function updatePropertiesList() {
+          const propertiesList = Array.from(allProperties.values());
+          console.log(`Updated properties list with ${propertiesList.length} items`);
+          setProperties(propertiesList);
+          setIsLoading(false);
+        }
         
         // Return a cleanup function
         return () => {
           // Properly unsubscribe from the Firebase listeners
-          vacantListener();
-          legacyListener();
+          migratedListener();
+          legacyVacantListener();
+          generalLegacyListener();
         };
       } catch (err) {
         console.error("Auth check failed:", err);

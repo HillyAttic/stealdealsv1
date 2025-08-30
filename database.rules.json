@@ -4,20 +4,36 @@
     ".write": "true",
     "wishlists": {
       "$uid": {
-        ".indexOn": ["propertyId", "addedAt", "priority"]
+        ".indexOn": ["propertyId", "addedAt", "priority", "userId"]
+      }
+    },
+    "activities": {
+      "$uid": {
+        ".indexOn": ["type", "timestamp", "propertyId", "sessionId"]
       }
     },
     "properties": {
-      ".indexOn": ["category", "location", "price"]
+      ".indexOn": ["category", "location", "price", "createdAt", "updatedAt"]
     },
     "vacantProperties": {
-      ".indexOn": ["category", "location", "price"]
+      ".indexOn": ["category", "location", "price", "createdAt", "updatedAt", "propertyType"]
     },
     "preleasedProperties": {
-      ".indexOn": ["category", "location", "price"]
+      ".indexOn": ["category", "location", "price", "createdAt", "updatedAt", "propertyType"]
     },
     "franchiseProperties": {
-      ".indexOn": ["industry", "location", "investment"]
+      ".indexOn": ["industry", "location", "investment", "createdAt", "updatedAt"]
+    },
+    "plots": {
+      ".indexOn": ["location", "status", "createdAt", "updatedAt"]
+    },
+    "userStats": {
+      "$uid": {
+        ".indexOn": ["lastUpdated", "totalViews", "wishlistItems"]
+      }
+    },
+    "globalStats": {
+      ".indexOn": ["timestamp", "type"]
     }
   }
 }

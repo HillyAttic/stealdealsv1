@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { FaTimes, FaDownload, FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaMoneyBillWave, FaChartLine, FaBuilding, FaDollarSign, FaCalendarAlt, FaStoreAlt, FaShoppingBag, FaFileAlt, FaClock, FaGraduationCap, FaHeadset, FaBullhorn, FaCog, FaPhone, FaEnvelope, FaGlobe, FaShare, FaTrophy, FaHandshake, FaRocket, FaShieldAlt, FaRulerCombined } from 'react-icons/fa';
+import { useState, useEffect, useCallback } from 'react';
+import { FaTimes, FaDownload, FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaMoneyBillWave, FaChartLine, FaBuilding, FaDollarSign, FaCalendarAlt, FaStoreAlt, FaShoppingBag, FaFileAlt, FaClock, FaGraduationCap, FaHeadset, FaBullhorn, FaCog, FaPhone, FaEnvelope, FaGlobe, FaShare, FaTrophy, FaHandshake, FaRocket, FaShieldAlt, FaRulerCombined, FaLock } from 'react-icons/fa';
 import PropertyImage from '@/components/PropertyImage';
+import { useGatedContent } from '@/hooks/useGatedContent';
+import { GatedContentModal } from './GatedContentModal';
+import { SuccessMessage } from './SuccessMessage';
 
 // Define the Franchise interface to match the database
 interface Franchise {
@@ -48,6 +51,45 @@ interface FranchiseModalProps {
 
 export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal }: FranchiseModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  // Gated content functionality - Generate consistent ID like FranchiseCard
+  const franchiseId = franchise?.id || `franchise-${franchise?.name?.replace(/\s+/g, '-').toLowerCase()}-${franchise?.industry?.replace(/\s+/g, '-').toLowerCase()}`;
+  const { isContentUnlocked, unlockContent } = useGatedContent('franchise');
+  const [showGatedModal, setShowGatedModal] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const isUnlocked = isContentUnlocked(franchiseId);
+
+  // Handle investor discovery kit click
+  const handleInvestorKitClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent any parent click handlers
+    
+    if (!franchise?.investorDiscoveryKitUrl) {
+      return; // Do nothing if no URL
+    }
+    
+    if (isUnlocked) {
+      // Content is unlocked, open the Google Drive link
+      window.open(franchise.investorDiscoveryKitUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      // Content is locked, show the gated modal
+      setShowGatedModal(true);
+    }
+  }, [franchise?.investorDiscoveryKitUrl, isUnlocked]);
+
+  // Handle successful form submission
+  const handleGatedSuccess = useCallback(() => {
+    setShowGatedModal(false);
+    unlockContent(franchiseId);
+    setShowSuccessMessage(true);
+  }, [franchiseId, unlockContent]);
+
+  // Handle download from success message
+  const handleDownloadFromSuccess = useCallback(() => {
+    setShowSuccessMessage(false);
+    if (franchise?.investorDiscoveryKitUrl) {
+      window.open(franchise.investorDiscoveryKitUrl, '_blank', 'noopener,noreferrer');
+    }
+  }, [franchise?.investorDiscoveryKitUrl]);
 
   // Reset image index when franchise changes
   useEffect(() => {
@@ -77,18 +119,23 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
 
   // Format currency using Indian format
   const formatCurrency = (value: number | string | undefined): string => {
-    if (value === undefined || value === null) return '-';
+    if (value === undefined || value === null || value === '') return 'Contact for details';
     
-    // If it's already a string with text (like "20 LACS"), return as is
+    // If it's already a string with text (like "20 LACS"), add currency symbol and return
+    if (typeof value === 'string' && (value.includes('LACS') || value.includes('CR') || value.includes('LAKHS') || value.includes('CRORE'))) {
+      return `₹${value}`;
+    }
+    
+    // If it's a string with text but no units, return as is with currency
     if (typeof value === 'string' && isNaN(Number(value))) {
-      return value;
+      return `₹${value}`;
     }
     
     // Convert to number for formatting
     const numAmount = typeof value === 'string' ? Number(value) : value;
     
     if (isNaN(numAmount)) {
-      return "₹0";
+      return 'Contact for details';
     }
     
     if (numAmount >= 10000000) {
@@ -110,14 +157,23 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
 
   // Get area requirements display
   const getAreaDisplay = () => {
-    if (franchise.minArea && franchise.maxArea && franchise.minArea !== "NA" && franchise.maxArea !== "NA") {
-      return `${franchise.minArea} - ${franchise.maxArea} sq.ft.`;
+    const cleanArea = (area: string) => {
+      if (!area || area === "NA") return null;
+      // Remove existing sq.ft. suffix if present (case insensitive)
+      return area.replace(/\s*sq\.?\s*ft\.?\s*$/i, '').trim();
+    };
+    
+    const minAreaClean = cleanArea(franchise.minArea || '');
+    const maxAreaClean = cleanArea(franchise.maxArea || '');
+    
+    if (minAreaClean && maxAreaClean) {
+      return `${minAreaClean} - ${maxAreaClean} sq.ft.`;
     }
-    if (franchise.minArea && franchise.minArea !== "NA") {
-      return `${franchise.minArea} sq.ft.`;
+    if (minAreaClean) {
+      return `${minAreaClean} sq.ft.`;
     }
-    if (franchise.maxArea && franchise.maxArea !== "NA") {
-      return `${franchise.maxArea} sq.ft.`;
+    if (maxAreaClean) {
+      return `${maxAreaClean} sq.ft.`;
     }
     return 'Flexible';
   };
@@ -125,9 +181,10 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
   // Get payback period display
   const getPaybackDisplay = () => {
     if (franchise.minPaybackPeriod && franchise.maxPaybackPeriod) {
-      return `${franchise.minPaybackPeriod}-${franchise.maxPaybackPeriod}`;
+      return `${franchise.minPaybackPeriod}-${franchise.maxPaybackPeriod} (months)`;
     }
-    return franchise.minPaybackPeriod || franchise.maxPaybackPeriod || 'Contact for details';
+    const period = franchise.minPaybackPeriod || franchise.maxPaybackPeriod;
+    return period ? `${period} (months)` : 'Contact for details';
   };
 
   // Default image if none provided
@@ -284,8 +341,8 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                 </div>
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="bg-accent/10 p-4 rounded-lg border border-accent/20">
+                    <div className="space-y-4 flex flex-col">
+                      <div className="bg-accent/10 p-4 rounded-lg border border-accent/20 flex-1 flex flex-col justify-between">
                         <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
                           <FaDollarSign className="mr-2 text-accent" />
                           Total Investment
@@ -295,17 +352,17 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                         </p>
                       </div>
                       
-                      <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+                      <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 flex-1 flex flex-col justify-between">
                         <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
                           <FaChartLine className="mr-2 text-primary" />
                           ROI Expected
                         </h4>
-                        <p className="text-xl font-bold text-secondary">{franchise.roi || 'Contact for details'}</p>
+                        <p className="text-xl font-bold text-secondary">{'Contact for details'}</p>
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <div className="bg-secondary/10 p-4 rounded-lg border border-secondary/20">
+                    <div className="space-y-4 flex flex-col">
+                      <div className="bg-secondary/10 p-4 rounded-lg border border-secondary/20 flex-1 flex flex-col justify-between">
                         <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
                           <FaClock className="mr-2 text-secondary" />
                           Payback Period
@@ -315,7 +372,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                         </p>
                       </div>
                       
-                      <div className="bg-highlight/20 p-4 rounded-lg border border-highlight/40">
+                      <div className="bg-highlight/20 p-4 rounded-lg border border-highlight/40 flex-1 flex flex-col justify-between">
                         <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
                           <FaHandshake className="mr-2 text-primary" />
                           Royalty Fee
@@ -464,6 +521,29 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                     Call Now
                   </a>
                   
+                  {franchise.investorDiscoveryKitUrl && (
+                    <button
+                      onClick={handleInvestorKitClick}
+                      className={`w-full text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center ${
+                        isUnlocked 
+                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' 
+                          : 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700'
+                      }`}
+                    >
+                      {isUnlocked ? (
+                        <>
+                          <FaDownload className="mr-2" />
+                          Investor Discovery Kit
+                        </>
+                      ) : (
+                        <>
+                          <FaLock className="mr-2" />
+                          Unlock Discovery Kit
+                        </>
+                      )}
+                    </button>
+                  )}
+                  
                   <button 
                     onClick={() => {
                       if (navigator.share) {
@@ -500,7 +580,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                     
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-600">ROI</span>
-                      <span className="font-semibold text-accent">{franchise.roi || 'N/A'}</span>
+                      <span className="font-semibold text-accent">Contact for details</span>
                     </div>
                     
                     <div className="flex justify-between items-center py-2">
@@ -519,6 +599,26 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
         </div>
 
       </div>
+      
+      {/* Gated Content Modal */}
+      {franchise && (
+        <GatedContentModal
+          franchise={franchise}
+          isOpen={showGatedModal}
+          onClose={() => setShowGatedModal(false)}
+          onSuccess={handleGatedSuccess}
+        />
+      )}
+      
+      {/* Success Message */}
+      {franchise && (
+        <SuccessMessage
+          isOpen={showSuccessMessage}
+          onClose={() => setShowSuccessMessage(false)}
+          onDownload={handleDownloadFromSuccess}
+          franchiseName={franchise.product || franchise.name}
+        />
+      )}
     </div>
   );
 }

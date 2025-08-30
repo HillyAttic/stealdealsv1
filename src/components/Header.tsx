@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { FaBars, FaTimes, FaHome, FaInfoCircle, FaWarehouse, FaLandmark, FaHandshake, FaUtensils, FaImages, FaPhoneAlt } from 'react-icons/fa';
 import { usePathname } from 'next/navigation';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs';
+import { WishlistNavButton } from '@/components/wishlist/WishlistNavButton';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -153,8 +154,11 @@ const Header = () => {
               </ul>
             </nav>
 
-            {/* Right side buttons - Clerk Authentication */}
+            {/* Right side buttons - Wishlist and Clerk Authentication */}
             <div className="hidden md:flex items-center space-x-3 flex-shrink-0 ml-4">
+              {/* Wishlist Button - Always visible */}
+              <WishlistNavButton className="bg-white" />
+              
               <SignedOut>
                 <SignInButton mode="modal">
                   <button className="flex items-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ backgroundColor: 'rgb(28, 110, 164)' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgb(21, 77, 113)'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgb(28, 110, 164)'; }}>
@@ -237,8 +241,13 @@ const Header = () => {
               ))}
             </ul>
 
-            {/* Mobile Clerk Authentication */}
+            {/* Mobile Wishlist and Authentication */}
             <div className="px-4 py-4 border-t border-white/20 mt-4 space-y-3">
+              {/* Mobile Wishlist Button */}
+              <div className="flex justify-center">
+                <WishlistNavButton className="bg-white/10 text-white border-white/20 hover:bg-white/20" showText />
+              </div>
+              
               <SignedOut>
                 <SignInButton mode="modal">
                   <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors duration-200"

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface UnlockedContent {
   [contentId: string]: boolean;
@@ -13,6 +13,7 @@ export function useGatedContent(contentType: ContentType = 'franchise') {
   const [unlockedContent, setUnlockedContent] = useState<UnlockedContent>({});
   const [isClient, setIsClient] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const lastSavedRef = useRef<string>('{}'); // Track last saved state to prevent unnecessary saves
   
   // Get storage key based on content type
   const getStorageKey = useCallback(() => {
@@ -35,24 +36,22 @@ export function useGatedContent(contentType: ContentType = 'franchise') {
     if (!isClient) return;
     
     try {
-      console.log('[GatedContent] Loading from localStorage with key:', getStorageKey());
       const stored = localStorage.getItem(getStorageKey());
-      console.log('[GatedContent] Stored data:', stored);
       
       if (stored) {
         const parsed = JSON.parse(stored);
-        console.log('[GatedContent] Parsed data:', parsed);
         setUnlockedContent(parsed);
+        lastSavedRef.current = stored; // Track the loaded state
       } else {
-        console.log('[GatedContent] No stored data found, starting with empty state');
         setUnlockedContent({});
+        lastSavedRef.current = '{}';
       }
     } catch (error) {
       console.error('[GatedContent] Error loading unlocked content:', error);
       setUnlockedContent({});
+      lastSavedRef.current = '{}';
     } finally {
       setIsLoaded(true);
-      console.log('[GatedContent] Loading complete');
     }
   }, [getStorageKey, isClient]);
 
@@ -61,9 +60,13 @@ export function useGatedContent(contentType: ContentType = 'franchise') {
     if (!isClient || !isLoaded) return;
     
     try {
-      console.log('[GatedContent] Saving to localStorage:', unlockedContent);
-      localStorage.setItem(getStorageKey(), JSON.stringify(unlockedContent));
-      console.log('[GatedContent] Save successful');
+      const currentState = JSON.stringify(unlockedContent);
+      
+      // Only save if the state actually changed
+      if (currentState !== lastSavedRef.current) {
+        localStorage.setItem(getStorageKey(), currentState);
+        lastSavedRef.current = currentState;
+      }
     } catch (error) {
       console.error('[GatedContent] Error saving unlocked content:', error);
     }
@@ -76,7 +79,6 @@ export function useGatedContent(contentType: ContentType = 'franchise') {
     }
     
     const isUnlocked = unlockedContent[contentId] === true;
-    console.log(`[GatedContent] Content state for ${contentId}:`, isUnlocked ? 'unlocked' : 'locked');
     return isUnlocked ? 'unlocked' : 'locked';
   }, [unlockedContent, isClient, isLoaded]);
 
@@ -94,25 +96,26 @@ export function useGatedContent(contentType: ContentType = 'franchise') {
 
   // Unlock content for a specific content ID
   const unlockContent = useCallback((contentId: string) => {
-    console.log(`[GatedContent] Unlocking content: ${contentId}`);
     setUnlockedContent(prev => {
-      const newState = {
+      // Don't update if already unlocked
+      if (prev[contentId] === true) {
+        return prev;
+      }
+      
+      return {
         ...prev,
         [contentId]: true
       };
-      console.log('[GatedContent] New unlocked content state:', newState);
-      return newState;
     });
   }, []);
 
   // Reset all unlocked content (for testing purposes)
   const resetUnlockedContent = useCallback(() => {
-    console.log('[GatedContent] Resetting all unlocked content');
     setUnlockedContent({});
     if (isClient) {
       try {
         localStorage.removeItem(getStorageKey());
-        console.log('[GatedContent] localStorage cleared');
+        lastSavedRef.current = '{}';
       } catch (error) {
         console.error('[GatedContent] Error removing unlocked content:', error);
       }

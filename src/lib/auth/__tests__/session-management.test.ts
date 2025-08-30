@@ -1,14 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+const vi = jest;;
 import { NextRequest, NextResponse } from 'next/server';
 import { createSession, getSessionFromRequest, clearSession } from '../session';
 import { generateToken, verifyToken } from '../jwt';
 import { User } from '@/types/auth';
 
 // Mock Next.js cookies
-vi.mock('next/headers', () => ({
-  cookies: vi.fn(() => ({
-    get: vi.fn(),
-    set: vi.fn()
+jest.mock('next/headers', () => ({
+  cookies: jest.fn(() => ({
+    get: jest.fn(),
+    set: jest.fn()
   }))
 }));
 
@@ -38,11 +39,11 @@ describe('Session Management', () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('createSession', () => {
@@ -61,7 +62,7 @@ describe('Session Management', () => {
     it('should create session with response object', () => {
       const mockResponse = {
         cookies: {
-          set: vi.fn()
+          set: jest.fn()
         }
       } as any;
 
@@ -106,14 +107,14 @@ describe('Session Management', () => {
 
       const mockRequest = {
         cookies: {
-          get: vi.fn((name: string) => {
+          get: jest.fn((name: string) => {
             if (name === 'auth_session') return { value: token };
             if (name === 'auth_user') return { value: userCookie };
             return undefined;
           })
         },
         headers: {
-          get: vi.fn()
+          get: jest.fn()
         }
       } as any;
 
@@ -130,10 +131,10 @@ describe('Session Management', () => {
 
       const mockRequest = {
         cookies: {
-          get: vi.fn(() => undefined)
+          get: jest.fn(() => undefined)
         },
         headers: {
-          get: vi.fn((name: string) => {
+          get: jest.fn((name: string) => {
             if (name === 'Authorization') return `Bearer ${token}`;
             return null;
           })
@@ -150,14 +151,14 @@ describe('Session Management', () => {
     it('should return null for invalid token', () => {
       const mockRequest = {
         cookies: {
-          get: vi.fn((name: string) => {
+          get: jest.fn((name: string) => {
             if (name === 'auth_session') return { value: 'invalid-token' };
             if (name === 'auth_user') return { value: '{}' };
             return undefined;
           })
         },
         headers: {
-          get: vi.fn()
+          get: jest.fn()
         }
       } as any;
 
@@ -170,7 +171,7 @@ describe('Session Management', () => {
     it('should clear session cookies', () => {
       const mockResponse = {
         cookies: {
-          set: vi.fn()
+          set: jest.fn()
         }
       } as any;
 
@@ -207,20 +208,20 @@ describe('Session Management', () => {
       const expiredToken = generateToken(mockUser);
       
       // Mock the JWT to be expired
-      vi.mock('../jwt', () => ({
-        verifyToken: vi.fn(() => null), // Simulate expired token
-        generateToken: vi.fn(() => expiredToken)
+      jest.mock('../jwt', () => ({
+        verifyToken: jest.fn(() => null), // Simulate expired token
+        generateToken: jest.fn(() => expiredToken)
       }));
 
       const mockRequest = {
         cookies: {
-          get: vi.fn((name: string) => {
+          get: jest.fn((name: string) => {
             if (name === 'auth_session') return { value: expiredToken };
             return undefined;
           })
         },
         headers: {
-          get: vi.fn()
+          get: jest.fn()
         }
       } as any;
 

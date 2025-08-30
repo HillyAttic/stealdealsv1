@@ -1,11 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;;
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/user/wishlist/route';
 import { clearWishlist } from '@/lib/database/wishlist';
 
 // Mock the auth middleware
-vi.mock('@/lib/auth/middleware', () => ({
-  optionalAuth: vi.fn((request, handler) => {
+jest.mock('@/lib/auth/middleware', () => ({
+  optionalAuth: jest.fn((request, handler) => {
     // Mock authenticated user
     const mockUser = { id: 'test-user-1', email: 'test@example.com' };
     const requestWithUser = { ...request, user: mockUser };
@@ -14,8 +15,8 @@ vi.mock('@/lib/auth/middleware', () => ({
 }));
 
 // Mock Firebase
-vi.mock('@/lib/firebase', () => ({
-  getPropertyById: vi.fn().mockResolvedValue({
+jest.mock('@/lib/firebase', () => ({
+  getPropertyById: jest.fn().mockResolvedValue({
     id: 'prop-123',
     title: 'Test Property',
     location: 'Test Location',

@@ -1,15 +1,16 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+const vi = jest;;
 import { render, act, waitFor } from '@testing-library/react';
 import { WishlistProvider, useWishlistContext } from '@/contexts/WishlistContext';
 import { AuthProvider } from '@/components/auth/AuthProvider';
 import React from 'react';
 
 // Mock fetch
-const mockFetch = vi.fn();
+const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
 // Mock auth context
-vi.mock('@/components/auth/AuthProvider', () => ({
+jest.mock('@/components/auth/AuthProvider', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => children,
   useAuthContext: () => ({
     isAuthenticated: true,
@@ -71,21 +72,21 @@ describe('Wishlist Context Synchronization', () => {
 
   beforeEach(() => {
     stateChanges = [];
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     
     // Clear localStorage
     Object.defineProperty(window, 'localStorage', {
       value: {
-        getItem: vi.fn(() => null),
-        setItem: vi.fn(),
-        clear: vi.fn()
+        getItem: jest.fn(() => null),
+        setItem: jest.fn(),
+        clear: jest.fn()
       },
       writable: true
     });
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('Initial Load Behavior', () => {

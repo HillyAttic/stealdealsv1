@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;
 import { NextRequest, NextResponse } from 'next/server'
 
 // Import all authentication-related test suites
@@ -11,21 +12,21 @@ import '@/components/dashboard/__tests__/UserDashboard.test'
 import '@/components/wishlist/__tests__/WishlistButton.test'
 
 // Mock dependencies for comprehensive testing
-vi.mock('@/lib/auth/jwt', () => ({
-  generateToken: vi.fn(() => 'mock-jwt-token'),
-  verifyToken: vi.fn(() => ({
+jest.mock('@/lib/auth/jwt', () => ({
+  generateToken: jest.fn(() => 'mock-jwt-token'),
+  verifyToken: jest.fn(() => ({
     userId: 'test-user-id',
     email: 'test@example.com',
     role: 'user',
     exp: Math.floor(Date.now() / 1000) + 3600,
     iat: Math.floor(Date.now() / 1000)
   })),
-  refreshToken: vi.fn(() => 'refreshed-jwt-token')
+  refreshToken: jest.fn(() => 'refreshed-jwt-token')
 }))
 
-vi.mock('@/lib/auth/session', () => ({
-  createSession: vi.fn(() => 'mock-session-token'),
-  getSessionFromRequest: vi.fn(() => ({
+jest.mock('@/lib/auth/session', () => ({
+  createSession: jest.fn(() => 'mock-session-token'),
+  getSessionFromRequest: jest.fn(() => ({
     user: {
       id: 'test-user-id',
       email: 'test@example.com',
@@ -34,23 +35,23 @@ vi.mock('@/lib/auth/session', () => ({
     },
     token: 'mock-token'
   })),
-  clearSession: vi.fn(),
-  updateSessionExpiry: vi.fn()
+  clearSession: jest.fn(),
+  updateSessionExpiry: jest.fn()
 }))
 
-vi.mock('bcryptjs', () => ({
-  hash: vi.fn(() => Promise.resolve('hashed-password')),
-  compare: vi.fn(() => Promise.resolve(true)),
-  genSalt: vi.fn(() => Promise.resolve('mock-salt'))
+jest.mock('bcryptjs', () => ({
+  hash: jest.fn(() => Promise.resolve('hashed-password')),
+  compare: jest.fn(() => Promise.resolve(true)),
+  genSalt: jest.fn(() => Promise.resolve('mock-salt'))
 }))
 
-vi.mock('firebase/auth', () => ({
-  getAuth: vi.fn(),
-  GoogleAuthProvider: vi.fn(() => ({
-    addScope: vi.fn(),
-    setCustomParameters: vi.fn()
+jest.mock('firebase/auth', () => ({
+  getAuth: jest.fn(),
+  GoogleAuthProvider: jest.fn(() => ({
+    addScope: jest.fn(),
+    setCustomParameters: jest.fn()
   })),
-  signInWithPopup: vi.fn(() => Promise.resolve({
+  signInWithPopup: jest.fn(() => Promise.resolve({
     user: {
       uid: 'google-user-id',
       email: 'google@example.com',
@@ -62,7 +63,7 @@ vi.mock('firebase/auth', () => ({
       accessToken: 'google-access-token'
     }
   })),
-  signOut: vi.fn(() => Promise.resolve())
+  signOut: jest.fn(() => Promise.resolve())
 }))
 
 // Mock database operations
@@ -70,8 +71,8 @@ const mockUsers: any[] = []
 const mockWishlistItems: any[] = []
 const mockActivityLogs: any[] = []
 
-vi.mock('@/lib/db/users', () => ({
-  createUser: vi.fn((userData) => {
+jest.mock('@/lib/db/users', () => ({
+  createUser: jest.fn((userData) => {
     const user = {
       id: `user-${Date.now()}`,
       ...userData,
@@ -95,13 +96,13 @@ vi.mock('@/lib/db/users', () => ({
     mockUsers.push(user)
     return Promise.resolve(user)
   }),
-  findUserByEmail: vi.fn((email) => {
+  findUserByEmail: jest.fn((email) => {
     return Promise.resolve(mockUsers.find(u => u.email === email) || null)
   }),
-  findUserById: vi.fn((id) => {
+  findUserById: jest.fn((id) => {
     return Promise.resolve(mockUsers.find(u => u.id === id) || null)
   }),
-  updateUser: vi.fn((id, updates) => {
+  updateUser: jest.fn((id, updates) => {
     const userIndex = mockUsers.findIndex(u => u.id === id)
     if (userIndex !== -1) {
       mockUsers[userIndex] = { ...mockUsers[userIndex], ...updates, updatedAt: new Date() }
@@ -109,14 +110,14 @@ vi.mock('@/lib/db/users', () => ({
     }
     return Promise.resolve(null)
   }),
-  updateUserLastLogin: vi.fn((userId) => {
+  updateUserLastLogin: jest.fn((userId) => {
     const user = mockUsers.find(u => u.id === userId)
     if (user) {
       user.lastLoginAt = new Date()
     }
     return Promise.resolve(user)
   }),
-  deleteUser: vi.fn((id) => {
+  deleteUser: jest.fn((id) => {
     const userIndex = mockUsers.findIndex(u => u.id === id)
     if (userIndex !== -1) {
       const deleted = mockUsers.splice(userIndex, 1)[0]
@@ -126,8 +127,8 @@ vi.mock('@/lib/db/users', () => ({
   })
 }))
 
-vi.mock('@/lib/db/wishlist', () => ({
-  addToWishlist: vi.fn((userId, propertyId) => {
+jest.mock('@/lib/db/wishlist', () => ({
+  addToWishlist: jest.fn((userId, propertyId) => {
     const item = {
       id: `wishlist-${Date.now()}`,
       userId,
@@ -138,7 +139,7 @@ vi.mock('@/lib/db/wishlist', () => ({
     mockWishlistItems.push(item)
     return Promise.resolve(item)
   }),
-  removeFromWishlist: vi.fn((userId, propertyId) => {
+  removeFromWishlist: jest.fn((userId, propertyId) => {
     const index = mockWishlistItems.findIndex(i => i.userId === userId && i.propertyId === propertyId)
     if (index !== -1) {
       const removed = mockWishlistItems.splice(index, 1)[0]
@@ -146,16 +147,16 @@ vi.mock('@/lib/db/wishlist', () => ({
     }
     return Promise.resolve(null)
   }),
-  getUserWishlist: vi.fn((userId) => {
+  getUserWishlist: jest.fn((userId) => {
     return Promise.resolve(mockWishlistItems.filter(i => i.userId === userId))
   }),
-  isInWishlist: vi.fn((userId, propertyId) => {
+  isInWishlist: jest.fn((userId, propertyId) => {
     return Promise.resolve(mockWishlistItems.some(i => i.userId === userId && i.propertyId === propertyId))
   })
 }))
 
-vi.mock('@/lib/db/activity', () => ({
-  logActivity: vi.fn((activityData) => {
+jest.mock('@/lib/db/activity', () => ({
+  logActivity: jest.fn((activityData) => {
     const activity = {
       id: `activity-${Date.now()}`,
       ...activityData,
@@ -164,10 +165,10 @@ vi.mock('@/lib/db/activity', () => ({
     mockActivityLogs.push(activity)
     return Promise.resolve(activity)
   }),
-  getUserActivity: vi.fn((userId) => {
+  getUserActivity: jest.fn((userId) => {
     return Promise.resolve(mockActivityLogs.filter(a => a.userId === userId))
   }),
-  getActivityStats: vi.fn((userId) => {
+  getActivityStats: jest.fn((userId) => {
     const userActivity = mockActivityLogs.filter(a => a.userId === userId)
     return Promise.resolve({
       totalViews: userActivity.length,
@@ -179,7 +180,7 @@ vi.mock('@/lib/db/activity', () => ({
 
 describe('Authentication System Comprehensive Tests', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
     mockUsers.length = 0
     mockWishlistItems.length = 0
     mockActivityLogs.length = 0
@@ -269,7 +270,7 @@ describe('Authentication System Comprehensive Tests', () => {
       const { GET: wishlistGET } = await import('@/app/api/user/wishlist/route')
 
       // Mock unauthenticated request
-      vi.mocked(await import('@/lib/auth/session')).getSessionFromRequest.mockReturnValueOnce(null)
+      jest.mocked(await import('@/lib/auth/session')).getSessionFromRequest.mockReturnValueOnce(null)
 
       const request = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'GET'
@@ -329,7 +330,7 @@ describe('Authentication System Comprehensive Tests', () => {
       const { GET: sessionGET } = await import('@/app/api/auth/session-status/route')
 
       // Mock expired token
-      vi.mocked(await import('@/lib/auth/jwt')).verifyToken.mockReturnValueOnce({
+      jest.mocked(await import('@/lib/auth/jwt')).verifyToken.mockReturnValueOnce({
         userId: 'test-user-id',
         email: 'test@example.com',
         role: 'user',
@@ -498,7 +499,7 @@ describe('Authentication System Comprehensive Tests', () => {
       const { POST: loginPOST } = await import('@/app/api/auth/user/login/route')
 
       // Mock database error
-      vi.mocked(await import('@/lib/db/users')).findUserByEmail.mockRejectedValueOnce(
+      jest.mocked(await import('@/lib/db/users')).findUserByEmail.mockRejectedValueOnce(
         new Error('Database connection timeout')
       )
 

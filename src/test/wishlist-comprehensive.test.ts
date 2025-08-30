@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi, beforeAll, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterEach } from '@jest/globals';
+const vi = jest;;
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
@@ -6,22 +7,22 @@ import React from 'react';
 // Mock Firebase
 const mockFirebaseApp = {};
 const mockDatabase = {};
-const mockRef = vi.fn(() => ({}));
-const mockGet = vi.fn();
-const mockSet = vi.fn();
-const mockPush = vi.fn(() => ({ key: 'test-key' }));
-const mockQuery = vi.fn();
-const mockOrderByChild = vi.fn();
-const mockEqualTo = vi.fn();
-const mockOnValue = vi.fn();
-const mockUpdate = vi.fn();
+const mockRef = jest.fn(() => ({}));
+const mockGet = jest.fn();
+const mockSet = jest.fn();
+const mockPush = jest.fn(() => ({ key: 'test-key' }));
+const mockQuery = jest.fn();
+const mockOrderByChild = jest.fn();
+const mockEqualTo = jest.fn();
+const mockOnValue = jest.fn();
+const mockUpdate = jest.fn();
 
-vi.mock('firebase/app', () => ({
-  initializeApp: vi.fn(() => mockFirebaseApp)
+jest.mock('firebase/app', () => ({
+  initializeApp: jest.fn(() => mockFirebaseApp)
 }));
 
-vi.mock('firebase/database', () => ({
-  getDatabase: vi.fn(() => mockDatabase),
+jest.mock('firebase/database', () => ({
+  getDatabase: jest.fn(() => mockDatabase),
   ref: mockRef,
   get: mockGet,
   set: mockSet,
@@ -30,15 +31,15 @@ vi.mock('firebase/database', () => ({
   orderByChild: mockOrderByChild,
   equalTo: mockEqualTo,
   onValue: mockOnValue,
-  off: vi.fn(),
+  off: jest.fn(),
   update: mockUpdate,
-  remove: vi.fn()
+  remove: jest.fn()
 }));
 
 // Mock the Firebase config
-vi.mock('@/lib/firebase', () => ({
+jest.mock('@/lib/firebase', () => ({
   database: mockDatabase,
-  getPropertyById: vi.fn()
+  getPropertyById: jest.fn()
 }));
 
 // Mock auth provider
@@ -51,23 +52,23 @@ const mockAuthContext = {
   isAuthenticated: true,
   user: mockUser,
   loading: false,
-  signIn: vi.fn(),
-  signUp: vi.fn(),
-  signOut: vi.fn()
+  signIn: jest.fn(),
+  signUp: jest.fn(),
+  signOut: jest.fn()
 };
 
-vi.mock('@/components/auth/AuthProvider', () => ({
+jest.mock('@/components/auth/AuthProvider', () => ({
   useAuthContext: () => mockAuthContext
 }));
 
 // Mock Next.js components
-vi.mock('next/link', () => ({
+jest.mock('next/link', () => ({
   default: ({ children, href, ...props }: any) => {
     return React.createElement('a', { href, ...props }, children);
   }
 }));
 
-vi.mock('next/image', () => ({
+jest.mock('next/image', () => ({
   default: ({ src, alt, ...props }: any) => {
     return React.createElement('img', { src, alt, ...props });
   }
@@ -76,17 +77,17 @@ vi.mock('next/image', () => ({
 // Import components after mocking
 import { WishlistProvider, useWishlistContext } from '@/contexts/WishlistContext';
 import { WishlistSection } from '@/components/wishlist/WishlistSection';
-import WishlistPage from '@/app/dashboard/wishlist/page';
+import WishlistPage from '@/app/wishlist/page';
 
 describe('Wishlist System Comprehensive Tests', () => {
   beforeAll(() => {
     // Mock window and localStorage
     Object.defineProperty(window, 'localStorage', {
       value: {
-        getItem: vi.fn(),
-        setItem: vi.fn(),
-        removeItem: vi.fn(),
-        clear: vi.fn(),
+        getItem: jest.fn(),
+        setItem: jest.fn(),
+        removeItem: jest.fn(),
+        clear: jest.fn(),
       },
       writable: true,
     });
@@ -94,7 +95,7 @@ describe('Wishlist System Comprehensive Tests', () => {
 
   beforeEach(() => {
     // Reset all mocks
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     
     // Setup default mock returns
     mockGet.mockResolvedValue({ exists: () => false });
@@ -286,7 +287,7 @@ describe('Wishlist System Comprehensive Tests', () => {
       });
 
       // Mock fetch to simulate API error
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: false,
           status: 500,
@@ -334,7 +335,7 @@ describe('Wishlist System Comprehensive Tests', () => {
 
   describe('API Integration', () => {
     beforeEach(() => {
-      global.fetch = vi.fn();
+      global.fetch = jest.fn();
     });
 
     it('should handle successful wishlist API response', async () => {
@@ -351,7 +352,7 @@ describe('Wishlist System Comprehensive Tests', () => {
         }
       ];
 
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({
@@ -393,7 +394,7 @@ describe('Wishlist System Comprehensive Tests', () => {
     });
 
     it('should handle API timeout/network errors', async () => {
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.reject(new Error('Network error'))
       ) as any;
 
@@ -496,7 +497,7 @@ describe('Wishlist System Comprehensive Tests', () => {
       });
 
       // Mock API to return empty properties array
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({

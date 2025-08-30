@@ -1,11 +1,12 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import {  } from '@jest/globals';
+const vi = jest;;
 import Hero from '../components/Hero';
 
 // Mock Next.js Link component
-vi.mock('next/link', () => ({
+jest.mock('next/link', () => ({
   default: ({ children, href, ...props }: any) => {
     return <a href={href} {...props}>{children}</a>;
   }

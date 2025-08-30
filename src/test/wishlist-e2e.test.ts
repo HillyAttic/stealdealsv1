@@ -1,17 +1,18 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;;
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/user/wishlist/route';
 import { clearWishlist, addToWishlist, getUserWishlist } from '@/lib/database/wishlist';
 import { getPropertyById } from '@/lib/firebase';
 
 // Mock Firebase
-vi.mock('@/lib/firebase', () => ({
-  getPropertyById: vi.fn()
+jest.mock('@/lib/firebase', () => ({
+  getPropertyById: jest.fn()
 }));
 
 // Mock the auth middleware
-vi.mock('@/lib/auth/middleware', () => ({
-  optionalAuth: vi.fn((request, handler) => {
+jest.mock('@/lib/auth/middleware', () => ({
+  optionalAuth: jest.fn((request, handler) => {
     // Extract user from headers if provided
     const headers = request.headers;
     const userId = headers.get?.('x-mock-user-id') || 'user-1';
@@ -23,7 +24,7 @@ vi.mock('@/lib/auth/middleware', () => ({
   })
 }));
 
-const mockGetPropertyById = vi.mocked(getPropertyById);
+const mockGetPropertyById = jest.mocked(getPropertyById);
 
 describe('End-to-End Wishlist Flow', () => {
   const testUserId = 'user-1';
@@ -46,7 +47,7 @@ describe('End-to-End Wishlist Flow', () => {
 
   beforeEach(async () => {
     // Clear all wishlists before each test
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     await clearWishlist(testUserId);
     
     // Setup default mock to return the property

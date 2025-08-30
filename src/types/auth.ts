@@ -58,10 +58,19 @@ export interface WishlistProperty {
   priority: 'low' | 'medium' | 'high';
 }
 
+export type ActivityType = 
+  | 'property_view'
+  | 'wishlist_add'
+  | 'wishlist_remove'
+  | 'search'
+  | 'filter_apply'
+  | 'contact_inquiry'
+  | 'property_share';
+
 export interface UserActivity {
   id: string;
   userId: string;
-  type: 'property_view' | 'search' | 'wishlist_add' | 'wishlist_remove' | 'contact_inquiry';
+  type: ActivityType;
   propertyId?: string;
   metadata: Record<string, unknown>;
   timestamp: Date;
@@ -197,6 +206,60 @@ export interface EngagementData {
   averageSessionDuration: number;
   pagesPerSession: number;
   bounceRate: number;
+}
+
+export interface ActivityStats {
+  totalViews: number;
+  wishlistItems: number;
+  totalActivities: number;
+  recentActivities: UserActivity[];
+  topViewedProperties: Array<{
+    propertyId: string;
+    viewCount: number;
+    property: {
+      title: string;
+      location: string;
+      price: number;
+      imageUrl: string;
+      type: string;
+    };
+  }>;
+}
+
+export interface ActivityAggregation {
+  totalActivities: number;
+  activitiesByType: Record<ActivityType, number>;
+  activitiesByDay: Array<{
+    date: string;
+    count: number;
+    types: Record<ActivityType, number>;
+  }>;
+  activitiesByHour: Array<{
+    hour: number;
+    count: number;
+  }>;
+  topProperties: Array<{
+    propertyId: string;
+    viewCount: number;
+    title?: string;
+  }>;
+  userEngagement: {
+    averageSessionDuration: number;
+    averageActivitiesPerSession: number;
+    returnUserRate: number;
+  };
+}
+
+export interface PaginatedActivities {
+  activities: UserActivity[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
 }
 
 // Admin interfaces

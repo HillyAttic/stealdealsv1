@@ -6,7 +6,7 @@ import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
-import { database, Property, deleteProperty, preleasedPropertiesRef } from '@/lib/firebase';
+import { database, Property, deleteProperty, preleasedPropertiesRef, migratedPreleasedRef } from '@/lib/firebase';
 import { ref, onValue, query, orderByChild, equalTo, remove } from 'firebase/database';
 import ClientOnly from '@/components/ClientOnly';
 
@@ -53,53 +53,118 @@ function PreLeasedPropertiesContent() {
         // Set up real-time listener for preleased properties
         setIsLoading(true);
         
-        // Reference to preleased properties
-        const propertiesRef = preleasedPropertiesRef;
+        const allProperties = new Map<string, Property>();
         
-        // Set up listener for real-time updates
-        const unsubscribe = onValue(propertiesRef, (snapshot) => {
+        // Set up listener for migrated pre-leased properties (primary source)
+        const migratedListener = onValue(migratedPreleasedRef, (snapshot) => {
+          console.log('Migrated pre-leased properties updated');
           if (snapshot.exists()) {
-            const propertiesList: Property[] = [];
             snapshot.forEach((childSnapshot) => {
-              const property = { 
-                id: childSnapshot.key, 
-                ...childSnapshot.val() 
+              const propertyData = childSnapshot.val();
+              let property = { 
+                ...propertyData,
+                id: childSnapshot.key || propertyData.id || '',
+                source: 'migrated'
               };
-              propertiesList.push(property as Property);
-            });
-            setProperties(propertiesList);
-          } else {
-            // Also check legacy properties for Pre-Leased type
-            const legacyRef = ref(database, 'properties');
-            onValue(legacyRef, (legacySnapshot) => {
-              if (legacySnapshot.exists()) {
-                const legacyProperties: Property[] = [];
-                legacySnapshot.forEach((childSnapshot) => {
-                  const property = childSnapshot.val();
-                  if (property.propertyType === 'Pre-Leased') {
-                    legacyProperties.push({
-                      id: childSnapshot.key,
-                      ...property
-                    } as Property);
-                  }
-                });
-                setProperties(legacyProperties);
-              } else {
-                setProperties([]);
+              
+              // Handle nested structure from migration
+              if (propertyData.preleasedDetails) {
+                const details = propertyData.preleasedDetails;
+                property = {
+                  ...property,
+                  tenant: details.tenant || propertyData.tenant || '',
+                  category: details.category || propertyData.category || 'Pre-Leased',
+                  buildingName: details.buildingName || propertyData.buildingName || '',
+                  floor: details.floor || propertyData.floor || '',
+                  totalArea: details.totalArea || propertyData.totalArea || '',
+                  areaOnSale: details.areaOnSale || propertyData.areaOnSale || '',
+                  rent: parseFloat(typeof details.rent === 'string' ? details.rent.replace(/[^0-9.]/g, '') : details.rent || '0') || propertyData.rent || 0,
+                  leaseTerm: details.leaseTerm || propertyData.leaseTerm || '',
+                  remainingLease: details.remainingLease || propertyData.remainingLease || '',
+                  lockIn: details.lockIn || propertyData.lockIn || '',
+                  escalation: details.escalation || propertyData.escalation || '',
+                  securityDeposit: details.securityDeposit || propertyData.securityDeposit || '',
+                  roi: details.roi || propertyData.roi || '',
+                  propertyStatus: details.propertyStatus || propertyData.propertyStatus || '',
+                  reference: details.reference || propertyData.reference || '',
+                  channel: details.channel || propertyData.channel || '',
+                  propertyType: details.propertyType || propertyData.propertyType || 'Pre-Leased'
+                };
               }
-              setIsLoading(false);
+              
+              allProperties.set(property.id, property as Property);
             });
           }
-          setIsLoading(false);
+          updatePropertiesList();
         }, (error) => {
-          console.error("Error fetching properties:", error);
-          setError('Failed to load properties. Please try again later.');
+          console.error("Error fetching migrated pre-leased properties:", error);
+          setError('Failed to load migrated properties. Please try again later.');
           setIsLoading(false);
         });
         
-        // Clean up the listener on unmount
+        // Set up listener for legacy pre-leased properties (fallback source)
+        const legacyPreleasedListener = onValue(preleasedPropertiesRef, (snapshot) => {
+          console.log('Legacy pre-leased properties updated');
+          if (snapshot.exists()) {
+            snapshot.forEach((childSnapshot) => {
+              const propertyData = childSnapshot.val();
+              const property = { 
+                ...propertyData,
+                id: childSnapshot.key || propertyData.id || '',
+                source: 'legacy'
+              };
+              
+              // Only add if not already present from migrated collection
+              if (!allProperties.has(property.id)) {
+                allProperties.set(property.id, property as Property);
+              }
+            });
+          }
+          updatePropertiesList();
+        }, (error) => {
+          console.error("Error fetching legacy pre-leased properties:", error);
+        });
+        
+        // Set up listener for general legacy properties
+        const legacyPropertiesRef = ref(database, 'properties');
+        const generalLegacyListener = onValue(legacyPropertiesRef, (snapshot) => {
+          console.log('General legacy properties updated');
+          if (snapshot.exists()) {
+            snapshot.forEach((childSnapshot) => {
+              const propertyData = childSnapshot.val();
+              if (propertyData.propertyType === 'Pre-Leased') {
+                const property = {
+                  ...propertyData,
+                  id: childSnapshot.key || propertyData.id || '',
+                  source: 'legacy-general'
+                };
+                
+                // Only add if not already present
+                if (!allProperties.has(property.id)) {
+                  allProperties.set(property.id, property as Property);
+                }
+              }
+            });
+          }
+          updatePropertiesList();
+        }, (error) => {
+          console.error("Error fetching general legacy properties:", error);
+        });
+        
+        // Function to update the properties list from the combined map
+        function updatePropertiesList() {
+          const propertiesList = Array.from(allProperties.values());
+          console.log(`Updated pre-leased properties list with ${propertiesList.length} items`);
+          setProperties(propertiesList);
+          setIsLoading(false);
+        }
+        
+        // Return a cleanup function
         return () => {
-          setProperties([]);
+          // Properly unsubscribe from the Firebase listeners
+          migratedListener();
+          legacyPreleasedListener();
+          generalLegacyListener();
         };
       } catch (err) {
         console.error("Auth check failed:", err);

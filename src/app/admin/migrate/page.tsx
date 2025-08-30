@@ -1,380 +1,544 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
-import { FaPlay, FaCheck, FaExclamationTriangle, FaSync } from 'react-icons/fa';
-import ClientOnly from '@/components/ClientOnly';
+import { FaDatabase, FaPlay, FaEye, FaDownload, FaExclamationTriangle, FaCheckCircle, FaSpinner } from 'react-icons/fa';
 
-export default function MigratePage() {
-  return (
-    <AdminLayout>
-      <ClientOnly
-        fallback={
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
-            <p className="ml-2">Loading migration tools...</p>
-          </div>
-        }
-      >
-        <MigrateContent />
-      </ClientOnly>
-    </AdminLayout>
-  );
+interface MigrationStats {
+  franchises: { existing: number; expected: string };
+  plots: { existing: number; expected: string };
+  preleased: { existing: number; expected: string };
+  vacant: { existing: number; expected: string };
+  totalConflicts: number;
 }
 
-function MigrateContent() {
-  const [migrationStatus, setMigrationStatus] = useState<any>(null);
-  const [isChecking, setIsChecking] = useState(false);
-  const [isMigrating, setIsMigrating] = useState(false);
-  
-  // Vacant properties migration state
-  const [vacantMigrationStatus, setVacantMigrationStatus] = useState<any>(null);
-  const [isCheckingVacant, setIsCheckingVacant] = useState(false);
-  const [isMigratingVacant, setIsMigratingVacant] = useState(false);
+interface MigrationResult {
+  success: boolean;
+  message: string;
+  stats?: any;
+  errors?: string[];
+}
 
-  // Function to check migration status
-  const checkMigrationStatus = async () => {
-    setIsChecking(true);
+export default function MigratePage() {
+  const [migrationStats, setMigrationStats] = useState<MigrationStats | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [migrationResult, setMigrationResult] = useState<MigrationResult | null>(null);
+  const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<any>(null);
+
+  // Function to analyze the database
+  const analyzeDatabase = async () => {
+    setIsAnalyzing(true);
+    setMigrationResult(null);
+    
     try {
-      const response = await fetch('/api/admin/migrate-franchises', {
+      const response = await fetch('/api/admin/migrate', {
         method: 'GET',
         credentials: 'include'
       });
       
-      const result = await response.json();
-      setMigrationStatus(result);
-      
       if (!response.ok) {
-        alert("Error checking migration status: " + (result.error || "Unknown error"));
+        throw new Error('Failed to analyze database');
       }
+      
+      const data = await response.json();
+      setMigrationStats(data.stats);
+      setAnalysisComplete(true);
     } catch (error) {
-      console.error("Error checking migration status:", error);
-      alert("Error checking migration status: " + error);
+      console.error('Analysis error:', error);
+      setMigrationResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Analysis failed'
+      });
     } finally {
-      setIsChecking(false);
+      setIsAnalyzing(false);
     }
   };
 
-  // Function to run migration
-  const runMigration = async () => {
-    if (!confirm("Are you sure you want to run the franchise migration? This will update all franchises missing the product field.")) {
-      return;
-    }
-
-    setIsMigrating(true);
+  // Function to create backup
+  const createBackup = async () => {
+    setIsBackingUp(true);
+    setMigrationResult(null);
+    
     try {
-      const response = await fetch('/api/admin/migrate-franchises', {
+      const response = await fetch('/api/admin/migrate', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'backup' }),
         credentials: 'include'
       });
       
-      const result = await response.json();
-      
-      if (response.ok) {
-        alert(`Migration completed successfully! Updated ${result.updated} franchises.`);
-        setMigrationStatus(result);
-        // Check status again to see the updated state
-        setTimeout(() => {
-          checkMigrationStatus();
-        }, 1000);
-      } else {
-        alert("Migration failed: " + (result.error || "Unknown error"));
+      if (!response.ok) {
+        throw new Error('Failed to create backup');
       }
+      
+      const data = await response.json();
+      setMigrationResult({
+        success: true,
+        message: `Backup created successfully: ${data.backupFile}`
+      });
     } catch (error) {
-      console.error("Error running migration:", error);
-      alert("Error running migration: " + error);
+      console.error('Backup error:', error);
+      setMigrationResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Backup failed'
+      });
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  // Function to run dry run migration
+  const runDryRun = async () => {
+    setIsMigrating(true);
+    setMigrationResult(null);
+    
+    try {
+      console.log('Starting dry run request...');
+      
+      const response = await fetch('/api/admin/migrate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'dry-run' }),
+        credentials: 'include'
+      });
+      
+      console.log('Dry run response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Dry run response error:', errorText);
+        
+        let errorMessage = 'Failed to run dry run migration';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      const data = await response.json();
+      console.log('Dry run completed successfully:', data);
+      setMigrationResult(data);
+    } catch (error) {
+      console.error('Dry run error details:', {
+        error: error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      setMigrationResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Dry run failed'
+      });
     } finally {
       setIsMigrating(false);
     }
   };
 
-  // Function to check vacant properties migration status
-  const checkVacantMigrationStatus = async () => {
-    setIsCheckingVacant(true);
+  // Function to run actual migration
+  const runMigration = async () => {
+    if (!confirm('Are you sure you want to run the migration? This will modify your database.')) {
+      return;
+    }
+    
+    setIsMigrating(true);
+    setMigrationResult(null);
+    
     try {
-      const response = await fetch('/api/admin/migrate-vacant-properties', {
+      console.log('Starting migration request...');
+      
+      const response = await fetch('/api/admin/migrate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'migrate' }),
+        credentials: 'include'
+      });
+      
+      console.log('Migration response status:', response.status);
+      console.log('Migration response headers:', Object.fromEntries(response.headers.entries()));
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Migration response error:', errorText);
+        
+        let errorMessage = 'Failed to run migration';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+      
+      const data = await response.json();
+      console.log('Migration completed successfully:', data);
+      setMigrationResult(data);
+    } catch (error) {
+      console.error('Migration error details:', {
+        error: error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      setMigrationResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Migration failed'
+      });
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
+  // Function to test admin authentication
+  const testAuthentication = async () => {
+    setIsTesting(true);
+    setTestResult(null);
+    
+    try {
+      console.log('Testing admin authentication...');
+      
+      const response = await fetch('/api/admin/test', {
         method: 'GET',
         credentials: 'include'
       });
       
-      const result = await response.json();
-      setVacantMigrationStatus(result);
+      console.log('Test response status:', response.status);
       
       if (!response.ok) {
-        alert("Error checking database cleanup status: " + (result.error || "Unknown error"));
+        const errorText = await response.text();
+        console.error('Test response error:', errorText);
+        
+        let errorMessage = 'Authentication test failed';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        
+        throw new Error(errorMessage);
       }
+      
+      const data = await response.json();
+      console.log('Authentication test successful:', data);
+      setTestResult(data);
     } catch (error) {
-      console.error("Error checking database cleanup status:", error);
-      alert("Error checking database cleanup status: " + error);
-    } finally {
-      setIsCheckingVacant(false);
-    }
-  };
-
-  // Function to run vacant properties comprehensive cleanup
-  const runVacantMigration = async () => {
-    if (!confirm("Are you sure you want to run the comprehensive database cleanup? This will permanently remove all unnecessary fields from vacant properties and keep only the 17 required fields. This action cannot be undone.")) {
-      return;
-    }
-
-    setIsMigratingVacant(true);
-    try {
-      const response = await fetch('/api/admin/migrate-vacant-properties', {
-        method: 'POST',
-        credentials: 'include'
+      console.error('Authentication test error:', error);
+      setTestResult({
+        success: false,
+        error: error instanceof Error ? error.message : 'Test failed'
       });
-      
-      const result = await response.json();
-      
-      if (response.ok) {
-        alert(`Database cleanup completed successfully! Updated ${result.updated} properties and removed ${result.fieldsRemoved} unnecessary fields.`);
-        setVacantMigrationStatus(result);
-        // Check status again to see the updated state
-        setTimeout(() => {
-          checkVacantMigrationStatus();
-        }, 1000);
-      } else {
-        alert("Database cleanup failed: " + (result.error || "Unknown error"));
-      }
-    } catch (error) {
-      console.error("Error running database cleanup:", error);
-      alert("Error running database cleanup: " + error);
     } finally {
-      setIsMigratingVacant(false);
+      setIsTesting(false);
     }
   };
+
+  // Auto-analyze on component mount
+  useEffect(() => {
+    analyzeDatabase();
+  }, []);
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Data Migration Tools</h1>
-        <p className="text-gray-600">
-          Fix data inconsistencies across the platform. These tools help maintain data integrity and ensure proper field values.
-        </p>
-      </div>
-
-      {/* Franchise Migration Status Card */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 flex items-center">
-          <FaExclamationTriangle className="mr-2 text-yellow-500" />
-          Franchise Migration Status
-        </h2>
-        
-        <div className="flex gap-4 mb-6">
-          <button 
-            onClick={checkMigrationStatus}
-            disabled={isChecking}
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center"
-          >
-            {isChecking ? (
-              <FaSync className="mr-2 animate-spin" />
-            ) : (
-              <FaCheck className="mr-2" />
-            )}
-            {isChecking ? 'Checking...' : 'Check Status'}
-          </button>
-          
-          <button 
-            onClick={runMigration}
-            disabled={isMigrating || !migrationStatus}
-            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 flex items-center"
-          >
-            {isMigrating ? (
-              <FaSync className="mr-2 animate-spin" />
-            ) : (
-              <FaPlay className="mr-2" />
-            )}
-            {isMigrating ? 'Migrating...' : 'Run Migration'}
-          </button>
+    <AdminLayout>
+      <div className="px-4 py-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Database Migration</h1>
+          <p className="text-gray-600">
+            Fix ID conflicts where property ID "1" causes wrong properties to show in wishlists
+          </p>
         </div>
 
-        {migrationStatus && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold mb-3">Current Status:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="bg-blue-100 p-3 rounded">
-                <div className="text-2xl font-bold text-blue-800">{migrationStatus.total || 0}</div>
-                <div className="text-sm text-blue-600">Total Franchises</div>
+        {/* Critical Issue Alert */}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+          <div className="flex items-start">
+            <FaExclamationTriangle className="text-red-500 mr-3 mt-1" size={20} />
+            <div>
+              <h3 className="text-lg font-semibold text-red-800 mb-2">Critical Database Issue Detected</h3>
+              <p className="text-red-700 mb-2">
+                Your database has severe ID conflicts where the same ID exists across multiple collections:
+              </p>
+              <ul className="text-sm text-red-600 space-y-1">
+                <li>• <strong>franchiseProperties[1]</strong> = "LITTLE LEADERS"</li>
+                <li>• <strong>plots[1]</strong> = "Bird Estate" ← This is what you want in wishlist</li>
+                <li>• <strong>preleasedProperties[1]</strong> = "JMD GALLERIA"</li>
+                <li>• <strong>vacantProperties[1]</strong> = "DEFENCE COLONY" ← This shows up instead</li>
+              </ul>
+              <p className="text-red-700 mt-2">
+                <strong>Result:</strong> When wishlist references property ID "1", it shows the wrong property!
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Analysis Results */}
+        {migrationStats && (
+          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Database Analysis Results</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-900">Franchises</h4>
+                <p className="text-2xl font-bold text-blue-700">{migrationStats.franchises.existing}</p>
+                <p className="text-sm text-blue-600">Next ID: {migrationStats.franchises.expected}</p>
               </div>
-              <div className="bg-red-100 p-3 rounded">
-                <div className="text-2xl font-bold text-red-800">{migrationStatus.needsMigration || 0}</div>
-                <div className="text-sm text-red-600">Need Migration</div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-green-900">Plots</h4>
+                <p className="text-2xl font-bold text-green-700">{migrationStats.plots.existing}</p>
+                <p className="text-sm text-green-600">Next ID: {migrationStats.plots.expected}</p>
               </div>
-              <div className="bg-green-100 p-3 rounded">
-                <div className="text-2xl font-bold text-green-800">{(migrationStatus.total || 0) - (migrationStatus.needsMigration || 0)}</div>
-                <div className="text-sm text-green-600">Already Fixed</div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-purple-900">Pre-leased</h4>
+                <p className="text-2xl font-bold text-purple-700">{migrationStats.preleased.existing}</p>
+                <p className="text-sm text-purple-600">Next ID: {migrationStats.preleased.expected}</p>
+              </div>
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-orange-900">Vacant</h4>
+                <p className="text-2xl font-bold text-orange-700">{migrationStats.vacant.existing}</p>
+                <p className="text-sm text-orange-600">Next ID: {migrationStats.vacant.expected}</p>
               </div>
             </div>
             
-            {migrationStatus.needsMigration > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-                <h4 className="font-semibold text-yellow-800 mb-2">Franchises needing migration:</h4>
-                <div className="max-h-40 overflow-y-auto">
-                  {migrationStatus.franchises
-                    .filter((f: any) => f.needsMigration)
-                    .map((franchise: any) => (
-                      <div key={franchise.id} className="text-sm text-yellow-700 mb-1">
-                        ID {franchise.id}: {franchise.name || 'No Name'} 
-                        {franchise.missingName && <span className="text-red-600"> (Missing Name)</span>}
-                        {franchise.missingProduct && <span className="text-red-600"> (Missing Product)</span>}
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-            
-            {migrationStatus.needsMigration === 0 && (
-              <div className="bg-green-50 border border-green-200 rounded p-4">
-                <div className="text-green-800 font-semibold">✅ All franchises have product fields set!</div>
-                <div className="text-green-600 text-sm mt-1">No migration needed.</div>
-              </div>
-            )}
+            <div className="bg-red-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-red-900 mb-2">ID Conflicts Detected</h4>
+              <p className="text-3xl font-bold text-red-700">{migrationStats.totalConflicts}</p>
+              <p className="text-sm text-red-600">Properties with conflicting IDs across collections</p>
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Database Cleanup Status Card */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4 flex items-center">
-          <FaExclamationTriangle className="mr-2 text-orange-500" />
-          Database Schema Cleanup Status
-        </h2>
-        
-        <div className="flex gap-4 mb-6">
-          <button 
-            onClick={checkVacantMigrationStatus}
-            disabled={isCheckingVacant}
-            className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center"
+        {/* Debug Section */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">Debug & Troubleshooting</h3>
+          <p className="text-gray-600 mb-4">
+            If migration is failing, use this test to check authentication and environment setup.
+          </p>
+          
+          <button
+            onClick={testAuthentication}
+            disabled={isTesting}
+            className="flex items-center justify-center px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mb-4"
           >
-            {isCheckingVacant ? (
-              <FaSync className="mr-2 animate-spin" />
+            {isTesting ? (
+              <>
+                <FaSpinner className="animate-spin mr-2" />
+                Testing...
+              </>
             ) : (
-              <FaCheck className="mr-2" />
+              <>
+                <FaCheckCircle className="mr-2" />
+                Test Authentication
+              </>
             )}
-            {isCheckingVacant ? 'Checking...' : 'Check Database Status'}
           </button>
           
-          <button 
-            onClick={runVacantMigration}
-            disabled={isMigratingVacant || !vacantMigrationStatus}
-            className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 flex items-center"
-          >
-            {isMigratingVacant ? (
-              <FaSync className="mr-2 animate-spin" />
-            ) : (
-              <FaPlay className="mr-2" />
-            )}
-            {isMigratingVacant ? 'Cleaning Database...' : 'Clean Database Schema'}
-          </button>
+          {testResult && (
+            <div className={`p-4 rounded-lg ${
+              testResult.success 
+                ? 'bg-green-50 border border-green-200' 
+                : 'bg-red-50 border border-red-200'
+            }`}>
+              <h4 className={`font-semibold mb-2 ${
+                testResult.success ? 'text-green-800' : 'text-red-800'
+              }`}>
+                {testResult.success ? 'Authentication Test Passed' : 'Authentication Test Failed'}
+              </h4>
+              <pre className="text-sm bg-gray-100 p-3 rounded overflow-x-auto">
+                {JSON.stringify(testResult, null, 2)}
+              </pre>
+            </div>
+          )}
         </div>
 
-        {vacantMigrationStatus && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold mb-3">Database Schema Status:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <div className="bg-blue-100 p-3 rounded">
-                <div className="text-2xl font-bold text-blue-800">{vacantMigrationStatus.total || 0}</div>
-                <div className="text-sm text-blue-600">Total Properties</div>
-              </div>
-              <div className="bg-red-100 p-3 rounded">
-                <div className="text-2xl font-bold text-red-800">{vacantMigrationStatus.needsCleanup || 0}</div>
-                <div className="text-sm text-red-600">Need Cleanup</div>
-              </div>
-              <div className="bg-orange-100 p-3 rounded">
-                <div className="text-2xl font-bold text-orange-800">{vacantMigrationStatus.totalUnwantedFields || 0}</div>
-                <div className="text-sm text-orange-600">Unwanted Fields</div>
-              </div>
-              <div className="bg-green-100 p-3 rounded">
-                <div className="text-2xl font-bold text-green-800">{(vacantMigrationStatus.total || 0) - (vacantMigrationStatus.needsCleanup || 0)}</div>
-                <div className="text-sm text-green-600">Schema Clean</div>
+        {/* Action Buttons */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">Migration Actions</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Analyze Button */}
+            <button
+              onClick={analyzeDatabase}
+              disabled={isAnalyzing}
+              className="flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isAnalyzing ? (
+                <>
+                  <FaSpinner className="animate-spin mr-2" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <FaEye className="mr-2" />
+                  Analyze Database
+                </>
+              )}
+            </button>
+
+            {/* Backup Button */}
+            <button
+              onClick={createBackup}
+              disabled={isBackingUp || !analysisComplete}
+              className="flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isBackingUp ? (
+                <>
+                  <FaSpinner className="animate-spin mr-2" />
+                  Creating Backup...
+                </>
+              ) : (
+                <>
+                  <FaDownload className="mr-2" />
+                  Create Backup
+                </>
+              )}
+            </button>
+
+            {/* Dry Run Button */}
+            <button
+              onClick={runDryRun}
+              disabled={isMigrating || !analysisComplete}
+              className="flex items-center justify-center px-4 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isMigrating ? (
+                <>
+                  <FaSpinner className="animate-spin mr-2" />
+                  Running...
+                </>
+              ) : (
+                <>
+                  <FaEye className="mr-2" />
+                  Dry Run
+                </>
+              )}
+            </button>
+
+            {/* Migrate Button */}
+            <button
+              onClick={runMigration}
+              disabled={isMigrating || !analysisComplete}
+              className="flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isMigrating ? (
+                <>
+                  <FaSpinner className="animate-spin mr-2" />
+                  Migrating...
+                </>
+              ) : (
+                <>
+                  <FaPlay className="mr-2" />
+                  Run Migration
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="mt-6 text-sm text-gray-600">
+            <p><strong>Recommended steps:</strong></p>
+            <ol className="list-decimal list-inside space-y-1 mt-2">
+              <li>First, click "Analyze Database" to see current state</li>
+              <li>Create a backup before making any changes</li>
+              <li>Run "Dry Run" to preview what will happen</li>
+              <li>Finally, run the actual migration</li>
+            </ol>
+          </div>
+        </div>
+
+        {/* Results Display */}
+        {migrationResult && (
+          <div className={`border rounded-lg p-6 ${
+            migrationResult.success 
+              ? 'bg-green-50 border-green-200' 
+              : 'bg-red-50 border-red-200'
+          }`}>
+            <div className="flex items-start">
+              {migrationResult.success ? (
+                <FaCheckCircle className="text-green-500 mr-3 mt-1" size={20} />
+              ) : (
+                <FaExclamationTriangle className="text-red-500 mr-3 mt-1" size={20} />
+              )}
+              <div className="flex-1">
+                <h3 className={`text-lg font-semibold mb-2 ${
+                  migrationResult.success ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  {migrationResult.success ? 'Success!' : 'Error'}
+                </h3>
+                <p className={migrationResult.success ? 'text-green-700' : 'text-red-700'}>
+                  {migrationResult.message}
+                </p>
+                
+                {migrationResult.stats && (
+                  <div className="mt-4">
+                    <h4 className="font-semibold mb-2">Migration Statistics:</h4>
+                    <pre className="bg-gray-100 p-3 rounded text-sm overflow-x-auto">
+                      {JSON.stringify(migrationResult.stats, null, 2)}
+                    </pre>
+                  </div>
+                )}
+                
+                {migrationResult.errors && migrationResult.errors.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="font-semibold mb-2">Errors:</h4>
+                    <ul className="space-y-1">
+                      {migrationResult.errors.map((error, index) => (
+                        <li key={index} className="text-sm text-red-600">
+                          • {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
-            
-            {vacantMigrationStatus.needsCleanup > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
-                <h4 className="font-semibold text-yellow-800 mb-2">Properties needing database cleanup:</h4>
-                <div className="mb-3 text-sm text-yellow-700">
-                  <strong>Average unwanted fields per property:</strong> {vacantMigrationStatus.averageUnwantedFieldsPerProperty || 0}
-                </div>
-                <div className="max-h-40 overflow-y-auto">
-                  {vacantMigrationStatus.properties
-                    .filter((p: any) => p.needsCleanup)
-                    .map((property: any) => (
-                      <div key={property.id} className="text-sm text-yellow-700 mb-2 border-l-2 border-yellow-400 pl-2">
-                        <strong>ID {property.id}:</strong> {property.location || 'No Location'} 
-                        <div className="text-xs">
-                          <span className="text-red-600">Fields to remove ({property.unwantedFieldsCount}): </span>
-                          {property.unwantedFields?.slice(0, 3).join(', ') || 'None'}
-                          {property.unwantedFields?.length > 3 && ` +${property.unwantedFields.length - 3} more`}
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-            
-            {vacantMigrationStatus.needsCleanup === 0 && (
-              <div className="bg-green-50 border border-green-200 rounded p-4">
-                <div className="text-green-800 font-semibold">✅ Database schema is clean!</div>
-                <div className="text-green-600 text-sm mt-1">All properties have only the 17 required fields and show "Vacant" as Property Type.</div>
-                <div className="text-green-600 text-xs mt-2">
-                  <strong>Required fields:</strong> {vacantMigrationStatus.requiredFields?.join(', ')}
-                </div>
-              </div>
-            )}
           </div>
         )}
-      </div>
 
-      {/* Instructions Card */}
-      <div className="bg-blue-50 rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4 text-blue-800">Migration Tools Overview</h2>
-        
-        {/* Franchise Migration Instructions */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-blue-700 mb-2">Franchise Migration</h3>
-          <ol className="list-decimal list-inside space-y-2 text-blue-700 text-sm">
-            <li>Click "Check Status" to see which franchises need the product field fixed</li>
-            <li>Review the list of franchises that need migration</li>
-            <li>Click "Run Migration" to automatically fix all missing product fields</li>
-            <li>The migration will set the product field to the franchise name for any missing entries</li>
-          </ol>
-        </div>
-        
-        {/* Database Schema Cleanup Instructions */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-orange-700 mb-2">Database Schema Cleanup</h3>
-          <ol className="list-decimal list-inside space-y-2 text-orange-700 text-sm">
-            <li>Click "Check Database Status" to see which properties have unwanted fields</li>
-            <li>Review the comprehensive cleanup report showing total unwanted fields</li>
-            <li>Click "Clean Database Schema" to permanently remove all unnecessary fields</li>
-            <li>This will keep only the 17 required fields and remove everything else (price, askingPrice, subDistrict, etc.)</li>
-            <li><strong>WARNING:</strong> This action cannot be undone - backup your data if needed</li>
-          </ol>
-        </div>
-        
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="p-4 bg-blue-100 rounded">
-            <h3 className="font-semibold text-blue-800 mb-2">Franchise Migration Fixes:</h3>
-            <ul className="list-disc list-inside text-blue-700 text-sm space-y-1">
-              <li>Missing product names on franchise detail pages</li>
-              <li>Empty product fields in the database</li>
-              <li>Inconsistent product display across franchise listings</li>
-            </ul>
+        {/* Expected Results */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mt-8">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">Expected Results After Migration</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold text-red-600 mb-3">❌ Before Migration (Current Issues)</h4>
+              <ul className="space-y-2 text-sm">
+                <li>• franchiseProperties[1] = "LITTLE LEADERS"</li>
+                <li>• plots[1] = "Bird Estate" ← What you want</li>
+                <li>• preleasedProperties[1] = "JMD GALLERIA"</li>
+                <li>• vacantProperties[1] = "DEFENCE COLONY" ← What shows up</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-green-600 mb-3">✅ After Migration (Fixed)</h4>
+              <ul className="space-y-2 text-sm">
+                <li>• PROP_FRAN_002 = "LITTLE LEADERS"</li>
+                <li>• PROP_PLOT_001 = "Bird Estate" ← Unique!</li>
+                <li>• PROP_PRLS_001 = "JMD GALLERIA"</li>
+                <li>• PROP_VCNT_001 = "DEFENCE COLONY"</li>
+              </ul>
+            </div>
           </div>
           
-          <div className="p-4 bg-orange-100 rounded">
-            <h3 className="font-semibold text-orange-800 mb-2">Database Schema Cleanup Fixes:</h3>
-            <ul className="list-disc list-inside text-orange-700 text-sm space-y-1">
-              <li>Removes "00" issue caused by corrupted price/askingPrice fields</li>
-              <li>Eliminates unwanted subDistrict, title, description fields</li>
-              <li>Cleans obsolete advance, ROI, escalation, lockIn fields</li>
-              <li>Standardizes schema to 17 required fields only</li>
-              <li>Fixes property type consistency across all vacant properties</li>
-            </ul>
+          <div className="mt-6 p-4 bg-green-50 rounded-lg">
+            <p className="text-green-800 font-semibold">
+              🎯 Result: Wishlist item referencing "Bird Estate" will show the correct property!
+            </p>
           </div>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }

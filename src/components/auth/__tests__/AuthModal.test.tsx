@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;
 import { render, screen, fireEvent, waitFor } from '@/test/utils'
 import AuthModal from '../AuthModal'
 
 // Mock child components
-vi.mock('../SignInForm', () => ({
+jest.mock('../SignInForm', () => ({
   default: ({ onSuccess, onSwitchToSignUp }: any) => (
     <div data-testid="sign-in-form">
       <button onClick={onSuccess}>Sign In Success</button>
@@ -12,7 +13,7 @@ vi.mock('../SignInForm', () => ({
   )
 }))
 
-vi.mock('../SignUpForm', () => ({
+jest.mock('../SignUpForm', () => ({
   default: ({ onSuccess, onSwitchToSignIn }: any) => (
     <div data-testid="sign-up-form">
       <button onClick={onSuccess}>Sign Up Success</button>
@@ -22,10 +23,10 @@ vi.mock('../SignUpForm', () => ({
 }))
 
 describe('AuthModal', () => {
-  const mockOnClose = vi.fn()
+  const mockOnClose = jest.fn()
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   it('should not render when isOpen is false', () => {

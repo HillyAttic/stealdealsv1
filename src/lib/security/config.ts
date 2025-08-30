@@ -287,7 +287,7 @@ export const SECURITY_MIDDLEWARE_CONFIG = {
     '/api/user',
     '/api/wishlist',
     '/api/admin',
-    '/dashboard',
+    '/wishlist',
     '/profile'
   ]
 };

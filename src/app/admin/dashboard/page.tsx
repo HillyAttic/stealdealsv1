@@ -6,8 +6,9 @@ import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 import { FaChartBar, FaStore, FaBuilding, FaHome } from 'react-icons/fa';
 import ClientOnly from '@/components/ClientOnly';
-import { preleasedPropertiesRef, vacantPropertiesRef, franchisePropertiesRef } from '@/lib/firebase';
+import { migratedPreleasedRef, migratedVacantRef, migratedFranchiseRef, migratedPlotsRef } from '@/lib/firebase';
 import { get } from 'firebase/database';
+import { RealTimeUserStats } from '@/components/admin/RealTimeUserStats';
 
 // Add global type declaration for the window extension
 declare global {
@@ -43,6 +44,7 @@ function AdminDashboardContent() {
     preleased: 0,
     vacant: 0,
     franchise: 0,
+    plots: 0,
     total: 0
   });
   const [categoryData, setCategoryData] = useState({
@@ -94,32 +96,38 @@ function AdminDashboardContent() {
     }
   };
 
-  // Fetch data from Firebase
+  // Fetch data from Firebase migrated structure
   const fetchData = async () => {
     try {
-      // Get preleased properties count
-      const preleasedSnapshot = await get(preleasedPropertiesRef);
+      // Get preleased properties count from migrated structure
+      const preleasedSnapshot = await get(migratedPreleasedRef);
       const preleasedCount = preleasedSnapshot.exists() ? 
         Object.keys(preleasedSnapshot.val()).length : 0;
       
-      // Get vacant properties count
-      const vacantSnapshot = await get(vacantPropertiesRef);
+      // Get vacant properties count from migrated structure
+      const vacantSnapshot = await get(migratedVacantRef);
       const vacantCount = vacantSnapshot.exists() ? 
         Object.keys(vacantSnapshot.val()).length : 0;
       
-      // Get franchise properties count
-      const franchiseSnapshot = await get(franchisePropertiesRef);
+      // Get franchise properties count from migrated structure
+      const franchiseSnapshot = await get(migratedFranchiseRef);
       const franchiseCount = franchiseSnapshot.exists() ? 
         Object.keys(franchiseSnapshot.val()).length : 0;
       
+      // Get plots count from migrated structure
+      const plotsSnapshot = await get(migratedPlotsRef);
+      const plotsCount = plotsSnapshot.exists() ? 
+        Object.keys(plotsSnapshot.val()).length : 0;
+      
       // Calculate total
-      const totalCount = preleasedCount + vacantCount + franchiseCount;
+      const totalCount = preleasedCount + vacantCount + franchiseCount + plotsCount;
       
       // Update stats
       setStats({
         preleased: preleasedCount,
         vacant: vacantCount,
         franchise: franchiseCount,
+        plots: plotsCount,
         total: totalCount
       });
       
@@ -484,32 +492,8 @@ function AdminDashboardContent() {
             </div>
           </div>
           
-          {/* User Analytics Section */}
-          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold">User Management Overview</h2>
-              <Link 
-                href="/admin/users"
-                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-              >
-                View All Users
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">0</div>
-                <div className="text-sm text-blue-700">Total Users</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">0</div>
-                <div className="text-sm text-green-700">Active Users</div>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">0</div>
-                <div className="text-sm text-purple-700">New This Month</div>
-              </div>
-            </div>
-          </div>
+          {/* Real-time User Analytics Section */}
+          <RealTimeUserStats />
           
           {/* Error message if any */}
           {error && (

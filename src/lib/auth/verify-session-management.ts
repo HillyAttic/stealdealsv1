@@ -199,7 +199,7 @@ export function testMiddlewareLogic(): boolean {
     const token = generateToken(mockUser);
     
     // Test protected path detection
-    const protectedPaths = ['/api/user', '/api/wishlist', '/dashboard', '/profile'];
+    const protectedPaths = ['/api/user', '/api/wishlist', '/wishlist', '/profile'];
     const publicPaths = ['/api/auth/user/login', '/api/properties', '/'];
     
     console.log('✅ Path detection logic verified');

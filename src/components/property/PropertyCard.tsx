@@ -7,6 +7,7 @@ import { FaMapMarkerAlt, FaBuilding, FaRulerCombined } from 'react-icons/fa';
 import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
 import PropertyImage from '@/components/PropertyImage';
+import { useActivity } from '@/hooks/useActivity';
 
 interface Property {
   id: string;
@@ -49,10 +50,22 @@ export function PropertyCard({
   showWishlist = true,
   onClick
 }: PropertyCardProps) {
+  const { logPropertyView } = useActivity();
+
   // Memoized callback to prevent unnecessary re-renders
   const handleAuthRequired = useCallback(() => {
     // No longer needed - auth prompts are disabled
   }, []);
+
+  // Handle property view tracking
+  const handlePropertyView = useCallback(() => {
+    logPropertyView(property.id, {
+      propertyTitle: property.title || property.location,
+      source: 'card',
+      category: property.category,
+      location: property.location
+    });
+  }, [logPropertyView, property.id, property.title, property.location, property.category]);
 
   // Format currency using Indian format
   const formatCurrency = (value: number | string | undefined): string => {
@@ -220,6 +233,7 @@ export function PropertyCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              handlePropertyView(); // Track property view
               if (onClick) onClick();
             }}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center text-xs"
@@ -243,7 +257,7 @@ export function PropertyCard({
   return (
     <>
       {linkPath !== null ? (
-        <Link href={getHref()}>
+        <Link href={getHref()} onClick={handlePropertyView}>
           <CardContent />
         </Link>
       ) : (

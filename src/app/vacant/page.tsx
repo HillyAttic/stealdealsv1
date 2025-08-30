@@ -11,8 +11,7 @@ import { PropertyCard } from '@/components/property';
 import { VacantModal } from '@/components/vacant';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { FaSearch, FaFilter, FaBuilding, FaMapMarkerAlt, FaRulerCombined, FaChevronDown, FaChevronUp, FaSort, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
-import { database, Property, vacantPropertiesRef } from '@/lib/firebase';
-import { ref, onValue } from 'firebase/database';
+import { Property } from '@/lib/firebase';
 import { trackSearch } from '@/lib/activity-tracker';
 
 // Default fallback image
@@ -44,42 +43,28 @@ export default function VacantPropertiesPage() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Load properties from Firebase
+  // Load properties from API
   useEffect(() => {
-    // Set up real-time listener
-    setIsLoading(true);
-    
-    // Reference to vacant properties in Realtime Database
-    const propertiesRef = vacantPropertiesRef;
-    
-    // Set up listener for real-time updates
-    const unsubscribe = onValue(propertiesRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const propertiesList: Property[] = [];
-        snapshot.forEach((childSnapshot) => {
-          const property = { 
-            id: childSnapshot.key, 
-            ...childSnapshot.val() 
-          };
-          propertiesList.push(property as Property);
-        });
-        setProperties(propertiesList);
-      } else {
-        setProperties([]);
+    const loadProperties = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/properties?propertyType=vacant');
+        const data = await response.json();
+        
+        if (response.ok) {
+          setProperties(data.properties || []);
+        } else {
+          throw new Error(data.error || 'Failed to load properties');
+        }
+      } catch (err: any) {
+        console.error("Error fetching vacant properties:", err);
+        setError('Failed to load properties. Please try again later.');
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    }, (error) => {
-      console.error("Error fetching properties:", error);
-      setError('Failed to load properties. Please try again later.');
-      setIsLoading(false);
-    });
-    
-    // Clean up the listener on unmount
-    return () => {
-      // Firebase Realtime DB doesn't need explicit unsubscribe as with Firestore
-      // But we'll implement a cleanup pattern for good practice
-      setProperties([]);
     };
+    
+    loadProperties();
   }, []);
 
   // Handle image error

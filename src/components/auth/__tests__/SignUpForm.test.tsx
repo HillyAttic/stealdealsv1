@@ -1,23 +1,24 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;
 import { render, screen, fireEvent, waitFor } from '@/test/utils'
 import SignUpForm from '../SignUpForm'
 import { mockToast } from '@/test/utils'
 
 // Mock dependencies
-vi.mock('react-hot-toast', () => ({
+jest.mock('react-hot-toast', () => ({
   default: mockToast
 }))
 
-const mockOnSuccess = vi.fn()
-const mockOnSwitchToSignIn = vi.fn()
+const mockOnSuccess = jest.fn()
+const mockOnSwitchToSignIn = jest.fn()
 
 // Mock fetch for API calls
-global.fetch = vi.fn()
+global.fetch = jest.fn()
 
 describe('SignUpForm', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.mocked(global.fetch).mockClear()
+    jest.clearAllMocks()
+    jest.mocked(global.fetch).mockClear()
   })
 
   it('should render sign up form with all fields', () => {
@@ -131,7 +132,7 @@ describe('SignUpForm', () => {
   })
 
   it('should submit form with valid data', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    jest.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({
         success: true,
@@ -181,7 +182,7 @@ describe('SignUpForm', () => {
   })
 
   it('should handle registration error', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    jest.mocked(global.fetch).mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({
         success: false,
@@ -215,7 +216,7 @@ describe('SignUpForm', () => {
   })
 
   it('should show loading state during submission', async () => {
-    vi.mocked(global.fetch).mockImplementationOnce(
+    jest.mocked(global.fetch).mockImplementationOnce(
       () => new Promise(resolve => setTimeout(resolve, 100))
     )
     
@@ -258,13 +259,13 @@ describe('SignUpForm', () => {
 
   it('should handle Google sign up', async () => {
     // Mock Google OAuth success
-    const mockGoogleSignUp = vi.fn().mockResolvedValue({
+    const mockGoogleSignUp = jest.fn().mockResolvedValue({
       user: { id: 'google-id', email: 'google@example.com', name: 'Google User' },
       token: 'google-jwt-token',
       isNewUser: true
     })
     
-    vi.mock('../GoogleAuthButton', () => ({
+    jest.mock('../GoogleAuthButton', () => ({
       default: ({ onSuccess }: { onSuccess: (result: any) => void }) => (
         <button onClick={() => onSuccess(mockGoogleSignUp())}>
           Sign up with Google
@@ -288,7 +289,7 @@ describe('SignUpForm', () => {
   })
 
   it('should handle network errors', async () => {
-    vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'))
+    jest.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'))
     
     render(
       <SignUpForm 
@@ -369,7 +370,7 @@ describe('SignUpForm', () => {
   })
 
   it('should handle form submission with Enter key', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    jest.mocked(global.fetch).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({
         success: true,
@@ -421,7 +422,7 @@ describe('SignUpForm', () => {
   })
 
   it('should handle validation errors from server', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
+    jest.mocked(global.fetch).mockResolvedValueOnce({
       ok: false,
       json: () => Promise.resolve({
         success: false,

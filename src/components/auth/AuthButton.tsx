@@ -37,7 +37,7 @@ const AuthButton: React.FC<AuthButtonProps> = ({ className }) => {
 
   const handleDashboard = () => {
     setIsDropdownOpen(false);
-    router.push('/dashboard');
+    router.push('/wishlist');
   };
 
   const handleAuthSuccess = () => {
@@ -101,7 +101,7 @@ const AuthButton: React.FC<AuthButtonProps> = ({ className }) => {
                   onClick={handleDashboard}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
                 >
-                  Dashboard
+                  My Wishlist
                 </button>
                 <button
                   onClick={handleLogout}

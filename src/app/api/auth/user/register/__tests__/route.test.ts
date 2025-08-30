@@ -1,54 +1,55 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;
 import { NextRequest } from 'next/server'
 import { POST } from '../route'
 
 // Mock dependencies
-vi.mock('@/lib/validations/auth', () => ({
+jest.mock('@/lib/validations/auth', () => ({
   registerSchema: {
-    safeParse: vi.fn()
+    safeParse: jest.fn()
   }
 }))
 
-vi.mock('@/lib/auth/password', () => ({
-  hashPassword: vi.fn()
+jest.mock('@/lib/auth/password', () => ({
+  hashPassword: jest.fn()
 }))
 
-vi.mock('@/lib/database/mock-users', () => ({
-  createUser: vi.fn(),
-  getUserByEmail: vi.fn()
+jest.mock('@/lib/database/mock-users', () => ({
+  createUser: jest.fn(),
+  getUserByEmail: jest.fn()
 }))
 
-vi.mock('@/lib/auth/session', () => ({
-  createSession: vi.fn()
+jest.mock('@/lib/auth/session', () => ({
+  createSession: jest.fn()
 }))
 
-vi.mock('@/lib/security/csrf', () => ({
-  withCSRFProtection: vi.fn((handler) => handler)
+jest.mock('@/lib/security/csrf', () => ({
+  withCSRFProtection: jest.fn((handler) => handler)
 }))
 
-vi.mock('@/lib/security/rate-limit', () => ({
-  applyAuthRateLimit: vi.fn()
+jest.mock('@/lib/security/rate-limit', () => ({
+  applyAuthRateLimit: jest.fn()
 }))
 
-vi.mock('@/lib/security/sanitization', () => ({
-  sanitizeRegistrationData: vi.fn()
+jest.mock('@/lib/security/sanitization', () => ({
+  sanitizeRegistrationData: jest.fn()
 }))
 
-vi.mock('@/lib/security/cookies', () => ({
-  setSessionCookies: vi.fn()
+jest.mock('@/lib/security/cookies', () => ({
+  setSessionCookies: jest.fn()
 }))
 
-vi.mock('@/lib/security/session-timeout', () => ({
-  updateSessionActivity: vi.fn()
+jest.mock('@/lib/security/session-timeout', () => ({
+  updateSessionActivity: jest.fn()
 }))
 
-vi.mock('@/lib/api/error-handler', () => ({
-  withErrorHandling: vi.fn((handler) => handler)
+jest.mock('@/lib/api/error-handler', () => ({
+  withErrorHandling: jest.fn((handler) => handler)
 }))
 
 describe('/api/auth/user/register', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   it('should register a new user successfully', async () => {
@@ -60,14 +61,14 @@ describe('/api/auth/user/register', () => {
 
     // Mock successful validation
     const { registerSchema } = await import('@/lib/validations/auth')
-    vi.mocked(registerSchema.safeParse).mockReturnValue({
+    jest.mocked(registerSchema.safeParse).mockReturnValue({
       success: true,
       data: userData
     })
 
     // Mock rate limiting allows request
     const { applyAuthRateLimit } = await import('@/lib/security/rate-limit')
-    vi.mocked(applyAuthRateLimit).mockReturnValue({
+    jest.mocked(applyAuthRateLimit).mockReturnValue({
       allowed: true,
       remaining: 2,
       resetTime: Date.now() + 60000
@@ -75,15 +76,15 @@ describe('/api/auth/user/register', () => {
 
     // Mock sanitization
     const { sanitizeRegistrationData } = await import('@/lib/security/sanitization')
-    vi.mocked(sanitizeRegistrationData).mockReturnValue(userData)
+    jest.mocked(sanitizeRegistrationData).mockReturnValue(userData)
 
     // Mock user doesn't exist
     const { getUserByEmail } = await import('@/lib/database/mock-users')
-    vi.mocked(getUserByEmail).mockResolvedValue(null)
+    jest.mocked(getUserByEmail).mockResolvedValue(null)
 
     // Mock password hashing
     const { hashPassword } = await import('@/lib/auth/password')
-    vi.mocked(hashPassword).mockResolvedValue('hashed-password')
+    jest.mocked(hashPassword).mockResolvedValue('hashed-password')
 
     // Mock user creation
     const { createUser } = await import('@/lib/database/mock-users')
@@ -111,11 +112,11 @@ describe('/api/auth/user/register', () => {
         }
       }
     }
-    vi.mocked(createUser).mockResolvedValue(mockUser)
+    jest.mocked(createUser).mockResolvedValue(mockUser)
 
     // Mock session creation
     const { createSession } = await import('@/lib/auth/session')
-    vi.mocked(createSession).mockReturnValue('jwt-token')
+    jest.mocked(createSession).mockReturnValue('jwt-token')
 
     const request = new NextRequest('http://localhost:3000/api/auth/user/register', {
       method: 'POST',
@@ -148,7 +149,7 @@ describe('/api/auth/user/register', () => {
 
     // Mock rate limiting allows request
     const { applyAuthRateLimit } = await import('@/lib/security/rate-limit')
-    vi.mocked(applyAuthRateLimit).mockReturnValue({
+    jest.mocked(applyAuthRateLimit).mockReturnValue({
       allowed: true,
       remaining: 2,
       resetTime: Date.now() + 60000
@@ -156,7 +157,7 @@ describe('/api/auth/user/register', () => {
 
     // Mock validation failure
     const { registerSchema } = await import('@/lib/validations/auth')
-    vi.mocked(registerSchema.safeParse).mockReturnValue({
+    jest.mocked(registerSchema.safeParse).mockReturnValue({
       success: false,
       error: {
         errors: [
@@ -191,7 +192,7 @@ describe('/api/auth/user/register', () => {
 
     // Mock rate limiting allows request
     const { applyAuthRateLimit } = await import('@/lib/security/rate-limit')
-    vi.mocked(applyAuthRateLimit).mockReturnValue({
+    jest.mocked(applyAuthRateLimit).mockReturnValue({
       allowed: true,
       remaining: 2,
       resetTime: Date.now() + 60000
@@ -199,18 +200,18 @@ describe('/api/auth/user/register', () => {
 
     // Mock successful validation
     const { registerSchema } = await import('@/lib/validations/auth')
-    vi.mocked(registerSchema.safeParse).mockReturnValue({
+    jest.mocked(registerSchema.safeParse).mockReturnValue({
       success: true,
       data: userData
     })
 
     // Mock sanitization
     const { sanitizeRegistrationData } = await import('@/lib/security/sanitization')
-    vi.mocked(sanitizeRegistrationData).mockReturnValue(userData)
+    jest.mocked(sanitizeRegistrationData).mockReturnValue(userData)
 
     // Mock existing user
     const { getUserByEmail } = await import('@/lib/database/mock-users')
-    vi.mocked(getUserByEmail).mockResolvedValue({
+    jest.mocked(getUserByEmail).mockResolvedValue({
       id: 'existing-user',
       email: userData.email,
       name: 'Existing User'
@@ -240,7 +241,7 @@ describe('/api/auth/user/register', () => {
 
     // Mock rate limiting blocks request
     const { applyAuthRateLimit } = await import('@/lib/security/rate-limit')
-    vi.mocked(applyAuthRateLimit).mockReturnValue({
+    jest.mocked(applyAuthRateLimit).mockReturnValue({
       allowed: false,
       remaining: 0,
       resetTime: Date.now() + 60000,
@@ -272,7 +273,7 @@ describe('/api/auth/user/register', () => {
 
     // Mock rate limiting allows request
     const { applyAuthRateLimit } = await import('@/lib/security/rate-limit')
-    vi.mocked(applyAuthRateLimit).mockReturnValue({
+    jest.mocked(applyAuthRateLimit).mockReturnValue({
       allowed: true,
       remaining: 2,
       resetTime: Date.now() + 60000
@@ -280,18 +281,18 @@ describe('/api/auth/user/register', () => {
 
     // Mock successful validation
     const { registerSchema } = await import('@/lib/validations/auth')
-    vi.mocked(registerSchema.safeParse).mockReturnValue({
+    jest.mocked(registerSchema.safeParse).mockReturnValue({
       success: true,
       data: userData
     })
 
     // Mock sanitization
     const { sanitizeRegistrationData } = await import('@/lib/security/sanitization')
-    vi.mocked(sanitizeRegistrationData).mockReturnValue(userData)
+    jest.mocked(sanitizeRegistrationData).mockReturnValue(userData)
 
     // Mock database error
     const { getUserByEmail } = await import('@/lib/database/mock-users')
-    vi.mocked(getUserByEmail).mockRejectedValue(new Error('Database connection failed'))
+    jest.mocked(getUserByEmail).mockRejectedValue(new Error('Database connection failed'))
 
     const request = new NextRequest('http://localhost:3000/api/auth/user/register', {
       method: 'POST',

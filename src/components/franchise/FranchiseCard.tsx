@@ -55,11 +55,8 @@ export function FranchiseCard({
   showWishlist = true,
   onOpenModal
 }: FranchiseCardProps) {
-  // Counter for generating consistent IDs
-  let franchiseIdCounter = 0;
-  
-  // Generate a consistent ID for this franchise
-  const franchiseId = franchise.id || `franchise-${++franchiseIdCounter}`;
+  // Generate a consistent ID for this franchise (same logic as FranchiseModal)
+  const franchiseId = franchise.id || `franchise-${franchise.name?.replace(/\s+/g, '-').toLowerCase()}-${franchise.industry?.replace(/\s+/g, '-').toLowerCase()}`;
 
   // Gated content state
   const { isContentUnlocked, unlockContent } = useGatedContent('franchise');
@@ -74,20 +71,25 @@ export function FranchiseCard({
 
   // Format the investment amount to show as lakhs or crores
   const formatInvestment = (amount: number | string | undefined) => {
-    if (amount === undefined || amount === null) {
-      return "₹0";
+    if (amount === undefined || amount === null || amount === '') {
+      return "Contact for details";
     }
     
-    // If it's already a string with text (like "20 LACS"), return as is
+    // If it's already a string with text (like "20 LACS"), add currency symbol and return
+    if (typeof amount === 'string' && (amount.includes('LACS') || amount.includes('CR') || amount.includes('LAKHS') || amount.includes('CRORE'))) {
+      return `₹${amount}`;
+    }
+    
+    // If it's a string with text but no units, return as is with currency
     if (typeof amount === 'string' && isNaN(Number(amount))) {
-      return amount;
+      return `₹${amount}`;
     }
     
     // Convert to number for formatting
     const numAmount = typeof amount === 'string' ? Number(amount) : amount;
     
     if (isNaN(numAmount)) {
-      return "₹0";
+      return "Contact for details";
     }
     
     if (numAmount >= 10000000) {
@@ -151,7 +153,7 @@ export function FranchiseCard({
           <img 
             src={franchise.image || defaultImage}
             alt={franchise.name}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 bg-gray-50"
           />
           {franchise.status === 'Limited' && (
             <div className="absolute top-4 left-4 bg-highlight text-primary px-3 py-1 rounded-md text-sm font-medium">
@@ -208,11 +210,14 @@ export function FranchiseCard({
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div className="flex items-center text-sm text-gray-700">
             <FaMoneyBillWave className="mr-2 text-secondary" />
-            <span>
-              {franchise.maxInvestment && franchise.maxInvestment !== "" 
-                ? `${formatInvestment(franchise.minInvestment)} - ${formatInvestment(franchise.maxInvestment)}`
-                : formatInvestment(franchise.minInvestment || franchise.investment)}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500">Total Investment</span>
+              <span className="font-medium">
+                {franchise.maxInvestment && franchise.maxInvestment !== "" && franchise.maxInvestment !== franchise.minInvestment
+                  ? `${formatInvestment(franchise.minInvestment)} - ${formatInvestment(franchise.maxInvestment)}`
+                  : formatInvestment(franchise.minInvestment || franchise.investment)}
+              </span>
+            </div>
           </div>
           <div className="flex items-center text-sm text-gray-700">
             <FaChartLine className="mr-2 text-accent" />

@@ -74,12 +74,23 @@ export const wishlistItemSchema = z.object({
 
 // Activity tracking validation schemas
 export const activitySchema = z.object({
-  type: z.enum(['property_view', 'search', 'wishlist_add', 'wishlist_remove', 'contact_inquiry']),
+  type: z.enum(['property_view', 'search', 'wishlist_add', 'wishlist_remove', 'contact_inquiry', 'filter_apply', 'property_share']),
   propertyId: z.string().optional(),
   metadata: z.record(z.any()).default({}),
   sessionId: z.string().min(1, 'Session ID is required'),
-  ipAddress: z.string().ip('Invalid IP address'),
-  userAgent: z.string().min(1, 'User agent is required')
+  ipAddress: z.string().ip('Invalid IP address').optional(),
+  userAgent: z.string().min(1, 'User agent is required').optional()
+});
+
+export const activityQuerySchema = z.object({
+  endpoint: z.enum(['paginated', 'views', 'searches', 'engagement', 'stats', 'aggregation']).optional(),
+  type: z.enum(['property_view', 'search', 'wishlist_add', 'wishlist_remove', 'contact_inquiry', 'filter_apply', 'property_share']).optional(),
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(50),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  propertyId: z.string().optional(),
+  groupBy: z.enum(['day', 'hour', 'week']).optional()
 });
 
 // Search query validation schema

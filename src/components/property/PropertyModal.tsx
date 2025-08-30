@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { FaTimes, FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaRulerCombined, FaBuilding, FaPhone, FaUser } from 'react-icons/fa';
 import PropertyImage from '@/components/PropertyImage';
 import { Property } from '@/lib/firebase';
+import { useActivity } from '@/hooks/useActivity';
 
 interface PropertyModalProps {
   property: Property | null;
@@ -13,11 +14,24 @@ interface PropertyModalProps {
 
 export function PropertyModal({ property, isOpen, onClose }: PropertyModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const { logPropertyView } = useActivity();
 
   // Reset image index when property changes
   useEffect(() => {
     setCurrentImageIndex(0);
   }, [property]);
+
+  // Track property view when modal opens
+  useEffect(() => {
+    if (isOpen && property) {
+      logPropertyView(property.id, {
+        propertyTitle: property.title || property.location,
+        source: 'modal',
+        category: property.category,
+        location: property.location
+      });
+    }
+  }, [isOpen, property, logPropertyView]);
 
   // Handle escape key press and header visibility
   useEffect(() => {

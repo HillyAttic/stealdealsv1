@@ -3,9 +3,43 @@
 import { useState } from 'react';
 import { FaSearch, FaMapMarkerAlt, FaHome, FaBuilding, FaDollarSign, FaArrowRight, FaListUl } from 'react-icons/fa';
 import Link from 'next/link';
+import { useActivity } from '@/hooks/useActivity';
 
 const Hero = () => {
   const [searchType, setSearchType] = useState('buy');
+  const [location, setLocation] = useState('');
+  const [propertyType, setPropertyType] = useState('');
+  const [priceRange, setPriceRange] = useState('');
+  const { logSearch } = useActivity();
+
+  // Handle search functionality
+  const handleSearch = async () => {
+    // Create search query
+    const searchQuery = [location, propertyType, priceRange].filter(Boolean).join(' ');
+    
+    if (!searchQuery.trim()) {
+      // If no search criteria, still log the search attempt
+      await logSearch('empty search', {
+        searchType,
+        source: 'hero_search',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    // Log the search activity
+    await logSearch(searchQuery, {
+      searchType,
+      location: location || undefined,
+      propertyType: propertyType || undefined,
+      priceRange: priceRange || undefined,
+      source: 'hero_search',
+      timestamp: new Date().toISOString()
+    });
+
+    // Here you would typically navigate to search results or trigger search
+    console.log('Search performed:', { searchType, location, propertyType, priceRange });
+  };
   
   // Hero background style
   const backgroundStyle = {
@@ -88,6 +122,8 @@ const Hero = () => {
                   <input
                     type="text"
                     placeholder="City, Neighborhood"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
                     className="w-full py-3 px-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
                   />
                 </div>
@@ -97,12 +133,16 @@ const Hero = () => {
                 <label className="block text-gray-700 text-sm font-medium mb-2">Property Type</label>
                 <div className="relative">
                   <FaHome className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <select className="w-full py-3 px-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 appearance-none">
-                    <option>Any Type</option>
-                    <option>House</option>
-                    <option>Apartment</option>
-                    <option>Villa</option>
-                    <option>Office</option>
+                  <select 
+                    value={propertyType}
+                    onChange={(e) => setPropertyType(e.target.value)}
+                    className="w-full py-3 px-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 appearance-none"
+                  >
+                    <option value="">Any Type</option>
+                    <option value="house">House</option>
+                    <option value="apartment">Apartment</option>
+                    <option value="villa">Villa</option>
+                    <option value="office">Office</option>
                   </select>
                 </div>
               </div>
@@ -111,17 +151,25 @@ const Hero = () => {
                 <label className="block text-gray-700 text-sm font-medium mb-2">Price Range</label>
                 <div className="relative">
                   <FaDollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <select className="w-full py-3 px-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 appearance-none">
-                    <option>Any Price</option>
-                    <option>₹10L - ₹50L</option>
-                    <option>₹50L - ₹1Cr</option>
-                    <option>₹1Cr - ₹2Cr</option>
-                    <option>₹2Cr+</option>
+                  <select 
+                    value={priceRange}
+                    onChange={(e) => setPriceRange(e.target.value)}
+                    className="w-full py-3 px-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 appearance-none"
+                  >
+                    <option value="">Any Price</option>
+                    <option value="10L-50L">₹10L - ₹50L</option>
+                    <option value="50L-1Cr">₹50L - ₹1Cr</option>
+                    <option value="1Cr-2Cr">₹1Cr - ₹2Cr</option>
+                    <option value="2Cr+">₹2Cr+</option>
                   </select>
                 </div>
               </div>
               
-              <button className="bg-blue-900 text-white py-3 px-6 rounded-md hover:bg-blue-800 transition-colors flex items-center justify-center font-medium self-end mt-7">
+              <button 
+                type="button"
+                onClick={handleSearch}
+                className="bg-blue-900 text-white py-3 px-6 rounded-md hover:bg-blue-800 transition-colors flex items-center justify-center font-medium self-end mt-7"
+              >
                 <FaSearch className="mr-2" />
                 Search
               </button>

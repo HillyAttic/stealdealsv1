@@ -1,4 +1,4 @@
-import { UserActivity, PropertyView, SearchQuery, EngagementData, UserAnalytics, PropertyTypeStats, LocationStats, DailyActivity, ConversionData } from '@/types/auth';
+import { UserActivity, PropertyView, SearchQuery, EngagementData, UserAnalytics, PropertyTypeStats, LocationStats, DailyActivity, ConversionData, ActivityStats, ActivityAggregation, PaginatedActivities, ActivityType } from '@/types/auth';
 import { getPropertyById } from '@/lib/firebase';
 
 // In-memory activity storage for testing (replace with real database in production)
@@ -107,6 +107,72 @@ function initializeTestActivityData() {
       sessionId: 'session-4',
       ipAddress: '192.168.1.2',
       userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+    },
+    
+    // Additional test activities for new types
+    {
+      id: '10',
+      userId: '2',
+      type: 'filter_apply',
+      metadata: { 
+        filters: { 
+          priceRange: '1000000-5000000', 
+          propertyType: 'apartment', 
+          location: 'mumbai' 
+        },
+        resultsCount: 12
+      },
+      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
+      sessionId: 'session-1',
+      ipAddress: '192.168.1.1',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    },
+    {
+      id: '11',
+      userId: '2',
+      type: 'property_share',
+      propertyId: 'prop-1',
+      metadata: { 
+        propertyTitle: 'Luxury Apartment in Mumbai',
+        shareMethod: 'email',
+        recipient: 'friend@example.com'
+      },
+      timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+      sessionId: 'session-1',
+      ipAddress: '192.168.1.1',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    },
+    {
+      id: '12',
+      userId: '3',
+      type: 'filter_apply',
+      metadata: { 
+        filters: { 
+          propertyType: 'office', 
+          location: 'bangalore',
+          area: '1000-5000'
+        },
+        resultsCount: 8
+      },
+      timestamp: new Date(Date.now() - 50 * 60 * 1000), // 50 minutes ago
+      sessionId: 'session-3',
+      ipAddress: '192.168.1.2',
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+    },
+    {
+      id: '13',
+      userId: '3',
+      type: 'property_share',
+      propertyId: 'prop-3',
+      metadata: { 
+        propertyTitle: 'Office Space in Bangalore',
+        shareMethod: 'whatsapp',
+        recipient: '+91-9876543210'
+      },
+      timestamp: new Date(Date.now() - 25 * 60 * 1000), // 25 minutes ago
+      sessionId: 'session-3',
+      ipAddress: '192.168.1.2',
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
     }
   ];
   
@@ -117,7 +183,7 @@ function initializeTestActivityData() {
     activities.set(activity.userId, userActivities);
   });
   
-  nextActivityId = 10;
+  nextActivityId = 14;
 }
 
 // Initialize test data
@@ -463,6 +529,315 @@ export async function getActivityStatistics(): Promise<{
     };
   } catch (error) {
     console.error('Error getting activity statistics:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get paginated user activity history with filtering
+ */
+export async function getPaginatedUserActivity(
+  userId: string,
+  options: {
+    page?: number;
+    limit?: number;
+    type?: ActivityType;
+    startDate?: Date;
+    endDate?: Date;
+    propertyId?: string;
+  } = {}
+): Promise<PaginatedActivities> {
+  try {
+    const { page = 1, limit = 50, type, startDate, endDate, propertyId } = options;
+    const userActivities = activities.get(userId) || [];
+    
+    // Apply filters
+    let filteredActivities = userActivities.filter(activity => {
+      if (type && activity.type !== type) return false;
+      if (startDate && activity.timestamp < startDate) return false;
+      if (endDate && activity.timestamp > endDate) return false;
+      if (propertyId && activity.propertyId !== propertyId) return false;
+      return true;
+    });
+    
+    // Sort by most recent first
+    filteredActivities = filteredActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    
+    const total = filteredActivities.length;
+    const totalPages = Math.ceil(total / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    
+    const paginatedActivities = filteredActivities.slice(startIndex, endIndex);
+    
+    return {
+      activities: paginatedActivities,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
+  } catch (error) {
+    console.error('Error getting paginated user activity:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get user activity statistics
+ */
+export async function getUserActivityStats(userId: string): Promise<ActivityStats> {
+  try {
+    const userActivities = activities.get(userId) || [];
+    
+    // Basic counts
+    const totalActivities = userActivities.length;
+    const totalViews = userActivities.filter(a => a.type === 'property_view').length;
+    const wishlistItems = userActivities.filter(a => a.type === 'wishlist_add').length;
+    
+    // Recent activities (last 10)
+    const recentActivities = userActivities
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, 10);
+    
+    // Top viewed properties
+    const propertyViewCounts = new Map<string, number>();
+    const propertyDetails = new Map<string, any>();
+    
+    for (const activity of userActivities) {
+      if (activity.type === 'property_view' && activity.propertyId) {
+        propertyViewCounts.set(activity.propertyId, (propertyViewCounts.get(activity.propertyId) || 0) + 1);
+        
+        if (!propertyDetails.has(activity.propertyId)) {
+          const property = await getPropertyById(activity.propertyId);
+          if (property) {
+            propertyDetails.set(activity.propertyId, {
+              title: property.title,
+              location: property.location,
+              price: property.price,
+              imageUrl: property.images?.[0] || '',
+              type: property.category || 'Unknown'
+            });
+          }
+        }
+      }
+    }
+    
+    const topViewedProperties = Array.from(propertyViewCounts.entries())
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([propertyId, viewCount]) => ({
+        propertyId,
+        viewCount,
+        property: propertyDetails.get(propertyId) || {
+          title: 'Unknown Property',
+          location: 'Unknown',
+          price: 0,
+          imageUrl: '',
+          type: 'Unknown'
+        }
+      }));
+    
+    return {
+      totalViews,
+      wishlistItems,
+      totalActivities,
+      recentActivities,
+      topViewedProperties
+    };
+  } catch (error) {
+    console.error('Error getting user activity stats:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get comprehensive activity aggregation data
+ */
+export async function getActivityAggregation(
+  options: {
+    userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    groupBy?: 'day' | 'hour' | 'week';
+  } = {}
+): Promise<ActivityAggregation> {
+  try {
+    const { userId, startDate, endDate, groupBy = 'day' } = options;
+    
+    // Get activities to analyze
+    let allActivities: UserActivity[] = [];
+    if (userId) {
+      allActivities = activities.get(userId) || [];
+    } else {
+      for (const userActivities of activities.values()) {
+        allActivities.push(...userActivities);
+      }
+    }
+    
+    // Apply date filters
+    if (startDate || endDate) {
+      allActivities = allActivities.filter(activity => {
+        if (startDate && activity.timestamp < startDate) return false;
+        if (endDate && activity.timestamp > endDate) return false;
+        return true;
+      });
+    }
+    
+    const totalActivities = allActivities.length;
+    
+    // Activities by type
+    const activitiesByType: Record<ActivityType, number> = {
+      property_view: 0,
+      wishlist_add: 0,
+      wishlist_remove: 0,
+      search: 0,
+      filter_apply: 0,
+      contact_inquiry: 0,
+      property_share: 0
+    };
+    
+    allActivities.forEach(activity => {
+      activitiesByType[activity.type] = (activitiesByType[activity.type] || 0) + 1;
+    });
+    
+    // Activities by time period
+    const activitiesByDay: Array<{
+      date: string;
+      count: number;
+      types: Record<ActivityType, number>;
+    }> = [];
+    
+    const activitiesByHour: Array<{
+      hour: number;
+      count: number;
+    }> = [];
+    
+    if (groupBy === 'day') {
+      const dayMap = new Map<string, { count: number; types: Record<ActivityType, number> }>();
+      
+      allActivities.forEach(activity => {
+        const dateStr = activity.timestamp.toISOString().split('T')[0];
+        if (!dayMap.has(dateStr)) {
+          dayMap.set(dateStr, {
+            count: 0,
+            types: {
+              property_view: 0,
+              wishlist_add: 0,
+              wishlist_remove: 0,
+              search: 0,
+              filter_apply: 0,
+              contact_inquiry: 0,
+              property_share: 0
+            }
+          });
+        }
+        const dayData = dayMap.get(dateStr)!;
+        dayData.count++;
+        dayData.types[activity.type]++;
+      });
+      
+      dayMap.forEach((data, date) => {
+        activitiesByDay.push({ date, ...data });
+      });
+      
+      activitiesByDay.sort((a, b) => a.date.localeCompare(b.date));
+    }
+    
+    if (groupBy === 'hour') {
+      const hourMap = new Map<number, number>();
+      
+      allActivities.forEach(activity => {
+        const hour = activity.timestamp.getHours();
+        hourMap.set(hour, (hourMap.get(hour) || 0) + 1);
+      });
+      
+      for (let hour = 0; hour < 24; hour++) {
+        activitiesByHour.push({
+          hour,
+          count: hourMap.get(hour) || 0
+        });
+      }
+    }
+    
+    // Top properties
+    const propertyViewCounts = new Map<string, number>();
+    allActivities
+      .filter(a => a.type === 'property_view' && a.propertyId)
+      .forEach(activity => {
+        propertyViewCounts.set(activity.propertyId!, (propertyViewCounts.get(activity.propertyId!) || 0) + 1);
+      });
+    
+    const topProperties: Array<{
+      propertyId: string;
+      viewCount: number;
+      title?: string;
+    }> = [];
+    
+    const sortedProperties = Array.from(propertyViewCounts.entries())
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10);
+    
+    for (const [propertyId, viewCount] of sortedProperties) {
+      const property = await getPropertyById(propertyId);
+      topProperties.push({
+        propertyId,
+        viewCount,
+        title: property?.title
+      });
+    }
+    
+    // User engagement metrics
+    const sessions = new Map<string, UserActivity[]>();
+    allActivities.forEach(activity => {
+      const sessionActivities = sessions.get(activity.sessionId) || [];
+      sessionActivities.push(activity);
+      sessions.set(activity.sessionId, sessionActivities);
+    });
+    
+    let totalSessionDuration = 0;
+    let totalActivitiesInSessions = 0;
+    const uniqueUsers = new Set<string>();
+    const returningUsers = new Set<string>();
+    
+    sessions.forEach(sessionActivities => {
+      if (sessionActivities.length > 1) {
+        const sortedActivities = sessionActivities.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        const duration = sortedActivities[sortedActivities.length - 1].timestamp.getTime() - sortedActivities[0].timestamp.getTime();
+        totalSessionDuration += duration;
+      }
+      
+      totalActivitiesInSessions += sessionActivities.length;
+      
+      // Track unique and returning users
+      const userId = sessionActivities[0].userId;
+      if (uniqueUsers.has(userId)) {
+        returningUsers.add(userId);
+      } else {
+        uniqueUsers.add(userId);
+      }
+    });
+    
+    const userEngagement = {
+      averageSessionDuration: sessions.size > 0 ? totalSessionDuration / sessions.size / 1000 : 0, // in seconds
+      averageActivitiesPerSession: sessions.size > 0 ? totalActivitiesInSessions / sessions.size : 0,
+      returnUserRate: uniqueUsers.size > 0 ? (returningUsers.size / uniqueUsers.size) * 100 : 0
+    };
+    
+    return {
+      totalActivities,
+      activitiesByType,
+      activitiesByDay,
+      activitiesByHour,
+      topProperties,
+      userEngagement
+    };
+  } catch (error) {
+    console.error('Error getting activity aggregation:', error);
     throw error;
   }
 }

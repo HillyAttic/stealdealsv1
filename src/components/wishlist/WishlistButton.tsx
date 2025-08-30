@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
-import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useAuth } from '@clerk/nextjs';
 import { useWishlist } from '@/hooks/useWishlist';
-import { trackWishlistAdd, trackWishlistRemove } from '@/lib/activity-tracker';
+import { useActivity } from '@/hooks/useActivity';
 
 interface WishlistButtonProps {
   propertyId: string;
@@ -15,6 +15,7 @@ interface WishlistButtonProps {
   onWishlistChange?: (inWishlist: boolean) => void;
 }
 
+
 export function WishlistButton({ 
   propertyId, 
   className = '', 
@@ -23,11 +24,20 @@ export function WishlistButton({
   onAuthRequired,
   onWishlistChange
 }: WishlistButtonProps) {
-  const { isAuthenticated } = useAuthContext();
-  const { isInWishlist, toggleWishlist, isLoading } = useWishlist();
-  const [isToggling, setIsToggling] = useState(false);
+  const { isSignedIn, userId } = useAuth();
+  const { 
+    isInWishlist, 
+    toggleWishlist, 
+    isLoading, 
+    error, 
+    clearError,
+    isOperationLoading 
+  } = useWishlist();
+  const { logWishlistAdd, logWishlistRemove } = useActivity();
+  const [showError, setShowError] = useState(false);
 
   const inWishlist = isInWishlist(propertyId);
+  const isOperationInProgress = isOperationLoading(propertyId);
 
   // Size configurations
   const sizeConfig = {
@@ -53,35 +63,52 @@ export function WishlistButton({
     if (onWishlistChange) {
       onWishlistChange(inWishlist);
     }
-  }, [inWishlist]);
+  }, [inWishlist, onWishlistChange]);
+
+  // Handle error display
+  useEffect(() => {
+    if (error) {
+      setShowError(true);
+      const timer = setTimeout(() => {
+        setShowError(false);
+        clearError();
+      }, 3000); // Show error for 3 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, clearError]);
 
   // Handle wishlist toggle
   const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // Check if user is authenticated - simply return without showing auth prompt
-    if (!isAuthenticated) {
+    // Check if user is signed in - redirect to sign in if not
+    if (!isSignedIn) {
+      // Redirect to sign-in page instead of showing modal
+      window.location.href = '/sign-in?redirect_url=' + encodeURIComponent(window.location.href);
       return;
     }
 
-    setIsToggling(true);
+    // Don't allow multiple operations on the same property
+    if (isOperationInProgress) {
+      return;
+    }
 
     try {
+      const wasInWishlist = inWishlist;
       const success = await toggleWishlist(propertyId);
       
       if (success) {
-        // Track successful wishlist action
-        if (inWishlist) {
-          trackWishlistRemove(propertyId);
+        // Track successful wishlist action with new activity system
+        if (wasInWishlist) {
+          await logWishlistRemove(propertyId);
         } else {
-          trackWishlistAdd(propertyId);
+          await logWishlistAdd(propertyId);
         }
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
-    } finally {
-      setIsToggling(false);
     }
   };
 
@@ -89,47 +116,63 @@ export function WishlistButton({
   const isActive = inWishlist;
 
   return (
-    <button
-      onClick={handleToggle}
-      disabled={isToggling}
-      className={`
-        inline-flex items-center justify-center
-        ${config.button}
-        rounded-full
-        transition-all duration-200
-        ${isActive 
-          ? 'bg-red-500 text-white hover:bg-red-600 shadow-md' 
-          : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200 hover:border-gray-300'
-        }
-        ${isToggling ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}
-        ${className}
-      `}
-      title={
-        !isAuthenticated 
-          ? 'Sign in to add to wishlist'
-          : isActive 
-            ? 'Remove from wishlist' 
-            : 'Add to wishlist'
-      }
-    >
-      {isToggling ? (
-        <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${config.icon}`}>
-          <div className="w-4 h-4"></div>
-        </div>
-      ) : (
-        <>
-          {isActive ? (
-            <FaHeart className={`${config.icon} ${showText ? 'mr-2' : ''}`} />
+    <>
+      <div className="relative">
+        <button
+          onClick={handleToggle}
+          disabled={isOperationInProgress || isLoading}
+          className={`
+            inline-flex items-center justify-center
+            ${config.button}
+            rounded-full
+            transition-all duration-200
+            ${isActive 
+              ? 'bg-red-500 text-white hover:bg-red-600 shadow-md' 
+              : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200 hover:border-gray-300'
+            }
+            ${isOperationInProgress || isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}
+            ${showError ? 'ring-2 ring-red-300' : ''}
+            ${!isSignedIn ? 'hover:bg-blue-50 hover:border-blue-300' : ''}
+            ${className}
+          `}
+          title={
+            !isSignedIn
+              ? 'Sign in to save to wishlist'
+              : isOperationInProgress
+              ? 'Processing...'
+              : isActive 
+                ? 'Remove from wishlist' 
+                : 'Add to wishlist'
+          }
+        >
+          {isOperationInProgress ? (
+            <div className={`animate-spin rounded-full border-2 border-current border-t-transparent ${config.icon}`}>
+              <div className="w-4 h-4"></div>
+            </div>
           ) : (
-            <FaRegHeart className={`${config.icon} ${showText ? 'mr-2' : ''}`} />
+            <>
+              {isActive && isSignedIn ? (
+                <FaHeart className={`${config.icon} ${showText ? 'mr-2' : ''}`} />
+              ) : (
+                <FaRegHeart className={`${config.icon} ${showText ? 'mr-2' : ''}`} />
+              )}
+              {showText && (
+                <span className={`font-medium ${config.text}`}>
+                  {!isSignedIn ? 'Sign in to Save' : isActive ? 'Saved' : 'Save'}
+                </span>
+              )}
+            </>
           )}
-          {showText && (
-            <span className={`font-medium ${config.text}`}>
-              {isActive ? 'Saved' : 'Save'}
-            </span>
-          )}
-        </>
-      )}
-    </button>
+        </button>
+        
+        {/* Error tooltip */}
+        {showError && error && (
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-red-600 text-white text-xs rounded whitespace-nowrap z-10">
+            {error}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-red-600"></div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

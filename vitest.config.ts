@@ -1,4 +1,5 @@
 /// <reference types="vitest" />
+/// <reference types="@testing-library/jest-dom" />
 import { defineConfig } from 'vitest/config'
 import { resolve } from 'path'
 
@@ -9,6 +10,9 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['node_modules', 'dist', '.next'],
+    typecheck: {
+      tsconfig: './tsconfig.test.json'
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -38,7 +42,7 @@ export default defineConfig({
   // Disable PostCSS for tests
   css: {
     modules: {
-      classNameStrategy: 'non-scoped'
+      localsConvention: 'camelCase'
     }
   },
   esbuild: {

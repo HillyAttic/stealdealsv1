@@ -8,13 +8,14 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import {  } from '@jest/globals';
+const vi = jest;;
 import Header from '../components/Header';
 import Hero from '../components/Hero';
 import Home from '../app/page';
 
 // Mock Next.js router
-vi.mock('next/navigation', () => ({
+jest.mock('next/navigation', () => ({
   usePathname: () => '/',
   useSearchParams: () => ({
     get: () => null
@@ -22,12 +23,12 @@ vi.mock('next/navigation', () => ({
 }));
 
 // Mock Next.js Image component
-vi.mock('next/image', () => ({
+jest.mock('next/image', () => ({
   default: ({ src, alt, ...props }: any) => <img src={src} alt={alt} {...props} />
 }));
 
 // Mock Next.js Link component
-vi.mock('next/link', () => ({
+jest.mock('next/link', () => ({
   default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>
 }));
 
@@ -420,7 +421,7 @@ describe('Responsive Behavior Tests', () => {
       setViewport(375, 667);
       
       // Mock the ClientOnly component to render immediately
-      vi.mock('../components/ClientOnly', () => ({
+      jest.mock('../components/ClientOnly', () => ({
         default: ({ children }: { children: React.ReactNode }) => <>{children}</>
       }));
       
@@ -443,7 +444,7 @@ describe('Responsive Behavior Tests', () => {
       setViewport(1200, 800);
       
       // Mock the ClientOnly component
-      vi.mock('../components/ClientOnly', () => ({
+      jest.mock('../components/ClientOnly', () => ({
         default: ({ children }: { children: React.ReactNode }) => <>{children}</>
       }));
       

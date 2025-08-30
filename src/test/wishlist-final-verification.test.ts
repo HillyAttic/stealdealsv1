@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;;
 
 describe('Wishlist Final Verification', () => {
   beforeEach(() => {
-    global.fetch = vi.fn();
+    global.fetch = jest.fn();
   });
 
   describe('API Integration', () => {
@@ -19,7 +20,7 @@ describe('Wishlist Final Verification', () => {
         }
       };
 
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockResponse)
@@ -63,7 +64,7 @@ describe('Wishlist Final Verification', () => {
         total: 1
       };
 
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockResponse)
@@ -86,7 +87,7 @@ describe('Wishlist Final Verification', () => {
         message: 'Property removed from wishlist'
       };
 
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockResponse)
@@ -115,7 +116,7 @@ describe('Wishlist Final Verification', () => {
         error: 'Property not found'
       };
 
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: false,
           status: 404,
@@ -144,7 +145,7 @@ describe('Wishlist Final Verification', () => {
         error: 'Property ID and action are required'
       };
 
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: false,
           status: 400,
@@ -193,7 +194,7 @@ describe('Wishlist Final Verification', () => {
         total: 0
       };
 
-      global.fetch = vi.fn(() =>
+      global.fetch = jest.fn(() =>
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve(emptyResponse)
@@ -277,9 +278,9 @@ describe('Wishlist Final Verification', () => {
 
     it('should handle localStorage for guest users', () => {
       const mockLocalStorage = {
-        getItem: vi.fn(() => '["prop1", "prop2"]'),
-        setItem: vi.fn(),
-        removeItem: vi.fn()
+        getItem: jest.fn(() => '["prop1", "prop2"]'),
+        setItem: jest.fn(),
+        removeItem: jest.fn()
       };
 
       const stored = mockLocalStorage.getItem('stealdeals_wishlist_temp');

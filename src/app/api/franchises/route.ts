@@ -1,37 +1,20 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { push, get, set, ref, child } from 'firebase/database';
-import { franchisePropertiesRef, database } from '@/lib/firebase';
+import { getAllFranchises, migratedFranchiseRef, generateUniquePropertyId, getNextSequenceNumber } from '@/lib/firebase';
 
-// Get all franchises
+// Get all franchises from migrated structure
 export async function GET() {
   try {
-    console.log("Fetching franchises from Firebase...");
-    const snapshot = await get(franchisePropertiesRef);
+    console.log("Fetching franchises from migrated structure...");
+    const franchises = await getAllFranchises();
     
-    if (snapshot.exists()) {
-      // Convert the snapshot to an array of franchises
-      const franchises: Array<{id: string | null, [key: string]: any}> = [];
-      snapshot.forEach((childSnapshot) => {
-        franchises.push({
-          id: childSnapshot.key,
-          ...childSnapshot.val()
-        });
-      });
-      
-      console.log(`Franchises fetched: ${franchises.length}`);
-      
-      return NextResponse.json({
-        franchises,
-        total: franchises.length
-      });
-    } else {
-      console.log("No franchises found in database");
-      return NextResponse.json({
-        franchises: [],
-        total: 0
-      });
-    }
+    console.log(`Franchises fetched from migratedProperties: ${franchises.length}`);
+    
+    return NextResponse.json({
+      franchises,
+      total: franchises.length
+    });
   } catch (error) {
     console.error('Error fetching franchises:', error);
     return NextResponse.json(
@@ -55,30 +38,15 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Get all existing franchises to determine the next ID
-    const snapshot = await get(franchisePropertiesRef);
-    let nextId = 0;
+    // Get the next sequence number for franchise properties
+    const sequenceNumber = await getNextSequenceNumber('Franchise');
     
-    if (snapshot.exists()) {
-      // Find the highest numeric ID
-      snapshot.forEach((childSnapshot) => {
-        const id = childSnapshot.key;
-        // Check if the ID is numeric
-        if (id && /^\d+$/.test(id)) {
-          const numericId = parseInt(id, 10);
-          if (numericId >= nextId) {
-            nextId = numericId + 1;
-          }
-        }
-      });
-    }
-    
-    // Convert the next ID to a string
-    const newId = nextId.toString();
+    // Generate the new unique ID
+    const newId = generateUniquePropertyId('Franchise', sequenceNumber);
     console.log(`Creating new franchise with ID: ${newId}`);
     
-    // Create a new franchise entry with sequential ID
-    const newFranchiseRef = child(franchisePropertiesRef, newId);
+    // Create a new franchise entry with unique ID in migrated structure
+    const newFranchiseRef = child(migratedFranchiseRef, newId);
     const newFranchise = {
       name: body.brand || body.name || `Franchise ${newId}`, // Ensure name is always set for main title
       industry: body.industry,

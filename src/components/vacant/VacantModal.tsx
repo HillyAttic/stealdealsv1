@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { FaTimes, FaBuilding, FaRulerCombined, FaRupeeSign, FaMapMarkerAlt, FaEnvelope, FaPhone } from 'react-icons/fa';
 import PropertyImage from '@/components/PropertyImage';
 import { Property } from '@/lib/firebase';
-import { trackPropertyView, trackContactInquiry } from '@/lib/activity-tracker';
+import { useActivity } from '@/hooks/useActivity';
 
 // Define VacantContactModal props locally to avoid circular imports
 interface VacantContactModalProps {
@@ -14,7 +14,7 @@ interface VacantContactModalProps {
 }
 
 // VacantContactModal component defined inline
-function VacantContactModal({ property, isOpen, onClose }: VacantContactModalProps) {
+function VacantContactModal({ property, isOpen, onClose, logContactInquiry }: VacantContactModalProps & { logContactInquiry: (propertyId: string, metadata?: any) => Promise<void> }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen || !property) return null;
@@ -57,6 +57,14 @@ function VacantContactModal({ property, isOpen, onClose }: VacantContactModalPro
         input.value = value.toString();
         tempForm.appendChild(input);
       }
+      
+      // Log contact inquiry activity
+      await logContactInquiry(property.id, {
+        propertyTitle: property.location || property.title,
+        inquiryType: 'form',
+        source: 'vacant_modal',
+        timestamp: new Date().toISOString()
+      });
       
       // Add the form to the document and submit
       document.body.appendChild(tempForm);
@@ -358,6 +366,7 @@ interface VacantModalProps {
 export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
   const [showContactModal, setShowContactModal] = useState(false);
   const [viewStartTime] = useState(Date.now());
+  const { logPropertyView, logContactInquiry } = useActivity();
 
   // Handle escape key press and header visibility
   useEffect(() => {
@@ -383,21 +392,22 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
   // Track property view when modal opens
   useEffect(() => {
     if (isOpen && property) {
-      trackPropertyView(property.id || 'unknown', {
+      logPropertyView(property.id || 'unknown', {
+        propertyTitle: property.title || property.location,
         source: 'modal',
         propertyType: property.propertyType,
         category: property.category,
         location: property.location
       });
     }
-  }, [isOpen, property]);
+  }, [isOpen, property, logPropertyView]);
 
   // Track page exit with duration
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (property) {
         const duration = Date.now() - viewStartTime;
-        trackPropertyView(property.id || 'unknown', {
+        logPropertyView(property.id || 'unknown', {
           source: 'modal',
           duration,
           propertyType: property.propertyType,
@@ -436,7 +446,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
 
   // Track contact inquiry
   const handleContactClick = () => {
-    trackContactInquiry(property.id || 'unknown', {
+    logContactInquiry(property.id || 'unknown', {
       contactType: 'modal-form',
       propertyTitle: property.location || 'Unknown Property'
     });
@@ -444,7 +454,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
   };
 
   const handlePhoneClick = () => {
-    trackContactInquiry(property.id || 'unknown', {
+    logContactInquiry(property.id || 'unknown', {
       contactType: 'phone',
       propertyTitle: property.location || 'Unknown Property'
     });
@@ -728,8 +738,8 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
                   <div className="space-y-3">
                     <button 
                       onClick={handleContactClick}
-                      className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 transition-colors py-2 px-4 rounded font-medium text-sm"
-                     style={{ color: 'rgb(28, 110, 164)' }}
+                      className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 transition-colors py-2 px-4 rounded font-medium text-sm cursor-pointer"
+                      style={{ color: 'rgb(28, 110, 164)' }}
                     >
                       <FaEnvelope className="text-sm" />
                       Request Information
@@ -772,6 +782,7 @@ export function VacantModal({ property, isOpen, onClose }: VacantModalProps) {
           property={property}
           isOpen={showContactModal}
           onClose={() => setShowContactModal(false)}
+          logContactInquiry={logContactInquiry}
         />
       )}
     </>

@@ -113,7 +113,7 @@ export default function PropertyImage({
         alt={alt}
         fill={true}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        style={{ objectFit: 'cover' }}
+        style={{ objectFit: 'contain' }}
         className={className}
         onError={handleImageError}
         unoptimized={unoptimized}

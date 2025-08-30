@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;;
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/user/wishlist/route';
 
@@ -6,12 +7,12 @@ import { GET, POST } from '@/app/api/user/wishlist/route';
 let mockDatabase: Record<string, Record<string, any>> = {};
 
 // Mock Firebase Realtime Database functions
-vi.mock('firebase/database', () => ({
-  ref: vi.fn((db: any, path?: string) => ({ 
+jest.mock('firebase/database', () => ({
+  ref: jest.fn((db: any, path?: string) => ({ 
     key: path || '', 
     path: path || '' 
   })),
-  set: vi.fn((ref: any, data: any) => {
+  set: jest.fn((ref: any, data: any) => {
     const pathParts = ref.path.split('/');
     let current = mockDatabase;
     for (let i = 0; i < pathParts.length - 1; i++) {
@@ -23,7 +24,7 @@ vi.mock('firebase/database', () => ({
     current[pathParts[pathParts.length - 1]] = data;
     return Promise.resolve();
   }),
-  get: vi.fn((ref: any) => {
+  get: jest.fn((ref: any) => {
     // Handle query objects (for orderByChild + equalTo)
     if (ref.conditions) {
       const pathParts = ref.path.split('/');
@@ -33,7 +34,7 @@ vi.mock('firebase/database', () => ({
           return Promise.resolve({
             exists: () => false,
             val: () => null,
-            forEach: vi.fn()
+            forEach: jest.fn()
           });
         }
         current = current[part];
@@ -74,7 +75,7 @@ vi.mock('firebase/database', () => ({
         return Promise.resolve({
           exists: () => false,
           val: () => null,
-          forEach: vi.fn()
+          forEach: jest.fn()
         });
       }
       current = current[part];
@@ -95,14 +96,14 @@ vi.mock('firebase/database', () => ({
       }
     });
   }),
-  push: vi.fn((ref: any) => {
+  push: jest.fn((ref: any) => {
     const key = `item-${Date.now()}-${Math.random()}`;
     return {
       key,
       path: `${ref.path}/${key}`
     };
   }),
-  remove: vi.fn((ref: any) => {
+  remove: jest.fn((ref: any) => {
     const pathParts = ref.path.split('/');
     let current = mockDatabase;
     for (let i = 0; i < pathParts.length - 1; i++) {
@@ -114,7 +115,7 @@ vi.mock('firebase/database', () => ({
     delete current[pathParts[pathParts.length - 1]];
     return Promise.resolve();
   }),
-  update: vi.fn((ref: any, updates: any) => {
+  update: jest.fn((ref: any, updates: any) => {
     Object.entries(updates).forEach(([path, value]) => {
       // Handle absolute paths (like "wishlists/user-1/item-id")
       let fullPath: string[];
@@ -141,26 +142,26 @@ vi.mock('firebase/database', () => ({
     });
     return Promise.resolve();
   }),
-  query: vi.fn((ref: any, ...conditions: any[]) => ({ 
+  query: jest.fn((ref: any, ...conditions: any[]) => ({ 
     key: `query-${ref.path}`, 
     path: ref.path,
     conditions 
   })),
-  orderByChild: vi.fn((field: string) => ({ type: 'orderByChild', field })),
-  equalTo: vi.fn((value: any) => ({ type: 'equalTo', value })),
-  onValue: vi.fn(),
-  off: vi.fn()
+  orderByChild: jest.fn((field: string) => ({ type: 'orderByChild', field })),
+  equalTo: jest.fn((value: any) => ({ type: 'equalTo', value })),
+  onValue: jest.fn(),
+  off: jest.fn()
 }));
 
 // Mock Firebase
-vi.mock('@/lib/firebase', () => ({
-  getPropertyById: vi.fn(),
+jest.mock('@/lib/firebase', () => ({
+  getPropertyById: jest.fn(),
   database: { mock: true }
 }));
 
 // Mock auth middleware
-vi.mock('@/lib/auth/middleware', () => ({
-  optionalAuth: vi.fn((request, handler) => {
+jest.mock('@/lib/auth/middleware', () => ({
+  optionalAuth: jest.fn((request, handler) => {
     const mockUser = { id: 'user-1', email: 'test@example.com' };
     const requestWithUser = { ...request, user: mockUser };
     return handler(requestWithUser);
@@ -169,7 +170,7 @@ vi.mock('@/lib/auth/middleware', () => ({
 
 // Import and mock getPropertyById after the mock is set up
 import { getPropertyById } from '@/lib/firebase';
-const mockGetPropertyById = vi.mocked(getPropertyById);
+const mockGetPropertyById = jest.mocked(getPropertyById);
 
 describe('Wishlist Integration Test with Mocked Firebase', () => {
   const userId = 'user-1';
@@ -196,7 +197,7 @@ describe('Wishlist Integration Test with Mocked Firebase', () => {
   ];
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     mockDatabase = {}; // Clear mock database
     
     mockGetPropertyById.mockImplementation((id) => {

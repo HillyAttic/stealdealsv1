@@ -1,148 +1,150 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { clerkClient } from '@clerk/nextjs/server';
+import { getUserWishlist } from '@/lib/database/wishlist';
+import { getUserActivity } from '@/lib/database/user-activity';
 
-// GET /api/admin/user-details?userId=xxx - Get specific user details for admin dashboard
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {
     try {
-      const { searchParams } = new URL(request.url);
-      const userId = searchParams.get('userId');
 
-      if (!userId) {
+      const { searchParams } = new URL(request.url);
+      const targetUserId = searchParams.get('userId');
+
+      if (!targetUserId) {
         return NextResponse.json(
           { success: false, error: 'User ID is required' },
           { status: 400 }
         );
       }
 
-      // Fetch user from Clerk
+      // Get user details from Clerk
       const client = await clerkClient();
-      const user = await client.users.getUser(userId);
-
-      if (!user) {
-        return NextResponse.json(
-          { success: false, error: 'User not found' },
-          { status: 404 }
-        );
+      const targetUser = await client.users.getUser(targetUserId);
+      
+      // Get user's wishlist items with full property details
+      let wishlist = [];
+      try {
+        console.log(`[API] Fetching wishlist with full property details for user: ${targetUserId}`);
+        let wishlistProperties = await getUserWishlist(targetUserId);
+        
+        // In development, also try the fallback user ID if no items found
+        if (wishlistProperties.length === 0 && process.env.NODE_ENV === 'development') {
+          console.log(`[API] No items found for ${targetUserId}, trying fallback user-1`);
+          wishlistProperties = await getUserWishlist('user-1');
+        }
+        
+        console.log(`[API] Found ${wishlistProperties.length} wishlist properties with full details`);
+        
+        // Convert to format expected by admin UI
+        wishlist = wishlistProperties.map(property => ({
+          id: property.id,
+          title: property.title,
+          location: property.location,
+          price: typeof property.price === 'number' ? `₹${property.price.toLocaleString('en-IN')}` : property.price,
+          imageUrl: property.images && property.images.length > 0 ? property.images[0] : '/api/placeholder/300/200',
+          addedAt: property.addedAt.toISOString(),
+          type: property.type,
+          // These fields don't exist in our property structure, so we'll handle them in UI
+          bedrooms: null,
+          bathrooms: null,  
+          area: null, // We'll use property data to determine this in UI
+          notes: property.notes,
+          priority: property.priority,
+          // Add more property details for rich display
+          images: property.images || []
+        }));
+        
+        console.log(`[API] Successfully processed ${wishlist.length} wishlist items with full property details`);
+      } catch (error) {
+        console.warn('Failed to fetch wishlist for user:', targetUserId, error);
       }
 
-      // Transform Clerk user data
-      const transformedUser = {
-        id: user.id,
-        name: user.firstName && user.lastName 
-          ? `${user.firstName} ${user.lastName}`
-          : user.username || user.primaryEmailAddress?.emailAddress || 'Unknown User',
-        email: user.primaryEmailAddress?.emailAddress || 'No email',
-        role: user.publicMetadata?.role || 'user',
-        isActive: !user.banned && !user.locked,
-        emailVerified: user.primaryEmailAddress?.verification?.status === 'verified',
-        provider: user.externalAccounts?.[0]?.provider || 'email',
-        createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : new Date().toISOString(),
-        lastLoginAt: user.lastSignInAt ? new Date(user.lastSignInAt).toISOString() : null,
-        lastActiveAt: user.lastActiveAt ? new Date(user.lastActiveAt).toISOString() : null,
-        imageUrl: user.imageUrl,
-        phoneNumber: user.primaryPhoneNumber?.phoneNumber || null,
-        banned: user.banned,
-        locked: user.locked,
-        hasImage: !!user.hasImage,
-        twoFactorEnabled: user.twoFactorEnabled,
-        backupCodeEnabled: user.backupCodeEnabled,
-        totpEnabled: user.totpEnabled,
-        externalAccounts: user.externalAccounts.map((account: any) => ({
-          provider: account.provider,
-          emailAddress: account.emailAddress
-        }))
+      // Get user's activity
+      let activity = [];
+      try {
+        const userActivities = await getUserActivity(targetUserId, 50);
+        activity = userActivities.map(act => ({
+          id: act.id,
+          type: act.type,
+          description: getActivityDescription(act),
+          timestamp: act.timestamp,
+          metadata: act.metadata
+        }));
+      } catch (error) {
+        console.warn('Failed to fetch activities for user:', targetUserId, error);
+      }
+
+      // Calculate analytics
+      const analytics = {
+        totalViews: activity.filter(a => a.type === 'property_view').length,
+        uniqueProperties: new Set(
+          activity
+            .filter(a => a.type === 'property_view' && a.metadata?.propertyId)
+            .map(a => a.metadata.propertyId)
+        ).size,
+        averageSessionDuration: 0 // This would need session tracking
       };
 
-      // Mock activity data (in a real app, this would come from your database)
-      const mockActivity = [
-        {
-          id: '1',
-          type: 'property_view',
-          description: 'Viewed property: Modern Apartment in Downtown',
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          metadata: {
-            propertyId: 'prop_1',
-            propertyTitle: 'Modern Apartment in Downtown',
-            duration: 120
-          }
-        },
-        {
-          id: '2',
-          type: 'search',
-          description: 'Searched for properties in Mumbai',
-          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-          metadata: {
-            query: 'Mumbai apartments',
-            resultsCount: 15
-          }
-        },
-        {
-          id: '3',
-          type: 'wishlist_add',
-          description: 'Added property to wishlist',
-          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-          metadata: {
-            propertyId: 'prop_2',
-            propertyTitle: 'Luxury Villa in Goa'
-          }
-        }
-      ];
-
-      // Mock wishlist data (in a real app, this would come from your database)
-      const mockWishlist = [
-        {
-          id: 'prop_1',
-          title: 'Modern Apartment in Downtown',
-          location: 'Mumbai, Maharashtra',
-          price: '₹85,00,000',
-          imageUrl: '/api/placeholder/300/200',
-          addedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          type: 'apartment',
-          bedrooms: 2,
-          bathrooms: 2,
-          area: '1200 sq ft'
-        },
-        {
-          id: 'prop_2',
-          title: 'Luxury Villa in Goa',
-          location: 'North Goa, Goa',
-          price: '₹3,50,00,000',
-          imageUrl: '/api/placeholder/300/200',
-          addedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-          type: 'villa',
-          bedrooms: 4,
-          bathrooms: 3,
-          area: '2500 sq ft'
-        }
-      ];
-
-      // Mock analytics data
-      const mockAnalytics = {
-        totalViews: 45,
-        uniqueProperties: 12,
-        averageSessionDuration: 385 // seconds
+      const userDetails = {
+        id: targetUser.id,
+        name: `${targetUser.firstName || ''} ${targetUser.lastName || ''}`.trim() || 'Unknown User',
+        email: targetUser.emailAddresses[0]?.emailAddress || 'No email',
+        role: targetUser.publicMetadata?.role || 'user',
+        isActive: !targetUser.banned && !targetUser.locked,
+        emailVerified: targetUser.emailAddresses[0]?.verification?.status === 'verified',
+        provider: targetUser.externalAccounts[0]?.provider || 'email',
+        createdAt: targetUser.createdAt ? new Date(targetUser.createdAt).toISOString() : null,
+        lastLoginAt: targetUser.lastSignInAt ? new Date(targetUser.lastSignInAt).toISOString() : null,
+        lastActiveAt: targetUser.lastActiveAt ? new Date(targetUser.lastActiveAt).toISOString() : null,
+        imageUrl: targetUser.imageUrl,
+        phoneNumber: targetUser.phoneNumbers[0]?.phoneNumber || null,
+        banned: targetUser.banned,
+        locked: targetUser.locked,
+        hasImage: !!targetUser.imageUrl,
+        twoFactorEnabled: targetUser.twoFactorEnabled,
+        backupCodeEnabled: targetUser.backupCodeEnabled,
+        totpEnabled: targetUser.totpEnabled,
+        externalAccounts: targetUser.externalAccounts.map(account => ({
+          provider: account.provider,
+          emailAddress: account.emailAddress || ''
+        }))
       };
 
       return NextResponse.json({
         success: true,
-        user: transformedUser,
-        activity: mockActivity,
-        wishlist: mockWishlist,
-        analytics: mockAnalytics
+        user: userDetails,
+        wishlist,
+        activity,
+        analytics
       });
 
     } catch (error) {
-      console.error('Get user details error:', error);
+      console.error('Error in user-details API:', error);
       return NextResponse.json(
         { 
-          success: false,
-          error: 'Failed to fetch user details',
-          details: error instanceof Error ? error.message : 'Unknown error'
+          success: false, 
+          error: error instanceof Error ? error.message : 'Internal server error' 
         },
         { status: 500 }
       );
     }
   });
+}
+
+function getActivityDescription(activity: any): string {
+  switch (activity.type) {
+    case 'property_view':
+      return `Viewed property ${activity.metadata?.propertyId || 'unknown'}`;
+    case 'search':
+      return `Searched for "${activity.metadata?.query || 'unknown'}"`;
+    case 'wishlist_add':
+      return `Added property ${activity.metadata?.propertyId || 'unknown'} to wishlist`;
+    case 'wishlist_remove':
+      return `Removed property ${activity.metadata?.propertyId || 'unknown'} from wishlist`;
+    case 'contact_inquiry':
+      return `Made contact inquiry for property ${activity.metadata?.propertyId || 'unknown'}`;
+    default:
+      return `Performed ${activity.type} action`;
+  }
 }

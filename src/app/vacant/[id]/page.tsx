@@ -37,11 +37,26 @@ export default function VacantPropertyDetails() {
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [viewStartTime] = useState(Date.now());
   
-  // Load property data
+  // Detect property type from ID and redirect if necessary
   useEffect(() => {
     if (!propertyId) {
       setError('Property ID is missing');
       setIsLoading(false);
+      return;
+    }
+
+    // Check if this is not a vacant property ID
+    if (propertyId.includes('FRAN')) {
+      // Redirect to franchise route
+      router.push(`/franchise/${propertyId}`);
+      return;
+    } else if (propertyId.includes('PLOT')) {
+      // Redirect to plots route
+      router.push(`/plots/${propertyId}`);
+      return;
+    } else if (propertyId.includes('PRLS')) {
+      // Redirect to pre-leased route
+      router.push(`/Pre-Leased/${propertyId}`);
       return;
     }
     
@@ -59,8 +74,27 @@ export default function VacantPropertyDetails() {
         
         if (snapshot.exists()) {
           const propertyData = snapshot.val();
-          // Verify this is a vacant property
-          if (propertyData.propertyType === 'Vacant') {
+          
+          // Handle property type mismatches with helpful redirects
+          if (propertyData.propertyType !== 'Vacant') {
+            console.log(`Property ${propertyId} has type: ${propertyData.propertyType}, expected: Vacant`);
+            
+            // Redirect to correct route based on property type
+            switch (propertyData.propertyType) {
+              case 'Franchise':
+                router.push(`/franchise/${propertyId}`);
+                return;
+              case 'Plot':
+                router.push(`/plots/${propertyId}`);
+                return;
+              case 'Pre-Leased':
+                router.push(`/Pre-Leased/${propertyId}`);
+                return;
+              default:
+                setError(`This property is of type "${propertyData.propertyType}" and cannot be viewed as a vacant property.`);
+            }
+          } else {
+            // Valid vacant property
             const propertyWithId = { 
               id: snapshot.key, 
               ...propertyData 
@@ -74,11 +108,9 @@ export default function VacantPropertyDetails() {
               category: propertyData.category,
               location: propertyData.location
             });
-          } else {
-            setError('Property not found');
           }
         } else {
-          setError('Property not found');
+          setError('Property not found in database. Please check the property ID and try again.');
         }
       } catch (err: any) {
         console.error('Error loading property:', err);
@@ -190,11 +222,33 @@ export default function VacantPropertyDetails() {
             
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-6 mb-6 text-center">
-                <h2 className="text-xl font-bold mb-2">{error}</h2>
-                <p>The property you're looking for might have been removed or doesn't exist.</p>
-                <Link href="/vacant" className="mt-4 inline-block px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 transition-colors">
-                  View All Vacant Properties
-                </Link>
+                <h2 className="text-xl font-bold mb-2">Property Access Issue</h2>
+                <p className="mb-4">{error}</p>
+                
+                {/* Helpful navigation based on property ID */}
+                <div className="space-x-4">
+                  <Link href="/vacant" className="inline-block px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 transition-colors">
+                    View Vacant Properties
+                  </Link>
+                  
+                  {propertyId?.includes('FRAN') && (
+                    <Link href="/franchise" className="inline-block px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
+                      View Franchise Properties
+                    </Link>
+                  )}
+                  
+                  {propertyId?.includes('PLOT') && (
+                    <Link href="/plots" className="inline-block px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
+                      View Plot Properties
+                    </Link>
+                  )}
+                  
+                  {propertyId?.includes('PRLS') && (
+                    <Link href="/Pre-Leased" className="inline-block px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                      View Pre-Leased Properties
+                    </Link>
+                  )}
+                </div>
               </div>
             )}
             

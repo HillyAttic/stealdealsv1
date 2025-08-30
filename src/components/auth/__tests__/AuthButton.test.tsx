@@ -1,11 +1,12 @@
 import React from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;
 import { render, screen, fireEvent, waitFor } from '@/test/utils'
 import AuthButton from '../AuthButton'
 import { mockUser } from '@/test/utils'
 
 // Mock Next.js Image component
-vi.mock('next/image', () => ({
+jest.mock('next/image', () => ({
   default: ({ src, alt, ...props }: any) => (
     <img src={src} alt={alt} {...props} />
   )
@@ -15,17 +16,17 @@ vi.mock('next/image', () => ({
 const mockAuthContext = {
   user: null,
   isAuthenticated: false,
-  login: vi.fn(),
-  logout: vi.fn(),
+  login: jest.fn(),
+  logout: jest.fn(),
   isLoading: false
 }
 
-vi.mock('../AuthProvider', () => ({
+jest.mock('../AuthProvider', () => ({
   useAuthContext: () => mockAuthContext
 }))
 
 // Mock the AuthModal
-vi.mock('../AuthModal', () => ({
+jest.mock('../AuthModal', () => ({
   default: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
     isOpen ? (
       <div data-testid="auth-modal">
@@ -37,7 +38,7 @@ vi.mock('../AuthModal', () => ({
 
 describe('AuthButton', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
     mockAuthContext.user = null
     mockAuthContext.isAuthenticated = false
     mockAuthContext.isLoading = false
@@ -157,13 +158,13 @@ describe('AuthButton', () => {
     fireEvent.click(userButton)
     
     await waitFor(() => {
-      expect(screen.getByText('Dashboard')).toBeInTheDocument()
+      expect(screen.getByText('My Wishlist')).toBeInTheDocument()
     })
     
-    const dashboardLink = screen.getByText('Dashboard')
-    fireEvent.click(dashboardLink)
+    const wishlistLink = screen.getByText('My Wishlist')
+    fireEvent.click(wishlistLink)
     
-    expect(mockLocation.href).toBe('/dashboard')
+    expect(mockLocation.href).toBe('/wishlist')
   })
 
   it('should close dropdown when clicking outside', async () => {

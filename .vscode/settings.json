@@ -1,3 +1,16 @@
 {
-    "typescript.autoClosingTags": false
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.format.enable": true,
+  "typescript.validate.enable": true,
+  "files.associations": {
+    "*.test.ts": "typescript",
+    "*.test.tsx": "typescriptreact",
+    "*.spec.ts": "typescript",
+    "*.spec.tsx": "typescriptreact"
+  },
+  "typescript.preferences.useLabelDetailsInCompletionEntries": true,
+  "typescript.suggest.includeCompletionsForImportStatements": true,
+  "typescript.suggest.includeCompletionsWithInsertText": true
 }

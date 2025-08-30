@@ -1,23 +1,24 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import {  } from '@jest/globals';
+const vi = jest;;
 
 // Mock Next.js components
-vi.mock('next/link', () => ({
+jest.mock('next/link', () => ({
   default: ({ children, href, ...props }: any) => {
     return <a href={href} {...props}>{children}</a>;
   }
 }));
 
-vi.mock('next/image', () => ({
+jest.mock('next/image', () => ({
   default: ({ src, alt, ...props }: any) => {
     return <img src={src} alt={alt} {...props} />;
   }
 }));
 
-vi.mock('next/navigation', () => ({
+jest.mock('next/navigation', () => ({
   useSearchParams: () => ({
-    get: vi.fn(() => null)
+    get: jest.fn(() => null)
   })
 }));
 

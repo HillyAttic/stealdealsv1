@@ -1,6 +1,8 @@
 import { WishlistItem, WishlistProperty } from '@/types/auth';
 import { getPropertyById, getAllProperties, database } from '@/lib/firebase';
 import { ref, push, set, get, remove, query, orderByChild, equalTo, update, DataSnapshot } from 'firebase/database';
+import { cacheService } from './cache';
+import { dbPool } from './connection-pool';
 
 // Firebase references
 const wishlistsRef = ref(database, 'wishlists');
@@ -20,7 +22,14 @@ function getWishlistItemRef(userId: string, itemId: string) {
 }
 
 /**
- * Add property to user's wishlist in Firebase
+ * Get Firebase reference for user's activity
+ */
+function getUserActivityRef(userId: string) {
+  return ref(database, `activities/${userId}`);
+}
+
+/**
+ * Add property to user's wishlist in Firebase with caching and connection pooling
  */
 export async function addToWishlist(
   userId: string, 
@@ -31,10 +40,10 @@ export async function addToWishlist(
   try {
     console.log(`[Firebase Wishlist] Adding property ${propertyId} to user ${userId}'s wishlist`);
     
-    const userWishlistRef = getUserWishlistRef(userId);
+    const userWishlistPath = `wishlists/${userId}`;
     
-    // Check if property already exists by scanning all items
-    const existingSnapshot = await get(userWishlistRef);
+    // Check if property already exists using optimized connection pool
+    const existingSnapshot = await dbPool.optimizedGet(userWishlistPath);
     if (existingSnapshot.exists()) {
       let propertyExists = false;
       existingSnapshot.forEach((childSnapshot) => {
@@ -51,8 +60,13 @@ export async function addToWishlist(
     }
     
     // Create new wishlist item
-    const newItemRef = push(userWishlistRef);
-    const itemId = newItemRef.key!;
+    const itemId = await dbPool.optimizedPush(userWishlistPath, {
+      userId,
+      propertyId,
+      addedAt: new Date().toISOString(),
+      notes: notes || null,
+      priority
+    });
     
     const wishlistItem: WishlistItem = {
       id: itemId,
@@ -63,17 +77,9 @@ export async function addToWishlist(
       priority
     };
     
-    // Convert to Firebase format (dates as ISO strings)
-    const firebaseItem = {
-      id: itemId,
-      userId,
-      propertyId,
-      addedAt: wishlistItem.addedAt.toISOString(),
-      notes: notes || null,
-      priority
-    };
-    
-    await set(newItemRef, firebaseItem);
+    // Invalidate cache
+    cacheService.invalidateUserWishlist(userId);
+    cacheService.invalidateUserStats(userId, 'wishlist');
     
     console.log(`[Firebase Wishlist] ✅ Successfully added property ${propertyId} with item ID ${itemId}`);
     return wishlistItem;
@@ -85,23 +91,23 @@ export async function addToWishlist(
 }
 
 /**
- * Remove property from user's wishlist in Firebase
+ * Remove property from user's wishlist in Firebase with caching and connection pooling
  */
 export async function removeFromWishlist(userId: string, propertyId: string): Promise<boolean> {
   try {
     console.log(`[Firebase Wishlist] Removing property ${propertyId} from user ${userId}'s wishlist`);
     
-    const userWishlistRef = getUserWishlistRef(userId);
+    const userWishlistPath = `wishlists/${userId}`;
     
-    // Find the item by scanning all items
-    const snapshot = await get(userWishlistRef);
+    // Find the item by scanning all items using optimized connection pool
+    const snapshot = await dbPool.optimizedGet(userWishlistPath);
     
     if (!snapshot.exists()) {
       console.log(`[Firebase Wishlist] ❌ Property ${propertyId} not found in wishlist (no wishlist exists)`);
       return false;
     }
     
-    // Find and remove matching items
+    // Find and remove matching items using batch operations
     const updates: Record<string, null> = {};
     let found = false;
     
@@ -118,7 +124,12 @@ export async function removeFromWishlist(userId: string, propertyId: string): Pr
       return false;
     }
     
-    await update(ref(database), updates);
+    // Use batch operation for better performance (use root reference for batch updates)
+    await dbPool.optimizedUpdate('', updates);
+    
+    // Invalidate cache
+    cacheService.invalidateUserWishlist(userId);
+    cacheService.invalidateUserStats(userId, 'wishlist');
     
     console.log(`[Firebase Wishlist] ✅ Successfully removed property ${propertyId}`);
     return true;
@@ -130,18 +141,27 @@ export async function removeFromWishlist(userId: string, propertyId: string): Pr
 }
 
 /**
- * Get user's wishlist with property details from Firebase
+ * Get user's wishlist with property details from Firebase with caching
  */
 export async function getUserWishlist(userId: string): Promise<WishlistProperty[]> {
   try {
     console.log(`[Firebase Wishlist] Getting wishlist for user ${userId}`);
     
-    const userWishlistRef = getUserWishlistRef(userId);
-    const snapshot = await get(userWishlistRef);
+    // Check cache first
+    const cachedWishlist = cacheService.getUserWishlist(userId);
+    if (cachedWishlist) {
+      console.log(`[Firebase Wishlist] ✅ Returning cached wishlist for user ${userId}`);
+      return cachedWishlist;
+    }
+    
+    const userWishlistPath = `wishlists/${userId}`;
+    const snapshot = await dbPool.optimizedGet(userWishlistPath);
     
     if (!snapshot.exists()) {
       console.log(`[Firebase Wishlist] No wishlist found for user ${userId}`);
-      return [];
+      const emptyWishlist: WishlistProperty[] = [];
+      cacheService.setUserWishlist(userId, emptyWishlist, 30 * 1000); // Cache for 30 seconds
+      return emptyWishlist;
     }
     
     const wishlistItems: WishlistItem[] = [];
@@ -163,21 +183,33 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
     
     console.log(`[Firebase Wishlist] Found ${wishlistItems.length} items in wishlist`);
     
-    // Get ALL properties first (more efficient than individual lookups)
-    const allProperties = await getAllProperties();
-    console.log(`[Firebase Wishlist] Loaded ${allProperties.length} total properties for lookup`);
+    // Get property details with caching
+    const wishlistProperties: WishlistProperty[] = [];
+    const propertyIds = wishlistItems.map(item => item.propertyId);
     
-    // Create a map for faster lookups
+    // Batch property lookups for better performance
+    const propertyPromises = propertyIds.map(async (propertyId) => {
+      // Check property cache first
+      let property = cacheService.getProperty(propertyId);
+      if (!property) {
+        property = await getPropertyById(propertyId);
+        if (property) {
+          cacheService.setProperty(propertyId, property);
+        }
+      }
+      return { propertyId, property };
+    });
+    
+    const propertyResults = await Promise.all(propertyPromises);
     const propertyMap = new Map();
-    allProperties.forEach(prop => {
-      propertyMap.set(prop.id, prop);
+    propertyResults.forEach(({ propertyId, property }) => {
+      if (property) {
+        propertyMap.set(propertyId, property);
+      }
     });
     
     // Build wishlist properties with enriched data
-    const wishlistProperties: WishlistProperty[] = [];
-    
     for (const item of wishlistItems) {
-      console.log(`[Firebase Wishlist] Looking up property details for ${item.propertyId}`);
       const property = propertyMap.get(item.propertyId);
       
       if (property) {
@@ -210,7 +242,7 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
           priority: item.priority
         });
       } else {
-        console.warn(`[Firebase Wishlist] ⚠️ Property not found in ${allProperties.length} properties: ${item.propertyId}`);
+        console.warn(`[Firebase Wishlist] ⚠️ Property not found: ${item.propertyId}`);
         // Keep the wishlist item but mark as not found
         wishlistProperties.push({
           id: item.propertyId,
@@ -228,6 +260,9 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
     
     // Sort by most recently added
     wishlistProperties.sort((a, b) => b.addedAt.getTime() - a.addedAt.getTime());
+    
+    // Cache the result
+    cacheService.setUserWishlist(userId, wishlistProperties);
     
     console.log(`[Firebase Wishlist] ✅ Returning ${wishlistProperties.length} wishlist properties`);
     return wishlistProperties;
@@ -449,4 +484,4 @@ export async function getRawWishlistItems(userId: string): Promise<WishlistItem[
 /**
  * Export Firebase references for use in real-time listeners
  */
-export { getUserWishlistRef, wishlistsRef };
+export { getUserWishlistRef, getUserActivityRef, wishlistsRef };

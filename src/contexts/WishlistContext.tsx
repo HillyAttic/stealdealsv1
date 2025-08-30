@@ -1,7 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useAuthContext } from '@/components/auth/AuthProvider';
+// WishlistContext with fixed infinite loop prevention using refs
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { useAuth, useUser } from '@clerk/nextjs';
+import { useActivityContext } from '@/contexts/ActivityContext';
 import { 
   addToWishlist as addToWishlistDB, 
   removeFromWishlist as removeFromWishlistDB, 
@@ -15,11 +17,15 @@ interface WishlistContextType {
   wishlistCount: number;
   isLoading: boolean;
   isInitialized: boolean;
+  error: string | null;
+  operationLoading: Set<string>; // Track loading state per property
   addToWishlist: (propertyId: string) => Promise<boolean>;
   removeFromWishlist: (propertyId: string) => Promise<boolean>;
   isInWishlist: (propertyId: string) => boolean;
   toggleWishlist: (propertyId: string) => Promise<boolean>;
   refreshWishlist: () => Promise<void>;
+  clearError: () => void;
+  isOperationLoading: (propertyId: string) => boolean;
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
@@ -27,25 +33,56 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 const WISHLIST_STORAGE_KEY = 'stealdeals_wishlist_temp';
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user } = useAuthContext();
+  const { isSignedIn, userId } = useAuth();
+  const { user } = useUser();
+  const { logActivity } = useActivityContext();
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
-  const [isListenerActive, setIsListenerActive] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [operationLoading, setOperationLoading] = useState<Set<string>>(new Set());
+  
+  // Use refs for internal state that doesn't need to trigger re-renders
+  const isListenerActiveRef = useRef(false);
+  const isInitializedRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
+  const cleanupFunctionRef = useRef<(() => void) | null>(null);
+
+  // Clear error function
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  // Check if operation is loading for specific property
+  const isOperationLoading = useCallback((propertyId: string): boolean => {
+    return operationLoading.has(propertyId);
+  }, [operationLoading]);
+
+  // Set operation loading state
+  const setOperationLoadingState = useCallback((propertyId: string, loading: boolean) => {
+    setOperationLoading(prev => {
+      const newSet = new Set(prev);
+      if (loading) {
+        newSet.add(propertyId);
+      } else {
+        newSet.delete(propertyId);
+      }
+      return newSet;
+    });
+  }, []);
 
   // Function to get current user ID (with fallback for development)
   const getCurrentUserId = useCallback((): string => {
-    if (user?.id) return user.id;
+    if (userId) return userId;
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
       return 'user-1'; // Development fallback
     }
     return 'anonymous';
-  }, [user?.id]);
+  }, [userId]);
 
   // Setup Firebase real-time listener
   const setupRealtimeListener = useCallback(() => {
     const userId = getCurrentUserId();
-    if (!userId || userId === 'anonymous' || isListenerActive) return;
+    if (!userId || userId === 'anonymous' || isListenerActiveRef.current) return;
 
     console.log(`[WishlistContext] 🔥 Setting up Firebase real-time listener for user ${userId}`);
     
@@ -72,25 +109,28 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         console.log(`[WishlistContext] 🔄 Real-time update: ${propertyIds.size} items [${Array.from(propertyIds).join(', ')}]`);
         setWishlistItems(propertyIds);
         setIsLoading(false);
+        setError(null); // Clear any previous errors
         
       } catch (error) {
         console.error('[WishlistContext] ❌ Error processing real-time update:', error);
+        setError('Failed to process wishlist update');
         setIsLoading(false);
       }
     }, (error) => {
       console.error('[WishlistContext] ❌ Firebase listener error:', error);
+      setError('Connection to wishlist service failed');
       setIsLoading(false);
     });
 
-    setIsListenerActive(true);
+    isListenerActiveRef.current = true;
     
     // Return cleanup function
     return () => {
       console.log(`[WishlistContext] 🔥 Cleaning up Firebase listener for user ${userId}`);
       unsubscribe();
-      setIsListenerActive(false);
+      isListenerActiveRef.current = false;
     };
-  }, [getCurrentUserId, isListenerActive]);
+  }, [getCurrentUserId]);
 
   // Load from localStorage for non-authenticated users
   const loadFromLocalStorage = useCallback(() => {
@@ -105,6 +145,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('[WishlistContext] ❌ Failed to load from localStorage:', error);
+      setError('Failed to load saved wishlist items');
     }
   }, []);
 
@@ -116,33 +157,63 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify([...items]));
     } catch (error) {
       console.error('[WishlistContext] ❌ Failed to save to localStorage:', error);
+      setError('Failed to save wishlist changes');
     }
   }, []);
 
-  // Initial load and listener setup
+  // Initial load and listener setup with stable dependencies
   useEffect(() => {
     // Get current user ID directly
-    const userId = user?.id || (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' ? 'user-1' : 'anonymous');
+    const currentUserId = userId || (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' ? 'user-1' : 'anonymous');
     
-    console.log(`[WishlistContext] 🚀 Initializing for user: ${userId}, authenticated: ${isAuthenticated}`);
+    // Check if user changed - if so, reset everything
+    if (lastUserIdRef.current && lastUserIdRef.current !== currentUserId) {
+      console.log(`[WishlistContext] 👤 User changed from ${lastUserIdRef.current} to ${currentUserId}, resetting...`);
+      console.log(`[WishlistContext] 📊 State before reset: initialized=${isInitializedRef.current}, listenerActive=${isListenerActiveRef.current}`);
+      
+      // Cleanup previous listener if exists
+      if (cleanupFunctionRef.current) {
+        console.log(`[WishlistContext] 🧹 Cleaning up previous listener for user change`);
+        cleanupFunctionRef.current();
+        cleanupFunctionRef.current = null;
+      }
+      
+      setWishlistItems(new Set());
+      isInitializedRef.current = false;
+      isListenerActiveRef.current = false;
+      setIsLoading(false);
+      setError(null);
+    }
     
-    if (isAuthenticated && userId !== 'anonymous') {
+    lastUserIdRef.current = currentUserId;
+    
+    // Prevent double initialization during development mode or re-renders
+    if (isInitializedRef.current && lastUserIdRef.current === currentUserId) {
+      console.log(`[WishlistContext] ⚡ Already initialized for user ${currentUserId}, skipping`);
+      return;
+    }
+    
+    console.log(`[WishlistContext] 🚀 Initializing for user: ${currentUserId}, authenticated: ${isSignedIn}`);
+    
+    if (isSignedIn && currentUserId !== 'anonymous') {
       // Authenticated user - use Firebase with real-time listener
-      if (!isListenerActive) {
-        console.log(`[WishlistContext] 🔥 Setting up Firebase real-time listener for user ${userId}`);
+      if (!isListenerActiveRef.current) {
+        console.log(`[WishlistContext] 🔥 Setting up Firebase real-time listener for user ${currentUserId}`);
         setIsLoading(true);
         
-        const wishlistRef = getUserWishlistRef(userId);
+        const wishlistRef = getUserWishlistRef(currentUserId);
         
         const unsubscribe = onValue(wishlistRef, (snapshot) => {
           try {
-            console.log(`[WishlistContext] 🔄 Real-time update received`);
+            const timestamp = new Date().toISOString();
+            console.log(`[WishlistContext] 🔄 Real-time update received at ${timestamp} for user ${currentUserId}`);
+            console.log(`[WishlistContext] 📊 Current state: initialized=${isInitializedRef.current}, listenerActive=${isListenerActiveRef.current}`);
             
             if (!snapshot.exists()) {
-              console.log(`[WishlistContext] 📭 No wishlist data, setting empty`);
+              console.log(`[WishlistContext] 📭 No wishlist data found, setting empty set`);
               setWishlistItems(new Set());
               setIsLoading(false);
-              setIsInitialized(true);
+              isInitializedRef.current = true;
               return;
             }
             
@@ -154,37 +225,39 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
               }
             });
             
-            console.log(`[WishlistContext] 🔄 Real-time update: ${propertyIds.size} items [${Array.from(propertyIds).join(', ')}]`);
+            console.log(`[WishlistContext] 🔄 Real-time update processed: ${propertyIds.size} items [${Array.from(propertyIds).join(', ')}]`);
             setWishlistItems(propertyIds);
             setIsLoading(false);
-            setIsInitialized(true);
+            isInitializedRef.current = true;
+            setError(null); // Clear any previous errors
             
           } catch (error) {
             console.error('[WishlistContext] ❌ Error processing real-time update:', error);
+            setError('Failed to process wishlist update');
             setIsLoading(false);
+            isInitializedRef.current = true;
           }
         }, (error) => {
           console.error('[WishlistContext] ❌ Firebase listener error:', error);
+          setError('Connection to wishlist service failed');
           setIsLoading(false);
+          isInitializedRef.current = true;
         });
 
-        setIsListenerActive(true);
+        isListenerActiveRef.current = true;
         
-        // Return cleanup function
-        return () => {
-          console.log(`[WishlistContext] 🔥 Cleaning up Firebase listener for user ${userId}`);
+        // Store cleanup function
+        cleanupFunctionRef.current = () => {
+          console.log(`[WishlistContext] 🔥 Cleaning up Firebase listener for user ${currentUserId}`);
           unsubscribe();
-          setIsListenerActive(false);
+          isListenerActiveRef.current = false;
         };
-      } else {
-        // Listener already active, don't set loading
-        setIsLoading(false);
       }
     } else {
       // Non-authenticated user - use localStorage
       console.log(`[WishlistContext] 📱 Using localStorage for non-authenticated user`);
-      setIsLoading(false); // Ensure loading is false for non-authenticated users
-      setIsInitialized(true);
+      setIsLoading(false);
+      isInitializedRef.current = true;
       
       if (typeof window !== 'undefined') {
         try {
@@ -196,24 +269,33 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
           }
         } catch (error) {
           console.error('[WishlistContext] ❌ Failed to load from localStorage:', error);
+          setError('Failed to load saved wishlist items');
         }
       }
     }
-  }, [isAuthenticated, user?.id]);
+    
+    // Cleanup function
+    return () => {
+      if (cleanupFunctionRef.current) {
+        cleanupFunctionRef.current();
+        cleanupFunctionRef.current = null;
+      }
+    };
+  }, [isSignedIn, userId]); // Only stable dependencies
 
   // Manual refresh function (mainly for debugging)
   const refreshWishlist = async () => {
-    const userId = getCurrentUserId();
-    console.log(`[WishlistContext] 🔄 Manual refresh requested for user ${userId}`);
+    const currentUserId = getCurrentUserId();
+    console.log(`[WishlistContext] 🔄 Manual refresh requested for user ${currentUserId}`);
     
-    if (!isAuthenticated || userId === 'anonymous') {
+    if (!isSignedIn || currentUserId === 'anonymous') {
       loadFromLocalStorage();
       return;
     }
     
     try {
       setIsLoading(true);
-      const items = await getRawWishlistItems(userId);
+      const items = await getRawWishlistItems(currentUserId);
       const propertyIds = new Set(items.map(item => item.propertyId));
       setWishlistItems(propertyIds);
       console.log(`[WishlistContext] ✅ Manual refresh: ${propertyIds.size} items`);
@@ -234,6 +316,9 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       console.log(`[WishlistContext] ⚠️ Property ${propertyId} already in wishlist`);
       return true;
     }
+
+    // Set loading state for this specific property
+    setOperationLoadingState(propertyId, true);
     
     // Optimistic update
     const previousItems = new Set(wishlistItems);
@@ -241,7 +326,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     setWishlistItems(newItems);
     
     try {
-      if (isAuthenticated && userId !== 'anonymous') {
+      if (isSignedIn && userId !== 'anonymous') {
         // Firebase operation
         await addToWishlistDB(userId, propertyId);
         console.log(`[WishlistContext] ✅ Successfully added ${propertyId} to Firebase`);
@@ -252,12 +337,49 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         console.log(`[WishlistContext] ✅ Successfully added ${propertyId} to localStorage`);
       }
       
+      // Log activity for wishlist addition
+      try {
+        await logActivity('wishlist_add', propertyId, {
+          timestamp: new Date().toISOString(),
+          source: 'wishlist_button'
+        });
+        console.log(`[WishlistContext] 📊 Activity logged: wishlist_add for ${propertyId}`);
+        
+        // Broadcast real-time update
+        try {
+          await fetch('/api/realtime/broadcast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'wishlist_update',
+              userId,
+              data: {
+                action: 'add',
+                propertyId,
+                wishlistCount: newItems.size
+              }
+            })
+          });
+        } catch (broadcastError) {
+          console.warn(`[WishlistContext] ⚠️ Failed to broadcast wishlist update:`, broadcastError);
+        }
+      } catch (activityError) {
+        console.warn(`[WishlistContext] ⚠️ Failed to log wishlist_add activity:`, activityError);
+        // Don't fail the wishlist operation if activity logging fails
+      }
+      
+      // Clear any previous errors
+      setError(null);
       return true;
     } catch (error) {
       console.error(`[WishlistContext] ❌ Failed to add ${propertyId}:`, error);
       // Revert optimistic update
       setWishlistItems(previousItems);
+      setError(`Failed to add property to wishlist`);
       return false;
+    } finally {
+      // Clear loading state for this property
+      setOperationLoadingState(propertyId, false);
     }
   };
 
@@ -271,6 +393,15 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       console.log(`[WishlistContext] ⚠️ Property ${propertyId} not in wishlist`);
       return false;
     }
+
+    // Check if already being processed
+    if (isOperationLoading(propertyId)) {
+      console.log(`[WishlistContext] 🔄 Property ${propertyId} removal already in progress`);
+      return false;
+    }
+
+    // Set loading state for this specific property
+    setOperationLoadingState(propertyId, true);
     
     // Optimistic update
     const previousItems = new Set(wishlistItems);
@@ -279,7 +410,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     setWishlistItems(newItems);
     
     try {
-      if (isAuthenticated && userId !== 'anonymous') {
+      if (isSignedIn && userId !== 'anonymous') {
         // Firebase operation
         const success = await removeFromWishlistDB(userId, propertyId);
         if (success) {
@@ -294,12 +425,49 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         console.log(`[WishlistContext] ✅ Successfully removed ${propertyId} from localStorage`);
       }
       
+      // Log activity for wishlist removal
+      try {
+        await logActivity('wishlist_remove', propertyId, {
+          timestamp: new Date().toISOString(),
+          source: 'wishlist_button'
+        });
+        console.log(`[WishlistContext] 📊 Activity logged: wishlist_remove for ${propertyId}`);
+        
+        // Broadcast real-time update
+        try {
+          await fetch('/api/realtime/broadcast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'wishlist_update',
+              userId,
+              data: {
+                action: 'remove',
+                propertyId,
+                wishlistCount: newItems.size
+              }
+            })
+          });
+        } catch (broadcastError) {
+          console.warn(`[WishlistContext] ⚠️ Failed to broadcast wishlist update:`, broadcastError);
+        }
+      } catch (activityError) {
+        console.warn(`[WishlistContext] ⚠️ Failed to log wishlist_remove activity:`, activityError);
+        // Don't fail the wishlist operation if activity logging fails
+      }
+      
+      // Clear any previous errors
+      setError(null);
       return true;
     } catch (error) {
       console.error(`[WishlistContext] ❌ Failed to remove ${propertyId}:`, error);
       // Revert optimistic update
       setWishlistItems(previousItems);
+      setError(`Failed to remove property from wishlist`);
       return false;
+    } finally {
+      // Clear loading state for this property
+      setOperationLoadingState(propertyId, false);
     }
   };
 
@@ -319,25 +487,29 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   // Save localStorage whenever wishlistItems changes for non-authenticated users
   useEffect(() => {
-    if (!isAuthenticated && typeof window !== 'undefined') {
+    if (!isSignedIn && typeof window !== 'undefined') {
       try {
         localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify([...wishlistItems]));
       } catch (error) {
         console.error('[WishlistContext] ❌ Failed to save to localStorage:', error);
       }
     }
-  }, [wishlistItems, isAuthenticated]);
+  }, [wishlistItems, isSignedIn]);
 
   const value: WishlistContextType = {
     wishlistItems,
     wishlistCount: wishlistItems.size,
-    isLoading: isLoading && !isInitialized, // Only show loading during initial setup
-    isInitialized,
+    isLoading: isLoading && !isInitializedRef.current, // Only show loading during initial setup
+    isInitialized: isInitializedRef.current,
+    error,
+    operationLoading,
     addToWishlist,
     removeFromWishlist,
     isInWishlist,
     toggleWishlist,
-    refreshWishlist
+    refreshWishlist,
+    clearError,
+    isOperationLoading
   };
 
   return (
@@ -350,6 +522,23 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 export function useWishlistContext() {
   const context = useContext(WishlistContext);
   if (context === undefined) {
+    // Check if we're in a server-side rendering context
+    if (typeof window === 'undefined') {
+      // Return a mock context for SSR to prevent build errors
+      return {
+        wishlistItems: new Set<string>(),
+        wishlistCount: 0,
+        isLoading: false,
+        isInitialized: false,
+        error: null,
+        addToWishlist: async () => false,
+        removeFromWishlist: async () => false,
+        isInWishlist: () => false,
+        toggleWishlist: async () => false,
+        refreshWishlist: async () => {},
+        clearError: () => {}
+      };
+    }
     throw new Error('useWishlistContext must be used within a WishlistProvider');
   }
   return context;

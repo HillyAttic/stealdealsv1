@@ -1,18 +1,25 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;
 import { NextRequest } from 'next/server'
-import { GET, POST } from '../route'
+import { GET, POST, PUT, DELETE } from '../route'
 
-// Mock dependencies
-vi.mock('@/lib/auth/middleware', () => ({
-  requireAuth: vi.fn()
+// Mock Clerk
+jest.mock('@clerk/nextjs/server', () => ({
+  currentUser: jest.fn()
 }))
 
-vi.mock('@/lib/database/wishlist', () => ({
-  getUserWishlist: vi.fn(),
-  addToWishlist: vi.fn(),
-  removeFromWishlist: vi.fn(),
-  getWishlistStats: vi.fn(),
-  isInWishlist: vi.fn()
+// Mock dependencies
+jest.mock('@/lib/auth/middleware', () => ({
+  optionalAuth: jest.fn((request, handler) => handler(request))
+}))
+
+jest.mock('@/lib/database/wishlist', () => ({
+  getUserWishlist: jest.fn(),
+  addToWishlist: jest.fn(),
+  removeFromWishlist: jest.fn(),
+  getWishlistStats: jest.fn(),
+  isInWishlist: jest.fn(),
+  updateWishlistItem: jest.fn()
 }))
 
 describe('/api/user/wishlist', () => {
@@ -29,7 +36,7 @@ describe('/api/user/wishlist', () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    jest.clearAllMocks()
   })
 
   describe('GET /api/user/wishlist', () => {
@@ -63,13 +70,13 @@ describe('/api/user/wishlist', () => {
 
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock wishlist data
       const { getUserWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(getUserWishlist).mockResolvedValue(mockWishlistProperties)
+      jest.mocked(getUserWishlist).mockResolvedValue(mockWishlistProperties)
 
       const request = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'GET'
@@ -102,13 +109,13 @@ describe('/api/user/wishlist', () => {
 
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock wishlist stats
       const { getWishlistStats } = await import('@/lib/database/wishlist')
-      vi.mocked(getWishlistStats).mockResolvedValue(mockStats)
+      jest.mocked(getWishlistStats).mockResolvedValue(mockStats)
 
       const request = new NextRequest('http://localhost:3000/api/user/wishlist?stats=true', {
         method: 'GET'
@@ -126,13 +133,13 @@ describe('/api/user/wishlist', () => {
     it('should handle empty wishlist', async () => {
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock empty wishlist
       const { getUserWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(getUserWishlist).mockResolvedValue([])
+      jest.mocked(getUserWishlist).mockResolvedValue([])
 
       const request = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'GET'
@@ -150,13 +157,13 @@ describe('/api/user/wishlist', () => {
     it('should handle database errors', async () => {
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock database error
       const { getUserWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(getUserWishlist).mockRejectedValue(new Error('Database error'))
+      jest.mocked(getUserWishlist).mockRejectedValue(new Error('Database error'))
 
       const request = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'GET'
@@ -191,14 +198,14 @@ describe('/api/user/wishlist', () => {
 
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock property not in wishlist
       const { isInWishlist, addToWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(isInWishlist).mockResolvedValue(false)
-      vi.mocked(addToWishlist).mockResolvedValue(mockWishlistItem)
+      jest.mocked(isInWishlist).mockResolvedValue(false)
+      jest.mocked(addToWishlist).mockResolvedValue(mockWishlistItem)
 
       const request = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',
@@ -229,13 +236,13 @@ describe('/api/user/wishlist', () => {
 
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock successful removal
       const { removeFromWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(removeFromWishlist).mockResolvedValue(true)
+      jest.mocked(removeFromWishlist).mockResolvedValue(true)
 
       const request = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',
@@ -260,13 +267,13 @@ describe('/api/user/wishlist', () => {
 
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock property already in wishlist
       const { isInWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(isInWishlist).mockResolvedValue(true)
+      jest.mocked(isInWishlist).mockResolvedValue(true)
 
       const request = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',
@@ -290,13 +297,13 @@ describe('/api/user/wishlist', () => {
 
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock removal failure (property not found)
       const { removeFromWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(removeFromWishlist).mockResolvedValue(false)
+      jest.mocked(removeFromWishlist).mockResolvedValue(false)
 
       const request = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',
@@ -320,7 +327,7 @@ describe('/api/user/wishlist', () => {
 
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
@@ -346,7 +353,7 @@ describe('/api/user/wishlist', () => {
 
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
@@ -382,14 +389,14 @@ describe('/api/user/wishlist', () => {
 
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock property not in wishlist
       const { isInWishlist, addToWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(isInWishlist).mockResolvedValue(false)
-      vi.mocked(addToWishlist).mockResolvedValue(mockWishlistItem)
+      jest.mocked(isInWishlist).mockResolvedValue(false)
+      jest.mocked(addToWishlist).mockResolvedValue(mockWishlistItem)
 
       const request = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',
@@ -418,14 +425,14 @@ describe('/api/user/wishlist', () => {
 
       // Mock auth middleware
       const { requireAuth } = await import('@/lib/auth/middleware')
-      vi.mocked(requireAuth).mockImplementation(async (request, handler) => {
+      jest.mocked(requireAuth).mockImplementation(async (request, handler) => {
         return handler(mockAuthenticatedRequest)
       })
 
       // Mock property not in wishlist but add operation fails
       const { isInWishlist, addToWishlist } = await import('@/lib/database/wishlist')
-      vi.mocked(isInWishlist).mockResolvedValue(false)
-      vi.mocked(addToWishlist).mockRejectedValue(new Error('Database connection failed'))
+      jest.mocked(isInWishlist).mockResolvedValue(false)
+      jest.mocked(addToWishlist).mockRejectedValue(new Error('Database connection failed'))
 
       const request = new NextRequest('http://localhost:3000/api/user/wishlist', {
         method: 'POST',

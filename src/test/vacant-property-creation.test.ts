@@ -1,11 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from '@jest/globals';
+const vi = jest;;
 
 // Mock fetch for testing
-global.fetch = vi.fn();
+global.fetch = jest.fn();
 
 describe('Vacant Property Creation', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   it('should create vacant property with correct data structure', async () => {
