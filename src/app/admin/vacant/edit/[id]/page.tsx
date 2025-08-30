@@ -81,28 +81,29 @@ function EditVacantPropertyContent() {
     
     const fetchProperty = async () => {
       try {
-        // Try to get from vacant properties first
-        let propertyRef = child(vacantPropertiesRef, propertyId);
-        let snapshot = await get(propertyRef);
+        console.log(`Fetching property via API: ${propertyId}`);
         
-        // If not found, try legacy properties storage
-        if (!snapshot.exists()) {
-          propertyRef = ref(database, `properties/${propertyId}`);
-          snapshot = await get(propertyRef);
-        }
+        // Use the API endpoint instead of direct Firebase queries
+        const response = await fetch(`/api/properties/${propertyId}`, {
+          method: 'GET',
+          credentials: 'include'
+        });
         
-        if (snapshot.exists()) {
-          const propertyData = snapshot.val();
+        if (response.ok) {
+          const { property: propertyData } = await response.json();
           setProperty({
             ...propertyData,
             id: propertyId // Ensure we always have the Firebase key as the ID
           });
-          console.log(`Property loaded: ${propertyId}`);
-        } else {
+          console.log(`Property loaded via API: ${propertyId}`);
+        } else if (response.status === 404) {
           setError(`Property with ID "${propertyId}" not found in database`);
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          setError(errorData.error || `Failed to load property (${response.status})`);
         }
       } catch (err: any) {
-        console.error('Error loading property:', err);
+        console.error('Error loading property via API:', err);
         setError(err.message || 'Failed to load property');
       } finally {
         setIsLoading(false);
@@ -141,31 +142,29 @@ function EditVacantPropertyContent() {
         delete updatedProperty.imageUrl;
       }
       
-      // Remove the id field as it's not stored in the Firebase object
-      const { id, ...propertyToSave } = updatedProperty;
+      console.log(`Updating property via API: ${propertyId}`);
       
-      // Update the property in Firebase - try vacant properties first, then legacy
-      let propertyRef = child(vacantPropertiesRef, propertyId);
-      let legacyRef = ref(database, `properties/${propertyId}`);
+      // Use the API endpoint instead of direct Firebase operations
+      const response = await fetch(`/api/properties/${propertyId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(updatedProperty)
+      });
       
-      // Check if exists in vacant properties
-      const vacantSnapshot = await get(propertyRef);
-      if (vacantSnapshot.exists()) {
-        await update(propertyRef, propertyToSave);
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Property updated successfully via API:', result);
+        toast.success('Property updated successfully');
+        router.push('/admin/vacant');
       } else {
-        // Try updating in legacy location
-        const legacySnapshot = await get(legacyRef);
-        if (legacySnapshot.exists()) {
-          await update(legacyRef, propertyToSave);
-        } else {
-          throw new Error('Property not found in database');
-        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Update failed (${response.status})`);
       }
-      
-      toast.success('Property updated successfully');
-      router.push('/admin/vacant');
     } catch (err: any) {
-      console.error('Error updating property:', err);
+      console.error('Error updating property via API:', err);
       setError(err.message || 'Failed to update property');
       toast.error('Failed to update property');
     } finally {

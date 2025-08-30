@@ -306,21 +306,6 @@ export function EnhancedPropertyModal({ property, isOpen, onClose }: EnhancedPro
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <button className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 transition-colors py-2 px-4 rounded font-medium text-sm cursor-pointer" style={{ color: 'rgb(28, 110, 164)' }}>
-                    <FaEnvelope className="text-sm" />
-                    Request Information
-                  </button>
-                  {property.contactNumber && (
-                    <a 
-                      href={`tel:${property.contactNumber}`}
-                      className="w-full flex items-center justify-center gap-2 border border-white text-white hover:bg-white/10 transition-colors py-2 px-4 rounded font-medium text-sm"
-                    >
-                      <FaPhone className="text-sm" />
-                      Call Now
-                    </a>
-                  )}
-                </div>
 
                 <div className="mt-4 pt-4 border-t border-white/20">
                   <div className="space-y-2 text-sm text-white/80">

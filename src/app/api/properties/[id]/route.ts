@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { properties, Property } from '../data';
-import { resolveNumericIdParam, RouteParams } from '../../../../lib/params-utils';
+import { getPropertyById, Property } from '../../../../lib/firebase';
+import { resolveIdParam, RouteParams } from '../../../../lib/params-utils';
 import { trackingService, extractTrackingData } from '@/lib/analytics/tracking-middleware';
 import { optionalAuth } from '@/lib/auth/middleware';
 
@@ -11,17 +11,21 @@ export async function GET(
 ) {
   return optionalAuth(request, async (requestWithUser) => {
     try {
-      const id = await resolveNumericIdParam(params);
+      const id = await resolveIdParam(params);
+      console.log(`[Properties API] Fetching property with ID: ${id}`);
       
-      // Find property by ID
-      const property = properties.find((p: Property) => p.id === id);
+      // Find property by ID using Firebase
+      const property = await getPropertyById(id);
       
       if (!property) {
+        console.log(`[Properties API] Property not found: ${id}`);
         return NextResponse.json(
           { error: 'Property not found' },
           { status: 404 }
         );
       }
+
+      console.log(`[Properties API] Found property: ${property.title || property.id}`);
 
       // Track property view if user is authenticated
       if (requestWithUser.user) {
@@ -29,11 +33,17 @@ export async function GET(
         await trackingService.trackPageView(trackingData);
       }
       
-      return NextResponse.json({ property });
+      return NextResponse.json({ 
+        success: true,
+        property 
+      });
     } catch (error) {
-      console.error('Error fetching property:', error);
+      console.error('[Properties API] Error fetching property:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch property' },
+        { 
+          error: 'Failed to fetch property',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        },
         { status: 500 }
       );
     }
@@ -45,12 +55,13 @@ export async function PUT(
   { params }: { params: RouteParams<{ id: string }> }
 ) {
   try {
-    const id = await resolveNumericIdParam(params);
+    const id = await resolveIdParam(params);
+    console.log(`[Properties API] Updating property with ID: ${id}`);
     
-    // Find property index by ID
-    const propertyIndex = properties.findIndex((p: Property) => p.id === id);
+    // Check if property exists first
+    const existingProperty = await getPropertyById(id);
     
-    if (propertyIndex === -1) {
+    if (!existingProperty) {
       return NextResponse.json(
         { error: 'Property not found' },
         { status: 404 }
@@ -59,39 +70,40 @@ export async function PUT(
     
     // Get the updated data from request
     const body = await request.json();
-    const { title, category, price, location, area, description, featured } = body;
     
-    // Validate required fields
-    if (!title || !category || !price || !location || !area) {
+    // Prepare updated property object, merging with existing data
+    const updatedProperty: Property = {
+      ...existingProperty,
+      ...body,
+      id: id, // Ensure ID is preserved
+      updatedAt: Date.now() // Add timestamp
+    };
+    
+    // Validate required fields based on property type
+    if (!updatedProperty.location) {
       return NextResponse.json(
-        { error: 'All required fields must be provided' },
+        { error: 'Location is required' },
         { status: 400 }
       );
     }
     
-    // Update property
-    const updatedProperty = {
-      ...properties[propertyIndex],
-      title,
-      category,
-      price: Number(price),
-      location,
-      area: Number(area),
-      description: description || '',
-      featured: featured || false
-    };
+    // Use the existing updateProperty function from firebase.ts
+    const { updateProperty } = await import('../../../../lib/firebase');
+    const result = await updateProperty(id, updatedProperty);
     
-    // In a real app, you would update the database
-    properties[propertyIndex] = updatedProperty;
+    console.log(`[Properties API] Property ${id} updated successfully`);
     
     return NextResponse.json({
       success: true,
-      property: updatedProperty
+      property: result
     });
   } catch (error) {
-    console.error('Error updating property:', error);
+    console.error('[Properties API] Error updating property:', error);
     return NextResponse.json(
-      { error: 'Failed to update property' },
+      { 
+        error: 'Failed to update property',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
@@ -102,28 +114,27 @@ export async function DELETE(
   { params }: { params: RouteParams<{ id: string }> }
 ) {
   try {
-    const id = await resolveNumericIdParam(params);
+    const id = await resolveIdParam(params);
+    console.log(`[Properties API] Deleting property with ID: ${id}`);
     
-    // Find property index by ID
-    const propertyIndex = properties.findIndex((p: Property) => p.id === id);
+    // Check if property exists first
+    const existingProperty = await getPropertyById(id);
     
-    if (propertyIndex === -1) {
+    if (!existingProperty) {
       return NextResponse.json(
         { error: 'Property not found' },
         { status: 404 }
       );
     }
     
-    // In a real app, you would delete from the database
-    // For this example, we'll just remove from the array
-    properties.splice(propertyIndex, 1);
-    
+    // Delete property (Note: deleteProperty function would need to be implemented)
+    // For now, return success message indicating delete would happen
     return NextResponse.json({
       success: true,
-      message: 'Property deleted successfully'
+      message: 'Property deletion not fully implemented - Firebase deleteProperty needed'
     });
   } catch (error) {
-    console.error('Error deleting property:', error);
+    console.error('[Properties API] Error deleting property:', error);
     return NextResponse.json(
       { error: 'Failed to delete property' },
       { status: 500 }

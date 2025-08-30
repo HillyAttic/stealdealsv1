@@ -505,22 +505,6 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                 </h3>
                 
                 <div className="space-y-3 mb-6">
-                  <button 
-                    onClick={() => onOpenContactModal?.(franchise)}
-                    className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center"
-                  >
-                    <FaEnvelope className="mr-2" />
-                    Request Information
-                  </button>
-                  
-                  <a 
-                    href="tel:+919876543210"
-                    className="w-full bg-secondary text-white py-3 px-4 rounded-lg font-semibold hover:bg-secondary/90 transition-colors flex items-center justify-center"
-                  >
-                    <FaPhone className="mr-2" />
-                    Call Now
-                  </a>
-                  
                   {franchise.investorDiscoveryKitUrl && (
                     <button
                       onClick={handleInvestorKitClick}

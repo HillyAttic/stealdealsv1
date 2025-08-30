@@ -82,73 +82,36 @@ function EditFranchiseContent() {
     
     const fetchFranchise = async () => {
       try {
-        let franchiseData = null;
-        let foundInCollection = '';
+        console.log(`Fetching franchise via API: ${franchiseId}`);
         
-        // Try migrated collection first
-        console.log('Checking migrated franchise collection for ID:', franchiseId);
-        let snapshot = await get(child(migratedFranchiseRef, franchiseId));
+        // Use the API endpoint instead of direct Firebase queries
+        const response = await fetch(`/api/franchises/${franchiseId}`, {
+          method: 'GET',
+          credentials: 'include'
+        });
         
-        if (snapshot.exists()) {
-          franchiseData = snapshot.val();
-          foundInCollection = 'migrated';
-          console.log('Found franchise in migrated collection:', franchiseData);
-          
-          // Handle migrated structure - extract from franchiseDetails if nested
-          if (franchiseData.franchiseDetails) {
-            const details = franchiseData.franchiseDetails;
-            franchiseData = {
-              ...franchiseData,
-              // Map nested fields to root level for form compatibility
-              brand: franchiseData.title || franchiseData.name || details.name || details.brand || '',
-              industry: details.industry || franchiseData.industry || '',
-              segment: details.segment || franchiseData.segment || '',
-              model: details.model || franchiseData.model || '',
-              minArea: details.minArea || franchiseData.minArea || '',
-              maxArea: details.maxArea || franchiseData.maxArea || '',
-              minInvestment: details.minInvestment || franchiseData.minInvestment || '',
-              maxInvestment: details.maxInvestment || franchiseData.maxInvestment || '',
-              royalty: details.royalty || franchiseData.royalty || '',
-              establishmentYear: details.establishmentYear || franchiseData.establishmentYear || '',
-              franchiseStartedYear: details.franchiseStartedYear || franchiseData.franchiseStartedYear || '',
-              numberOutlets: details.numberOfOutlets || details.numberOutlets || franchiseData.numberOutlets || '',
-              minPaybackPeriod: details.minPaybackPeriod || franchiseData.minPaybackPeriod || '',
-              maxPaybackPeriod: details.maxPaybackPeriod || franchiseData.maxPaybackPeriod || '',
-              headquarter: details.headquarter || franchiseData.headquarter || franchiseData.location || '',
-              remarks: franchiseData.description || details.remarks || franchiseData.remarks || '',
-              image: franchiseData.images?.[0] || franchiseData.image || ''
-            };
-          }
-        } else {
-          // Fallback to legacy collection
-          console.log('Checking legacy franchise collection for ID:', franchiseId);
-          snapshot = await get(child(franchisePropertiesRef, franchiseId));
-          
-          if (snapshot.exists()) {
-            franchiseData = snapshot.val();
-            foundInCollection = 'legacy';
-            console.log('Found franchise in legacy collection:', franchiseData);
-          }
-        }
-        
-        if (franchiseData) {
-          console.log(`Fetched franchise data from ${foundInCollection} collection:`, franchiseData);
+        if (response.ok) {
+          const { franchise: franchiseData } = await response.json();
+          console.log('Franchise loaded via API:', franchiseData);
           
           // Make sure to properly map name/brand fields for UI display
           const dataWithBrand = {
             id: franchiseId,
             ...franchiseData,
-            // Ensure brand is set consistently
+            // Ensure brand is set consistently for form compatibility
             brand: franchiseData.brand || franchiseData.name || franchiseData.product || franchiseData.title || ''
           };
           
           setFranchise(dataWithBrand);
-        } else {
-          console.log('Franchise not found in any collection');
+        } else if (response.status === 404) {
+          console.log('Franchise not found via API');
           setError('Franchise not found');
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          setError(errorData.error || `Failed to load franchise (${response.status})`);
         }
       } catch (err: any) {
-        console.error('Error loading franchise:', err);
+        console.error('Error loading franchise via API:', err);
         setError(err.message || 'Failed to load franchise');
       } finally {
         setIsLoading(false);
@@ -193,37 +156,29 @@ function EditFranchiseContent() {
       updatedFranchise.roi = franchise.royalty || franchise.roi;
       updatedFranchise.description = franchise.remarks || franchise.description;
       
-      // Remove the id field as it's not stored in the Firebase object
-      const { id, ...franchiseToSave } = updatedFranchise;
+      console.log(`Updating franchise via API: ${franchiseId}`);
       
-      // Determine which collection to update - prefer migrated structure
-      let targetRef = child(migratedFranchiseRef, franchiseId);
+      // Use the API endpoint instead of direct Firebase operations
+      const response = await fetch(`/api/franchises/${franchiseId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(updatedFranchise)
+      });
       
-      // Check if franchise exists in migrated collection first
-      const migratedSnapshot = await get(child(migratedFranchiseRef, franchiseId));
-      if (migratedSnapshot.exists()) {
-        console.log('Updating franchise in migrated collection');
-        targetRef = child(migratedFranchiseRef, franchiseId);
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Franchise updated successfully via API:', result);
+        toast.success('Franchise updated successfully');
+        router.push('/admin/franchise');
       } else {
-        // Check legacy collection
-        const legacySnapshot = await get(child(franchisePropertiesRef, franchiseId));
-        if (legacySnapshot.exists()) {
-          console.log('Updating franchise in legacy collection');
-          targetRef = child(franchisePropertiesRef, franchiseId);
-        } else {
-          // If not found in either, create in migrated collection
-          console.log('Creating new franchise in migrated collection');
-          targetRef = child(migratedFranchiseRef, franchiseId);
-        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Update failed (${response.status})`);
       }
-      
-      // Update the franchise in Firebase
-      await update(targetRef, franchiseToSave);
-      
-      toast.success('Franchise updated successfully');
-      router.push('/admin/franchise');
     } catch (err: any) {
-      console.error('Error updating franchise:', err);
+      console.error('Error updating franchise via API:', err);
       setError(err.message || 'Failed to update franchise');
       toast.error('Failed to update franchise');
     } finally {

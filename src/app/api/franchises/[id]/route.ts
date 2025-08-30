@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { ref, get, update, remove } from 'firebase/database';
+import { ref, get, update, remove, child } from 'firebase/database';
 import { database, migratedFranchiseRef } from '@/lib/firebase';
 import { resolveIdParam, RouteParams } from '../../../../lib/params-utils';
 
@@ -128,7 +128,94 @@ export async function GET(
   }
 }
 
-// Update a franchise
+// Update a franchise (PUT method for compatibility)
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: RouteParams<{ id: string }> }
+) {
+  try {
+    const id = await resolveIdParam(params);
+    console.log(`[API] 🔄 Updating franchise with ID: ${id}`);
+    const body = await request.json();
+    
+    let foundFranchise = false;
+    let targetRef;
+    let existingData = null;
+    
+    // Check migrated collection first
+    const migratedSnapshot = await get(child(migratedFranchiseRef, id));
+    if (migratedSnapshot.exists()) {
+      console.log('[API] ✅ Found franchise in migrated collection');
+      targetRef = child(migratedFranchiseRef, id);
+      existingData = migratedSnapshot.val();
+      foundFranchise = true;
+    } else {
+      // Check legacy collection
+      const legacyRef = ref(database, `franchiseProperties/${id}`);
+      const legacySnapshot = await get(legacyRef);
+      if (legacySnapshot.exists()) {
+        console.log('[API] ✅ Found franchise in legacy collection');
+        targetRef = legacyRef;
+        existingData = legacySnapshot.val();
+        foundFranchise = true;
+      }
+    }
+    
+    if (!foundFranchise) {
+      return NextResponse.json(
+        { error: 'Franchise not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Merge existing data with updates
+    const updatedFranchise = {
+      ...existingData,
+      ...body,
+      updatedAt: Date.now()
+    };
+    
+    // Ensure backward compatibility fields are updated
+    if (body.brand) {
+      updatedFranchise.name = body.brand;
+      updatedFranchise.product = body.brand;
+    }
+    if (body.minInvestment) {
+      updatedFranchise.investment = body.minInvestment;
+    }
+    if (body.headquarter) {
+      updatedFranchise.location = body.headquarter;
+    }
+    if (body.royalty) {
+      updatedFranchise.roi = body.royalty;
+    }
+    if (body.remarks) {
+      updatedFranchise.description = body.remarks;
+    }
+    
+    await update(targetRef, updatedFranchise);
+    console.log(`[API] ✅ Franchise ${id} updated successfully`);
+    
+    return NextResponse.json({
+      success: true,
+      franchise: {
+        id,
+        ...updatedFranchise
+      }
+    });
+  } catch (error) {
+    console.error('[API] ❌ Error updating franchise:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to update franchise',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// Update a franchise (PATCH method for legacy compatibility)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: RouteParams<{ id: string }> }
