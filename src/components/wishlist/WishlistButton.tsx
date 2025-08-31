@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useAuth } from '@clerk/nextjs';
-import { useWishlist } from '@/hooks/useWishlist';
+import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useActivity } from '@/hooks/useActivity';
 
 interface WishlistButtonProps {
@@ -32,7 +32,7 @@ export function WishlistButton({
     error, 
     clearError,
     isOperationLoading 
-  } = useWishlist();
+  } = useWishlistContext();
   const { logWishlistAdd, logWishlistRemove } = useActivity();
   const [showError, setShowError] = useState(false);
 
@@ -97,18 +97,28 @@ export function WishlistButton({
 
     try {
       const wasInWishlist = inWishlist;
+      console.log(`[WishlistButton] Toggling property ${propertyId}, currently in wishlist: ${wasInWishlist}`);
+      
       const success = await toggleWishlist(propertyId);
       
       if (success) {
+        console.log(`[WishlistButton] Successfully toggled property ${propertyId}, new state: ${!wasInWishlist}`);
         // Track successful wishlist action with new activity system
-        if (wasInWishlist) {
-          await logWishlistRemove(propertyId);
-        } else {
-          await logWishlistAdd(propertyId);
+        try {
+          if (wasInWishlist) {
+            await logWishlistRemove(propertyId);
+          } else {
+            await logWishlistAdd(propertyId);
+          }
+        } catch (activityError) {
+          console.warn('[WishlistButton] Failed to log activity:', activityError);
+          // Don't fail wishlist operation if activity logging fails
         }
+      } else {
+        console.warn(`[WishlistButton] Toggle operation failed for property ${propertyId}`);
       }
     } catch (error) {
-      console.error('Error toggling wishlist:', error);
+      console.error(`[WishlistButton] Error toggling wishlist for property ${propertyId}:`, error);
     }
   };
 

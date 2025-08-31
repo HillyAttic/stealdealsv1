@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FaTimes, FaDownload, FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaMoneyBillWave, FaChartLine, FaBuilding, FaDollarSign, FaCalendarAlt, FaStoreAlt, FaShoppingBag, FaFileAlt, FaClock, FaGraduationCap, FaHeadset, FaBullhorn, FaCog, FaPhone, FaEnvelope, FaGlobe, FaShare, FaTrophy, FaHandshake, FaRocket, FaShieldAlt, FaRulerCombined, FaLock } from 'react-icons/fa';
 import PropertyImage from '@/components/PropertyImage';
-import { useGatedContent } from '@/hooks/useGatedContent';
+import { useSecureGatedContent } from '@/hooks/useSecureGatedContent';
 import { GatedContentModal } from './GatedContentModal';
 import { SuccessMessage } from './SuccessMessage';
 
@@ -52,11 +52,12 @@ interface FranchiseModalProps {
 export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal }: FranchiseModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
-  // Gated content functionality - Generate consistent ID like FranchiseCard
+  // Secure gated content functionality - Generate consistent ID like FranchiseCard
   const franchiseId = franchise?.id || `franchise-${franchise?.name?.replace(/\s+/g, '-').toLowerCase()}-${franchise?.industry?.replace(/\s+/g, '-').toLowerCase()}`;
-  const { isContentUnlocked, unlockContent } = useGatedContent('franchise');
+  const { isContentUnlocked, unlockContent } = useSecureGatedContent('franchise');
   const [showGatedModal, setShowGatedModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const isUnlocked = isContentUnlocked(franchiseId);
 
   // Handle investor discovery kit click
@@ -77,10 +78,15 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
   }, [franchise?.investorDiscoveryKitUrl, isUnlocked]);
 
   // Handle successful form submission
-  const handleGatedSuccess = useCallback(() => {
+  const handleGatedSuccess = useCallback(async () => {
     setShowGatedModal(false);
-    unlockContent(franchiseId);
-    setShowSuccessMessage(true);
+    try {
+      await unlockContent(franchiseId);
+      setShowSuccessMessage(true);
+    } catch (error) {
+      console.error('Failed to unlock content:', error);
+      // Could show error message to user here
+    }
   }, [franchiseId, unlockContent]);
 
   // Handle download from success message
@@ -505,6 +511,20 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                 </h3>
                 
                 <div className="space-y-3 mb-6">
+                  <button
+                    onClick={() => setShowContactModal(true)}
+                    className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center"
+                  >
+                    <FaEnvelope className="mr-2" />
+                    Request Information
+                  </button>
+                  <a
+                    href="tel:+919630403080"
+                    className="w-full bg-secondary text-white py-3 px-4 rounded-lg font-semibold hover:bg-secondary/90 transition-colors flex items-center justify-center"
+                  >
+                    <FaPhone className="mr-2" />
+                    Call Now
+                  </a>
                   {franchise.investorDiscoveryKitUrl && (
                     <button
                       onClick={handleInvestorKitClick}
@@ -602,6 +622,138 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
           onDownload={handleDownloadFromSuccess}
           franchiseName={franchise.product || franchise.name}
         />
+      )}
+      
+      {/* Contact Form Modal */}
+      {showContactModal && franchise && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center z-[60] p-4"
+          style={{
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            background: 'rgba(0, 0, 0, 0.5)'
+          }}
+        >
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl max-w-md md:max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/20">
+            <div className="bg-primary px-4 md:px-6 py-3 md:py-4 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg md:text-xl font-bold text-white">Request Information</h3>
+                <button
+                  onClick={() => setShowContactModal(false)}
+                  className="text-white hover:text-primary/20 transition-colors p-1 hover:bg-white/10 rounded-lg"
+                >
+                  <FaTimes className="text-lg md:text-xl" />
+                </button>
+              </div>
+              <p className="text-primary/20 text-xs md:text-sm mt-1">
+                Get detailed information about {franchise.name}
+              </p>
+            </div>
+            <div className="p-4 md:p-6">
+              <form 
+                action="https://formsubmit.co/stealdeals.co.in@gmail.com" 
+                method="POST" 
+                className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"
+              >
+                <input type="hidden" value={`Franchise Inquiry - ${franchise.name} (Contact Modal)`} name="_subject" />
+                <input type="hidden" value="https://stealdeals.co.in/franchise?success=true" name="_next" />
+                <input type="hidden" value="false" name="_captcha" />
+                <input type="hidden" value={franchise.name} name="franchise_name" />
+                <input type="hidden" value={franchise.industry} name="franchise_industry" />
+                <input type="hidden" value={typeof franchise.investment === 'string' ? franchise.investment : `₹${franchise.investment}`} name="franchise_investment" />
+                <input type="hidden" value={franchise.location} name="franchise_location" />
+                <input type="hidden" value={franchise.roi || 'NA'} name="franchise_roi" />
+                <input type="hidden" value="Separate Contact Modal" name="form_type" />
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Franchise Name</label>
+                  <input
+                    readOnly
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-primary/5 text-gray-700 cursor-not-allowed"
+                    type="text"
+                    value={franchise.name}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                    <input
+                      required
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter your full name"
+                      type="text"
+                      name="name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                    <input
+                      required
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter your email"
+                      type="email"
+                      name="email"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
+                    <input
+                      required
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter your phone number"
+                      type="tel"
+                      name="phone"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Investment Budget</label>
+                    <select
+                      name="investment_budget"
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    >
+                      <option value="">Select your budget range</option>
+                      <option value="₹5-10 Lakhs">₹5-10 Lakhs</option>
+                      <option value="₹10-25 Lakhs">₹10-25 Lakhs</option>
+                      <option value="₹25-50 Lakhs">₹25-50 Lakhs</option>
+                      <option value="₹50 Lakhs - 1 Crore">₹50 Lakhs - 1 Crore</option>
+                      <option value="Above ₹1 Crore">Above ₹1 Crore</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+                  <textarea
+                    name="message"
+                    rows={3}
+                    className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Tell us about your franchise requirements..."
+                  ></textarea>
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-3 pt-4 md:pt-6 md:col-span-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowContactModal(false)}
+                    className="flex-1 px-4 md:px-6 py-2 md:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-primary text-white py-2 md:py-3 px-4 md:px-6 rounded-lg font-semibold hover:bg-primary/90 transition-colors text-sm md:text-base"
+                  >
+                    Send Request
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

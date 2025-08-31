@@ -56,6 +56,11 @@ export interface WishlistProperty {
   addedAt: Date;
   notes?: string;
   priority: 'low' | 'medium' | 'high';
+  developer?: string;
+  plotSize?: string;
+  category?: string;
+  segment?: string;
+  description?: string;
 }
 
 export type ActivityType = 

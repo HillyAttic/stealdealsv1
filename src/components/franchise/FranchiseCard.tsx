@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import { FaMapMarkerAlt, FaMoneyBillWave, FaChartLine, FaHandshake, FaDownload, FaLock } from 'react-icons/fa';
 import { WishlistButton } from '@/components/wishlist';
-import { useGatedContent } from '@/hooks/useGatedContent';
+import { useSecureGatedContent } from '@/hooks/useSecureGatedContent';
 import { GatedContentModal } from './GatedContentModal';
 import { SuccessMessage } from './SuccessMessage';
 
@@ -59,7 +59,7 @@ export function FranchiseCard({
   const franchiseId = franchise.id || `franchise-${franchise.name?.replace(/\s+/g, '-').toLowerCase()}-${franchise.industry?.replace(/\s+/g, '-').toLowerCase()}`;
 
   // Gated content state
-  const { isContentUnlocked, unlockContent } = useGatedContent('franchise');
+  const { isContentUnlocked, unlockContent } = useSecureGatedContent('franchise');
   const [showGatedModal, setShowGatedModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const isUnlocked = isContentUnlocked(franchiseId);

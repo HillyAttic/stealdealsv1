@@ -325,9 +325,27 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     
     try {
       if (isSignedIn && userId !== 'anonymous' && userId !== 'user-1') {
-        // Firebase operation
-        await addToWishlistDB(userId, propertyId);
-        console.log(`[WishlistContext] ✅ Successfully added ${propertyId} to Firebase`);
+        // Use API endpoint instead of direct Firebase
+        const response = await fetch('/api/user/wishlist', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-mock-user-id': userId,
+            'x-mock-user-email': 'user@example.com'
+          },
+          body: JSON.stringify({
+            propertyId,
+            action: 'add',
+            priority: 'medium'
+          })
+        });
+        
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Failed to add to wishlist');
+        }
+        
+        console.log(`[WishlistContext] ✅ Successfully added ${propertyId} via API`);
         // Real-time listener will update the UI
       } else {
         // localStorage operation
@@ -409,14 +427,27 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     
     try {
       if (isSignedIn && userId !== 'anonymous' && userId !== 'user-1') {
-        // Firebase operation
-        const success = await removeFromWishlistDB(userId, propertyId);
-        if (success) {
-          console.log(`[WishlistContext] ✅ Successfully removed ${propertyId} from Firebase`);
-          // Real-time listener will update the UI
-        } else {
-          throw new Error('Remove operation returned false');
+        // Use API endpoint instead of direct Firebase
+        const response = await fetch('/api/user/wishlist', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-mock-user-id': userId,
+            'x-mock-user-email': 'user@example.com'
+          },
+          body: JSON.stringify({
+            propertyId,
+            action: 'remove'
+          })
+        });
+        
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Failed to remove from wishlist');
         }
+        
+        console.log(`[WishlistContext] ✅ Successfully removed ${propertyId} via API`);
+        // Real-time listener will update the UI
       } else {
         // localStorage operation
         saveToLocalStorage(newItems);

@@ -216,11 +216,12 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
         console.log(`[Firebase Wishlist] ✅ Found property: ${property.title || property.category || 'Property'} at ${property.location}`);
         
         // Create proper property title
-        const propertyTitle = property.title || 
+        const propertyTitle = property.title || property.project ||
           `${property.category || 'Property'} in ${property.city || property.location || 'Unknown Location'}`;
         
         // Get property price (try different price fields)
-        const propertyPrice = property.price || property.rent || property.askingPrice || 0;
+        const propertyPrice = property.price || property.rent || property.askingPrice || 
+          (property.investmentStartsFrom?.amount) || 0;
         
         // Create image array (handle different image field formats)
         let propertyImages: string[] = [];
@@ -228,6 +229,20 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
           propertyImages = [property.image];
         } else if (property.images && Array.isArray(property.images)) {
           propertyImages = property.images;
+        }
+        
+        // Handle plot size for plot properties (can be string or object)
+        let plotSizeValue: string | undefined;
+        if (property.plotSize) {
+          if (typeof property.plotSize === 'object' && property.plotSize.min && property.plotSize.max) {
+            // Handle plot size range object
+            plotSizeValue = `${property.plotSize.min}–${property.plotSize.max} ${property.plotSize.unit || 'sq.yds'}`;
+          } else if (typeof property.plotSize === 'string') {
+            plotSizeValue = property.plotSize;
+          }
+        } else {
+          // Fallback to other area fields
+          plotSizeValue = property.areaOnSale || property.superArea || undefined;
         }
         
         wishlistProperties.push({
@@ -239,7 +254,13 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
           type: property.category || property.propertyType || 'Property',
           addedAt: item.addedAt,
           notes: item.notes,
-          priority: item.priority
+          priority: item.priority,
+          // Add missing fields that are defined in WishlistProperty interface
+          developer: property.developerName || property.developer || undefined,
+          plotSize: plotSizeValue,
+          category: property.category || undefined,
+          segment: property.segment || undefined,
+          description: property.description || 'Premium plot in prime location'
         });
       } else {
         console.warn(`[Firebase Wishlist] ⚠️ Property not found: ${item.propertyId}`);
@@ -253,7 +274,12 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
           type: 'Unknown',
           addedAt: item.addedAt,
           notes: item.notes,
-          priority: item.priority
+          priority: item.priority,
+          developer: undefined,
+          plotSize: undefined,
+          category: undefined,
+          segment: undefined,
+          description: 'Property data not available'
         });
       }
     }

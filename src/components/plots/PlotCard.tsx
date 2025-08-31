@@ -6,7 +6,7 @@ import { FaMapMarkerAlt, FaRulerCombined, FaDownload, FaLock } from 'react-icons
 import { WishlistButton } from '@/components/wishlist';
 import PropertyImage from '@/components/PropertyImage';
 import { Plot } from '@/lib/firebase';
-import { useGatedContent } from '@/hooks/useGatedContent';
+import { useSecureGatedContent } from '@/hooks/useSecureGatedContent';
 import { PlotGatedContentModal } from './PlotGatedContentModal';
 import { PlotSuccessMessage } from './PlotSuccessMessage';
 
@@ -27,7 +27,7 @@ export function PlotCard({
   const plotId = plot.id || `plot-${plot.project?.replace(/\s+/g, '-').toLowerCase()}`;
 
   // Gated content state
-  const { isContentUnlocked, isContentLoading, getContentState, unlockContent } = useGatedContent('plot');
+  const { isContentUnlocked, isContentLoading, getContentState, unlockContent } = useSecureGatedContent('plot');
   const [showGatedModal, setShowGatedModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   
