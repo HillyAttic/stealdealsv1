@@ -12,6 +12,7 @@ interface FranchiseWishlistModalProps {
 
 export function FranchiseWishlistModal({ property, isOpen, onClose }: FranchiseWishlistModalProps) {
   const [showGatedModal, setShowGatedModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   
   // Secure gated content state
@@ -305,7 +306,9 @@ export function FranchiseWishlistModal({ property, isOpen, onClose }: FranchiseW
                   </h3>
                   
                   <div className="space-y-3 mb-6">
-                    <button className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center">
+                    <button 
+                      onClick={() => setShowContactModal(true)}
+                      className="w-full bg-primary text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center">
                       <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                         <path d="M502.3 190.8c3.9-3.1 9.7-.2 9.7 4.7V400c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V195.6c0-5 5.7-7.8 9.7-4.7 22.4 17.4 52.1 39.5 154.1 113.6 21.1 15.4 56.7 47.8 92.2 47.6 35.7.3 72-32.8 92.3-47.6 102-74.1 131.6-96.3 154-113.7zM256 320c23.2.4 56.6-29.2 73.4-41.4 132.7-96.3 142.8-104.7 173.4-128.7 5.8-4.5 9.2-11.5 9.2-18.9v-19c0-26.5-21.5-48-48-48H48C21.5 64 0 85.5 0 112v19c0 7.4 3.4 14.3 9.2 18.9 30.6 23.9 40.7 32.4 173.4 128.7 16.8 12.2 50.2 41.8 73.4 41.4z"></path>
                       </svg>
@@ -372,70 +375,252 @@ export function FranchiseWishlistModal({ property, isOpen, onClose }: FranchiseW
         </div>
       </div>
       
+      {/* Contact Information Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4 bg-black/50">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl max-w-md md:max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/20">
+            <div className="bg-primary px-4 md:px-6 py-3 md:py-4 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg md:text-xl font-bold text-white">Request Information</h3>
+                <button 
+                  onClick={() => setShowContactModal(false)}
+                  className="text-white hover:text-primary/20 transition-colors p-1 hover:bg-white/10 rounded-lg">
+                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 352 512" className="text-lg md:text-xl" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
+                  </svg>
+                </button>
+              </div>
+              <p className="text-primary/20 text-xs md:text-sm mt-1">Get detailed information about {property.title}</p>
+            </div>
+            
+            <div className="p-4 md:p-6">
+              <form action="https://formsubmit.co/stealdeals.co.in@gmail.com" method="POST" className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <input type="hidden" value={`Franchise Inquiry - ${property.title} (Contact Modal)`} name="_subject" />
+                <input type="hidden" value="https://stealdeals.co.in/franchise?success=true" name="_next" />
+                <input type="hidden" value="false" name="_captcha" />
+                <input type="hidden" value={property.title} name="franchise_name" />
+                <input type="hidden" value={property.category || 'Education'} name="franchise_industry" />
+                <input type="hidden" value={getInvestmentDisplay()} name="franchise_investment" />
+                <input type="hidden" value={property.location || 'GHAZIABAD'} name="franchise_location" />
+                <input type="hidden" value="NO ROYALTY" name="franchise_roi" />
+                <input type="hidden" value="Separate Contact Modal" name="form_type" />
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Franchise Name</label>
+                  <input 
+                    readOnly 
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-primary/5 text-gray-700 cursor-not-allowed" 
+                    type="text" 
+                    value={property.title} 
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                    <input 
+                      required 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                      placeholder="Enter your full name" 
+                      type="text" 
+                      name="name" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                    <input 
+                      required 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                      placeholder="Enter your email" 
+                      type="email" 
+                      name="email" 
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
+                    <input 
+                      required 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                      placeholder="Enter your phone number" 
+                      type="tel" 
+                      name="phone" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Investment Budget</label>
+                    <select 
+                      name="investment_budget" 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                      <option value="">Select your budget range</option>
+                      <option value="₹5-10 Lakhs">₹5-10 Lakhs</option>
+                      <option value="₹10-25 Lakhs">₹10-25 Lakhs</option>
+                      <option value="₹25-50 Lakhs">₹25-50 Lakhs</option>
+                      <option value="₹50 Lakhs - 1 Crore">₹50 Lakhs - 1 Crore</option>
+                      <option value="Above ₹1 Crore">Above ₹1 Crore</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+                  <textarea 
+                    name="message" 
+                    rows={3} 
+                    className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                    placeholder="Tell us about your franchise requirements..."
+                  ></textarea>
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-3 pt-4 md:pt-6 md:col-span-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowContactModal(false)}
+                    className="flex-1 px-4 md:px-6 py-2 md:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base">
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="flex-1 bg-primary text-white py-2 md:py-3 px-4 md:px-6 rounded-lg font-semibold hover:bg-primary/90 transition-colors text-sm md:text-base">
+                    Send Request
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Gated Content Modal */}
       {showGatedModal && (
         <div className="fixed inset-0 flex items-center justify-center z-[60] p-4 bg-black/50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-bold mb-4">Unlock Discovery Kit</h3>
-            <p className="mb-4">Submit your details to unlock the investor discovery kit for this franchise.</p>
-            <form action="https://formsubmit.co/info@stealdeals.co.in" method="POST" className="space-y-4">
-              <input type="hidden" name="_subject" value="Franchise Discovery Kit Request" />
-              <input type="hidden" name="_captcha" value="false" />
-              <input type="hidden" name="_next" value={typeof window !== 'undefined' ? window.location.href : ''} />
-              <input type="hidden" name="property_title" value={property.title} />
-              <input type="hidden" name="property_id" value={property.id} />
-              <input type="hidden" name="property_type" value="Franchise" />
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                <input 
-                  type="text" 
-                  name="name" 
-                  required 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Your full name"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                <input 
-                  type="email" 
-                  name="email" 
-                  required 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Your email address"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
-                <input 
-                  type="tel" 
-                  name="phone" 
-                  required 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="+91 96 3040 3080"
-                />
-              </div>
-              
-              <div className="flex gap-3">
-                <button
-                  type="button"
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl max-w-md md:max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/20">
+            <div 
+              className="px-4 md:px-6 py-3 md:py-4 rounded-t-2xl" 
+              style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))'}}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="text-white mr-3 text-xl" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M400 224h-24v-72C376 68.2 307.8 0 224 0S72 68.2 72 152v72H48c-26.5 0-48 21.5-48 48v192c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V272c0-26.5-21.5-48-48-48zm-104 0H152v-72c0-39.7 32.3-72 72-72s72 32.3 72 72v72z"></path>
+                  </svg>
+                  <h3 className="text-lg md:text-xl font-bold text-white">Unlock Investor Discovery Kit</h3>
+                </div>
+                <button 
                   onClick={() => setShowGatedModal(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  onClick={handleGatedSuccess}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
-                >
-                  Submit & Unlock
+                  className="text-white hover:text-white/70 transition-colors p-1 hover:bg-white/10 rounded-lg">
+                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 352 512" className="text-lg md:text-xl" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
+                  </svg>
                 </button>
               </div>
-            </form>
+              <p className="text-white/80 text-xs md:text-sm mt-1">Please provide your details to access the investor discovery kit for {property.title}</p>
+            </div>
+            
+            <div className="p-4 md:p-6">
+              <form className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <input type="hidden" value={`Investor Discovery Kit Request - ${property.title} (Gated Content)`} name="_subject" />
+                <input type="hidden" value="http://localhost:3002/franchise?kit_unlocked=true" name="_next" />
+                <input type="hidden" value="false" name="_captcha" />
+                <input type="hidden" value={property.title} name="franchise_name" />
+                <input type="hidden" value={property.category || 'Education'} name="franchise_industry" />
+                <input type="hidden" value={getInvestmentDisplay()} name="franchise_investment" />
+                <input type="hidden" value={property.location || 'GHAZIABAD'} name="franchise_location" />
+                <input type="hidden" value="NO ROYALTY" name="franchise_roi" />
+                <input type="hidden" value="Gated Content - Investor Discovery Kit" name="form_type" />
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Franchise Name</label>
+                  <input 
+                    readOnly 
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 cursor-not-allowed" 
+                    type="text" 
+                    value={property.title}
+                    style={{backgroundColor: 'rgba(21, 77, 113, 0.05)'}} 
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                    <input 
+                      required 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" 
+                      placeholder="Enter your full name" 
+                      type="text" 
+                      name="name"
+                      style={{'--tw-ring-color': '#154D71'} as React.CSSProperties} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                    <input 
+                      required 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" 
+                      placeholder="Enter your email" 
+                      type="email" 
+                      name="email" 
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
+                    <input 
+                      required 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" 
+                      placeholder="Enter your phone number" 
+                      type="tel" 
+                      name="phone" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Investment Budget</label>
+                    <select 
+                      name="investment_budget" 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent">
+                      <option value="">Select your budget range</option>
+                      <option value="₹5-10 Lakhs">₹5-10 Lakhs</option>
+                      <option value="₹10-25 Lakhs">₹10-25 Lakhs</option>
+                      <option value="₹25-50 Lakhs">₹25-50 Lakhs</option>
+                      <option value="₹50 Lakhs - 1 Crore">₹50 Lakhs - 1 Crore</option>
+                      <option value="Above ₹1 Crore">Above ₹1 Crore</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+                  <textarea 
+                    name="message" 
+                    rows={3} 
+                    className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" 
+                    placeholder="Tell us about your franchise requirements..."
+                  ></textarea>
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-3 pt-4 md:pt-6 md:col-span-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowGatedModal(false)}
+                    className="flex-1 px-4 md:px-6 py-2 md:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base disabled:opacity-50">
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    onClick={handleGatedSuccess}
+                    className="flex-1 text-white py-2 md:py-3 px-4 md:px-6 rounded-lg font-semibold transition-all duration-300 text-sm md:text-base disabled:opacity-50 flex items-center justify-center"
+                    style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164))'}}>
+                    <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M216 0h80c13.3 0 24 10.7 24 24v168h87.7c17.8 0 26.7 21.5 14.1 34.1L269.7 378.3c-7.5 7.5-19.8 7.5-27.3 0L90.1 226.1c-12.6-12.6-3.7-34.1 14.1-34.1H192V24c0-13.3 10.7-24 24-24zm296 376v112c0 13.3-10.7 24-24 24H24c-13.3 0-24-10.7-24-24V376c0-13.3 10.7-24 24-24h146.7l49 49c20.1 20.1 52.5 20.1 72.6 0l49-49H488c13.3 0 24 10.7 24 24zm-124 88c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20zm64 0c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20z"></path>
+                    </svg>
+                    Unlock Discovery Kit
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

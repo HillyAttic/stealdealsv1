@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getPropertyById, updateProperty, Property } from '@/lib/firebase';
 import { FaSpinner, FaSave } from 'react-icons/fa';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 interface PropertyEditFormProps {
   propertyId: string;
@@ -81,6 +82,14 @@ export default function PropertyEditForm({ propertyId }: PropertyEditFormProps) 
 
   // Replace all input field classNames with this updated one that includes text-gray-800
   const inputClasses = "w-full p-2 border border-gray-300 rounded-md text-gray-800";
+
+  // Handle image URL generation from uploader
+  const handleImageUrlGenerated = (url: string) => {
+    setProperty(prev => ({
+      ...prev,
+      image: url
+    }));
+  };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -467,14 +476,23 @@ export default function PropertyEditForm({ propertyId }: PropertyEditFormProps) 
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-              <input
-                type="text"
-                name="image"
-                value={property.image || ''}
-                onChange={handleInputChange}
-                className={inputClasses}
-                placeholder="https://example.com/image.jpg"
-              />
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  name="image"
+                  value={property.image || ''}
+                  onChange={handleInputChange}
+                  className={inputClasses}
+                  placeholder="https://example.com/image.jpg"
+                />
+                <div className="flex-shrink-0">
+                  <ImageUploader 
+                    onImageUrlGenerated={handleImageUrlGenerated}
+                    disabled={saving}
+                    hideUrlDisplay={true}
+                  />
+                </div>
+              </div>
             </div>
           </div>
           

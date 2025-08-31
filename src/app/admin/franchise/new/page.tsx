@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { FaArrowLeft, FaSave, FaList } from 'react-icons/fa';
 import { BsListUl } from 'react-icons/bs';
 import ClientOnly from '@/components/ClientOnly';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 export default function NewFranchisePage() {
   return (
@@ -55,6 +56,14 @@ function FranchiseForm() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFranchise(prev => ({ ...prev, [name]: value }));
+  };
+  
+  // Handle image URL generated from ImageUploader
+  const handleImageUrlGenerated = (url: string) => {
+    setFranchise(prev => ({
+      ...prev,
+      image: url
+    }));
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -424,16 +433,24 @@ function FranchiseForm() {
 
           <div className="row mb-3 flex">
             <label htmlFor="inputImage" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Image URL</label>
-            <div className="col-sm-10 position-relative w-5/6">
-              <div className="flex">
-                <input 
-                  type="text" 
-                  className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
-                  id="inputImage"
-                  name="image"
-                  value={franchise.image}
-                  onChange={handleChange} 
-                  placeholder="https://example.com/image.jpg"
+            <div className="col-sm-8 position-relative w-4/6">
+              <input 
+                type="text" 
+                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                id="inputImage"
+                name="image"
+                value={franchise.image}
+                onChange={handleChange} 
+                placeholder="https://example.com/image.jpg"
+              />
+              <div className="text-xs text-gray-500 mt-1">Enter a URL for the franchise image (shows in listings)</div>
+            </div>
+            <div className="col-sm-2 position-relative w-1/6 flex items-center justify-center pl-2">
+              <div className="flex items-center space-x-2">
+                <ImageUploader 
+                  onImageUrlGenerated={handleImageUrlGenerated}
+                  disabled={isSubmitting}
+                  hideUrlDisplay={true}
                 />
                 {franchise.image && (
                   <div className="ml-2">
@@ -449,7 +466,6 @@ function FranchiseForm() {
                   </div>
                 )}
               </div>
-              <div className="text-xs text-gray-500 mt-1">Enter a URL for the franchise image (shows in listings)</div>
             </div>
           </div>
 

@@ -6,6 +6,7 @@ import AdminLayout from '../../components/AdminLayout';
 import { FaSave } from 'react-icons/fa';
 import { BsMenuUp } from 'react-icons/bs';
 import ClientOnly from '@/components/ClientOnly';
+import ImageUploader from '@/components/ui/ImageUploader';
 import dynamic from 'next/dynamic';
 
 // Import ReactQuill dynamically to avoid SSR issues
@@ -139,6 +140,14 @@ function NewPlotContent() {
     setFormData(prev => ({
       ...prev,
       images: prev.images.map((img, i) => i === index ? value : img)
+    }));
+  };
+
+  // Handle image URL generation from uploader
+  const handleImageUrlGenerated = (index: number, url: string) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.map((img, i) => i === index ? url : img)
     }));
   };
   
@@ -511,14 +520,23 @@ function NewPlotContent() {
                 <label htmlFor={`image${index}`} className="block text-gray-700 mb-2">
                   Image {index + 1} URL {index === 0 ? '*' : ''}
                 </label>
-                <input 
-                  type="url"
-                  id={`image${index}`}
-                  value={image}
-                  onChange={(e) => handleImageChange(index, e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                  placeholder="https://example.com/image.jpg"
-                />
+                <div className="flex space-x-2">
+                  <input 
+                    type="url"
+                    id={`image${index}`}
+                    value={image}
+                    onChange={(e) => handleImageChange(index, e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  <div className="flex-shrink-0">
+                    <ImageUploader 
+                      onImageUrlGenerated={(url) => handleImageUrlGenerated(index, url)}
+                      disabled={isLoading}
+                      hideUrlDisplay={true}
+                    />
+                  </div>
+                </div>
                 {image && (
                   <div className="mt-2">
                     <img 

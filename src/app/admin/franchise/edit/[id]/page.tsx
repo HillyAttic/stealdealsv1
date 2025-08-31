@@ -9,6 +9,7 @@ import { BsMenuUp, BsSave } from 'react-icons/bs';
 import { toast, Toaster } from 'react-hot-toast';
 import { franchisePropertiesRef, migratedFranchiseRef, database } from '@/lib/firebase';
 import { ref, get, child, update } from 'firebase/database';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 export default function EditFranchisePage() {
   return (
@@ -127,6 +128,14 @@ function EditFranchiseContent() {
     setFranchise({
       ...franchise,
       [name]: value
+    });
+  };
+
+  // Handle image URL generated from ImageUploader
+  const handleImageUrlGenerated = (url: string) => {
+    setFranchise({
+      ...franchise,
+      image: url
     });
   };
 
@@ -425,13 +434,20 @@ function EditFranchiseContent() {
                 </div>
                 <div className="mb-3">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                  <input
-                    type="text"
-                    name="image"
-                    value={franchise.image || ''}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                  />
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      name="image"
+                      value={franchise.image || ''}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
+                    />
+                    <ImageUploader 
+                      onImageUrlGenerated={handleImageUrlGenerated}
+                      disabled={isSaving}
+                      hideUrlDisplay={true}
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                   <div className="mb-3">

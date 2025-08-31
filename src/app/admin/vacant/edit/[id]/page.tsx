@@ -8,6 +8,7 @@ import { BsMenuUp, BsSave } from 'react-icons/bs';
 import { database, vacantPropertiesRef } from '@/lib/firebase';
 import { ref, get, child, update } from 'firebase/database';
 import { toast, Toaster } from 'react-hot-toast';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 export default function EditVacantProperty() {
   return (
@@ -119,6 +120,14 @@ function EditVacantPropertyContent() {
     setProperty({
       ...property,
       [name]: value
+    });
+  };
+
+  // Handle image URL generated from ImageUploader
+  const handleImageUrlGenerated = (url: string) => {
+    setProperty({
+      ...property,
+      image: url
     });
   };
 
@@ -410,13 +419,20 @@ function EditVacantPropertyContent() {
                 <h3 className="text-md font-semibold mb-3 text-purple-900 border-b border-purple-200 pb-2">IMAGE</h3>
                 <div className="mb-3">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                  <input
-                    type="text"
-                    name="image"
-                    value={property.image || property.imageUrl || ''}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                  />
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      name="image"
+                      value={property.image || property.imageUrl || ''}
+                      onChange={handleInputChange}
+                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
+                    />
+                    <ImageUploader 
+                      onImageUrlGenerated={handleImageUrlGenerated}
+                      disabled={isSaving}
+                      hideUrlDisplay={true}
+                    />
+                  </div>
                 </div>
                 {(property.image || property.imageUrl) && (
                   <div className="mt-2">

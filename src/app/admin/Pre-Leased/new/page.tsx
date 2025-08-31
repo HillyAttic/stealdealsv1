@@ -7,6 +7,7 @@ import { FaSave } from 'react-icons/fa';
 import { BsMenuUp } from 'react-icons/bs';
 import { database, addProperty } from '@/lib/firebase';
 import ClientOnly from '@/components/ClientOnly';
+import ImageUploader from '@/components/ui/ImageUploader';
 
 // Property categories
 const CATEGORIES = [
@@ -179,6 +180,14 @@ function NewPreLeasedPropertyContent() {
         return newErrors;
       });
     }
+  };
+
+  // Handle image URL generation from uploader
+  const handleImageUrlGenerated = (url: string) => {
+    setFormData(prev => ({
+      ...prev,
+      image: url
+    }));
   };
 
   // Validate form data
@@ -687,7 +696,7 @@ function NewPreLeasedPropertyContent() {
             <div className="list-group list-group-item border border-gray-200 rounded p-4">
               <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
                 <label htmlFor="image" className="col-span-2 text-gray-700">Image URL</label>
-                <div className="col-span-10 position-relative">
+                <div className="col-span-8 position-relative">
                   <input 
                     type="text"
                     id="image"
@@ -699,6 +708,13 @@ function NewPreLeasedPropertyContent() {
                     autoComplete="off"
                   />
                   <p className="text-xs text-gray-500 mt-1">Enter a direct URL to an image (e.g., https://example.com/image.jpg)</p>
+                </div>
+                <div className="col-span-2 flex justify-center">
+                  <ImageUploader 
+                    onImageUrlGenerated={handleImageUrlGenerated}
+                    disabled={isLoading}
+                    hideUrlDisplay={true}
+                  />
                 </div>
               </div>
               
