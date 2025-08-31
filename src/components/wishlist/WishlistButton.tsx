@@ -26,20 +26,20 @@ export function WishlistButton({
   onWishlistChange
 }: WishlistButtonProps) {
   const { isSignedIn, userId } = useAuth();
+  const wishlistContext = useWishlistContext();
   const { 
     isInWishlist, 
     toggleWishlist, 
     isLoading, 
     error, 
-    clearError,
-    isOperationLoading 
-  } = useWishlistContext();
+    clearError
+  } = wishlistContext;
   const { logWishlistAdd, logWishlistRemove } = useActivity();
   const { showWarning } = useToast();
   const [showError, setShowError] = useState(false);
 
   const inWishlist = isInWishlist(propertyId);
-  const isOperationInProgress = isOperationLoading(propertyId);
+  const isOperationInProgress = wishlistContext.isOperationLoading(propertyId);
 
   // Size configurations
   const sizeConfig = {

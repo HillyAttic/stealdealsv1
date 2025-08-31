@@ -560,12 +560,14 @@ export function useWishlistContext() {
         isLoading: false,
         isInitialized: false,
         error: null,
+        operationLoading: new Set<string>(),
         addToWishlist: async () => false,
         removeFromWishlist: async () => false,
         isInWishlist: () => false,
         toggleWishlist: async () => false,
         refreshWishlist: async () => {},
-        clearError: () => {}
+        clearError: () => {},
+        isOperationLoading: () => false
       };
     }
     throw new Error('useWishlistContext must be used within a WishlistProvider');
