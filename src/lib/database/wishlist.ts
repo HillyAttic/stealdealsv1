@@ -219,9 +219,33 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
         const propertyTitle = property.title || property.project ||
           `${property.category || 'Property'} in ${property.city || property.location || 'Unknown Location'}`;
         
-        // Get property price (try different price fields)
-        const propertyPrice = property.price || property.rent || property.askingPrice || 
-          (property.investmentStartsFrom?.amount) || 0;
+        // Get property price (try different price fields, prioritizing franchise investment amounts)
+        // For franchises, show full investment range if both min and max are available
+        let propertyPrice = 0;
+        let priceDisplay = '';
+        
+        // Helper function to convert lakhs values to full rupee amounts
+        const convertToFullAmount = (value: number): number => {
+          // If value is less than 1000, it's likely in lakhs, so multiply by 100,000
+          if (value > 0 && value < 1000) {
+            return value * 100000;
+          }
+          return value;
+        };
+        
+        if (property.minInvestment && property.maxInvestment && property.minInvestment !== property.maxInvestment) {
+          // Show investment range for franchises - convert lakhs to full amounts
+          const minAmount = convertToFullAmount(property.minInvestment);
+          const maxAmount = convertToFullAmount(property.maxInvestment);
+          priceDisplay = `₹${minAmount.toLocaleString('en-IN')} - ₹${maxAmount.toLocaleString('en-IN')}`;
+          propertyPrice = minAmount; // Use min for sorting purposes
+        } else {
+          // Single price value - convert if needed
+          const singlePrice = property.price || property.rent || property.askingPrice || 
+            property.minInvestment || property.maxInvestment || property.investment ||
+            (property.investmentStartsFrom?.amount) || 0;
+          propertyPrice = convertToFullAmount(singlePrice);
+        }
         
         // Create image array (handle different image field formats)
         let propertyImages: string[] = [];
@@ -249,6 +273,7 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
           id: property.id || item.propertyId,
           title: propertyTitle,
           price: propertyPrice,
+          priceDisplay: priceDisplay || undefined, // Custom formatted price for display
           location: property.location || 'Unknown Location',
           images: propertyImages,
           type: property.category || property.propertyType || 'Property',

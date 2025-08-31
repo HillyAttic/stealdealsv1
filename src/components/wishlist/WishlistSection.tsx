@@ -159,9 +159,14 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
     setEditPriority('medium');
   };
 
-  // Format currency
-  const formatCurrency = (value: number): string => {
-    return `₹${value.toLocaleString('en-IN')}`;
+  // Format currency to show full amounts without abbreviations
+  const formatCurrency = (value: number | string | undefined): string => {
+    if (!value) return '₹0';
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue)) return '₹0';
+    
+    // Always show full amount with proper Indian number formatting
+    return `₹${numValue.toLocaleString('en-IN')}`;
   };
 
   // Get priority color
@@ -282,7 +287,7 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-600">
                         <span className="font-semibold text-blue-600">
-                          {formatCurrency(property.price)}
+                          {property.priceDisplay || formatCurrency(property.price)}
                         </span>
                         <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
                           {property.type}

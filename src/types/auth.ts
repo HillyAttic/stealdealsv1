@@ -50,6 +50,7 @@ export interface WishlistProperty {
   id: string;
   title: string;
   price: number;
+  priceDisplay?: string; // Custom formatted price for display (e.g., ranges)
   location: string;
   images: string[];
   type: string;
