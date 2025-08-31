@@ -18,3 +18,5 @@ src/app/api/admin/user-wishlists/
 src/app/wishlist/
 src/components/wishlist/ImprovedWishlistButton.tsx
 
+.vercel
+.claude
