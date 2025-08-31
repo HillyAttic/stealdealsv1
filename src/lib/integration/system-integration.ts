@@ -5,7 +5,7 @@
  */
 
 import { WishlistProvider } from '@/contexts/EnhancedWishlistContext';
-import { ActivityProvider } from '@/contexts/EnhancedActivityContext';
+// import { ActivityProvider } from '@/contexts/EnhancedActivityContext'; // File removed
 import { ToastProvider } from '@/contexts/ToastContext';
 import { RealTimeService } from '@/lib/realtime/service';
 import { PerformanceMonitor } from '@/lib/monitoring/performance';
@@ -14,7 +14,7 @@ import { AnalyticsTracker } from '@/lib/monitoring/analytics';
 // Export all context providers for easy integration
 export const SystemProviders = {
   WishlistProvider,
-  ActivityProvider,
+  // ActivityProvider, // File removed
   ToastProvider
 };
 
@@ -27,7 +27,7 @@ export const SystemServices = {
 
 // Export all hooks
 export { useWishlist } from '@/hooks/useWishlist';
-export { useActivity } from '@/hooks/useActivity';
+// export { useActivity } from '@/hooks/useActivity'; // File removed
 export { useRealTime } from '@/hooks/useRealTime';
 export { useAnalyticsTracking } from '@/hooks/useAnalyticsTracking';
 
@@ -42,7 +42,7 @@ export { UserAnalyticsDashboard } from '@/components/admin/UserAnalyticsDashboar
 
 // Export error boundaries
 export { WishlistErrorBoundary } from '@/components/error-boundaries/WishlistErrorBoundary';
-export { ActivityErrorBoundary } from '@/components/error-boundaries/ActivityErrorBoundary';
+// export { ActivityErrorBoundary } from '@/components/error-boundaries/ActivityErrorBoundary'; // File removed
 
 // System initialization function
 export async function initializeSystem() {

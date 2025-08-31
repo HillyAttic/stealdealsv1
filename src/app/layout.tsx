@@ -8,6 +8,7 @@ import ErrorSuppressor from "@/components/ErrorSuppressor";
 import DevErrorSuppressor from "@/components/error-boundaries/DevErrorSuppressor";
 import TestCredentials from "@/components/dev/TestCredentials";
 import { ClerkProvider } from '@clerk/nextjs';
+import { GoogleTagManager } from '@next/third-parties/google';
 
 const jost = Jost({
   variable: "--font-jost",
@@ -82,8 +83,21 @@ export default function RootLayout({
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
     >
       <html lang="en" suppressHydrationWarning>
+        <GoogleTagManager gtmId="GTM-KSJF5RQ8" />
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+          {/* Google Analytics */}
+          <script async src="https://www.googletagmanager.com/gtag/js?id=G-71EPMH0ZW9"></script>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'G-71EPMH0ZW9');
+              `
+            }}
+          />
           {/* Favicon links */}
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
           <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />

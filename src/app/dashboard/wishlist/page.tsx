@@ -7,6 +7,7 @@ import { FaHeart, FaMapMarkerAlt, FaTrash, FaEdit, FaEye, FaArrowLeft, FaFilter,
 import { WishlistProperty } from '@/types/auth';
 import { useAuthContext } from '@/components/auth/AuthProvider';
 import { useWishlistContext } from '@/contexts/WishlistContext';
+import { WishlistPropertyModal } from '@/components/wishlist/WishlistPropertyModal';
 
 export default function WishlistPage() {
   const { isAuthenticated, user } = useAuthContext();
@@ -17,6 +18,10 @@ export default function WishlistPage() {
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState('');
   const [editPriority, setEditPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  
+  // Modal state
+  const [selectedProperty, setSelectedProperty] = useState<WishlistProperty | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Filter and sort states
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
@@ -175,6 +180,17 @@ export default function WishlistPage() {
     setEditingItem(null);
     setEditNotes('');
     setEditPriority('medium');
+  };
+
+  // Handle modal open/close
+  const handleViewProperty = (property: WishlistProperty) => {
+    setSelectedProperty(property);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedProperty(null);
   };
 
   // Format currency
@@ -476,12 +492,12 @@ export default function WishlistPage() {
                     )}
 
                     {/* View Property Button */}
-                    <Link 
-                      href={`/vacant/${property.id}`}
+                    <button
+                      onClick={() => handleViewProperty(property)}
                       className="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors mt-3"
                     >
                       View Property
-                    </Link>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -507,6 +523,13 @@ export default function WishlistPage() {
             )}
           </>
         )}
+        
+        {/* Property Modal */}
+        <WishlistPropertyModal
+          property={selectedProperty}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
       </div>
     </div>
   );

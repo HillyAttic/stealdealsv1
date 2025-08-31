@@ -25,7 +25,6 @@ declare module '@/*' {
 
 // If needed, we can add specific exports here
 declare module '@/contexts/EnhancedWishlistContext';
-declare module '@/contexts/EnhancedActivityContext';
 declare module '@/contexts/ToastContext';
 declare module '@/contexts/ActivityContext';
 declare module '@/components/wishlist/WishlistButton';

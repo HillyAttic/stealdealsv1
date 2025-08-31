@@ -12,6 +12,7 @@ interface VacantModalProps {
 
 export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalProps) {
   const [viewStartTime] = useState(Date.now());
+  const [showContactForm, setShowContactForm] = useState(false);
   const { logPropertyView, logContactInquiry } = useActivity();
 
   // Log property view when modal opens
@@ -205,7 +206,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                         <path d="M308 96c6.627 0 12-5.373 12-12V44c0-6.627-5.373-12-12-12H12C5.373 32 0 37.373 0 44v44.748c0 6.627 5.373 12 12 12h85.28c27.308 0 48.261 9.958 60.97 27.252H12c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h158.757c-6.217 36.086-32.961 58.632-74.757 58.632H12c-6.627 0-12 5.373-12 12v53.012c0 3.349 1.4 6.546 3.861 8.818l165.052 152.356a12.001 12.001 0 0 0 8.139 3.182h82.562c10.924 0 16.166-13.408 8.139-20.818L116.871 319.906c76.499-2.34 131.144-53.395 138.318-127.906H308c6.627 0 12-5.373 12-12v-40c0-6.627-5.373-12-12-12h-58.69c-3.486-11.541-8.28-22.246-14.252-32H308z"></path>
                       </svg>
                       <div>
-                        <p className="text-lg font-medium text-gray-800">{property.rent ? formatCurrency(property.rent) : '₹3,50,000'}</p>
+                        <p className="text-xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>{property.rent ? formatCurrency(property.rent) : '₹3,50,000'}</p>
                         <p className="text-xs text-gray-600">per month</p>
                       </div>
                     </div>
@@ -269,6 +270,28 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                   </div>
                 </div>
 
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setShowContactForm(true)}
+                    className="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 transition-colors py-2 px-4 rounded font-medium text-sm cursor-pointer"
+                    style={{ color: 'rgb(28, 110, 164)' }}
+                  >
+                    <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="text-sm" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M502.3 190.8c3.9-3.1 9.7-.2 9.7 4.7V400c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V195.6c0-5 5.7-7.8 9.7-4.7 22.4 17.4 52.1 39.5 154.1 113.6 21.1 15.4 56.7 47.8 92.2 47.6 35.7.3 72-32.8 92.3-47.6 102-74.1 131.6-96.3 154-113.7zM256 320c23.2.4 56.6-29.2 73.4-41.4 132.7-96.3 142.8-104.7 173.4-128.7 5.8-4.5 9.2-11.5 9.2-18.9v-19c0-26.5-21.5-48-48-48H48C21.5 64 0 85.5 0 112v19c0 7.4 3.4 14.3 9.2 18.9 30.6 23.9 40.7 32.4 173.4 128.7 16.8 12.2 50.2 41.8 73.4 41.4z"></path>
+                    </svg>
+                    Request Information
+                  </button>
+                  <a
+                    href="tel:+919630403080"
+                    className="w-full flex items-center justify-center gap-2 border border-white text-white hover:bg-white/10 transition-colors py-2 px-4 rounded font-medium text-sm"
+                  >
+                    <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="text-sm" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M493.4 24.6l-104-24c-11.3-2.6-22.9 3.3-27.5 13.9l-48 112c-4.2 9.8-1.4 21.3 6.9 28l60.6 49.6c-36 76.7-98.9 140.5-177.2 177.2l-49.6-60.6c-6.8-8.3-18.2-11.1-28-6.9l-112 48C3.9 366.5-2 378.1.6 389.4l24 104C27.1 504.2 36.7 512 48 512c256.1 0 464-207.5 464-464 0-11.2-7.7-20.9-18.6-23.4z"></path>
+                    </svg>
+                    Call Now
+                  </a>
+                </div>
+
 
                 <div className="mt-4 pt-4 border-t border-white/20">
                   <div className="space-y-2 text-sm text-white/80">
@@ -287,6 +310,185 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
           </div>
         </div>
       </div>
+      
+      {/* Contact Form Modal */}
+      {showContactForm && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center z-[60] p-4"
+          style={{
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            background: 'rgba(0, 0, 0, 0.5)'
+          }}
+        >
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl max-w-md md:max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/20">
+            <div
+              className="px-4 md:px-6 py-3 md:py-4 rounded-t-2xl"
+              style={{ background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))' }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="text-white mr-3 text-xl" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M502.3 190.8c3.9-3.1 9.7-.2 9.7 4.7V400c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V195.6c0-5 5.7-7.8 9.7-4.7 22.4 17.4 52.1 39.5 154.1 113.6 21.1 15.4 56.7 47.8 92.2 47.6 35.7.3 72-32.8 92.3-47.6 102-74.1 131.6-96.3 154-113.7zM256 320c23.2.4 56.6-29.2 73.4-41.4 132.7-96.3 142.8-104.7 173.4-128.7 5.8-4.5 9.2-11.5 9.2-18.9v-19c0-26.5-21.5-48-48-48H48C21.5 64 0 85.5 0 112v19c0 7.4 3.4 14.3 9.2 18.9 30.6 23.9 40.7 32.4 173.4 128.7 16.8 12.2 50.2 41.8 73.4 41.4z"></path>
+                  </svg>
+                  <h3 className="text-lg md:text-xl font-bold text-white">Request Information</h3>
+                </div>
+                <button
+                  onClick={() => setShowContactForm(false)}
+                  className="text-white hover:text-white/70 transition-colors p-1 hover:bg-white/10 rounded-lg"
+                >
+                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 352 512" className="text-lg md:text-xl" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
+                  </svg>
+                </button>
+              </div>
+              <p className="text-white/80 text-xs md:text-sm mt-1">Get detailed information about {property.location}</p>
+            </div>
+            
+            <div className="p-4 md:p-6">
+              <form
+                action="https://formsubmit.co/info@stealdeals.co.in"
+                method="POST"
+                className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"
+              >
+                <input type="hidden" value={`Vacant Property Inquiry - ${property.location} (Contact Modal)`} name="_subject" />
+                <input type="hidden" value="https://stealdeals.co.in/vacant?success=true" name="_next" />
+                <input type="hidden" value="false" name="_captcha" />
+                <input type="hidden" value={property.location} name="property_location" />
+                <input type="hidden" value={property.category || 'Industrial'} name="property_category" />
+                <input type="hidden" value={property.rent ? formatCurrency(property.rent) + '/month' : '₹3,50,000/month'} name="property_rent" />
+                <input type="hidden" value={`${property.city || 'SOUTH DELHI'}, ${property.state || 'DELHI'}`} name="property_city" />
+                <input type="hidden" value="Vacant" name="property_type" />
+                <input type="hidden" value="Vacant Property Contact Modal" name="form_type" />
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Property Location</label>
+                  <input
+                    readOnly
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 cursor-not-allowed"
+                    type="text"
+                    value={property.location}
+                    style={{ backgroundColor: 'rgba(21, 77, 113, 0.05)' }}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                    <input
+                      required
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
+                      placeholder="Enter your full name"
+                      type="text"
+                      name="name"
+                      style={{ '--tw-ring-color': '#154D71' } as React.CSSProperties}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                    <input
+                      required
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
+                      placeholder="Enter your email"
+                      type="email"
+                      name="email"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
+                    <input
+                      required
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
+                      placeholder="Enter your phone number"
+                      type="tel"
+                      name="phone"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Budget Range</label>
+                    <select
+                      name="budget_range"
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
+                    >
+                      <option value="">Select your budget range</option>
+                      <option value="₹10,000 - ₹25,000/month">₹10,000 - ₹25,000/month</option>
+                      <option value="₹25,000 - ₹50,000/month">₹25,000 - ₹50,000/month</option>
+                      <option value="₹50,000 - ₹1,00,000/month">₹50,000 - ₹1,00,000/month</option>
+                      <option value="₹1,00,000 - ₹2,00,000/month">₹1,00,000 - ₹2,00,000/month</option>
+                      <option value="Above ₹2,00,000/month">Above ₹2,00,000/month</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Preferred Move-in Date</label>
+                    <input
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
+                      type="date"
+                      name="move_in_date"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Intended Use</label>
+                    <select
+                      name="intended_use"
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
+                    >
+                      <option value="">Select intended use</option>
+                      <option value="Office Space">Office Space</option>
+                      <option value="Retail Store">Retail Store</option>
+                      <option value="Restaurant/Cafe">Restaurant/Cafe</option>
+                      <option value="Warehouse">Warehouse</option>
+                      <option value="Manufacturing">Manufacturing</option>
+                      <option value="Other Business">Other Business</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+                  <textarea
+                    name="message"
+                    rows={3}
+                    className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
+                    placeholder="Tell us about your requirements..."
+                  />
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-3 pt-4 md:pt-6 md:col-span-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowContactForm(false)}
+                    className="flex-1 px-4 md:px-6 py-2 md:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 text-white py-2 md:py-3 px-4 md:px-6 rounded-lg font-semibold transition-all duration-300 text-sm md:text-base disabled:opacity-50 flex items-center justify-center"
+                    style={{ background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164))' }}
+                    onClick={() => {
+                      logContactInquiry(property.id, {
+                        propertyTitle: property.location,
+                        inquiryType: 'form'
+                      });
+                    }}
+                  >
+                    <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M502.3 190.8c3.9-3.1 9.7-.2 9.7 4.7V400c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V195.6c0-5 5.7-7.8 9.7-4.7 22.4 17.4 52.1 39.5 154.1 113.6 21.1 15.4 56.7 47.8 92.2 47.6 35.7.3 72-32.8 92.3-47.6 102-74.1 131.6-96.3 154-113.7zM256 320c23.2.4 56.6-29.2 73.4-41.4 132.7-96.3 142.8-104.7 173.4-128.7 5.8-4.5 9.2-11.5 9.2-18.9v-19c0-26.5-21.5-48-48-48H48C21.5 64 0 85.5 0 112v19c0 7.4 3.4 14.3 9.2 18.9 30.6 23.9 40.7 32.4 173.4 128.7 16.8 12.2 50.2 41.8 73.4 41.4z"></path>
+                    </svg>
+                    Send Request
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

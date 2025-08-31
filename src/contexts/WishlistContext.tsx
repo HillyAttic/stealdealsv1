@@ -70,19 +70,17 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Function to get current user ID (with fallback for development)
+  // Function to get current user ID - NO Firebase connections for development/anonymous users
   const getCurrentUserId = useCallback((): string => {
     if (userId) return userId;
-    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-      return 'user-1'; // Development fallback
-    }
+    // REMOVED: Development fallback that created Firebase connections
     return 'anonymous';
   }, [userId]);
 
   // Setup Firebase real-time listener
   const setupRealtimeListener = useCallback(() => {
     const userId = getCurrentUserId();
-    if (!userId || userId === 'anonymous' || isListenerActiveRef.current) return;
+    if (!userId || userId === 'anonymous' || userId === 'user-1' || isListenerActiveRef.current) return;
 
     console.log(`[WishlistContext] 🔥 Setting up Firebase real-time listener for user ${userId}`);
     
@@ -163,8 +161,8 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   // Initial load and listener setup with stable dependencies
   useEffect(() => {
-    // Get current user ID directly
-    const currentUserId = userId || (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' ? 'user-1' : 'anonymous');
+    // Get current user ID directly - NO Firebase connections for non-authenticated users
+    const currentUserId = userId || 'anonymous';
     
     // Check if user changed - if so, reset everything
     if (lastUserIdRef.current && lastUserIdRef.current !== currentUserId) {
@@ -195,7 +193,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     
     console.log(`[WishlistContext] 🚀 Initializing for user: ${currentUserId}, authenticated: ${isSignedIn}`);
     
-    if (isSignedIn && currentUserId !== 'anonymous') {
+    if (isSignedIn && currentUserId !== 'anonymous' && currentUserId !== 'user-1') {
       // Authenticated user - use Firebase with real-time listener
       if (!isListenerActiveRef.current) {
         console.log(`[WishlistContext] 🔥 Setting up Firebase real-time listener for user ${currentUserId}`);
@@ -288,7 +286,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     const currentUserId = getCurrentUserId();
     console.log(`[WishlistContext] 🔄 Manual refresh requested for user ${currentUserId}`);
     
-    if (!isSignedIn || currentUserId === 'anonymous') {
+    if (!isSignedIn || currentUserId === 'anonymous' || currentUserId === 'user-1') {
       loadFromLocalStorage();
       return;
     }
@@ -326,7 +324,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     setWishlistItems(newItems);
     
     try {
-      if (isSignedIn && userId !== 'anonymous') {
+      if (isSignedIn && userId !== 'anonymous' && userId !== 'user-1') {
         // Firebase operation
         await addToWishlistDB(userId, propertyId);
         console.log(`[WishlistContext] ✅ Successfully added ${propertyId} to Firebase`);
@@ -410,7 +408,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     setWishlistItems(newItems);
     
     try {
-      if (isSignedIn && userId !== 'anonymous') {
+      if (isSignedIn && userId !== 'anonymous' && userId !== 'user-1') {
         // Firebase operation
         const success = await removeFromWishlistDB(userId, propertyId);
         if (success) {

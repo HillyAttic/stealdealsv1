@@ -131,11 +131,6 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       icon: <FaUser />
     },
     {
-      name: 'Wishlists',
-      href: '/admin/wishlists',
-      icon: <FaHeart />
-    },
-    {
       name: 'Pre-leased',
       href: '/admin/Pre-Leased',
       icon: <FaBuilding />

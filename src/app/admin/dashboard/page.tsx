@@ -7,7 +7,7 @@ import AdminLayout from '../components/AdminLayout';
 import { FaChartBar, FaStore, FaBuilding, FaHome } from 'react-icons/fa';
 import ClientOnly from '@/components/ClientOnly';
 import { migratedPreleasedRef, migratedVacantRef, migratedFranchiseRef, migratedPlotsRef } from '@/lib/firebase';
-import { get } from 'firebase/database';
+import { dbPool } from '@/lib/database/connection-pool';
 import { RealTimeUserStats } from '@/components/admin/RealTimeUserStats';
 
 // Add global type declaration for the window extension
@@ -96,26 +96,30 @@ function AdminDashboardContent() {
     }
   };
 
-  // Fetch data from Firebase migrated structure
+  // Fetch data from Firebase migrated structure using optimized parallel reads
   const fetchData = async () => {
     try {
-      // Get preleased properties count from migrated structure
-      const preleasedSnapshot = await get(migratedPreleasedRef);
+      console.log('[AdminDashboard] 🚀 Fetching data using optimized parallel reads');
+      
+      // Use parallel reads with connection pooling to reduce connection usage
+      const snapshots = await dbPool.parallelReads([
+        'migratedProperties/preleased',
+        'migratedProperties/vacant', 
+        'migratedProperties/franchise',
+        'migratedProperties/plots'
+      ]);
+
+      const preleasedSnapshot = snapshots['migratedProperties/preleased'];
+      const vacantSnapshot = snapshots['migratedProperties/vacant'];
+      const franchiseSnapshot = snapshots['migratedProperties/franchise'];
+      const plotsSnapshot = snapshots['migratedProperties/plots'];
+
       const preleasedCount = preleasedSnapshot.exists() ? 
         Object.keys(preleasedSnapshot.val()).length : 0;
-      
-      // Get vacant properties count from migrated structure
-      const vacantSnapshot = await get(migratedVacantRef);
       const vacantCount = vacantSnapshot.exists() ? 
         Object.keys(vacantSnapshot.val()).length : 0;
-      
-      // Get franchise properties count from migrated structure
-      const franchiseSnapshot = await get(migratedFranchiseRef);
       const franchiseCount = franchiseSnapshot.exists() ? 
         Object.keys(franchiseSnapshot.val()).length : 0;
-      
-      // Get plots count from migrated structure
-      const plotsSnapshot = await get(migratedPlotsRef);
       const plotsCount = plotsSnapshot.exists() ? 
         Object.keys(plotsSnapshot.val()).length : 0;
       
@@ -198,26 +202,26 @@ function AdminDashboardContent() {
     // Clean up existing charts first
     cleanupCharts();
     
-    // Add a small delay to ensure DOM elements are ready
-    setTimeout(() => {
-      console.log('Initializing charts...');
+    console.log('Initializing charts...');
+    
+    // Import Chart.js dynamically on the client side
+    import('chart.js').then(({ Chart, registerables }) => {
+      // Register all chart types, scales, etc.
+      Chart.register(...registerables);
       
-      // Import Chart.js dynamically on the client side
-      import('chart.js').then(({ Chart, registerables }) => {
-        // Register all chart types, scales, etc.
-        Chart.register(...registerables);
+      // Get chart elements
+      const categoryChartElement = document.getElementById('categoryChart') as HTMLCanvasElement;
+      const summaryChartElement = document.getElementById('summaryChart') as HTMLCanvasElement;
+      const franchiseChartElement = document.getElementById('franchiseChart') as HTMLCanvasElement;
+      
+      console.log('Chart elements found:', {
+        categoryChart: !!categoryChartElement,
+        summaryChart: !!summaryChartElement,
+        franchiseChart: !!franchiseChartElement
+      });
         
-        // Get chart elements
-        const categoryChartElement = document.getElementById('categoryChart');
-        const summaryChartElement = document.getElementById('summaryChart');
-        const franchiseChartElement = document.getElementById('franchiseChart');
-        
-        console.log('Chart elements found:', {
-          categoryChart: !!categoryChartElement,
-          summaryChart: !!summaryChartElement,
-          franchiseChart: !!franchiseChartElement
-        });
-        
+      // Use setTimeout to ensure DOM is fully ready
+      setTimeout(() => {
         // Ensure we have data to display
         console.log('Chart data:', {
           categoryData,
@@ -376,7 +380,11 @@ function AdminDashboardContent() {
   useEffect(() => {
     if (!isLoading) {
       console.log('Data loaded, initializing charts');
-      initCharts();
+      // Use a longer timeout to ensure DOM elements are fully rendered
+      const timer = setTimeout(() => {
+        initCharts();
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isLoading]);
 

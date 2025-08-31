@@ -5,7 +5,6 @@ import { AuthProvider } from '@/components/auth/AuthProvider';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import { ActivityProvider } from '@/contexts/ActivityContext';
 import { EnhancedWishlistProvider } from '@/contexts/EnhancedWishlistContext';
-import { EnhancedActivityProvider } from '@/contexts/EnhancedActivityContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { AuthErrorBoundary } from '@/components/error-boundaries/AuthErrorBoundary';
 import { WishlistErrorBoundary } from '@/components/error-boundaries/WishlistErrorBoundary';
@@ -36,23 +35,21 @@ export function Providers({ children }: ProvidersProps) {
           <AuthProvider>
             <ActivityErrorBoundary>
               <ActivityProvider>
-                <EnhancedActivityProvider>
-                  <WishlistErrorBoundary>
-                    <WishlistProvider>
-                      <EnhancedWishlistProvider>
-                        {children}
-                        <ConnectionStatus />
-                        {/* Debug components disabled for performance */}
-                        {process.env.NODE_ENV === 'development' && false && (
-                          <>
-                            <AuthDebug />
-                            <WishlistDebug />
-                          </>
-                        )}
-                      </EnhancedWishlistProvider>
-                    </WishlistProvider>
-                  </WishlistErrorBoundary>
-                </EnhancedActivityProvider>
+                <WishlistErrorBoundary>
+                  <WishlistProvider>
+                    <EnhancedWishlistProvider>
+                      {children}
+                      <ConnectionStatus />
+                      {/* Debug components disabled for performance */}
+                      {process.env.NODE_ENV === 'development' && false && (
+                        <>
+                          <AuthDebug />
+                          <WishlistDebug />
+                        </>
+                      )}
+                    </EnhancedWishlistProvider>
+                  </WishlistProvider>
+                </WishlistErrorBoundary>
               </ActivityProvider>
             </ActivityErrorBoundary>
           </AuthProvider>

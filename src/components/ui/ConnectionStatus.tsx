@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { FaWifi, FaClock, FaSync, FaExclamationTriangle } from 'react-icons/fa';
 import { MdSignalWifiOff } from 'react-icons/md';
 import { useEnhancedWishlistContext } from '@/contexts/EnhancedWishlistContext';
-import { useEnhancedActivityContext } from '@/contexts/EnhancedActivityContext';
 import { useToast } from '@/contexts/ToastContext';
 
 interface ConnectionStatusProps {
@@ -17,12 +16,11 @@ export function ConnectionStatus({ className = '', showDetails = false }: Connec
   const [showDetailedStatus, setShowDetailedStatus] = useState(showDetails);
   
   const wishlistContext = useEnhancedWishlistContext();
-  const activityContext = useEnhancedActivityContext();
   const { showInfo } = useToast();
   
-  const isOnline = wishlistContext.isOnline && activityContext.isOnline;
-  const totalQueuedOperations = wishlistContext.queuedOperations + activityContext.queuedActivities;
-  const hasErrors = wishlistContext.error || activityContext.error;
+  const isOnline = wishlistContext.isOnline;
+  const totalQueuedOperations = wishlistContext.queuedOperations;
+  const hasErrors = wishlistContext.error;
 
   // Show status when offline or when there are queued operations
   useEffect(() => {
@@ -41,10 +39,7 @@ export function ConnectionStatus({ className = '', showDetails = false }: Connec
 
   const handleRetryOperations = async () => {
     try {
-      await Promise.all([
-        wishlistContext.retryFailedOperations(),
-        activityContext.retryFailedActivities()
-      ]);
+      await wishlistContext.retryFailedOperations();
       showInfo('Retry initiated', 'Attempting to sync pending operations...');
     } catch (error) {
       console.error('Error retrying operations:', error);
@@ -113,20 +108,10 @@ export function ConnectionStatus({ className = '', showDetails = false }: Connec
                 </div>
               )}
               
-              {activityContext.queuedActivities > 0 && (
-                <div className="flex justify-between">
-                  <span>Activity logs:</span>
-                  <span>{activityContext.queuedActivities}</span>
-                </div>
-              )}
-              
               {hasErrors && (
                 <div className="text-red-200 mt-2">
                   {wishlistContext.error && (
                     <div>Wishlist: {wishlistContext.error}</div>
-                  )}
-                  {activityContext.error && (
-                    <div>Activity: {activityContext.error}</div>
                   )}
                 </div>
               )}
@@ -146,7 +131,6 @@ export function ConnectionStatus({ className = '', showDetails = false }: Connec
                   <button
                     onClick={() => {
                       wishlistContext.clearError();
-                      activityContext.clearError();
                     }}
                     className="px-3 py-1 bg-white bg-opacity-20 rounded text-xs hover:bg-opacity-30 transition-colors"
                   >
@@ -165,11 +149,10 @@ export function ConnectionStatus({ className = '', showDetails = false }: Connec
 // Compact version for header/navbar
 export function ConnectionStatusIndicator({ className = '' }: { className?: string }) {
   const wishlistContext = useEnhancedWishlistContext();
-  const activityContext = useEnhancedActivityContext();
   
-  const isOnline = wishlistContext.isOnline && activityContext.isOnline;
-  const totalQueuedOperations = wishlistContext.queuedOperations + activityContext.queuedActivities;
-  const hasErrors = wishlistContext.error || activityContext.error;
+  const isOnline = wishlistContext.isOnline;
+  const totalQueuedOperations = wishlistContext.queuedOperations;
+  const hasErrors = wishlistContext.error;
 
   if (isOnline && totalQueuedOperations === 0 && !hasErrors) {
     return null;

@@ -26,15 +26,8 @@ export class ConnectionManager {
       this.degradation.handleDegradation();
     }
 
-    // Check connection limits and evict if needed
-    if (this.registry.getActiveCount() >= 30) {
-      const listeners = this.registry.getAllListeners();
-      const lowPriorityListener = listeners.find(l => l.priority === 'low');
-      if (lowPriorityListener) {
-        this.registry.unregister(lowPriorityListener.id);
-        this.pool.releaseListener();
-      }
-    }
+    // Connection limits removed - Now unlimited connections per user on Blaze plan
+    // Previous limit was 30 connections, now respecting Firebase's 200K concurrent limit
 
     // Check leadership for multi-tab coordination
     if (!this.coordinator.isLeader()) {
