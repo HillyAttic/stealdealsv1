@@ -2,6 +2,9 @@
 
 @import "tailwindcss";
 
+/* ReactQuill Editor Styles */
+@import "react-quill-new/dist/quill.snow.css";
+
 @layer base {
   *,::backdrop,:after,:before {
     box-sizing: border-box;
@@ -138,6 +141,7 @@
   --radius: 0.5rem;
 }
 
+/* Tailwind CSS v4 theme configuration - valid directive */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -332,5 +336,6 @@ body.modal-open header {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  line-clamp: 2; /* Standard property for compatibility */
   overflow: hidden;
 }

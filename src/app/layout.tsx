@@ -19,44 +19,11 @@ const jost = Jost({
 export const metadata: Metadata = {
   title: "Stealdeals - Discover Unbeatable Property Deals",
   description: "Find the best real estate deals on Stealdeals. Browse properties for sale and rent across the country.",
+  manifest: '/manifest.json',
   icons: {
-    icon: [
-      {
-        url: '/favicon.svg',
-        type: 'image/svg+xml',
-      },
-      {
-        url: '/favicon-32x32.png',
-        sizes: '32x32',
-        type: 'image/png',
-      },
-      {
-        url: '/favicon-16x16.png',
-        sizes: '16x16',
-        type: 'image/png',
-      }
-    ],
-    apple: [
-      {
-        url: '/apple-touch-icon.png',
-        sizes: '180x180',
-        type: 'image/png',
-      }
-    ],
-    other: [
-      {
-        rel: 'icon',
-        url: '/favicon-192x192.png',
-        sizes: '192x192',
-        type: 'image/png',
-      },
-      {
-        rel: 'icon',
-        url: '/favicon-512x512.png',
-        sizes: '512x512',
-        type: 'image/png',
-      }
-    ],
+    icon: '/favicon.svg',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
 };
 
@@ -86,6 +53,17 @@ export default function RootLayout({
         <GoogleTagManager gtmId="GTM-KSJF5RQ8" />
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+          
+          {/* Favicon - Multiple formats for maximum compatibility */}
+          <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+          <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+          <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+          <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+          <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
+          <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+          <link rel="shortcut icon" href="/favicon.ico" />
+          <link rel="manifest" href="/manifest.json" />
+          
           {/* Google Analytics */}
           <script async src="https://www.googletagmanager.com/gtag/js?id=G-71EPMH0ZW9"></script>
           <script
@@ -98,12 +76,6 @@ export default function RootLayout({
               `
             }}
           />
-          {/* Favicon links */}
-          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-          <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
-          <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-          <link rel="manifest" href="/manifest.json" />
           {/* Add Boxicons for icons used in the admin panel */}
           <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet' />
           {/* Temporarily disabled for performance */}

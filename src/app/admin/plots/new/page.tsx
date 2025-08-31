@@ -10,19 +10,10 @@ import ImageUploader from '@/components/ui/ImageUploader';
 import dynamic from 'next/dynamic';
 
 // Import ReactQuill dynamically to avoid SSR issues
-const ReactQuill = dynamic(
-  () => import('react-quill-new').then((mod) => {
-    // Import CSS dynamically when component loads
-    if (typeof window !== 'undefined') {
-      import('react-quill-new/dist/quill.snow.css');
-    }
-    return mod;
-  }), 
-  { 
-    ssr: false,
-    loading: () => <p>Loading editor...</p>
-  }
-);
+const ReactQuill = dynamic(() => import('react-quill-new'), {
+  ssr: false,
+  loading: () => <p>Loading editor...</p>
+});
 
 // Status options
 const STATUS_OPTIONS = [
