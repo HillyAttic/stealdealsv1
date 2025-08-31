@@ -226,7 +226,7 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
         </h2>
         {wishlistProperties.length > 0 && (
           <Link 
-            href="/dashboard/wishlist"
+            href="/wishlist"
             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
           >
             View All
@@ -374,7 +374,7 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
           {wishlistProperties.length > 3 && (
             <div className="text-center pt-4">
               <Link 
-                href="/dashboard/wishlist"
+                href="/wishlist"
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
                 View {wishlistProperties.length - 3} more properties →

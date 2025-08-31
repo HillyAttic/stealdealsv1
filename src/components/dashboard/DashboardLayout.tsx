@@ -53,10 +53,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 Home
               </Link>
               <Link 
-                href="/dashboard" 
+                href="/wishlist" 
                 className="text-blue-600 font-medium"
               >
-                Dashboard
+                Wishlist
               </Link>
             </nav>
 
@@ -120,11 +120,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 Home
               </Link>
               <Link 
-                href="/dashboard" 
+                href="/wishlist" 
                 className="block px-3 py-2 text-blue-600 font-medium bg-blue-50 rounded-md"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Dashboard
+                Wishlist
               </Link>
             </div>
           </div>

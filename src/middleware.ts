@@ -18,7 +18,7 @@ const ADMIN_PATHS = [
 
 // Define user paths that should be protected by Clerk
 const isUserProtectedRoute = createRouteMatcher([
-  '/dashboard(.*)',
+  '/wishlist',
   '/api/user(.*)',
   '/api/wishlist(.*)',
   '/api/activity(.*)'
@@ -42,7 +42,7 @@ const PUBLIC_PATHS = [
   '/terms'
 ];
 
-export default clerkMiddleware((auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
   const { pathname } = new URL(req.url);
   
   // Skip middleware for static files and Next.js internal routes
@@ -65,7 +65,10 @@ export default clerkMiddleware((auth, req) => {
 
   // Protect user routes with Clerk
   if (isUserProtectedRoute(req)) {
-    auth().protect();
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.redirect(new URL('/sign-in', req.url));
+    }
   }
 
   return NextResponse.next();

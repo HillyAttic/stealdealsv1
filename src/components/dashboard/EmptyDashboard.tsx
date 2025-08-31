@@ -53,7 +53,7 @@ export function EmptyDashboard() {
                 Update Profile
               </Link>
               <span className="text-gray-300">•</span>
-              <Link href="/dashboard/wishlist" className="text-blue-600 hover:text-blue-700">
+              <Link href="/wishlist" className="text-blue-600 hover:text-blue-700">
                 View Wishlist
               </Link>
               <span className="text-gray-300">•</span>

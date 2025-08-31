@@ -13,12 +13,6 @@ export default function ActivityPage() {
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-4">
-              <Link 
-                href="/dashboard"
-                className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <FaArrowLeft />
-              </Link>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Activity History</h1>
                 <p className="text-gray-600 mt-1">
