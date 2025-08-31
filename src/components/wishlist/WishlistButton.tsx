@@ -5,6 +5,7 @@ import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useAuth } from '@clerk/nextjs';
 import { useWishlistContext } from '@/contexts/WishlistContext';
 import { useActivity } from '@/hooks/useActivity';
+import { useToast } from '@/contexts/ToastContext';
 
 interface WishlistButtonProps {
   propertyId: string;
@@ -34,6 +35,7 @@ export function WishlistButton({
     isOperationLoading 
   } = useWishlistContext();
   const { logWishlistAdd, logWishlistRemove } = useActivity();
+  const { showWarning } = useToast();
   const [showError, setShowError] = useState(false);
 
   const inWishlist = isInWishlist(propertyId);
@@ -83,10 +85,26 @@ export function WishlistButton({
     e.preventDefault();
     e.stopPropagation();
 
-    // Check if user is signed in - redirect to sign in if not
+    // Check if user is signed in - show toast notification if not
     if (!isSignedIn) {
-      // Redirect to sign-in page instead of showing modal
-      window.location.href = '/sign-in?redirect_url=' + encodeURIComponent(window.location.href);
+      showWarning(
+        'Sign in required',
+        'Please sign in to add properties to your wishlist',
+        {
+          duration: 5000,
+          action: {
+            label: 'Sign In',
+            onClick: () => {
+              window.location.href = '/sign-in?redirect_url=' + encodeURIComponent(window.location.href);
+            }
+          }
+        }
+      );
+      
+      // Call the optional callback for parent components
+      if (onAuthRequired) {
+        onAuthRequired();
+      }
       return;
     }
 

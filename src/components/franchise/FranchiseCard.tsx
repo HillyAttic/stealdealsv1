@@ -150,18 +150,27 @@ export function FranchiseCard({
     >
       <div className="relative">
         <div className="h-56 relative overflow-hidden">
+          {/* Blurred background image */}
+          <div 
+            className="absolute inset-0 bg-center bg-cover filter blur-md scale-110"
+            style={{
+              backgroundImage: `url(${franchise.image || defaultImage})`,
+              opacity: 0.3
+            }}
+          ></div>
+          {/* Main image */}
           <img 
             src={franchise.image || defaultImage}
             alt={franchise.name}
-            className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 bg-gray-50"
+            className="relative z-10 w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
           />
           {franchise.status === 'Limited' && (
-            <div className="absolute top-4 left-4 bg-highlight text-primary px-3 py-1 rounded-md text-sm font-medium">
+            <div className="absolute top-4 left-4 bg-highlight text-primary px-3 py-1 rounded-md text-sm font-medium z-20">
               Limited
             </div>
           )}
           {showWishlist && (
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-4 right-4 z-30">
               <WishlistButton
                 propertyId={franchiseId}
                 size="md"

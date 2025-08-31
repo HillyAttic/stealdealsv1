@@ -76,16 +76,26 @@ export class AnalyticsTracker {
     userAgent?: string,
     ipAddress?: string
   ): void {
+    // Validate required fields
+    if (!event || !category) {
+      console.warn('[AnalyticsTracker] ⚠️ Skipping track call with missing required fields:', { event, category });
+      return;
+    }
+
+    // Clean undefined values and sanitize string inputs
+    const cleanUserId = userId && userId !== 'undefined' && userId.trim() !== '' ? userId.trim() : undefined;
+    const cleanSessionId = sessionId && sessionId !== 'undefined' && sessionId.trim() !== '' ? sessionId.trim() : undefined;
+    
     const metric: UsageMetric = {
       id: crypto.randomUUID(),
-      userId,
-      event,
+      event: event.trim(),
       category,
-      properties,
+      properties: properties || {},
       timestamp: new Date(),
-      sessionId,
-      userAgent,
-      ipAddress
+      ...(cleanUserId && { userId: cleanUserId }),
+      ...(cleanSessionId && { sessionId: cleanSessionId }),
+      ...(userAgent && { userAgent: userAgent.trim() }),
+      ...(ipAddress && { ipAddress: ipAddress.trim() })
     };
 
     // Add to buffer
@@ -420,23 +430,61 @@ export class AnalyticsTracker {
     try {
       console.log(`[AnalyticsTracker] 💾 Flushing ${metricsToFlush.length} metrics to Firebase`);
       
+      // Filter out metrics with invalid data and clean undefined values
+      const validMetrics = metricsToFlush.filter(metric => {
+        if (!metric.id || !metric.event || !metric.category) {
+          console.warn('[AnalyticsTracker] ⚠️ Skipping metric with missing required fields:', metric);
+          return false;
+        }
+        return true;
+      }).map(metric => {
+        // Clean undefined values by creating a clean object
+        const cleanMetric: any = {
+          id: metric.id,
+          event: metric.event,
+          category: metric.category,
+          properties: metric.properties || {},
+          timestamp: metric.timestamp.toISOString()
+        };
+        
+        // Only add optional fields if they have valid values
+        if (metric.userId && metric.userId !== 'undefined') {
+          cleanMetric.userId = metric.userId;
+        }
+        if (metric.sessionId && metric.sessionId !== 'undefined') {
+          cleanMetric.sessionId = metric.sessionId;
+        }
+        if (metric.userAgent) {
+          cleanMetric.userAgent = metric.userAgent;
+        }
+        if (metric.ipAddress) {
+          cleanMetric.ipAddress = metric.ipAddress;
+        }
+        
+        return cleanMetric;
+      });
+
+      if (validMetrics.length === 0) {
+        console.log('[AnalyticsTracker] ⚠️ No valid metrics to flush, skipping Firebase operation');
+        return;
+      }
+
+      console.log(`[AnalyticsTracker] 💾 Processing ${validMetrics.length} valid metrics (filtered from ${metricsToFlush.length})`);
+      
       // Store individual events
       const eventsRef = ref(database, 'analytics/events');
-      const batch = metricsToFlush.map(async (metric) => {
+      const batch = validMetrics.map(async (metric) => {
         const eventRef = push(eventsRef);
-        await set(eventRef, {
-          ...metric,
-          timestamp: metric.timestamp.toISOString()
-        });
+        await set(eventRef, metric);
       });
       
       await Promise.all(batch);
       
-      // Update aggregated stats
+      // Update aggregated stats (using original metrics for stats)
       await this.updateAggregatedStats(metricsToFlush);
       
-      this.eventEmitter.emit('flush', { count: metricsToFlush.length });
-      console.log(`[AnalyticsTracker] ✅ Successfully flushed ${metricsToFlush.length} metrics`);
+      this.eventEmitter.emit('flush', { count: validMetrics.length });
+      console.log(`[AnalyticsTracker] ✅ Successfully flushed ${validMetrics.length} metrics`);
       
     } catch (error) {
       console.error('[AnalyticsTracker] ❌ Error flushing metrics:', error);

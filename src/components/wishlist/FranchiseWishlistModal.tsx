@@ -22,10 +22,14 @@ export function FranchiseWishlistModal({ property, isOpen, onClose }: FranchiseW
 
   if (!isOpen || !property) return null;
 
+  // Check if property has investor discovery kit
+  const hasInvestorKit = property.investorDiscoveryKitUrl || (property as any).investorDiscoveryKit?.url;
+
   const handleInvestorKitClick = () => {
-    if (isUnlocked) {
+    const kitUrl = property.investorDiscoveryKitUrl || (property as any).investorDiscoveryKit?.url;
+    if (isUnlocked && kitUrl) {
       // Open download link if available
-      window.open('#', '_blank');
+      window.open(kitUrl, '_blank');
     } else {
       setShowGatedModal(true);
     }
@@ -320,19 +324,21 @@ export function FranchiseWishlistModal({ property, isOpen, onClose }: FranchiseW
                       </svg>
                       Call Now
                     </a>
-                    <button
-                      onClick={handleInvestorKitClick}
-                      className={`w-full text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center ${
-                        isUnlocked 
-                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' 
-                          : 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700'
-                      }`}
-                    >
-                      <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M400 224h-24v-72C376 68.2 307.8 0 224 0S72 68.2 72 152v72H48c-26.5 0-48 21.5-48 48v192c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V272c0-26.5-21.5-48-48-48zm-104 0H152v-72c0-39.7 32.3-72 72-72s72 32.3 72 72v72z"></path>
-                      </svg>
-                      {isUnlocked ? 'Investor Discovery Kit' : 'Unlock Discovery Kit'}
-                    </button>
+                    {hasInvestorKit && (
+                      <button
+                        onClick={handleInvestorKitClick}
+                        className={`w-full text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center ${
+                          isUnlocked 
+                            ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' 
+                            : 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700'
+                        }`}
+                      >
+                        <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M400 224h-24v-72C376 68.2 307.8 0 224 0S72 68.2 72 152v72H48c-26.5 0-48 21.5-48 48v192c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V272c0-26.5-21.5-48-48-48zm-104 0H152v-72c0-39.7 32.3-72 72-72s72 32.3 72 72v72z"></path>
+                        </svg>
+                        {isUnlocked ? 'Investor Discovery Kit' : 'Unlock Discovery Kit'}
+                      </button>
+                    )}
                     <button className="w-full bg-accent text-white py-3 px-4 rounded-lg font-semibold hover:bg-accent/90 transition-colors flex items-center justify-center">
                       <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                         <path d="M503.691 189.836L327.687 37.851C312.281 24.546 288 35.347 288 56.015v80.053C127.371 137.907 0 170.1 0 322.326c0 61.441 39.581 122.309 83.333 154.132 13.653 9.931 33.111-2.533 28.077-18.631C66.066 312.814 132.917 274.316 288 272.085V360c0 20.7 24.3 31.453 39.687 18.164l176.004-152c11.071-9.562 11.086-26.753 0-36.328z"></path>

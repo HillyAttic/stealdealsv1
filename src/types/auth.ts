@@ -61,6 +61,7 @@ export interface WishlistProperty {
   category?: string;
   segment?: string;
   description?: string;
+  investorDiscoveryKitUrl?: string;
 }
 
 export type ActivityType = 
