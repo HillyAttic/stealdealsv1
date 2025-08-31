@@ -4,7 +4,7 @@
  * for seamless integration into the existing application
  */
 
-import { WishlistProvider } from '@/contexts/EnhancedWishlistContext';
+import { EnhancedWishlistProvider } from '@/contexts/EnhancedWishlistContext';
 // import { ActivityProvider } from '@/contexts/EnhancedActivityContext'; // File removed
 import { ToastProvider } from '@/contexts/ToastContext';
 import { RealTimeService } from '@/lib/realtime/service';
@@ -13,7 +13,7 @@ import { AnalyticsTracker } from '@/lib/monitoring/analytics';
 
 // Export all context providers for easy integration
 export const SystemProviders = {
-  WishlistProvider,
+  WishlistProvider: EnhancedWishlistProvider,
   // ActivityProvider, // File removed
   ToastProvider
 };

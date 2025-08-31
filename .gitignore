@@ -20,3 +20,4 @@ src/components/wishlist/ImprovedWishlistButton.tsx
 
 .vercel
 .claude
+.env*.local
