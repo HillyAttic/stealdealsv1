@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { WishlistProperty } from '@/types/auth';
 import { useActivity } from '@/hooks/useActivity';
+import { useSecureGatedContent } from '@/hooks/useSecureGatedContent';
 
 interface VacantWishlistModalProps {
   property: WishlistProperty;
@@ -12,9 +13,40 @@ interface VacantWishlistModalProps {
 
 export function VacantWishlistModal({ property, isOpen, onClose }: VacantWishlistModalProps) {
   const [showContactForm, setShowContactForm] = useState(false);
+  const [showGatedModal, setShowGatedModal] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const { logContactInquiry } = useActivity();
+  
+  // Secure gated content state
+  const { isContentUnlocked, unlockContent } = useSecureGatedContent('franchise');
+  const franchiseId = property.id || `property-${property.title?.replace(/\s+/g, '-').toLowerCase()}`;
+  const isUnlocked = isContentUnlocked(franchiseId);
 
   if (!isOpen || !property) return null;
+
+  const handleInvestorKitClick = () => {
+    const kitUrl = (property as any).investorDiscoveryKitUrl || (property as any).investorDiscoveryKit?.url;
+    if (isUnlocked && kitUrl) {
+      // Open download link if available
+      window.open(kitUrl, '_blank');
+    } else {
+      setShowGatedModal(true);
+    }
+  };
+
+  const handleGatedSuccess = async () => {
+    setShowGatedModal(false);
+    try {
+      await unlockContent(franchiseId);
+      setShowSuccessMessage(true);
+    } catch (error) {
+      console.error('Failed to unlock content:', error);
+      // Could show error message to user here
+    }
+  };
+
+  // Check if property has investor discovery kit
+  const hasInvestorKit = (property as any).investorDiscoveryKitUrl || (property as any).investorDiscoveryKit?.url;
 
   // Format currency using Indian format
   const formatCurrency = (value: number | string | undefined): string => {
@@ -230,6 +262,21 @@ export function VacantWishlistModal({ property, isOpen, onClose }: VacantWishlis
                       </svg>
                       Call Now
                     </a>
+                    {hasInvestorKit && (
+                      <button
+                        onClick={handleInvestorKitClick}
+                        className={`w-full text-white py-2 px-4 rounded font-medium text-sm transition-all duration-300 flex items-center justify-center ${
+                          isUnlocked 
+                            ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' 
+                            : 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700'
+                        }`}
+                      >
+                        <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M400 224h-24v-72C376 68.2 307.8 0 224 0S72 68.2 72 152v72H48c-26.5 0-48 21.5-48 48v192c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V272c0-26.5-21.5-48-48-48zm-104 0H152v-72c0-39.7 32.3-72 72-72s72 32.3 72 72v72z"></path>
+                        </svg>
+                        {isUnlocked ? 'Investor Discovery Kit' : 'Unlock Discovery Kit'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -245,7 +292,7 @@ export function VacantWishlistModal({ property, isOpen, onClose }: VacantWishlis
             <h3 className="text-lg font-bold mb-4">Request Information</h3>
             <p className="mb-4 text-gray-600">Get detailed information about this vacant property</p>
             
-            <form action="https://formsubmit.co/info@stealdeals.co.in" method="POST" className="space-y-4">
+            <form action="https://formsubmit.co/stealdeals.co.in@gmail.com" method="POST" className="space-y-4">
               <input type="hidden" name="_subject" value="Vacant Property Information Request" />
               <input type="hidden" name="_captcha" value="false" />
               <input type="hidden" name="_next" value={typeof window !== 'undefined' ? window.location.href : ''} />
@@ -315,9 +362,157 @@ export function VacantWishlistModal({ property, isOpen, onClose }: VacantWishlis
             
             <div className="mt-4 pt-4 border-t text-center text-sm text-gray-500">
               <p>Or contact us directly:</p>
-              <p className="font-medium">Email: info@stealdeals.co.in</p>
+              <p className="font-medium">Email: stealdeals.co.in@gmail.com</p>
               <p className="font-medium">Phone: +91 96 3040 3080</p>
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Gated Content Modal */}
+      {showGatedModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4 bg-black/50">
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl max-w-md md:max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/20">
+            <div 
+              className="px-4 md:px-6 py-3 md:py-4 rounded-t-2xl" 
+              style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))'}}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="text-white mr-3 text-xl" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M400 224h-24v-72C376 68.2 307.8 0 224 0S72 68.2 72 152v72H48c-26.5 0-48 21.5-48 48v192c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V272c0-26.5-21.5-48-48-48zm-104 0H152v-72c0-39.7 32.3-72 72-72s72 32.3 72 72v72z"></path>
+                  </svg>
+                  <h3 className="text-lg md:text-xl font-bold text-white">Unlock Investor Discovery Kit</h3>
+                </div>
+                <button 
+                  onClick={() => setShowGatedModal(false)}
+                  className="text-white hover:text-white/70 transition-colors p-1 hover:bg-white/10 rounded-lg">
+                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 352 512" className="text-lg md:text-xl" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
+                  </svg>
+                </button>
+              </div>
+              <p className="text-white/80 text-xs md:text-sm mt-1">Please provide your details to access the investor discovery kit for {property.title}</p>
+            </div>
+            
+            <div className="p-4 md:p-6">
+              <form action="https://formsubmit.co/stealdeals.co.in@gmail.com" method="POST" className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <input type="hidden" value={`Investor Discovery Kit Request - ${property.title} (Gated Content)`} name="_subject" />
+                <input type="hidden" value="http://localhost:3000/wishlist?kit_unlocked=true" name="_next" />
+                <input type="hidden" value="false" name="_captcha" />
+                <input type="hidden" value={property.title} name="property_title" />
+                <input type="hidden" value={property.category || 'Vacant'} name="property_category" />
+                <input type="hidden" value={property.price > 0 ? formatCurrency(property.price) + '/month' : '₹3,50,000/month'} name="property_rent" />
+                <input type="hidden" value={property.location || 'SOUTH DELHI'} name="property_location" />
+                <input type="hidden" value="Vacant" name="property_type" />
+                <input type="hidden" value="Gated Content - Investor Discovery Kit" name="form_type" />
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Property Name</label>
+                  <input 
+                    readOnly 
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 cursor-not-allowed" 
+                    type="text" 
+                    value={property.title}
+                    style={{backgroundColor: 'rgba(21, 77, 113, 0.05)'}} 
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+                    <input 
+                      required 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" 
+                      placeholder="Enter your full name" 
+                      type="text" 
+                      name="name"
+                      style={{'--tw-ring-color': '#154D71'} as React.CSSProperties} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                    <input 
+                      required 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" 
+                      placeholder="Enter your email" 
+                      type="email" 
+                      name="email" 
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 md:col-span-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
+                    <input 
+                      required 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" 
+                      placeholder="Enter your phone number" 
+                      type="tel" 
+                      name="phone" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Budget Range</label>
+                    <select 
+                      name="budget_range" 
+                      className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent">
+                      <option value="">Select your budget range</option>
+                      <option value="₹10,000 - ₹25,000/month">₹10,000 - ₹25,000/month</option>
+                      <option value="₹25,000 - ₹50,000/month">₹25,000 - ₹50,000/month</option>
+                      <option value="₹50,000 - ₹1,00,000/month">₹50,000 - ₹1,00,000/month</option>
+                      <option value="₹1,00,000 - ₹2,00,000/month">₹1,00,000 - ₹2,00,000/month</option>
+                      <option value="Above ₹2,00,000/month">Above ₹2,00,000/month</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Message</label>
+                  <textarea 
+                    name="message" 
+                    rows={3} 
+                    className="w-full px-3 md:px-4 py-2 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" 
+                    placeholder="Tell us about your requirements..."
+                  ></textarea>
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-3 pt-4 md:pt-6 md:col-span-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowGatedModal(false)}
+                    className="flex-1 px-4 md:px-6 py-2 md:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base disabled:opacity-50">
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    onClick={handleGatedSuccess}
+                    className="flex-1 text-white py-2 md:py-3 px-4 md:px-6 rounded-lg font-semibold transition-all duration-300 text-sm md:text-base disabled:opacity-50 flex items-center justify-center"
+                    style={{background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164))'}}>
+                    <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M216 0h80c13.3 0 24 10.7 24 24v168h87.7c17.8 0 26.7 21.5 14.1 34.1L269.7 378.3c-7.5 7.5-19.8 7.5-27.3 0L90.1 226.1c-12.6-12.6-3.7-34.1 14.1-34.1H192V24c0-13.3 10.7-24 24-24zm296 376v112c0 13.3-10.7 24-24 24H24c-13.3 0-24-10.7-24-24V376c0-13.3 10.7-24 24-24h146.7l49 49c20.1 20.1 52.5 20.1 72.6 0l49-49H488c13.3 0 24 10.7 24 24zm-124 88c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20zm64 0c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20z"></path>
+                    </svg>
+                    Unlock Discovery Kit
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] p-4 bg-black/50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-bold mb-4 text-green-600">Success!</h3>
+            <p className="mb-4">Discovery kit unlocked! You can now download the materials.</p>
+            <button
+              onClick={() => setShowSuccessMessage(false)}
+              className="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
+            >
+              Continue
+            </button>
           </div>
         </div>
       )}

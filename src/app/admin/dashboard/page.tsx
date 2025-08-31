@@ -337,10 +337,10 @@ function AdminDashboardContent() {
         } catch (error) {
           console.error('Error initializing charts:', error);
         }
-      }).catch(error => {
-        console.error('Failed to load Chart.js:', error);
-      });
-    }, 1000); // Increased timeout to 1000ms to ensure DOM is ready
+      }, 1000); // Increased timeout to 1000ms to ensure DOM is ready
+    }).catch(error => {
+      console.error('Failed to load Chart.js:', error);
+    });
   };
 
   // Clean Bitdefender attributes and initialize charts on mount

@@ -213,8 +213,10 @@ export default function VacantPropertiesPage() {
 
   // Handle property card click to open modal
   const handlePropertyClick = (property: Property) => {
+    console.log('handlePropertyClick called with property:', property.id, property.title || property.location);
     setSelectedProperty(property);
     setIsModalOpen(true);
+    console.log('Modal should now be open, isModalOpen:', true);
   };
 
   // Handle modal close

@@ -61,7 +61,7 @@ export function PropertyCard({
   const handlePropertyView = useCallback(() => {
     logPropertyView(property.id, {
       propertyTitle: property.title || property.location,
-      source: 'card',
+      source: 'search',
       category: property.category,
       location: property.location
     });
@@ -100,7 +100,21 @@ export function PropertyCard({
   };
 
   const CardContent = () => (
-    <div className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 group border border-gray-200 h-full flex flex-col ${className}`}>
+    <div 
+      className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 group border border-gray-200 h-full flex flex-col cursor-pointer ${className}`}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('PropertyCard clicked for property:', property.id);
+        handlePropertyView(); // Track property view
+        if (onClick) {
+          console.log('Calling onClick handler for property:', property.id);
+          onClick();
+        } else {
+          console.log('No onClick handler provided for property:', property.id);
+        }
+      }}
+    >
       <div className="relative flex-shrink-0">
         <div className="h-40 relative overflow-hidden">
           <PropertyImage 
@@ -123,11 +137,19 @@ export function PropertyCard({
           {/* Wishlist Button */}
           {showWishlist && (
             <div className="absolute top-4 right-4">
-              <WishlistButton
-                propertyId={property.id}
-                size="md"
-                onAuthRequired={handleAuthRequired}
-              />
+              <div 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Wishlist button area clicked - preventing card click');
+                }}
+              >
+                <WishlistButton
+                  propertyId={property.id}
+                  size="md"
+                  onAuthRequired={handleAuthRequired}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -233,10 +255,16 @@ export function PropertyCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              console.log('PropertyCard button clicked for property:', property.id);
               handlePropertyView(); // Track property view
-              if (onClick) onClick();
+              if (onClick) {
+                console.log('Calling onClick handler for property:', property.id);
+                onClick();
+              } else {
+                console.log('No onClick handler provided for property:', property.id);
+              }
             }}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center text-xs"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center text-xs cursor-pointer"
             style={{
               backgroundColor: 'rgb(28, 110, 164)'
             }}
