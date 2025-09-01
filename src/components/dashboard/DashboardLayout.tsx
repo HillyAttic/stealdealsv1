@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { DashboardNavigation } from './DashboardNavigation';
 
 interface DashboardLayoutProps {
@@ -12,15 +12,14 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user, logout } = useAuthContext();
+  const { signOut } = useAuth();
+  const { user } = useUser();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
-    const result = await logout();
-    if (result.success) {
-      router.push('/');
-    }
+    await signOut();
+    router.push('/');
   };
 
   return (

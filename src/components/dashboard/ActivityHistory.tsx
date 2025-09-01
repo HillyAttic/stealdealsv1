@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PropertyView, SearchQuery, EngagementData } from '@/types/auth';
 import { formatDistanceToNow } from 'date-fns';
-import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useUser } from '@clerk/nextjs';
 
 interface ActivityHistoryProps {
   className?: string;
@@ -17,7 +17,7 @@ interface ActivityData {
 }
 
 export default function ActivityHistory({ className = '' }: ActivityHistoryProps) {
-  const { user } = useAuthContext();
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState<'views' | 'searches' | 'engagement'>('views');
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
   const [loading, setLoading] = useState(true);

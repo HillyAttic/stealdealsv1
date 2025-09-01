@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { UserActivity, ActivityResponse, EngagementData } from '@/types/auth';
 
 interface ActivityStats {
@@ -44,7 +44,8 @@ interface PendingActivity {
 }
 
 export function ActivityProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user } = useAuthContext();
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [stats, setStats] = useState<ActivityStats>({
     totalViews: 0,
@@ -155,7 +156,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
             } else {
               console.error(`[ActivityContext] ❌ Failed to log activity after ${MAX_RETRY_ATTEMPTS} attempts:`, activity);
               // Re-queue for later retry if user is authenticated
-              if (isAuthenticated) {
+              if (isSignedIn) {
                 activity.retryCount = (activity.retryCount || 0) + 1;
                 if (activity.retryCount < 5) { // Max 5 total retries
                   pendingActivities.current.push(activity);
@@ -183,7 +184,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
         scheduleBatch();
       }
     }
-  }, [isAuthenticated]);
+  }, [isSignedIn]);
 
   // Schedule batch processing
   const scheduleBatch = useCallback(() => {
@@ -254,7 +255,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
   const getActivityHistory = useCallback(async (limit: number = 50): Promise<UserActivity[]> => {
     const userId = getCurrentUserId();
     
-    if (!isAuthenticated || userId === 'anonymous') {
+    if (!isSignedIn || userId === 'anonymous') {
       console.log('[ActivityContext] 📭 No authenticated user, returning empty activity history');
       return [];
     }
@@ -282,13 +283,13 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [getCurrentUserId, isAuthenticated]);
+  }, [getCurrentUserId, isSignedIn]);
 
   // Refresh activities
   const refreshActivities = useCallback(async () => {
     const userId = getCurrentUserId();
     
-    if (!isAuthenticated || userId === 'anonymous') {
+    if (!isSignedIn || userId === 'anonymous') {
       console.log('[ActivityContext] 📭 No authenticated user, skipping refresh');
       setActivities([]);
       setStats({
@@ -356,11 +357,11 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [getCurrentUserId, isAuthenticated]);
+  }, [getCurrentUserId, isSignedIn]);
 
   // Initialize activities on auth change
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isSignedIn) {
       refreshActivities();
     } else {
       // Clear activities for non-authenticated users
@@ -373,7 +374,7 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
         recentActivities: []
       });
     }
-  }, [isAuthenticated, refreshActivities]);
+  }, [isSignedIn, refreshActivities]);
 
   // Cleanup batch timeout on unmount
   useEffect(() => {

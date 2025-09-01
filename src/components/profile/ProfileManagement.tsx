@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
 
 export function ProfileManagement() {
-  const { user, isLoading: authLoading } = useAuthContext();
+  const { isLoaded } = useAuth();
+  const { user, isLoaded: userLoaded } = useUser();
+  const authLoading = !isLoaded || !userLoaded;
   const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'notifications' | 'account'>('profile');
 
   // Show loading state

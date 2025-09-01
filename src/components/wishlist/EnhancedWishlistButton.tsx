@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaHeart, FaSpinner, FaClock, FaExclamationTriangle } from 'react-icons/fa';
-import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useAuth, useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { useEnhancedWishlistContext } from '@/contexts/EnhancedWishlistContext';
 import { WishlistErrorBoundary } from '@/components/error-boundaries/WishlistErrorBoundary';
 
@@ -23,7 +24,8 @@ function WishlistButtonContent({
   className = '',
   onToggle
 }: EnhancedWishlistButtonProps) {
-  const { isAuthenticated, openAuthModal } = useAuthContext();
+  const { isSignedIn } = useAuth();
+  const router = useRouter();
   const {
     isInWishlist,
     toggleWishlist,
@@ -78,8 +80,8 @@ function WishlistButtonContent({
   };
 
   const handleClick = async () => {
-    if (!isAuthenticated) {
-      openAuthModal?.();
+    if (!isSignedIn) {
+      router.push('/sign-in');
       return;
     }
 
@@ -173,7 +175,7 @@ function WishlistButtonContent({
         disabled={isLoading}
         className={`${getButtonClasses()} ${className}`}
         title={
-          !isAuthenticated 
+          !isSignedIn 
             ? 'Sign in to save properties' 
             : isInWishlistState 
               ? 'Remove from wishlist' 

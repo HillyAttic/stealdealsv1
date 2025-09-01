@@ -1,15 +1,11 @@
 'use client';
 
 import React, { ReactNode, useEffect } from 'react';
-import { AuthProvider } from '@/components/auth/AuthProvider';
-import { WishlistProvider } from '@/contexts/WishlistContext';
 import { ActivityProvider } from '@/contexts/ActivityContext';
 import { EnhancedWishlistProvider } from '@/contexts/EnhancedWishlistContext';
 import { ToastProvider } from '@/contexts/ToastContext';
-import { AuthErrorBoundary } from '@/components/error-boundaries/AuthErrorBoundary';
 import { WishlistErrorBoundary } from '@/components/error-boundaries/WishlistErrorBoundary';
 import { ActivityErrorBoundary } from '@/components/error-boundaries/ActivityErrorBoundary';
-import { AuthDebug } from '@/components/debug/AuthDebug';
 import WishlistDebug from '@/components/debug/WishlistDebug';
 import { ConnectionStatus } from '@/components/ui/ConnectionStatus';
 
@@ -31,29 +27,22 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <div suppressHydrationWarning>
       <ToastProvider>
-        <AuthErrorBoundary>
-          <AuthProvider>
-            <ActivityErrorBoundary>
-              <ActivityProvider>
-                <WishlistErrorBoundary>
-                  <WishlistProvider>
-                    <EnhancedWishlistProvider>
-                      {children}
-                      <ConnectionStatus />
-                      {/* Debug components disabled for performance */}
-                      {process.env.NODE_ENV === 'development' && false && (
-                        <>
-                          <AuthDebug />
-                          <WishlistDebug />
-                        </>
-                      )}
-                    </EnhancedWishlistProvider>
-                  </WishlistProvider>
-                </WishlistErrorBoundary>
-              </ActivityProvider>
-            </ActivityErrorBoundary>
-          </AuthProvider>
-        </AuthErrorBoundary>
+        <ActivityErrorBoundary>
+          <ActivityProvider>
+            <WishlistErrorBoundary>
+              <EnhancedWishlistProvider>
+                {children}
+                <ConnectionStatus />
+                {/* Debug components disabled for performance */}
+                {process.env.NODE_ENV === 'development' && false && (
+                  <>
+                    <WishlistDebug />
+                  </>
+                )}
+              </EnhancedWishlistProvider>
+            </WishlistErrorBoundary>
+          </ActivityProvider>
+        </ActivityErrorBoundary>
       </ToastProvider>
     </div>
   );

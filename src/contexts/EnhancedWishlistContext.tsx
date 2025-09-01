@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { useActivityContext } from '@/contexts/ActivityContext';
 import { useToast } from '@/contexts/ToastContext';
 import { 
@@ -39,7 +39,8 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 const WISHLIST_STORAGE_KEY = 'stealdeals_wishlist_temp';
 
 export function EnhancedWishlistProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, user } = useAuthContext();
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const { logActivity } = useActivityContext();
   const { showSuccess, showError, showWarning, showInfo } = useToast();
   const { handleError: handleBoundaryError } = useWishlistErrorHandler();
@@ -142,11 +143,9 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
   // Enhanced add to wishlist with retry and offline support
   const addToWishlist = async (propertyId: string): Promise<boolean> => {
     const userId = getCurrentUserId();
-    console.log(`[EnhancedWishlistContext] ➕ Adding property ${propertyId} for user ${userId}`);
     
     // Check if already exists
     if (wishlistItems.has(propertyId)) {
-      console.log(`[EnhancedWishlistContext] ⚠️ Property ${propertyId} already in wishlist`);
       return true;
     }
 
@@ -159,7 +158,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     setWishlistItems(newItems);
     
     try {
-      if (isAuthenticated && userId !== 'anonymous') {
+      if (isSignedIn && userId !== 'anonymous') {
         if (isOnline) {
           // Try online operation with retry
           await retryWithBackoff(
@@ -175,7 +174,6 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               }
             }
           );
-          console.log(`[EnhancedWishlistContext] ✅ Successfully added ${propertyId} to Firebase`);
           showSuccessRef('Added to wishlist', 'Property saved to your wishlist');
         } else {
           // Queue for offline processing
@@ -190,7 +188,6 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
       } else {
         // localStorage operation for non-authenticated users
         saveToLocalStorage(newItems);
-        console.log(`[EnhancedWishlistContext] ✅ Successfully added ${propertyId} to localStorage`);
         showSuccessRef('Added to wishlist', 'Property saved locally');
       }
       
@@ -247,7 +244,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     setWishlistItems(newItems);
     
     try {
-      if (isAuthenticated && userId !== 'anonymous') {
+      if (isSignedIn && userId !== 'anonymous') {
         if (isOnline) {
           // Try online operation with retry
           const success = await retryWithBackoff(
@@ -330,74 +327,15 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     }
   }, []);
 
-  // Setup Firebase real-time listener with error handling (for manual refresh)
-  const setupRealtimeListener = useCallback((forceUserId?: string) => {
-    const userId = forceUserId || getCurrentUserId();
-    if (!userId || userId === 'anonymous') return;
-
-    console.log(`[EnhancedWishlistContext] 🔥 Setting up Firebase real-time listener for user ${userId}`);
-    
-    const wishlistRef = getUserWishlistRef(userId);
-    
-    const unsubscribe = onValue(wishlistRef, (snapshot) => {
-      try {
-        console.log(`[EnhancedWishlistContext] 🔄 Real-time update received`);
-        
-        if (!snapshot.exists()) {
-          console.log(`[EnhancedWishlistContext] 📭 No wishlist data, setting empty`);
-          setWishlistItems(new Set());
-          setIsLoading(false);
-          setIsInitialized(true);
-          return;
-        }
-        
-        const propertyIds = new Set<string>();
-        snapshot.forEach((childSnapshot) => {
-          const data = childSnapshot.val();
-          if (data && data.propertyId) {
-            propertyIds.add(data.propertyId);
-          }
-        });
-        
-        console.log(`[EnhancedWishlistContext] 🔄 Real-time update: ${propertyIds.size} items`);
-        setWishlistItems(propertyIds);
-        setIsLoading(false);
-        setIsInitialized(true);
-        setError(null);
-        
-      } catch (error) {
-        console.error('[EnhancedWishlistContext] ❌ Error processing real-time update:', error);
-        setError('Failed to process wishlist update');
-        try {
-          handleBoundaryError(error as Error);
-        } catch (boundaryError) {
-          console.error('[EnhancedWishlistContext] ❌ Error boundary handler failed:', boundaryError);
-        }
-        setIsLoading(false);
-      }
-    }, (error) => {
-      console.error('[EnhancedWishlistContext] ❌ Firebase listener error:', error);
-      setError('Connection to wishlist service failed');
-      try {
-        handleBoundaryError(error);
-      } catch (boundaryError) {
-        console.error('[EnhancedWishlistContext] ❌ Error boundary handler failed:', boundaryError);
-      }
-      setIsLoading(false);
-    });
-    
-    return () => {
-      console.log(`[EnhancedWishlistContext] 🔥 Cleaning up Firebase listener for user ${userId}`);
-      unsubscribe();
-    };
-  }, [getCurrentUserId]);
+  // Simplified listener management - removed redundant function
+  // Firebase listener is now only managed in the main useEffect
 
   // Manual refresh function with error handling
   const refreshWishlist = useCallback(async () => {
     const userId = getCurrentUserId();
     console.log(`[EnhancedWishlistContext] 🔄 Manual refresh requested for user ${userId}`);
     
-    if (!isAuthenticated || userId === 'anonymous') {
+    if (!isSignedIn || userId === 'anonymous') {
       // Load from localStorage inline to avoid dependency issues
       if (typeof window !== 'undefined') {
         try {
@@ -442,7 +380,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, getCurrentUserId, showSuccessRef, showErrorRef]);
+  }, [isSignedIn, getCurrentUserId, showSuccessRef, showErrorRef]);
 
   // Retry failed operations
   const retryFailedOperations = async () => {
@@ -480,10 +418,10 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
   useEffect(() => {
     const userId = user?.id || (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' ? 'user-1' : 'anonymous');
     
-    console.log(`[EnhancedWishlistContext] 🚀 Initializing for user: ${userId}, authenticated: ${isAuthenticated}`);
+    console.log(`[EnhancedWishlistContext] 🚀 Initializing for user: ${userId}, authenticated: ${isSignedIn}`);
     
     try {
-      if (isAuthenticated && userId !== 'anonymous') {
+      if (isSignedIn && userId !== 'anonymous') {
         // Authenticated user - use Firebase with real-time listener
         if (!isListenerActive) {
           setIsLoading(true);
@@ -566,7 +504,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
       handleBoundaryError(error as Error);
       setIsLoading(false);
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isSignedIn, user?.id]);
 
   // Update queued operations count periodically
   useEffect(() => {
@@ -576,7 +514,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
 
   // Save localStorage whenever wishlistItems changes for non-authenticated users
   useEffect(() => {
-    if (!isAuthenticated && typeof window !== 'undefined') {
+    if (!isSignedIn && typeof window !== 'undefined') {
       try {
         localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify([...wishlistItems]));
       } catch (error) {
@@ -584,7 +522,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
         handleBoundaryError(error as Error);
       }
     }
-  }, [wishlistItems, isAuthenticated, handleBoundaryError]);
+  }, [wishlistItems, isSignedIn, handleBoundaryError]);
 
   const value: WishlistContextType = {
     wishlistItems,

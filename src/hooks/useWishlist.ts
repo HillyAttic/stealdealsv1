@@ -1,9 +1,9 @@
 'use client';
 
-import { useWishlistContext } from '@/contexts/WishlistContext';
+import { useEnhancedWishlistContext } from '@/contexts/EnhancedWishlistContext';
 
 export function useWishlist() {
-  const context = useWishlistContext();
+  const context = useEnhancedWishlistContext();
   
   return {
     items: Array.from(context.wishlistItems),

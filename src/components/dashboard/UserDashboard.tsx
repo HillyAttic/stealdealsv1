@@ -1,12 +1,14 @@
 'use client';
 
-import { useAuthContext } from '@/components/auth/AuthProvider';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { DashboardLayout } from './DashboardLayout';
 import { DashboardContent } from './DashboardContent';
 import { LoadingSpinner } from './LoadingSpinner';
 
 export function UserDashboard() {
-  const { user, isLoading: authLoading } = useAuthContext();
+  const { isLoaded } = useAuth();
+  const { user, isLoaded: userLoaded } = useUser();
+  const authLoading = !isLoaded || !userLoaded;
 
   // Show loading state
   if (authLoading) {

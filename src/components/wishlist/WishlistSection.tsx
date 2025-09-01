@@ -5,16 +5,17 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FaHeart, FaMapMarkerAlt, FaRulerCombined, FaTrash, FaEdit, FaStar, FaEye } from 'react-icons/fa';
 import { WishlistProperty } from '@/types/auth';
-import { useAuthContext } from '@/components/auth/AuthProvider';
-import { useWishlistContext } from '@/contexts/WishlistContext';
+import { useAuth, useUser } from '@clerk/nextjs';
+import { useEnhancedWishlistContext } from '@/contexts/EnhancedWishlistContext';
 
 interface WishlistSectionProps {
   className?: string;
 }
 
 export function WishlistSection({ className = '' }: WishlistSectionProps) {
-  const { isAuthenticated, user } = useAuthContext();
-  const { wishlistItems, wishlistCount, isLoading, refreshWishlist, removeFromWishlist } = useWishlistContext();
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+  const { wishlistItems, wishlistCount, isLoading, refreshWishlist, removeFromWishlist } = useEnhancedWishlistContext();
   const [wishlistProperties, setWishlistProperties] = useState<WishlistProperty[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
         // Add mock auth headers for development consistency
         if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' && user) {
           headers['x-mock-user-id'] = user.id;
-          headers['x-mock-user-email'] = user.email;
+          headers['x-mock-user-email'] = user.primaryEmailAddress?.emailAddress || '';
         }
 
         const response = await fetch('/api/user/wishlist', {
@@ -73,21 +74,18 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
         setWishlistProperties(properties);
         console.log(`[WishlistSection] ✅ Loaded ${properties.length} detailed properties`);
         
-        // Verify context sync
+        // Simplified sync - removed recursive refresh that caused performance issues
         const serverIds = new Set(properties.map((p: any) => p.id));
         const contextIds = wishlistItems;
         const inContextNotServer = Array.from(contextIds).filter(id => !serverIds.has(id));
         const inServerNotContext = Array.from(serverIds).filter(id => !contextIds.has(id as string));
         
         if (inContextNotServer.length > 0 || inServerNotContext.length > 0) {
-          console.warn(`[WishlistSection] ⚠️ Context/Server mismatch:`, {
+          console.warn(`[WishlistSection] ⚠️ Context/Server mismatch - will resolve on next user action:`, {
             inContextNotServer,
-            inServerNotContext,
-            contextIds: Array.from(contextIds),
-            serverIds: Array.from(serverIds)
+            inServerNotContext
           });
-          // Trigger context refresh to fix the mismatch
-          setTimeout(() => refreshWishlist(), 500);
+          // Removed automatic refresh to prevent infinite loops
         }
       } catch (err) {
         console.error('Error fetching detailed wishlist:', err);

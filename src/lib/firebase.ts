@@ -510,6 +510,20 @@ export async function getPropertyById(id: string): Promise<Property | null> {
     
     console.log(`[Firebase] Searching for property ID: "${id}" across all collections`);
     
+    // Log the search pattern to help debug production issues
+    const searchOrder = [
+      'migratedProperties/vacant',
+      'migratedProperties/preleased', 
+      'migratedProperties/franchise',
+      'migratedProperties/plots',
+      'legacy vacantProperties',
+      'legacy preleasedProperties',
+      'legacy franchiseProperties', 
+      'legacy plots',
+      'legacy properties'
+    ];
+    console.log(`[Firebase] Search order for ${id}:`, searchOrder);
+    
     // Try migrated collections first
     let snapshot = await get(child(migratedVacantRef, id));
     if (snapshot.exists()) {
@@ -706,13 +720,39 @@ export async function getPropertyById(id: string): Promise<Property | null> {
       };
     }
     
+    // Try legacy type-specific collections
+    snapshot = await get(child(vacantPropertiesRef, id));
+    if (snapshot.exists()) {
+      console.log(`[Firebase] Found property ${id} in legacy vacantProperties`);
+      return { id: snapshot.key, ...snapshot.val() };
+    }
+    
+    snapshot = await get(child(preleasedPropertiesRef, id));
+    if (snapshot.exists()) {
+      console.log(`[Firebase] Found property ${id} in legacy preleasedProperties`);
+      return { id: snapshot.key, ...snapshot.val() };
+    }
+    
+    snapshot = await get(child(franchisePropertiesRef, id));
+    if (snapshot.exists()) {
+      console.log(`[Firebase] Found property ${id} in legacy franchiseProperties`);
+      return { id: snapshot.key, ...snapshot.val() };
+    }
+    
+    snapshot = await get(child(plotsRef, id));
+    if (snapshot.exists()) {
+      console.log(`[Firebase] Found property ${id} in legacy plots`);
+      return { id: snapshot.key, ...snapshot.val() };
+    }
+    
+    // Finally try generic properties collection
     snapshot = await get(child(propertiesRef, id));
     if (snapshot.exists()) {
       console.log(`[Firebase] Found property ${id} in legacy properties`);
       return { id: snapshot.key, ...snapshot.val() };
     }
     
-    console.log(`[Firebase] Property ${id} not found in any collection`);
+    console.log(`[Firebase] Property ${id} not found in any collection (searched migrated and legacy collections)`);
     return null;
   } catch (error) {
     console.error(`[Firebase] Error fetching property ${id}:`, error);
