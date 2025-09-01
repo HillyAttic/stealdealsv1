@@ -8,7 +8,6 @@ import { FaChartBar, FaStore, FaBuilding, FaHome } from 'react-icons/fa';
 import ClientOnly from '@/components/ClientOnly';
 import { migratedPreleasedRef, migratedVacantRef, migratedFranchiseRef, migratedPlotsRef } from '@/lib/firebase';
 import { dbPool } from '@/lib/database/connection-pool';
-import { RealTimeUserStats } from '@/components/admin/RealTimeUserStats';
 
 // Add global type declaration for the window extension
 declare global {
@@ -500,8 +499,6 @@ function AdminDashboardContent() {
             </div>
           </div>
           
-          {/* Real-time User Analytics Section */}
-          <RealTimeUserStats />
           
           {/* Error message if any */}
           {error && (

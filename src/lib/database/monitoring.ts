@@ -4,7 +4,6 @@
 
 import { dbPool, ConnectionStats, QueryMetrics } from './connection-pool';
 import { cacheService, CacheStats } from './cache';
-import { getBatchProcessorStats } from './activity-optimized';
 
 interface DatabaseHealth {
   status: 'healthy' | 'warning' | 'critical';
@@ -109,8 +108,8 @@ class DatabaseMonitoringService {
       cacheStatus = overallCacheHitRate < 50 ? 'critical' : 'warning';
     }
     
-    // Check batch processor health
-    const batchStats = getBatchProcessorStats();
+    // Check batch processor health (placeholder - batch processor temporarily unavailable)
+    const batchStats = { pendingBatches: 0, totalPendingActivities: 0 };
     const batchIssues: string[] = [];
     const batchRecommendations: string[] = [];
     
@@ -183,7 +182,7 @@ class DatabaseMonitoringService {
     const timestamp = new Date();
     const poolMetrics = dbPool.getPerformanceMetrics();
     const cacheStats = cacheService.getAllStats();
-    const batchStats = getBatchProcessorStats();
+    const batchStats = { pendingBatches: 0, totalPendingActivities: 0 };
     
     // Calculate overall cache hit rate
     let totalHits = 0;

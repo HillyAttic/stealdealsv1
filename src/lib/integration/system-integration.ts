@@ -29,7 +29,7 @@ export const SystemServices = {
 export { useWishlist } from '@/hooks/useWishlist';
 // export { useActivity } from '@/hooks/useActivity'; // File removed
 export { useRealTime } from '@/hooks/useRealTime';
-export { useAnalyticsTracking } from '@/hooks/useAnalyticsTracking';
+// export { useAnalyticsTracking } from '@/hooks/useAnalyticsTracking'; // Hook removed
 
 // Export all components
 export { EnhancedWishlistButton } from '@/components/wishlist/EnhancedWishlistButton';
@@ -37,8 +37,8 @@ export { WishlistSection } from '@/components/wishlist/WishlistSection';
 // Dashboard components removed - using UI components instead
 export { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 export { ErrorMessage } from '@/components/ui/ErrorMessage';
-export { RealTimeUserStats } from '@/components/admin/RealTimeUserStats';
-export { UserAnalyticsDashboard } from '@/components/admin/UserAnalyticsDashboard';
+// export { RealTimeUserStats } from '@/components/admin/RealTimeUserStats'; // Component removed
+// export { UserAnalyticsDashboard } from '@/components/admin/UserAnalyticsDashboard'; // Component removed
 
 // Export error boundaries
 export { WishlistErrorBoundary } from '@/components/error-boundaries/WishlistErrorBoundary';

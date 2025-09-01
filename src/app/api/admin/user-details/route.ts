@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { clerkClient } from '@clerk/nextjs/server';
 import { getUserWishlist } from '@/lib/database/wishlist';
-import { getUserActivity } from '@/lib/database/user-activity';
 
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {
@@ -60,20 +59,8 @@ export async function GET(request: NextRequest) {
         console.warn('Failed to fetch wishlist for user:', targetUserId, error);
       }
 
-      // Get user's activity
+      // Get user's activity (placeholder - activity tracking temporarily unavailable)
       let activity = [];
-      try {
-        const userActivities = await getUserActivity(targetUserId, 50);
-        activity = userActivities.map(act => ({
-          id: act.id,
-          type: act.type,
-          description: getActivityDescription(act),
-          timestamp: act.timestamp,
-          metadata: act.metadata
-        }));
-      } catch (error) {
-        console.warn('Failed to fetch activities for user:', targetUserId, error);
-      }
 
       // Calculate analytics
       const analytics = {

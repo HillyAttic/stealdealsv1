@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getPropertyById, Property } from '../../../../lib/firebase';
 import { resolveIdParam, RouteParams } from '../../../../lib/params-utils';
-import { trackingService, extractTrackingData } from '@/lib/analytics/tracking-middleware';
 import { optionalAuth } from '@/lib/auth/middleware';
 
 export async function GET(
@@ -27,11 +26,7 @@ export async function GET(
 
       console.log(`[Properties API] Found property: ${property.title || property.id}`);
 
-      // Track property view if user is authenticated
-      if (requestWithUser.user) {
-        const trackingData = extractTrackingData(request, requestWithUser.user.id);
-        await trackingService.trackPageView(trackingData);
-      }
+      // Property view tracking temporarily unavailable
       
       return NextResponse.json({ 
         success: true,
