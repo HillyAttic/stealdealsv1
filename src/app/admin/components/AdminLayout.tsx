@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FaBuilding, FaTachometerAlt, FaUser, FaSignOutAlt, FaDatabase, FaHeart } from 'react-icons/fa';
+import { FaBuilding, FaTachometerAlt, FaUser, FaSignOutAlt, FaDatabase, FaHeart, FaChartBar } from 'react-icons/fa';
 import Cookies from 'js-cookie';
 import ClientOnly from '@/components/ClientOnly';
 
@@ -129,6 +129,11 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       name: 'Users',
       href: '/admin/users',
       icon: <FaUser />
+    },
+    {
+      name: 'Wishlist Analytics',
+      href: '/admin/wishlist-analytics',
+      icon: <FaChartBar />
     },
     {
       name: 'Pre-leased',

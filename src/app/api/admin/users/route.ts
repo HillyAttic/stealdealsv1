@@ -56,6 +56,31 @@ export async function GET(request: NextRequest) {
         ...(search && { query: search })
       });
       
+      // Get wishlist counts for all users
+      console.log(`[Admin Users API] Fetching wishlist counts for ${usersResponse.data.length} users`);
+      let wishlistCounts: Record<string, number> = {};
+      
+      try {
+        const { database } = await import('@/lib/firebase');
+        const { ref, get } = await import('firebase/database');
+        const wishlistsRef = ref(database, 'wishlists');
+        const wishlistsSnapshot = await get(wishlistsRef);
+        
+        if (wishlistsSnapshot.exists()) {
+          const wishlistData = wishlistsSnapshot.val();
+          // Count wishlist items for each user
+          Object.keys(wishlistData).forEach(userId => {
+            const userWishlist = wishlistData[userId];
+            if (userWishlist && typeof userWishlist === 'object') {
+              wishlistCounts[userId] = Object.keys(userWishlist).length;
+            }
+          });
+        }
+      } catch (wishlistError) {
+        console.warn('[Admin Users API] Failed to fetch wishlist counts:', wishlistError);
+        // Continue without wishlist counts
+      }
+
       // Transform Clerk user data for admin dashboard
       const transformedUsers = usersResponse.data.map(user => ({
         id: user.id,
@@ -83,9 +108,10 @@ export async function GET(request: NextRequest) {
           provider: account.provider,
           emailAddress: account.emailAddress
         })),
-        // Real-time activity data (placeholder - you can enhance this)
+        // Real-time activity data and wishlist count
         totalViews: 0, // You can implement activity tracking later
-        wishlistCount: 0 // You can fetch from your wishlist system
+        wishlistCount: wishlistCounts[user.id] || 0,
+        lastWishlistActivity: null // Could be enhanced to track last wishlist action
       }));
       
       // Get total count for pagination

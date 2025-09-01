@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaSearch, FaUser, FaEnvelope, FaCalendar, FaEye, FaEdit, FaCheck, FaTimes, FaExternalLinkAlt, FaUserCheck, FaBan, FaLock } from 'react-icons/fa';
+import { FaSearch, FaUser, FaEnvelope, FaCalendar, FaEye, FaEdit, FaCheck, FaTimes, FaExternalLinkAlt, FaUserCheck, FaBan, FaLock, FaHeart, FaSort, FaSortUp, FaSortDown, FaFilter } from 'react-icons/fa';
 import Link from 'next/link';
 import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
 import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
@@ -31,6 +31,7 @@ interface ClerkUser {
   }>;
   totalViews: number;
   wishlistCount: number;
+  lastWishlistActivity?: string | null;
 }
 
 interface UserStatistics {
@@ -65,8 +66,12 @@ export function UserManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState<ClerkUser | null>(null);
-  const [showUserDetails, setShowUserDetails] = useState(false);
+  
+  // Enhanced filtering and sorting
+  const [sortBy, setSortBy] = useState<'name' | 'email' | 'createdAt' | 'wishlistCount' | 'lastLoginAt'>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [wishlistFilter, setWishlistFilter] = useState<'all' | 'with_wishlist' | 'without_wishlist'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'banned'>('all');
 
   // Fetch users data from Clerk
   const fetchUsers = async (page: number = 1, search: string = '') => {
@@ -122,6 +127,80 @@ export function UserManagement() {
   // Handle pagination
   const handlePageChange = (newPage: number) => {
     fetchUsers(newPage, searchTerm);
+  };
+  
+  // Handle sorting
+  const handleSort = (column: 'name' | 'email' | 'createdAt' | 'wishlistCount' | 'lastLoginAt') => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('desc');
+    }
+  };
+  
+  // Get sorted and filtered users
+  const getSortedAndFilteredUsers = () => {
+    let filteredUsers = [...users];
+    
+    // Apply wishlist filter
+    if (wishlistFilter === 'with_wishlist') {
+      filteredUsers = filteredUsers.filter(user => user.wishlistCount > 0);
+    } else if (wishlistFilter === 'without_wishlist') {
+      filteredUsers = filteredUsers.filter(user => user.wishlistCount === 0);
+    }
+    
+    // Apply status filter
+    if (statusFilter === 'active') {
+      filteredUsers = filteredUsers.filter(user => user.isActive);
+    } else if (statusFilter === 'inactive') {
+      filteredUsers = filteredUsers.filter(user => !user.isActive && !user.banned);
+    } else if (statusFilter === 'banned') {
+      filteredUsers = filteredUsers.filter(user => user.banned);
+    }
+    
+    // Sort users
+    filteredUsers.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+      
+      switch (sortBy) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'email':
+          aValue = a.email.toLowerCase();
+          bValue = b.email.toLowerCase();
+          break;
+        case 'createdAt':
+          aValue = new Date(a.createdAt).getTime();
+          bValue = new Date(b.createdAt).getTime();
+          break;
+        case 'wishlistCount':
+          aValue = a.wishlistCount;
+          bValue = b.wishlistCount;
+          break;
+        case 'lastLoginAt':
+          aValue = a.lastLoginAt ? new Date(a.lastLoginAt).getTime() : 0;
+          bValue = b.lastLoginAt ? new Date(b.lastLoginAt).getTime() : 0;
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+    
+    return filteredUsers;
+  };
+  
+  // Get sort icon
+  const getSortIcon = (column: string) => {
+    if (sortBy !== column) return <FaSort className="text-gray-400" />;
+    return sortOrder === 'asc' ? <FaSortUp className="text-blue-500" /> : <FaSortDown className="text-blue-500" />;
   };
 
   // Format date
@@ -340,7 +419,8 @@ export function UserManagement() {
       )}
 
       {/* Search and Filters */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
+      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
+        {/* Search Form */}
         <form onSubmit={handleSearch} className="flex gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -362,6 +442,57 @@ export function UserManagement() {
             {isLoading ? 'Searching...' : 'Search'}
           </button>
         </form>
+        
+        {/* Advanced Filters */}
+        <div className="flex flex-wrap items-center gap-4 pt-4 border-t">
+          <div className="flex items-center">
+            <FaFilter className="mr-2 text-gray-500" />
+            <span className="text-sm font-medium text-gray-700">Filters:</span>
+          </div>
+          
+          {/* Status Filter */}
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-gray-600">Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="banned">Banned</option>
+            </select>
+          </div>
+          
+          {/* Wishlist Filter */}
+          <div className="flex items-center space-x-2">
+            <FaHeart className="text-red-500" />
+            <label className="text-sm text-gray-600">Wishlist:</label>
+            <select
+              value={wishlistFilter}
+              onChange={(e) => setWishlistFilter(e.target.value as any)}
+              className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">All Users</option>
+              <option value="with_wishlist">With Wishlist</option>
+              <option value="without_wishlist">No Wishlist</option>
+            </select>
+          </div>
+          
+          {/* Clear Filters */}
+          {(statusFilter !== 'all' || wishlistFilter !== 'all') && (
+            <button
+              onClick={() => {
+                setStatusFilter('all');
+                setWishlistFilter('all');
+              }}
+              className="text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Users Table */}
@@ -370,11 +501,27 @@ export function UserManagement() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>User</span>
+                    {getSortIcon('name')}
+                  </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
+                </th>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('wishlistCount')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <FaHeart className="text-red-500" />
+                    <span>Wishlist</span>
+                    {getSortIcon('wishlistCount')}
+                  </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Provider
@@ -382,8 +529,14 @@ export function UserManagement() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Security
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Active
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('lastLoginAt')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Last Active</span>
+                    {getSortIcon('lastLoginAt')}
+                  </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -391,7 +544,7 @@ export function UserManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => {
+              {getSortedAndFilteredUsers().map((user) => {
                 const providerInfo = getProviderInfo(user.provider);
                 const userStatus = getUserStatus(user);
                 const StatusIcon = userStatus.icon;
@@ -445,6 +598,22 @@ export function UserManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        <div className="flex items-center">
+                          <FaHeart className="text-red-500 mr-1" />
+                          <span className="text-lg font-bold text-gray-900">{user.wishlistCount}</span>
+                        </div>
+                        {user.wishlistCount > 0 && (
+                          <Link
+                            href={`/admin/users/${user.id}?tab=wishlist`}
+                            className="text-xs text-blue-600 hover:text-blue-800 underline"
+                          >
+                            View
+                          </Link>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${providerInfo.color}`}>
                         {providerInfo.name}
                       </span>
@@ -478,16 +647,13 @@ export function UserManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
-                        <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setShowUserDetails(true);
-                          }}
+                        <Link
+                          href={`/admin/users/${user.id}`}
                           className="text-blue-600 hover:text-blue-900"
                           title="View Details"
                         >
                           <FaEye />
-                        </button>
+                        </Link>
                         <a
                           href={`https://dashboard.clerk.com`}
                           target="_blank"
@@ -506,12 +672,14 @@ export function UserManagement() {
           </table>
         </div>
 
-        {users.length === 0 && !isLoading && (
+        {getSortedAndFilteredUsers().length === 0 && !isLoading && (
           <div className="text-center py-8">
             <FaUser className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchTerm ? 'Try adjusting your search terms.' : 'No users have signed up yet.'}
+              {searchTerm || statusFilter !== 'all' || wishlistFilter !== 'all' 
+                ? 'Try adjusting your search terms or filters.' 
+                : 'No users have signed up yet.'}
             </p>
           </div>
         )}
@@ -589,49 +757,6 @@ export function UserManagement() {
         </div>
       )}
 
-      {/* User Details Modal */}
-      {showUserDetails && selectedUser && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">User Details</h3>
-                <button
-                  onClick={() => {
-                    setShowUserDetails(false);
-                    setSelectedUser(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Name</label>
-                  <p className="text-sm text-gray-900">{selectedUser.name}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <p className="text-sm text-gray-900">{selectedUser.email}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">User ID</label>
-                  <p className="text-sm text-gray-900 font-mono">{selectedUser.id}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <p className="text-sm text-gray-900">{getUserStatus(selectedUser).status}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Created</label>
-                  <p className="text-sm text-gray-900">{formatDate(selectedUser.createdAt)}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
