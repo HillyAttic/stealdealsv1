@@ -10,9 +10,10 @@ import { useEnhancedWishlistContext } from '@/contexts/EnhancedWishlistContext';
 
 interface WishlistSectionProps {
   className?: string;
+  showAll?: boolean;
 }
 
-export function WishlistSection({ className = '' }: WishlistSectionProps) {
+export function WishlistSection({ className = '', showAll = false }: WishlistSectionProps) {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const { wishlistItems, wishlistCount, isLoading, refreshWishlist, removeFromWishlist } = useEnhancedWishlistContext();
@@ -227,7 +228,7 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
             {wishlistCount}
           </span>
         </h2>
-        {wishlistProperties.length > 0 && (
+        {!showAll && wishlistProperties.length > 0 && (
           <Link 
             href="/wishlist"
             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
@@ -252,7 +253,7 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {wishlistProperties.slice(0, 3).map((property) => (
+          {(showAll ? wishlistProperties : wishlistProperties.slice(0, 3)).map((property) => (
             <div key={property.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
               <div className="flex gap-4">
                 {/* Property Image */}
@@ -374,7 +375,7 @@ export function WishlistSection({ className = '' }: WishlistSectionProps) {
             </div>
           ))}
 
-          {wishlistProperties.length > 3 && (
+          {!showAll && wishlistProperties.length > 3 && (
             <div className="text-center pt-4">
               <Link 
                 href="/wishlist"

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { WishlistProvider } from '@/contexts/WishlistContext';
+import { EnhancedWishlistProvider } from '@/contexts/EnhancedWishlistContext';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import { WishlistTestComponent } from '@/components/wishlist/WishlistTestComponent';
 import { AuthProvider } from '@/components/auth/AuthProvider';
@@ -9,7 +9,7 @@ import { AuthProvider } from '@/components/auth/AuthProvider';
 export function WishlistDemo() {
   return (
     <AuthProvider>
-      <WishlistProvider>
+      <EnhancedWishlistProvider>
         <div className="p-6 space-y-6">
           <h2 className="text-2xl font-bold">Wishlist System Demo</h2>
           
@@ -27,7 +27,7 @@ export function WishlistDemo() {
             <WishlistTestComponent propertyId="demo-1" />
           </div>
         </div>
-      </WishlistProvider>
+      </EnhancedWishlistProvider>
     </AuthProvider>
   );
 }

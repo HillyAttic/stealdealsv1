@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { FaHeart } from 'react-icons/fa';
 import { useAuth } from '@/hooks/useAuth';
-import { useWishlistContext } from '@/contexts/WishlistContext';
+import { useEnhancedWishlistContext } from '@/contexts/EnhancedWishlistContext';
 
 interface WishlistIndicatorProps {
   className?: string;
@@ -12,7 +12,7 @@ interface WishlistIndicatorProps {
 
 export function WishlistIndicator({ className = '', showText = false }: WishlistIndicatorProps) {
   const { isAuthenticated } = useAuth();
-  const { wishlistCount } = useWishlistContext();
+  const { wishlistCount } = useEnhancedWishlistContext();
 
   if (!isAuthenticated) {
     return null;

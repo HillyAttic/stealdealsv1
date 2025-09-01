@@ -178,11 +178,72 @@ export function UserManagement() {
   }
 
   if (error && users.length === 0) {
+    // Check if this is a Clerk configuration error
+    const isClerkConfigError = error.includes('Clerk configuration') || error.includes('CLERK_SECRET_KEY');
+    
     return (
-      <ErrorMessage 
-        message={error}
-        onRetry={() => fetchUsers()}
-      />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Clerk User Management</h1>
+            <p className="text-gray-600">Manage and monitor Clerk authenticated users</p>
+          </div>
+        </div>
+        
+        {isClerkConfigError ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <FaBan className="h-5 w-5 text-red-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  Clerk Configuration Required
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p className="mb-3">{error}</p>
+                  <div className="bg-red-100 p-3 rounded border">
+                    <h4 className="font-medium mb-2">To Fix This Issue:</h4>
+                    <ol className="list-decimal list-inside space-y-1 text-xs">
+                      <li>Go to <a href="https://dashboard.clerk.com" target="_blank" rel="noopener noreferrer" className="text-red-800 underline font-medium">Clerk Dashboard</a></li>
+                      <li>Navigate to API Keys section</li>
+                      <li>Copy your <strong>Secret key</strong> (starts with sk_live_...)</li>
+                      <li>Copy your <strong>Publishable key</strong> (starts with pk_live_...)</li>
+                      <li>Set these in your production environment variables:</li>
+                    </ol>
+                    <div className="mt-2 p-2 bg-red-200 rounded font-mono text-xs">
+                      CLERK_SECRET_KEY=sk_live_your_actual_key<br/>
+                      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_your_actual_key
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 flex space-x-3">
+                  <button
+                    onClick={() => fetchUsers()}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Retry Connection
+                  </button>
+                  <a
+                    href="/api/admin/health"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-3 py-2 border border-red-200 text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    <FaExternalLinkAlt className="mr-1" />
+                    Check System Health
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <ErrorMessage 
+            message={error}
+            onRetry={() => fetchUsers()}
+          />
+        )}
+      </div>
     );
   }
 

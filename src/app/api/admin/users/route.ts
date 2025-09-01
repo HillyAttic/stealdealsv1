@@ -6,6 +6,38 @@ import { clerkClient } from '@clerk/nextjs/server';
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {
     try {
+      // Validate Clerk configuration first
+      const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+      const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+      
+      if (!clerkSecretKey || clerkSecretKey.includes('YOUR_CLERK_SECRET_KEY_HERE')) {
+        console.error('[Admin Users API] Missing or invalid CLERK_SECRET_KEY in production environment');
+        return NextResponse.json(
+          { 
+            success: false,
+            error: 'Clerk configuration error',
+            details: 'CLERK_SECRET_KEY is missing or not configured properly. Please set the correct production Clerk secret key in your environment variables.',
+            configRequired: {
+              CLERK_SECRET_KEY: 'Required: sk_live_... (from Clerk Dashboard > API Keys)',
+              NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'Required: pk_live_... (from Clerk Dashboard > API Keys)'
+            }
+          },
+          { status: 500 }
+        );
+      }
+      
+      if (!clerkPublishableKey || clerkPublishableKey.includes('YOUR_CLERK_PUBLISHABLE_KEY_HERE')) {
+        console.error('[Admin Users API] Missing or invalid NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY');
+        return NextResponse.json(
+          { 
+            success: false,
+            error: 'Clerk configuration error',
+            details: 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is missing or not configured properly.'
+          },
+          { status: 500 }
+        );
+      }
+      
       const { searchParams } = new URL(request.url);
       const page = parseInt(searchParams.get('page') || '1');
       const limit = parseInt(searchParams.get('limit') || '20');
@@ -13,6 +45,8 @@ export async function GET(request: NextRequest) {
       
       // Calculate offset for pagination
       const offset = (page - 1) * limit;
+      
+      console.log(`[Admin Users API] Fetching users from Clerk: page=${page}, limit=${limit}, search='${search}'`);
       
       // Fetch users from Clerk with search and pagination
       const client = await clerkClient();
@@ -99,12 +133,31 @@ export async function GET(request: NextRequest) {
       });
       
     } catch (error) {
-      console.error('Get Clerk users error:', error);
+      console.error('[Admin Users API] Get Clerk users error:', error);
+      
+      // Provide specific error messages for common issues
+      let errorMessage = 'Failed to fetch users from Clerk';
+      let errorDetails = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Invalid API key') || error.message.includes('authentication')) {
+          errorMessage = 'Clerk authentication failed';
+          errorDetails = 'Invalid Clerk API key. Please verify your CLERK_SECRET_KEY is correct and active.';
+        } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+          errorMessage = 'Network error connecting to Clerk';
+          errorDetails = 'Unable to connect to Clerk API. Please check your network connection and Clerk service status.';
+        } else if (error.message.includes('Rate limit')) {
+          errorMessage = 'Clerk API rate limit exceeded';
+          errorDetails = 'Too many requests to Clerk API. Please try again later.';
+        }
+      }
+      
       return NextResponse.json(
         { 
           success: false,
-          error: 'Failed to fetch users from Clerk',
-          details: error instanceof Error ? error.message : 'Unknown error'
+          error: errorMessage,
+          details: errorDetails,
+          timestamp: new Date().toISOString()
         },
         { status: 500 }
       );

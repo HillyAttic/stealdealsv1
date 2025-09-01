@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useAuth } from '@clerk/nextjs';
-import { useWishlistContext } from '@/contexts/WishlistContext';
+import { useEnhancedWishlistContext } from '@/contexts/EnhancedWishlistContext';
 import { useActivity } from '@/hooks/useActivity';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -26,7 +26,7 @@ export function WishlistButton({
   onWishlistChange
 }: WishlistButtonProps) {
   const { isSignedIn, userId } = useAuth();
-  const wishlistContext = useWishlistContext();
+  const wishlistContext = useEnhancedWishlistContext();
   const { 
     isInWishlist, 
     toggleWishlist, 

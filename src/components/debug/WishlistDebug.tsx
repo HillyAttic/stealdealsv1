@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useWishlistContext } from '@/contexts/WishlistContext';
+import { useEnhancedWishlistContext } from '@/contexts/EnhancedWishlistContext';
 import { useAuthContext } from '@/components/auth/AuthProvider';
 
 /**
@@ -10,7 +10,7 @@ import { useAuthContext } from '@/components/auth/AuthProvider';
  */
 export default function WishlistDebug() {
   const [isVisible, setIsVisible] = useState(false);
-  const { wishlistItems, wishlistCount, isLoading, isInitialized } = useWishlistContext();
+  const { wishlistItems, wishlistCount, isLoading, isInitialized } = useEnhancedWishlistContext();
   const { isAuthenticated, user } = useAuthContext();
 
   // Only show in development
