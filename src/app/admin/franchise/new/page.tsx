@@ -8,6 +8,7 @@ import { FaArrowLeft, FaSave, FaList } from 'react-icons/fa';
 import { BsListUl } from 'react-icons/bs';
 import ClientOnly from '@/components/ClientOnly';
 import ImageUploader from '@/components/ui/ImageUploader';
+import { createFranchiseWithDetails } from '@/lib/admin/franchiseHelpers';
 
 export default function NewFranchisePage() {
   return (
@@ -77,8 +78,8 @@ function FranchiseForm() {
         throw new Error('Please fill all required fields: Brand and Industry');
       }
       
-      // Format data for API - keep original string format for investment fields
-      const franchiseData = {
+      // Create franchise data using the new franchiseDetails structure
+      const franchiseData = createFranchiseWithDetails({
         ...franchise,
         // Make sure these required fields are explicitly set
         brand: franchise.brand,
@@ -86,16 +87,8 @@ function FranchiseForm() {
         // Don't force parsing to float - keep as strings if they contain text like "20 LACS"
         minInvestment: franchise.minInvestment || "0",
         maxInvestment: franchise.maxInvestment || "0",
-        image: franchise.image || 'https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1', // Default franchise image
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        // Set default values for required fields
-        status: "Active",
-        location: franchise.headquarter || "Multiple Locations",
-        roi: franchise.royalty || "Varies",
-        // Add investment field for backward compatibility
-        investment: franchise.minInvestment || "0"
-      };
+        image: franchise.image || 'https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+      });
       
       // Debug what's being sent
       console.log('Submitting franchise data:', franchiseData);

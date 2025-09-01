@@ -8,7 +8,15 @@ import { FaPlus, FaPencilAlt, FaTrash, FaSearch, FaEye } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
 import ClientOnly from '@/components/ClientOnly';
 
-// Franchise interface
+import { 
+  AdminFranchise, 
+  getFieldFromFranchise, 
+  getInvestmentFromFranchise,
+  getFranchiseDisplayName,
+  matchesFranchiseSearch 
+} from '@/lib/admin/franchiseHelpers';
+
+// Legacy interface kept for backward compatibility during transition
 interface Franchise {
   id?: string | null;
   name: string;
@@ -66,7 +74,7 @@ export default function FranchisePage() {
 
 function FranchiseContent() {
   const router = useRouter();
-  const [franchises, setFranchises] = useState<Franchise[]>([]);
+  const [franchises, setFranchises] = useState<AdminFranchise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,12 +118,9 @@ function FranchiseContent() {
     checkAuthAndLoadData();
   }, [router]);
 
-  // Filter franchises based on search term
+  // Filter franchises based on search term using helper function
   const filteredFranchises = franchises.filter(franchise =>
-    franchise.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    franchise.industry?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    franchise.headquarter?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    franchise.product?.toLowerCase().includes(searchTerm.toLowerCase())
+    matchesFranchiseSearch(franchise, searchTerm)
   );
 
   // Handle franchise deletion
@@ -243,13 +248,13 @@ function FranchiseContent() {
                           </span>
                         </td>
                         <td className="w-1/4 px-2 py-2">
-                          <div className="text-sm font-medium text-gray-900 truncate" title={franchise.name || franchise.product}>
-                            {franchise.name || franchise.product}
+                          <div className="text-sm font-medium text-gray-900 truncate" title={getFranchiseDisplayName(franchise)}>
+                            {getFranchiseDisplayName(franchise)}
                           </div>
                           {franchise.image && (
                             <img 
                               src={franchise.image} 
-                              alt={franchise.name}
+                              alt={getFranchiseDisplayName(franchise)}
                               className="w-10 h-6 object-cover rounded mt-1"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
@@ -258,14 +263,14 @@ function FranchiseContent() {
                           )}
                         </td>
                         <td className="w-1/6 px-2 py-2">
-                          <div className="text-sm text-gray-900 truncate" title={franchise.industry}>{franchise.industry}</div>
-                          {franchise.segment && (
-                            <div className="text-xs text-gray-500 truncate" title={franchise.segment}>{franchise.segment}</div>
+                          <div className="text-sm text-gray-900 truncate" title={getFieldFromFranchise(franchise, 'industry')}>{getFieldFromFranchise(franchise, 'industry')}</div>
+                          {getFieldFromFranchise(franchise, 'segment') && (
+                            <div className="text-xs text-gray-500 truncate" title={getFieldFromFranchise(franchise, 'segment')}>{getFieldFromFranchise(franchise, 'segment')}</div>
                           )}
                         </td>
                         <td className="w-1/6 px-2 py-2 text-sm text-gray-500">
-                          <div className="truncate" title={franchise.headquarter || franchise.location}>
-                            {franchise.headquarter || franchise.location}
+                          <div className="truncate" title={getFieldFromFranchise(franchise, 'headquarter')}>
+                            {getFieldFromFranchise(franchise, 'headquarter')}
                           </div>
                         </td>
                         <td className="w-16 px-2 py-2">
@@ -279,19 +284,19 @@ function FranchiseContent() {
                         </td>
                         <td className="w-1/6 px-2 py-2 text-sm text-gray-900">
                           <div className="truncate" title={
-                            franchise.maxInvestment && franchise.maxInvestment !== franchise.minInvestment
-                              ? `${formatCurrency(franchise.minInvestment || 0)} - ${formatCurrency(franchise.maxInvestment || 0)}`
-                              : formatCurrency(franchise.minInvestment || franchise.investment || 0)
+                            getInvestmentFromFranchise(franchise, 'max') && getInvestmentFromFranchise(franchise, 'max') !== getInvestmentFromFranchise(franchise, 'min')
+                              ? `${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)} - ${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'max')) || 0)}`
+                              : formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)
                           }>
-                            {franchise.maxInvestment && franchise.maxInvestment !== franchise.minInvestment
-                              ? `${formatCurrency(franchise.minInvestment || 0)} - ${formatCurrency(franchise.maxInvestment || 0)}`
-                              : formatCurrency(franchise.minInvestment || franchise.investment || 0)
+                            {getInvestmentFromFranchise(franchise, 'max') && getInvestmentFromFranchise(franchise, 'max') !== getInvestmentFromFranchise(franchise, 'min')
+                              ? `${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)} - ${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'max')) || 0)}`
+                              : formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)
                             }
                           </div>
                         </td>
                         <td className="w-20 px-2 py-2 text-sm text-gray-500">
-                          <div className="truncate" title={franchise.royalty || franchise.roi || 'Contact for details'}>
-                            {(franchise.royalty || franchise.roi || 'Contact').substring(0, 10)}
+                          <div className="truncate" title={getFieldFromFranchise(franchise, 'royalty') || 'Contact for details'}>
+                            {(getFieldFromFranchise(franchise, 'royalty') || 'Contact').substring(0, 10)}
                           </div>
                         </td>
                         <td className="w-20 px-2 py-2 text-sm font-medium">

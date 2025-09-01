@@ -19,6 +19,13 @@ interface MigrationResult {
   errors?: string[];
 }
 
+interface FranchiseAnalysis {
+  totalFranchises: number;
+  franchisesWithRedundancy: number;
+  redundantFields: string[];
+  estimatedSavings: string;
+}
+
 export default function MigratePage() {
   const [migrationStats, setMigrationStats] = useState<MigrationStats | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -28,6 +35,12 @@ export default function MigratePage() {
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<any>(null);
+  
+  // Franchise cleanup state
+  const [franchiseAnalysis, setFranchiseAnalysis] = useState<FranchiseAnalysis | null>(null);
+  const [isFranchiseAnalyzing, setIsFranchiseAnalyzing] = useState(false);
+  const [isFranchiseCleaning, setIsFranchiseCleaning] = useState(false);
+  const [franchiseResult, setFranchiseResult] = useState<MigrationResult | null>(null);
 
   // Function to analyze the database
   const analyzeDatabase = async () => {
@@ -248,9 +261,110 @@ export default function MigratePage() {
     }
   };
 
+  // Function to analyze franchise redundancy
+  const analyzeFranchiseRedundancy = async () => {
+    setIsFranchiseAnalyzing(true);
+    setFranchiseResult(null);
+    
+    try {
+      const response = await fetch('/api/admin/migrate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'analyze-franchise' }),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to analyze franchise redundancy');
+      }
+      
+      const data = await response.json();
+      setFranchiseAnalysis(data.stats);
+    } catch (error) {
+      console.error('Franchise analysis error:', error);
+      setFranchiseResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Franchise analysis failed'
+      });
+    } finally {
+      setIsFranchiseAnalyzing(false);
+    }
+  };
+
+  // Function to run franchise cleanup dry run
+  const runFranchiseDryRun = async () => {
+    setIsFranchiseCleaning(true);
+    setFranchiseResult(null);
+    
+    try {
+      const response = await fetch('/api/admin/migrate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'franchise-dry-run' }),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to run franchise cleanup dry run');
+      }
+      
+      const data = await response.json();
+      setFranchiseResult(data);
+    } catch (error) {
+      console.error('Franchise dry run error:', error);
+      setFranchiseResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Franchise dry run failed'
+      });
+    } finally {
+      setIsFranchiseCleaning(false);
+    }
+  };
+
+  // Function to run actual franchise cleanup
+  const runFranchiseCleanup = async () => {
+    if (!confirm('Are you sure you want to run the franchise cleanup? This will remove redundant fields from your franchise properties.')) {
+      return;
+    }
+    
+    setIsFranchiseCleaning(true);
+    setFranchiseResult(null);
+    
+    try {
+      const response = await fetch('/api/admin/migrate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'franchise-cleanup' }),
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to run franchise cleanup');
+      }
+      
+      const data = await response.json();
+      setFranchiseResult(data);
+    } catch (error) {
+      console.error('Franchise cleanup error:', error);
+      setFranchiseResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Franchise cleanup failed'
+      });
+    } finally {
+      setIsFranchiseCleaning(false);
+    }
+  };
+
   // Auto-analyze on component mount
   useEffect(() => {
     analyzeDatabase();
+    analyzeFranchiseRedundancy();
   }, []);
 
   return (
@@ -320,6 +434,125 @@ export default function MigratePage() {
             </div>
           </div>
         )}
+
+        {/* Franchise Data Cleanup Section */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">Franchise Data Cleanup</h3>
+          <p className="text-gray-600 mb-6">
+            Remove redundant fields from franchise properties to optimize database size and eliminate data inconsistencies.
+          </p>
+          
+          {/* Franchise Analysis Results */}
+          {franchiseAnalysis && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 mb-6">
+              <h4 className="text-lg font-semibold text-orange-900 mb-4">Franchise Redundancy Analysis</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-lg">
+                  <h5 className="font-semibold text-gray-900">Total Franchises</h5>
+                  <p className="text-2xl font-bold text-blue-700">{franchiseAnalysis.totalFranchises}</p>
+                  <p className="text-sm text-gray-600">In database</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg">
+                  <h5 className="font-semibold text-gray-900">With Redundancy</h5>
+                  <p className="text-2xl font-bold text-orange-700">{franchiseAnalysis.franchisesWithRedundancy}</p>
+                  <p className="text-sm text-gray-600">Need cleanup</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg">
+                  <h5 className="font-semibold text-gray-900">Estimated Savings</h5>
+                  <p className="text-2xl font-bold text-green-700">{franchiseAnalysis.estimatedSavings}</p>
+                  <p className="text-sm text-gray-600">Data reduction</p>
+                </div>
+              </div>
+              
+              {franchiseAnalysis.redundantFields.length > 0 && (
+                <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
+                  <h5 className="font-semibold text-yellow-900 mb-2">Redundant Fields Found:</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {franchiseAnalysis.redundantFields.slice(0, 8).map((field, index) => (
+                      <span key={index} className="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs rounded">
+                        {field}
+                      </span>
+                    ))}
+                    {franchiseAnalysis.redundantFields.length > 8 && (
+                      <span className="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs rounded">
+                        +{franchiseAnalysis.redundantFields.length - 8} more...
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Franchise Cleanup Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Analyze Button */}
+            <button
+              onClick={analyzeFranchiseRedundancy}
+              disabled={isFranchiseAnalyzing}
+              className="flex items-center justify-center px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isFranchiseAnalyzing ? (
+                <>
+                  <FaSpinner className="animate-spin mr-2" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <FaEye className="mr-2" />
+                  Analyze Redundancy
+                </>
+              )}
+            </button>
+
+            {/* Dry Run Button */}
+            <button
+              onClick={runFranchiseDryRun}
+              disabled={isFranchiseCleaning || !franchiseAnalysis}
+              className="flex items-center justify-center px-4 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isFranchiseCleaning ? (
+                <>
+                  <FaSpinner className="animate-spin mr-2" />
+                  Running...
+                </>
+              ) : (
+                <>
+                  <FaEye className="mr-2" />
+                  Dry Run Cleanup
+                </>
+              )}
+            </button>
+
+            {/* Cleanup Button */}
+            <button
+              onClick={runFranchiseCleanup}
+              disabled={isFranchiseCleaning || !franchiseAnalysis}
+              className="flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isFranchiseCleaning ? (
+                <>
+                  <FaSpinner className="animate-spin mr-2" />
+                  Cleaning...
+                </>
+              ) : (
+                <>
+                  <FaDatabase className="mr-2" />
+                  Run Cleanup
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="mt-6 text-sm text-gray-600">
+            <p><strong>Cleanup Process:</strong></p>
+            <ol className="list-decimal list-inside space-y-1 mt-2">
+              <li>First, click "Analyze Redundancy" to see current state</li>
+              <li>Run "Dry Run Cleanup" to preview what will be removed</li>
+              <li>Finally, run the actual cleanup to optimize your database</li>
+            </ol>
+          </div>
+        </div>
 
         {/* Debug Section */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
@@ -494,6 +727,76 @@ export default function MigratePage() {
                     <h4 className="font-semibold mb-2">Errors:</h4>
                     <ul className="space-y-1">
                       {migrationResult.errors.map((error, index) => (
+                        <li key={index} className="text-sm text-red-600">
+                          • {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Franchise Cleanup Results Display */}
+        {franchiseResult && (
+          <div className={`border rounded-lg p-6 mb-8 ${
+            franchiseResult.success 
+              ? 'bg-green-50 border-green-200' 
+              : 'bg-red-50 border-red-200'
+          }`}>
+            <div className="flex items-start">
+              {franchiseResult.success ? (
+                <FaCheckCircle className="text-green-500 mr-3 mt-1" size={20} />
+              ) : (
+                <FaExclamationTriangle className="text-red-500 mr-3 mt-1" size={20} />
+              )}
+              <div className="flex-1">
+                <h3 className={`text-lg font-semibold mb-2 ${
+                  franchiseResult.success ? 'text-green-800' : 'text-red-800'
+                }`}>
+                  {franchiseResult.success ? 'Franchise Cleanup Success!' : 'Franchise Cleanup Error'}
+                </h3>
+                <p className={franchiseResult.success ? 'text-green-700' : 'text-red-700'}>
+                  {franchiseResult.message}
+                </p>
+                
+                {franchiseResult.stats && (
+                  <div className="mt-4">
+                    <h4 className="font-semibold mb-2">Cleanup Statistics:</h4>
+                    {franchiseResult.stats.cleanup ? (
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-sm text-gray-600">Processed</p>
+                          <p className="text-xl font-bold text-blue-600">{franchiseResult.stats.cleanup.processed}</p>
+                        </div>
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-sm text-gray-600">Cleaned</p>
+                          <p className="text-xl font-bold text-green-600">{franchiseResult.stats.cleanup.cleaned}</p>
+                        </div>
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-sm text-gray-600">Fields Removed</p>
+                          <p className="text-xl font-bold text-orange-600">{franchiseResult.stats.cleanup.fieldsRemoved}</p>
+                        </div>
+                        <div className="bg-white p-3 rounded">
+                          <p className="text-sm text-gray-600">Errors</p>
+                          <p className="text-xl font-bold text-red-600">{franchiseResult.stats.cleanup.errors}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <pre className="bg-gray-100 p-3 rounded text-sm overflow-x-auto">
+                        {JSON.stringify(franchiseResult.stats, null, 2)}
+                      </pre>
+                    )}
+                  </div>
+                )}
+                
+                {franchiseResult.errors && franchiseResult.errors.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="font-semibold mb-2">Errors:</h4>
+                    <ul className="space-y-1">
+                      {franchiseResult.errors.map((error, index) => (
                         <li key={index} className="text-sm text-red-600">
                           • {error}
                         </li>

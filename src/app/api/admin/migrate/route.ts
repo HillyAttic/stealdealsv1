@@ -769,6 +769,177 @@ async function migrateWishlists(idMapping: { [key: string]: string }, isDryRun: 
   }
 }
 
+/**
+ * Analyze franchise properties for redundant fields
+ */
+async function analyzeFranchiseRedundancy() {
+  try {
+    console.log('[Franchise Cleanup] Analyzing franchise properties for redundancy...');
+    
+    const migratedSnapshot = await get(ref(database, 'migratedProperties/franchise'));
+    const migratedData = migratedSnapshot.val();
+    
+    if (!migratedData) {
+      return {
+        totalFranchises: 0,
+        franchisesWithRedundancy: 0,
+        redundantFields: [],
+        estimatedSavings: '0KB'
+      };
+    }
+
+    const redundantFields = [
+      'brand', 'establishmentYear', 'franchiseStartedYear', 'headquarter', 
+      'industry', 'maxArea', 'maxInvestment', 'maxPaybackPeriod', 'minArea', 
+      'minInvestment', 'minPaybackPeriod', 'model', 'name', 'product', 
+      'royalty', 'segment', 'numberOutlets', 'investment', 'location', 'roi'
+    ];
+
+    let totalFranchises = 0;
+    let franchisesWithRedundancy = 0;
+    let totalRedundantDataSize = 0;
+
+    for (const [franchiseId, franchiseData] of Object.entries(migratedData as { [key: string]: any })) {
+      totalFranchises++;
+      
+      let hasRedundancy = false;
+      let franchiseRedundantSize = 0;
+      
+      for (const field of redundantFields) {
+        if (franchiseData[field] && franchiseData.franchiseDetails?.[field]) {
+          hasRedundancy = true;
+          franchiseRedundantSize += JSON.stringify(franchiseData[field]).length;
+        }
+      }
+      
+      if (hasRedundancy) {
+        franchisesWithRedundancy++;
+        totalRedundantDataSize += franchiseRedundantSize;
+      }
+    }
+
+    const estimatedSavings = `${Math.round(totalRedundantDataSize / 1024)}KB`;
+
+    console.log(`[Franchise Cleanup] Analysis complete: ${franchisesWithRedundancy}/${totalFranchises} franchises have redundancy`);
+
+    return {
+      totalFranchises,
+      franchisesWithRedundancy,
+      redundantFields,
+      estimatedSavings
+    };
+  } catch (error) {
+    console.error('[Franchise Cleanup] Analysis error:', error);
+    throw new Error('Failed to analyze franchise redundancy');
+  }
+}
+
+/**
+ * Clean up franchise data redundancy (dry run or actual)
+ */
+async function cleanupFranchiseRedundancy(isDryRun: boolean = false) {
+  try {
+    console.log(`[Franchise Cleanup] ${isDryRun ? 'Dry run' : 'Actual'} cleanup starting...`);
+    
+    const migratedSnapshot = await get(ref(database, 'migratedProperties/franchise'));
+    const migratedData = migratedSnapshot.val();
+    
+    if (!migratedData) {
+      return {
+        processed: 0,
+        cleaned: 0,
+        errors: 0,
+        fieldsRemoved: 0
+      };
+    }
+
+    const redundantFields = [
+      'brand', 'establishmentYear', 'franchiseStartedYear', 'headquarter', 
+      'industry', 'maxArea', 'maxInvestment', 'maxPaybackPeriod', 'minArea', 
+      'minInvestment', 'minPaybackPeriod', 'model', 'name', 'product', 
+      'royalty', 'segment', 'numberOutlets', 'investment', 'location', 'roi'
+    ];
+
+    let processedCount = 0;
+    let cleanedCount = 0;
+    let errorCount = 0;
+    let fieldsRemovedCount = 0;
+    
+    const updates: { [path: string]: any } = {};
+
+    for (const [franchiseId, franchiseData] of Object.entries(migratedData as { [key: string]: any })) {
+      processedCount++;
+      
+      try {
+        const cleanedFranchise = { ...franchiseData };
+        let hadRedundancy = false;
+        
+        // Remove redundant fields that exist in franchiseDetails
+        for (const field of redundantFields) {
+          if (cleanedFranchise[field] && cleanedFranchise.franchiseDetails?.[field]) {
+            delete cleanedFranchise[field];
+            fieldsRemovedCount++;
+            hadRedundancy = true;
+          }
+        }
+        
+        // Ensure franchiseDetails has complete data and fix naming inconsistencies
+        if (cleanedFranchise.franchiseDetails) {
+          // Fix numberOutlets vs numberOfOutlets
+          if (cleanedFranchise.franchiseDetails.numberOutlets && !cleanedFranchise.franchiseDetails.numberOfOutlets) {
+            cleanedFranchise.franchiseDetails.numberOfOutlets = cleanedFranchise.franchiseDetails.numberOutlets;
+            delete cleanedFranchise.franchiseDetails.numberOutlets;
+          }
+          
+          // Update the updatedAt timestamp
+          cleanedFranchise.updatedAt = Date.now();
+          
+          // Add cleanup metadata
+          cleanedFranchise.cleanupInfo = {
+            cleanedAt: Date.now(),
+            fieldsRemoved: hadRedundancy ? redundantFields.filter(field => 
+              franchiseData[field] && franchiseData.franchiseDetails?.[field]
+            ) : [],
+            version: '1.0'
+          };
+        }
+        
+        if (hadRedundancy) {
+          cleanedCount++;
+          
+          if (!isDryRun) {
+            updates[`migratedProperties/franchise/${franchiseId}`] = removeUndefinedValues(cleanedFranchise);
+          }
+        }
+        
+      } catch (itemError) {
+        console.error(`[Franchise Cleanup] Error processing franchise ${franchiseId}:`, itemError);
+        errorCount++;
+      }
+    }
+
+    // Apply updates (only if not dry run)
+    if (!isDryRun && Object.keys(updates).length > 0) {
+      console.log(`[Franchise Cleanup] Applying ${Object.keys(updates).length} updates...`);
+      
+      // Use batch writing for large updates
+      await batchWriteToFirebase('migratedProperties/franchise', updates, 10);
+    }
+
+    console.log(`[Franchise Cleanup] ${isDryRun ? 'Dry run' : 'Cleanup'} completed: ${cleanedCount}/${processedCount} franchises cleaned`);
+
+    return {
+      processed: processedCount,
+      cleaned: cleanedCount,
+      errors: errorCount,
+      fieldsRemoved: fieldsRemovedCount
+    };
+  } catch (error) {
+    console.error('[Franchise Cleanup] Cleanup error:', error);
+    throw new Error('Failed to cleanup franchise redundancy');
+  }
+}
+
 // GET /api/admin/migrate - Analyze database
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {
@@ -879,6 +1050,56 @@ export async function POST(request: NextRequest) {
                 properties: migrationResult.stats,
                 wishlists: wishlistResult,
                 totalPropertiesMigrated: migrationResult.migratedProperties
+              }
+            });
+
+          case 'analyze-franchise':
+            console.log('[Franchise Cleanup] Starting franchise redundancy analysis...');
+            const analysisResult = await analyzeFranchiseRedundancy();
+            console.log('[Franchise Cleanup] Analysis result:', analysisResult);
+            
+            return NextResponse.json({
+              success: true,
+              message: 'Franchise redundancy analysis completed',
+              stats: analysisResult
+            });
+
+          case 'franchise-dry-run':
+            console.log('[Franchise Cleanup] Starting franchise cleanup dry run...');
+            const franchiseDryRunResult = await cleanupFranchiseRedundancy(true);
+            console.log('[Franchise Cleanup] Dry run result:', franchiseDryRunResult);
+            
+            return NextResponse.json({
+              success: true,
+              message: 'Franchise cleanup dry run completed successfully',
+              stats: franchiseDryRunResult
+            });
+
+          case 'franchise-cleanup':
+            console.log('[Franchise Cleanup] Starting actual franchise cleanup...');
+            
+            let franchiseBackupFile = 'skipped';
+            
+            // Create backup first (unless skipped)
+            if (!skipBackup) {
+              console.log('[Franchise Cleanup] Creating pre-cleanup backup...');
+              franchiseBackupFile = await createBackup();
+              console.log('[Franchise Cleanup] Backup created:', franchiseBackupFile);
+            } else {
+              console.log('[Franchise Cleanup] Skipping backup as requested...');
+            }
+            
+            // Run actual cleanup
+            console.log('[Franchise Cleanup] Running franchise redundancy cleanup...');
+            const cleanupResult = await cleanupFranchiseRedundancy(false);
+            console.log('[Franchise Cleanup] Cleanup result:', cleanupResult);
+            
+            return NextResponse.json({
+              success: true,
+              message: `Franchise cleanup completed successfully! Removed ${cleanupResult.fieldsRemoved} redundant fields from ${cleanupResult.cleaned} franchises.`,
+              stats: {
+                backup: franchiseBackupFile,
+                cleanup: cleanupResult
               }
             });
             

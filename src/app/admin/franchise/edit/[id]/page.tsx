@@ -10,6 +10,11 @@ import { toast, Toaster } from 'react-hot-toast';
 import { franchisePropertiesRef, migratedFranchiseRef, database } from '@/lib/firebase';
 import { ref, get, child, update } from 'firebase/database';
 import ImageUploader from '@/components/ui/ImageUploader';
+import { 
+  AdminFranchise, 
+  convertToLegacyFormData, 
+  createFranchiseWithDetails 
+} from '@/lib/admin/franchiseHelpers';
 
 export default function EditFranchisePage() {
   return (
@@ -95,15 +100,13 @@ function EditFranchiseContent() {
           const { franchise: franchiseData } = await response.json();
           console.log('Franchise loaded via API:', franchiseData);
           
-          // Make sure to properly map name/brand fields for UI display
-          const dataWithBrand = {
-            id: franchiseId,
-            ...franchiseData,
-            // Ensure brand is set consistently for form compatibility
-            brand: franchiseData.brand || franchiseData.name || franchiseData.product || franchiseData.title || ''
-          };
+          // Convert from franchiseDetails structure to legacy form format using helper function
+          const formData = convertToLegacyFormData(franchiseData as AdminFranchise);
           
-          setFranchise(dataWithBrand);
+          setFranchise({
+            id: franchiseId,
+            ...formData
+          });
         } else if (response.status === 404) {
           console.log('Franchise not found via API');
           setError('Franchise not found');
@@ -146,24 +149,19 @@ function EditFranchiseContent() {
     setError('');
     
     try {
-      // Prepare values - don't force numeric conversion if text is included
-      const updatedFranchise = {
+      // Create updated franchise data using the new franchiseDetails structure
+      const updatedFranchise = createFranchiseWithDetails({
         ...franchise,
         // Keep investment values as is - could be "20 LACS" or numeric
         minInvestment: franchise.minInvestment || "",
         maxInvestment: franchise.maxInvestment || "",
         minArea: franchise.minArea || "",
-        maxArea: franchise.maxArea || "",
-        updatedAt: Date.now()
-      };
+        maxArea: franchise.maxArea || ""
+      });
       
-      // Support legacy fields
-      updatedFranchise.name = franchise.brand || franchise.name;
-      updatedFranchise.product = franchise.brand || franchise.product;
-      updatedFranchise.investment = updatedFranchise.minInvestment; // Keep as is
-      updatedFranchise.location = franchise.headquarter || franchise.location;
-      updatedFranchise.roi = franchise.royalty || franchise.roi;
-      updatedFranchise.description = franchise.remarks || franchise.description;
+      // Set the ID and update timestamp
+      updatedFranchise.id = franchiseId;
+      updatedFranchise.updatedAt = Date.now();
       
       console.log(`Updating franchise via API: ${franchiseId}`);
       

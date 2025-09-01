@@ -28,43 +28,49 @@ export async function GET(
       const franchiseData = migratedSnapshot.val();
       console.log(`[API] ✅ Found franchise in migrated location: ${franchiseData?.title || franchiseData?.name || 'Unknown'}`);
       
-      // Convert migrated structure to expected format
+      // Convert migrated structure to expected format - prioritize franchiseDetails as primary source
       const details = franchiseData.franchiseDetails || {};
       const franchise = {
         id: migratedSnapshot.key,
-        name: franchiseData.title || franchiseData.name || details.name || details.brand || 'Franchise Name',
-        // Core franchise information
-        industry: franchiseData.industry || details.industry || 'Not specified',
-        segment: franchiseData.segment || details.segment || '',
-        product: franchiseData.product || details.product || franchiseData.title || '',
-        model: franchiseData.model || details.model || '',
-        minArea: franchiseData.minArea || details.minArea || '',
-        maxArea: franchiseData.maxArea || details.maxArea || '',
-        minInvestment: franchiseData.minInvestment || details.minInvestment || '',
-        maxInvestment: franchiseData.maxInvestment || details.maxInvestment || '',
-        royalty: franchiseData.royalty || details.royalty || 'Not specified',
-        establishmentYear: franchiseData.establishmentYear || details.establishmentYear || '',
-        franchiseStartedYear: franchiseData.franchiseStartedYear || details.franchiseStartedYear || '',
-        numberOutlets: franchiseData.numberOutlets || details.numberOfOutlets || details.numberOutlets || '',
-        minPaybackPeriod: franchiseData.minPaybackPeriod || details.minPaybackPeriod || '',
-        maxPaybackPeriod: franchiseData.maxPaybackPeriod || details.maxPaybackPeriod || '',
-        headquarter: franchiseData.headquarter || details.headquarter || franchiseData.location || '',
-        remarks: franchiseData.remarks || details.remarks || franchiseData.description || '',
-        brandDeck: franchiseData.brandDeck || details.brandDeck || '',
-        productList: franchiseData.productList || details.productList || '',
-        roiSheet: franchiseData.roiSheet || details.roiSheet || '',
-        investorDiscoveryKitUrl: franchiseData.investorDiscoveryKitUrl || details.investorDiscoveryKitUrl || '',
-        // Legacy compatibility fields
-        investment: franchiseData.price || franchiseData.investment || details.minInvestment || '',
-        location: franchiseData.location || details.headquarter || 'Location not specified',
+        // Use franchiseDetails as primary source, fallback to root level for backward compatibility
+        name: details.name || details.brand || franchiseData.title || franchiseData.name || 'Franchise Name',
+        // Core franchise information - prioritize franchiseDetails
+        industry: details.industry || franchiseData.industry || 'Not specified',
+        segment: details.segment || franchiseData.segment || '',
+        product: details.product || details.name || details.brand || franchiseData.product || franchiseData.title || '',
+        model: details.model || franchiseData.model || '',
+        minArea: details.minArea || franchiseData.minArea || '',
+        maxArea: details.maxArea || franchiseData.maxArea || '',
+        minInvestment: details.minInvestment || franchiseData.minInvestment || '',
+        maxInvestment: details.maxInvestment || franchiseData.maxInvestment || '',
+        royalty: details.royalty || franchiseData.royalty || 'Not specified',
+        establishmentYear: details.establishmentYear || franchiseData.establishmentYear || '',
+        franchiseStartedYear: details.franchiseStartedYear || franchiseData.franchiseStartedYear || '',
+        numberOutlets: details.numberOfOutlets || details.numberOutlets || franchiseData.numberOutlets || '',
+        minPaybackPeriod: details.minPaybackPeriod || franchiseData.minPaybackPeriod || '',
+        maxPaybackPeriod: details.maxPaybackPeriod || franchiseData.maxPaybackPeriod || '',
+        headquarter: details.headquarter || franchiseData.headquarter || franchiseData.location || '',
+        remarks: details.remarks || franchiseData.remarks || franchiseData.description || '',
+        brandDeck: details.brandDeck || franchiseData.brandDeck || '',
+        productList: details.productList || franchiseData.productList || '',
+        roiSheet: details.roiSheet || franchiseData.roiSheet || '',
+        investorDiscoveryKitUrl: details.investorDiscoveryKitUrl || franchiseData.investorDiscoveryKitUrl || '',
+        // Legacy compatibility fields - for backward compatibility with frontend
+        investment: details.minInvestment || franchiseData.price || franchiseData.investment || '',
+        location: details.headquarter || franchiseData.location || 'Location not specified',
         status: franchiseData.status || 'Active',
-        roi: franchiseData.royalty || details.royalty || 'Contact for details',
-        description: franchiseData.description || franchiseData.remarks || '',
+        roi: details.royalty || franchiseData.royalty || 'Contact for details',
+        description: details.remarks || franchiseData.description || franchiseData.remarks || '',
         image: franchiseData.images?.[0] || franchiseData.image || '',
         createdAt: franchiseData.createdAt,
         updatedAt: franchiseData.updatedAt,
-        // Include all original data
-        ...franchiseData
+        // Include franchiseDetails for direct access
+        franchiseDetails: details,
+        // Include essential root-level fields
+        title: franchiseData.title || details.name || details.brand || 'Franchise Property',
+        type: franchiseData.type || 'franchise',
+        price: franchiseData.price || details.minInvestment || 0,
+        images: franchiseData.images || []
       };
       
       return NextResponse.json({ franchise });

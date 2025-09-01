@@ -67,37 +67,45 @@ export async function POST(request: NextRequest) {
     const newId = generateUniquePropertyId('Franchise', sequenceNumber);
     console.log(`Creating new franchise with ID: ${newId}`);
     
-    // Create a new franchise entry with unique ID in migrated structure
+    // Create a new franchise entry with unique ID using franchiseDetails structure
     const newFranchiseRef = child(migratedFranchiseRef, newId);
     const newFranchise = {
-      name: body.brand || body.name || `Franchise ${newId}`, // Ensure name is always set for main title
-      industry: body.industry,
-      segment: body.segment || "",
-      product: body.brand || body.product || body.name || `Product ${newId}`, // Ensure product is always set
-      model: body.model || "",
-      minArea: body.minArea || "",
-      maxArea: body.maxArea || "",
-      minInvestment: body.minInvestment || "0",
-      maxInvestment: body.maxInvestment || "0",
-      royalty: body.royalty || "Varies",
-      establishmentYear: body.establishmentYear || "",
-      franchiseStartedYear: body.franchiseStartedYear || "",
-      numberOutlets: body.numberOutlets || "",
-      minPaybackPeriod: body.minPaybackPeriod || "",
-      maxPaybackPeriod: body.maxPaybackPeriod || "",
-      headquarter: body.headquarter || "Multiple Locations",
-      remarks: body.remarks || "",
-      brandDeck: body.brandDeck || "",
-      productList: body.productList || "",
-      roiSheet: body.roiSheet || "",
-      investment: body.minInvestment || "0", // Keep for backward compatibility
-      location: body.headquarter || "Multiple Locations", // Keep for backward compatibility
-      status: body.status || "Active",
-      roi: body.royalty || "Varies", // Keep for backward compatibility
-      description: body.remarks || "",
-      image: body.image || 'https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+      // Essential root-level fields only
+      id: newId,
+      type: 'franchise',
+      title: body.brand || body.name || `Franchise ${newId}`,
+      description: body.remarks || body.description || '',
+      location: body.headquarter || 'Multiple Locations',
+      price: parseFloat(body.minInvestment) || 0,
+      images: body.image ? [body.image] : ['https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'],
       createdAt: body.createdAt || Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      
+      // All franchise-specific data in franchiseDetails object
+      franchiseDetails: {
+        brand: body.brand || body.name || `Franchise ${newId}`,
+        name: body.brand || body.name || `Franchise ${newId}`,
+        industry: body.industry || 'Not specified',
+        segment: body.segment || '',
+        product: body.brand || body.product || body.name || `Product ${newId}`,
+        model: body.model || '',
+        minArea: body.minArea || '',
+        maxArea: body.maxArea || '',
+        minInvestment: body.minInvestment || '0',
+        maxInvestment: body.maxInvestment || '0',
+        royalty: body.royalty || 'Varies',
+        establishmentYear: body.establishmentYear || '',
+        franchiseStartedYear: body.franchiseStartedYear || '',
+        numberOfOutlets: body.numberOutlets || '', // Standardized naming
+        minPaybackPeriod: body.minPaybackPeriod || '',
+        maxPaybackPeriod: body.maxPaybackPeriod || '',
+        headquarter: body.headquarter || 'Multiple Locations',
+        remarks: body.remarks || '',
+        brandDeck: body.brandDeck || '',
+        productList: body.productList || '',
+        roiSheet: body.roiSheet || '',
+        investorDiscoveryKitUrl: body.investorDiscoveryKitUrl || ''
+      }
     };
     
     console.log('Saving franchise data:', newFranchise);

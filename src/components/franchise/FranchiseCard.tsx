@@ -7,11 +7,51 @@ import { useSecureGatedContent } from '@/hooks/useSecureGatedContent';
 import { GatedContentModal } from './GatedContentModal';
 import { SuccessMessage } from './SuccessMessage';
 
-// Define the Franchise interface to match the database
+// Define the Franchise interface to match the optimized database structure
+interface FranchiseDetails {
+  brand?: string;
+  name?: string;
+  industry?: string;
+  segment?: string;
+  product?: string;
+  model?: string;
+  minArea?: string;
+  maxArea?: string;
+  minInvestment?: number | string;
+  maxInvestment?: number | string;
+  royalty?: string;
+  establishmentYear?: string;
+  franchiseStartedYear?: string;
+  numberOfOutlets?: string;
+  numberOutlets?: string;
+  minPaybackPeriod?: string;
+  maxPaybackPeriod?: string;
+  headquarter?: string;
+  remarks?: string;
+  brandDeck?: string;
+  productList?: string;
+  roiSheet?: string;
+  investorDiscoveryKitUrl?: string;
+}
+
 interface Franchise {
   id?: string | null;
-  name: string;
-  industry: string;
+  type?: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  price?: number;
+  images?: string[];
+  image?: string;
+  createdAt?: number;
+  updatedAt?: number;
+  
+  // franchiseDetails is the primary source of franchise-specific data
+  franchiseDetails?: FranchiseDetails;
+  
+  // Legacy fields for backward compatibility (may be redundant after cleanup)
+  name?: string;
+  industry?: string;
   segment?: string;
   product?: string;
   model?: string;
@@ -31,15 +71,10 @@ interface Franchise {
   productList?: string;
   roiSheet?: string;
   investorDiscoveryKitUrl?: string;
-  investment: number | string;
-  location: string;
-  status: string;
-  roi: string;
-  description?: string;
+  investment?: number | string;
+  status?: string;
+  roi?: string;
   requirements?: string;
-  image?: string;
-  createdAt?: number;
-  updatedAt?: number;
 }
 
 interface FranchiseCardProps {
@@ -55,8 +90,54 @@ export function FranchiseCard({
   showWishlist = true,
   onOpenModal
 }: FranchiseCardProps) {
-  // Generate a consistent ID for this franchise (same logic as FranchiseModal)
-  const franchiseId = franchise.id || `franchise-${franchise.name?.replace(/\s+/g, '-').toLowerCase()}-${franchise.industry?.replace(/\s+/g, '-').toLowerCase()}`;
+  // Helper functions to get data from franchiseDetails with fallbacks to legacy fields
+  const getField = (field: keyof FranchiseDetails): string => {
+    const details = franchise.franchiseDetails;
+    switch (field) {
+      case 'name':
+        return details?.name || details?.brand || franchise.name || franchise.title || '';
+      case 'brand':
+        return details?.brand || details?.name || franchise.name || franchise.title || '';
+      case 'industry':
+        return details?.industry || franchise.industry || '';
+      case 'segment':
+        return details?.segment || franchise.segment || '';
+      case 'product':
+        return details?.product || details?.name || details?.brand || franchise.product || franchise.name || '';
+      case 'model':
+        return details?.model || franchise.model || '';
+      case 'minArea':
+        return details?.minArea || franchise.minArea || '';
+      case 'maxArea':
+        return details?.maxArea || franchise.maxArea || '';
+      case 'royalty':
+        return details?.royalty || franchise.royalty || franchise.roi || '';
+      case 'headquarter':
+        return details?.headquarter || franchise.headquarter || franchise.location || '';
+      case 'investorDiscoveryKitUrl':
+        return details?.investorDiscoveryKitUrl || franchise.investorDiscoveryKitUrl || '';
+      default:
+        return details?.[field] || franchise[field as keyof Franchise] || '';
+    }
+  };
+
+  const getInvestment = (type: 'min' | 'max'): number | string => {
+    const details = franchise.franchiseDetails;
+    if (type === 'min') {
+      return details?.minInvestment || franchise.minInvestment || franchise.investment || franchise.price || 0;
+    }
+    return details?.maxInvestment || franchise.maxInvestment || '';
+  };
+
+  const getOutlets = (): string => {
+    const details = franchise.franchiseDetails;
+    return details?.numberOfOutlets || details?.numberOutlets || franchise.numberOutlets || '';
+  };
+
+  // Generate a consistent ID for this franchise (use franchiseDetails data as primary)
+  const franchiseName = getField('name');
+  const franchiseIndustry = getField('industry');
+  const franchiseId = franchise.id || `franchise-${franchiseName?.replace(/\s+/g, '-').toLowerCase()}-${franchiseIndustry?.replace(/\s+/g, '-').toLowerCase()}`;
 
   // Gated content state
   const { isContentUnlocked, unlockContent } = useSecureGatedContent('franchise');
@@ -115,13 +196,14 @@ export function FranchiseCard({
   const handleInvestorKitClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     
-    if (!franchise.investorDiscoveryKitUrl) {
+    const kitUrl = getField('investorDiscoveryKitUrl');
+    if (!kitUrl) {
       return; // Do nothing if no URL
     }
     
     if (isUnlocked) {
       // Content is unlocked, open the Google Drive link
-      window.open(franchise.investorDiscoveryKitUrl, '_blank', 'noopener,noreferrer');
+      window.open(kitUrl, '_blank', 'noopener,noreferrer');
     } else {
       // Content is locked, show the gated modal
       setShowGatedModal(true);
@@ -138,8 +220,9 @@ export function FranchiseCard({
   // Handle download from success message
   const handleDownloadFromSuccess = () => {
     setShowSuccessMessage(false);
-    if (franchise.investorDiscoveryKitUrl) {
-      window.open(franchise.investorDiscoveryKitUrl, '_blank', 'noopener,noreferrer');
+    const kitUrl = getField('investorDiscoveryKitUrl');
+    if (kitUrl) {
+      window.open(kitUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -160,8 +243,8 @@ export function FranchiseCard({
           ></div>
           {/* Main image */}
           <img 
-            src={franchise.image || defaultImage}
-            alt={franchise.name}
+            src={franchise.images?.[0] || franchise.image || defaultImage}
+            alt={getField('name')}
             className="relative z-10 w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
           />
           {franchise.status === 'Limited' && (
@@ -186,16 +269,16 @@ export function FranchiseCard({
         <div className="flex justify-end items-start mb-2">
           <div className="flex flex-row flex-wrap gap-1 items-center justify-end">
             <span className="bg-primary/10 text-primary text-xs font-semibold px-2.5 py-0.5 rounded">
-              {franchise.industry}
+              {getField('industry')}
             </span>
-            {franchise.segment && (
+            {getField('segment') && (
               <span className="bg-secondary/10 text-secondary text-xs font-semibold px-2.5 py-0.5 rounded">
-                {franchise.segment}
+                {getField('segment')}
               </span>
             )}
-            {franchise.model && (
+            {getField('model') && (
               <span className="bg-accent/10 text-accent text-xs font-semibold px-2.5 py-0.5 rounded">
-                {franchise.model}
+                {getField('model')}
               </span>
             )}
           </div>
@@ -204,14 +287,14 @@ export function FranchiseCard({
         {/* Location */}
         <p className="text-gray-600 mb-2 flex items-center text-sm">
           <FaMapMarkerAlt className="mr-2 text-primary" />
-          {franchise.headquarter || franchise.location}
+          {getField('headquarter')}
         </p>
 
         {/* Product Display - HIGH PRIORITY */}
         <div className="bg-accent/10 border-l-4 border-accent p-3 rounded-md mb-4 shadow-sm">
           <h4 className="text-sm font-bold text-accent mb-1 uppercase">Product</h4>
           <p className="text-md font-bold text-gray-900 group-hover:text-primary transition-colors">
-            {franchise.product || franchise.name || 'Product Available'}
+            {getField('product') || 'Product Available'}
           </p>
         </div>
 
@@ -222,27 +305,27 @@ export function FranchiseCard({
             <div className="flex flex-col">
               <span className="text-xs text-gray-500">Total Investment</span>
               <span className="font-medium">
-                {franchise.maxInvestment && franchise.maxInvestment !== "" && franchise.maxInvestment !== franchise.minInvestment
-                  ? `${formatInvestment(franchise.minInvestment)} - ${formatInvestment(franchise.maxInvestment)}`
-                  : formatInvestment(franchise.minInvestment || franchise.investment)}
+                {getInvestment('max') && getInvestment('max') !== "" && getInvestment('max') !== getInvestment('min')
+                  ? `${formatInvestment(getInvestment('min'))} - ${formatInvestment(getInvestment('max'))}`
+                  : formatInvestment(getInvestment('min'))}
               </span>
             </div>
           </div>
           <div className="flex items-center text-sm text-gray-700">
             <FaChartLine className="mr-2 text-accent" />
-            <span>{franchise.royalty || franchise.roi}</span>
+            <span>{getField('royalty')}</span>
           </div>
         </div>
         
         {/* Area Requirements */}
-        {((franchise.minArea && franchise.minArea !== "NA") || (franchise.maxArea && franchise.maxArea !== "NA")) && (
+        {((getField('minArea') && getField('minArea') !== "NA") || (getField('maxArea') && getField('maxArea') !== "NA")) && (
           <div className="bg-primary/5 p-2 rounded-md mb-3">
             <h4 className="text-xs font-medium text-primary mb-1">Area Requirements</h4>
             <p className="text-xs text-gray-700">
-              {(franchise.minArea && franchise.minArea !== "NA") && 
-               (franchise.maxArea && franchise.maxArea !== "NA")
-                ? `${franchise.minArea} - ${franchise.maxArea}`
-                : `${franchise.minArea !== "NA" ? franchise.minArea : franchise.maxArea}`}
+              {(getField('minArea') && getField('minArea') !== "NA") && 
+               (getField('maxArea') && getField('maxArea') !== "NA")
+                ? `${getField('minArea')} - ${getField('maxArea')}`
+                : `${getField('minArea') !== "NA" ? getField('minArea') : getField('maxArea')}`}
             </p>
           </div>
         )}
@@ -252,34 +335,34 @@ export function FranchiseCard({
           {/* Establishment Year */}
           <div>
             <span className="text-gray-500">Est. Year:</span>
-            <span className="ml-1 text-gray-700 font-medium">{franchise.establishmentYear || 'N/A'}</span>
+            <span className="ml-1 text-gray-700 font-medium">{getField('establishmentYear') || 'N/A'}</span>
           </div>
           
           {/* Franchise Started */}
           <div>
             <span className="text-gray-500">Started:</span>
-            <span className="ml-1 text-gray-700 font-medium">{franchise.franchiseStartedYear || 'N/A'}</span>
+            <span className="ml-1 text-gray-700 font-medium">{getField('franchiseStartedYear') || 'N/A'}</span>
           </div>
           
           {/* Outlets */}
           <div>
             <span className="text-gray-500">Outlets:</span>
-            <span className="ml-1 text-gray-700 font-medium">{franchise.numberOutlets || 'N/A'}</span>
+            <span className="ml-1 text-gray-700 font-medium">{getOutlets() || 'N/A'}</span>
           </div>
           
           {/* Payback Period */}
           <div>
             <span className="text-gray-500">Payback:</span>
             <span className="ml-1 text-gray-700 font-medium">
-              {franchise.minPaybackPeriod && franchise.maxPaybackPeriod 
-                ? `${franchise.minPaybackPeriod}-${franchise.maxPaybackPeriod}`
-                : franchise.minPaybackPeriod || franchise.maxPaybackPeriod || 'N/A'}
+              {getField('minPaybackPeriod') && getField('maxPaybackPeriod') 
+                ? `${getField('minPaybackPeriod')}-${getField('maxPaybackPeriod')}`
+                : getField('minPaybackPeriod') || getField('maxPaybackPeriod') || 'N/A'}
             </span>
           </div>
         </div>
         
         <div className="border-t pt-3 mt-auto">
-          {franchise.investorDiscoveryKitUrl ? (
+          {getField('investorDiscoveryKitUrl') ? (
             <button
               onClick={handleInvestorKitClick}
               className={`w-full flex justify-center items-center py-2 px-4 rounded transition-all duration-300 text-white ${

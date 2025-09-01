@@ -21,3 +21,6 @@ src/components/wishlist/ImprovedWishlistButton.tsx
 .vercel
 .claude
 .env*.local
+
+# clerk configuration (can include secrets)
+/.clerk/
