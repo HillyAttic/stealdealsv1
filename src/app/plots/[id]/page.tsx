@@ -13,7 +13,7 @@ import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
 import { database, Property } from '@/lib/firebase';
 import { ref, get, child } from 'firebase/database';
-import { trackPropertyView, trackContactInquiry } from '@/lib/activity-tracker';
+import { useActivity } from '@/hooks/useActivity';
 
 // Default fallback image
 const DEFAULT_IMAGE = 'https://images.pexels.com/photos/260931/pexels-photo-260931.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
@@ -26,6 +26,7 @@ const formatCurrency = (value: number | string | undefined): string => {
 };
 
 export default function PlotPropertyDetails() {
+  const { logPropertyView, logContactInquiry } = useActivity();
   const params = useParams();
   const router = useRouter();
   const propertyId = params?.id as string;
@@ -77,7 +78,7 @@ export default function PlotPropertyDetails() {
         setProperty(data.property);
         
         // Track property view
-        trackPropertyView(propertyId, {
+        logPropertyView(propertyId, {
           source: 'direct_url',
           propertyTitle: data.property.location || data.property.title,
           category: data.property.category,
@@ -97,7 +98,7 @@ export default function PlotPropertyDetails() {
   // Handle contact inquiry tracking
   const handleContactClick = (method: 'email' | 'phone') => {
     if (property) {
-      trackContactInquiry(property.id!, {
+      logContactInquiry(property.id!, {
         method,
         contactName: property.contactName,
         propertyTitle: property.location || property.title,
@@ -111,7 +112,7 @@ export default function PlotPropertyDetails() {
     return () => {
       if (property) {
         const viewDuration = Date.now() - viewStartTime;
-        trackPropertyView(property.id!, {
+        logPropertyView(property.id!, {
           source: 'direct_url',
           propertyTitle: property.location || property.title,
           category: property.category,
@@ -303,23 +304,16 @@ export default function PlotPropertyDetails() {
                         <span className="text-gray-800">{property.contactName || 'Not Available'}</span>
                       </div>
                       
-                      {property.email && (
-                        <button 
-                          onClick={() => {
-                            window.location.href = `mailto:${property.email}`;
-                            handleContactClick('email');
-                          }}
-                          className="w-full flex items-center justify-center bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
-                        >
-                          <FaEnvelope className="mr-2" />
-                          Send Email
-                        </button>
+                      {property.contactName && (
+                        <div className="text-center">
+                          <span className="text-gray-600">Email contact available through contact person</span>
+                        </div>
                       )}
                       
-                      {property.phone && (
+                      {property.contactNumber && (
                         <button 
                           onClick={() => {
-                            window.location.href = `tel:${property.phone}`;
+                            window.location.href = `tel:${property.contactNumber}`;
                             handleContactClick('phone');
                           }}
                           className="w-full flex items-center justify-center bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"

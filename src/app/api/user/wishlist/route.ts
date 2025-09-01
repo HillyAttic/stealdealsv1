@@ -141,8 +141,8 @@ async function extractUserId(request: NextRequest & { user?: any }): Promise<str
 
 // Input validation schemas
 interface WishlistRequestBody {
-  propertyId?: string;
-  action?: 'add' | 'remove' | 'update';
+  propertyId: string;
+  action: 'add' | 'remove' | 'update';
   notes?: string;
   priority?: 'low' | 'medium' | 'high';
 }
@@ -221,16 +221,16 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
       
       const { searchParams } = new URL(request.url);
       const statsOnly = searchParams.get('stats') === 'true';
-      const limit = parseInt(searchParams.get('limit') || '50');
+      const limit = parseInt(searchParams.get('limit') || '1000'); // Increased default limit
       const offset = parseInt(searchParams.get('offset') || '0');
       
       // Validate query parameters
-      if (limit < 1 || limit > 100) {
+      if (limit < 1 || limit > 1000) {
         logWishlistOperation('get_wishlist', userId, undefined, { limit, error: 'Invalid limit' });
         return NextResponse.json(
           { 
             success: false,
-            error: 'Limit must be between 1 and 100',
+            error: 'Limit must be between 1 and 1000',
             code: 'INVALID_LIMIT'
           },
           { status: 400 }
@@ -250,7 +250,7 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
       }
       
       if (statsOnly) {
-        const stats = await getWishlistStats(userId);
+        const stats = await getWishlistStats(userId!);
         const duration = Date.now() - startTime;
         
         logWishlistOperation('get_wishlist_stats', userId, undefined, { 
@@ -269,7 +269,14 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
         });
       }
       
-      const wishlistProperties = await getUserWishlist(userId);
+      // Add cache control headers to prevent browser caching
+      const headers = {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      };
+      
+      const wishlistProperties = await getUserWishlist(userId!);
       
       // Apply pagination
       const paginatedProperties = wishlistProperties.slice(offset, offset + limit);
@@ -302,7 +309,7 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
           duration: `${duration}ms`,
           userSource: requestWithUser.user ? 'authenticated' : 'guest'
         }
-      });
+      }, { headers });
       
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -328,7 +335,14 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
             duration: `${duration}ms`
           }
         },
-        { status: 500 }
+        { 
+          status: 500,
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        }
       );
     }
   });
@@ -393,7 +407,7 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
       
       if (action === 'add') {
         // Check if already in wishlist
-        const alreadyInWishlist = await isInWishlist(userId, propertyId);
+        const alreadyInWishlist = await isInWishlist(userId!, propertyId);
         if (alreadyInWishlist) {
           logWishlistOperation('add_to_wishlist', userId, propertyId, { 
             reason: 'already_exists' 
@@ -409,7 +423,7 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
         }
         
         const wishlistItem = await addToWishlist(
-          userId, 
+          userId!, 
           propertyId, 
           notes, 
           priority || 'medium'
@@ -418,8 +432,8 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
         // Broadcast real-time update
         try {
           const realTimeService = RealTimeService.getInstance();
-          const wishlistStats = await getWishlistStats(userId);
-          realTimeService.broadcastWishlistUpdate(userId, 'add', propertyId, wishlistStats.totalItems);
+          const wishlistStats = await getWishlistStats(userId!);
+          realTimeService.broadcastWishlistUpdate(userId!, 'add', propertyId, wishlistStats.total);
           console.log(`[Wishlist API] 📡 Real-time update broadcasted: add ${propertyId} for user ${userId}`);
         } catch (broadcastError) {
           console.warn(`[Wishlist API] ⚠️ Failed to broadcast real-time update:`, broadcastError);
@@ -446,7 +460,7 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
         });
         
       } else if (action === 'remove') {
-        const removed = await removeFromWishlist(userId, propertyId);
+        const removed = await removeFromWishlist(userId!, propertyId);
         
         if (!removed) {
           logWishlistOperation('remove_from_wishlist', userId, propertyId, { 
@@ -465,8 +479,8 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
         // Broadcast real-time update
         try {
           const realTimeService = RealTimeService.getInstance();
-          const wishlistStats = await getWishlistStats(userId);
-          realTimeService.broadcastWishlistUpdate(userId, 'remove', propertyId, wishlistStats.totalItems);
+          const wishlistStats = await getWishlistStats(userId!);
+          realTimeService.broadcastWishlistUpdate(userId!, 'remove', propertyId, wishlistStats.total);
           console.log(`[Wishlist API] 📡 Real-time update broadcasted: remove ${propertyId} for user ${userId}`);
         } catch (broadcastError) {
           console.warn(`[Wishlist API] ⚠️ Failed to broadcast real-time update:`, broadcastError);
@@ -490,7 +504,7 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
         });
         
       } else if (action === 'update') {
-        const updatedItem = await updateWishlistItem(userId, propertyId, {
+        const updatedItem = await updateWishlistItem(userId!, propertyId, {
           notes,
           priority
         });
@@ -675,7 +689,7 @@ export const PUT = withWishlistMonitoring(async (request: NextRequest, context) 
         );
       }
       
-      const updatedItem = await updateWishlistItem(userId, propertyId, {
+      const updatedItem = await updateWishlistItem(userId!, propertyId, {
         notes,
         priority
       });
@@ -783,7 +797,7 @@ export const DELETE = withWishlistMonitoring(async (request: NextRequest, contex
         );
       }
       
-      const removed = await removeFromWishlist(userId, propertyId);
+      const removed = await removeFromWishlist(userId!, propertyId);
       
       if (!removed) {
         logWishlistOperation('delete_from_wishlist', userId, propertyId, { 
@@ -802,8 +816,8 @@ export const DELETE = withWishlistMonitoring(async (request: NextRequest, contex
       // Broadcast real-time update
       try {
         const realTimeService = RealTimeService.getInstance();
-        const wishlistStats = await getWishlistStats(userId);
-        realTimeService.broadcastWishlistUpdate(userId, 'remove', propertyId, wishlistStats.totalItems);
+        const wishlistStats = await getWishlistStats(userId!);
+        realTimeService.broadcastWishlistUpdate(userId!, 'remove', propertyId, wishlistStats.total);
         console.log(`[Wishlist API] 📡 Real-time update broadcasted: remove ${propertyId} for user ${userId}`);
       } catch (broadcastError) {
         console.warn(`[Wishlist API] ⚠️ Failed to broadcast real-time update:`, broadcastError);

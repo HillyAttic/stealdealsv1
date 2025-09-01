@@ -117,7 +117,7 @@ export function FranchiseCard({
       case 'investorDiscoveryKitUrl':
         return details?.investorDiscoveryKitUrl || franchise.investorDiscoveryKitUrl || '';
       default:
-        return details?.[field] || franchise[field as keyof Franchise] || '';
+        return String(details?.[field] || franchise[field as keyof Franchise] || '');
     }
   };
 
@@ -171,6 +171,11 @@ export function FranchiseCard({
     
     if (isNaN(numAmount)) {
       return "Contact for details";
+    }
+    
+    // Check if it's a small number that should be interpreted as lakhs
+    if (numAmount < 1000) {
+      return `₹${numAmount} LACS`;
     }
     
     if (numAmount >= 10000000) {
@@ -419,7 +424,15 @@ export function FranchiseCard({
       
       {/* Gated Content Modal */}
       <GatedContentModal
-        franchise={franchise}
+        franchise={{
+          ...franchise,
+          name: franchise.name || getField('name') || 'Franchise',
+          industry: franchise.industry || getField('industry') || 'General',
+          investment: franchise.investment || franchise.price || 0,
+          location: franchise.location || getField('headquarter') || 'Not specified',
+          status: franchise.status || 'Available',
+          roi: franchise.roi || getField('royalty') || 'Contact for details'
+        }}
         isOpen={showGatedModal}
         onClose={() => setShowGatedModal(false)}
         onSuccess={handleGatedSuccess}
@@ -430,7 +443,7 @@ export function FranchiseCard({
         isOpen={showSuccessMessage}
         onClose={() => setShowSuccessMessage(false)}
         onDownload={handleDownloadFromSuccess}
-        franchiseName={franchise.product || franchise.name}
+        franchiseName={franchise.product || franchise.name || getField('name') || 'Franchise'}
       />
     </>
   );

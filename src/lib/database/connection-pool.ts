@@ -44,8 +44,8 @@ class DatabaseConnectionPool {
   private maxMetricsHistory = 1000;
   private batchQueue: BatchOperation[] = [];
   private batchTimeout: NodeJS.Timeout | null = null;
-  private batchDelay = 50; // 50ms batch delay
-  private maxBatchSize = 100;
+  private batchDelay = 10; // Reduced batch delay to 10ms for better responsiveness
+  private maxBatchSize = 50; // Reduced batch size for better performance
 
   /**
    * Execute a read operation with performance tracking
@@ -251,22 +251,34 @@ class DatabaseConnectionPool {
 
   /**
    * Execute multiple read operations in parallel with connection pooling
+   * Optimized version with better error handling and performance
    */
   async parallelReads(paths: string[]): Promise<Record<string, DataSnapshot>> {
     const startTime = Date.now();
     const results: Record<string, DataSnapshot> = {};
 
     try {
-      const promises = paths.map(async (path) => {
-        const snapshot = await this.optimizedGet(path);
-        return { path, snapshot };
-      });
-
-      const resolvedPromises = await Promise.all(promises);
+      // Process in smaller batches to prevent overwhelming the database
+      const batchSize = 10;
+      const batches = [];
       
-      resolvedPromises.forEach(({ path, snapshot }) => {
-        results[path] = snapshot;
-      });
+      for (let i = 0; i < paths.length; i += batchSize) {
+        batches.push(paths.slice(i, i + batchSize));
+      }
+      
+      // Process batches sequentially to avoid overwhelming the database
+      for (const batch of batches) {
+        const promises = batch.map(async (path) => {
+          const snapshot = await this.optimizedGet(path);
+          return { path, snapshot };
+        });
+
+        const resolvedPromises = await Promise.all(promises);
+        
+        resolvedPromises.forEach(({ path, snapshot }) => {
+          results[path] = snapshot;
+        });
+      }
 
       const duration = Date.now() - startTime;
       console.log(`[DB Pool] ✅ Parallel reads completed: ${paths.length} paths (${duration}ms)`);

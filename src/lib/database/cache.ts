@@ -166,11 +166,12 @@ class LRUCache<T> {
  * Cache service for different data types
  */
 class CacheService {
-  private userWishlistCache = new LRUCache<any[]>(500, 2 * 60 * 1000); // 2 minutes TTL
-  private userActivityCache = new LRUCache<any[]>(500, 1 * 60 * 1000); // 1 minute TTL
-  private propertyCache = new LRUCache<any>(1000, 10 * 60 * 1000); // 10 minutes TTL
-  private userStatsCache = new LRUCache<any>(200, 5 * 60 * 1000); // 5 minutes TTL
-  private globalStatsCache = new LRUCache<any>(10, 30 * 1000); // 30 seconds TTL
+  // Increased TTL values for better performance
+  private userWishlistCache = new LRUCache<any[]>(500, 10 * 60 * 1000); // 10 minutes TTL (increased from 2 minutes)
+  private userActivityCache = new LRUCache<any[]>(500, 5 * 60 * 1000); // 5 minutes TTL (increased from 1 minute)
+  private propertyCache = new LRUCache<any>(1000, 30 * 60 * 1000); // 30 minutes TTL (increased from 10 minutes)
+  private userStatsCache = new LRUCache<any>(200, 10 * 60 * 1000); // 10 minutes TTL (increased from 5 minutes)
+  private globalStatsCache = new LRUCache<any>(10, 2 * 60 * 1000); // 2 minutes TTL (increased from 30 seconds)
 
   /**
    * Wishlist cache methods

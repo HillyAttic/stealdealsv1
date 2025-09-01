@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaHeart, FaMapMarkerAlt, FaRulerCombined, FaTrash, FaEdit, FaStar, FaEye } from 'react-icons/fa';
@@ -22,6 +22,7 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState('');
   const [editPriority, setEditPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [isDeleting, setIsDeleting] = useState<Set<string>>(new Set());
 
   // Fetch detailed wishlist data when wishlist items change
   useEffect(() => {
@@ -41,13 +42,25 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
           'Content-Type': 'application/json'
         };
         
-        // Add user identification headers for both development and production
+        // Add user identification headers
         if (typeof window !== 'undefined' && user?.id) {
           headers['x-user-id'] = user.id;
           if (process.env.NODE_ENV === 'development') {
-            // Development-specific headers
             headers['x-mock-user-id'] = user.id;
             headers['x-mock-user-email'] = user.primaryEmailAddress?.emailAddress || '';
+          }
+        } else if (!isSignedIn && typeof window !== 'undefined') {
+          // For non-authenticated users, try to get from localStorage
+          const stored = localStorage.getItem('stealdeals_wishlist_temp');
+          if (stored) {
+            try {
+              const items = JSON.parse(stored);
+              // For now, just show empty state for localStorage items as we can't fetch details without server
+              setWishlistProperties([]);
+              return;
+            } catch (e) {
+              console.warn('Failed to parse localStorage wishlist:', e);
+            }
           }
         }
 
@@ -58,67 +71,81 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
           userId: user?.id
         });
 
-        const response = await fetch('/api/user/wishlist', {
+        // Add cache-busting parameter to prevent browser caching
+        const response = await fetch(`/api/user/wishlist?_t=${Date.now()}&limit=1000`, {
           method: 'GET',
           headers,
           credentials: 'include'
         });
 
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+
         const data = await response.json();
 
         console.log(`[WishlistSection] Server response:`, {
-          ok: response.ok,
-          status: response.status,
           success: data.success,
           propertiesCount: data.properties?.length || 0,
           contextCount: wishlistItems.size
         });
 
-        if (!response.ok || !data.success) {
-          console.warn('Failed to fetch detailed wishlist:', data.error);
-          setError(`Failed to load wishlist: ${data.error || 'Server error'}`);
-          // Don't show mock data - show the error state instead
-          setWishlistProperties([]);
-          return;
+        if (!data.success) {
+          throw new Error(data.error || 'Server returned unsuccessful response');
         }
 
         const properties = data.properties || [];
         setWishlistProperties(properties);
         console.log(`[WishlistSection] ✅ Loaded ${properties.length} detailed properties`);
         
-        // Simplified sync - removed recursive refresh that caused performance issues
-        const serverIds = new Set(properties.map((p: any) => p.id));
-        const contextIds = wishlistItems;
-        const inContextNotServer = Array.from(contextIds).filter(id => !serverIds.has(id));
-        const inServerNotContext = Array.from(serverIds).filter(id => !contextIds.has(id as string));
-        
-        if (inContextNotServer.length > 0 || inServerNotContext.length > 0) {
-          console.warn(`[WishlistSection] ⚠️ Context/Server mismatch - will resolve on next user action:`, {
-            inContextNotServer,
-            inServerNotContext
-          });
-          // Removed automatic refresh to prevent infinite loops
-        }
       } catch (err) {
         console.error('Error fetching detailed wishlist:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load wishlist details');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load wishlist details';
+        setError(errorMessage);
         setWishlistProperties([]);
       }
     };
 
-    fetchDetailedWishlist();
-  }, [wishlistItems, user, refreshWishlist]);
+    // Only fetch if we have items and user is signed in
+    if (wishlistItems.size > 0 && isSignedIn && user?.id) {
+      fetchDetailedWishlist();
+    } else if (wishlistItems.size === 0) {
+      setWishlistProperties([]);
+    }
+  }, [wishlistItems, user?.id, isSignedIn]);
 
-  // Remove property from wishlist
-  const handleRemove = async (propertyId: string) => {
+  // Remove property from wishlist with immediate UI update
+  const handleRemove = useCallback(async (propertyId: string) => {
+    if (isDeleting.has(propertyId)) return; // Prevent double-clicks
+    
     try {
-      await removeFromWishlist(propertyId);
-      // The context will handle the API call and state updates
-      // The useEffect will refresh the detailed properties
+      // Add to deleting set to show loading state
+      setIsDeleting(prev => new Set([...prev, propertyId]));
+      
+      // Immediately update UI for better user experience
+      setWishlistProperties(prev => prev.filter(p => p.id !== propertyId));
+      
+      // Then remove from context (which handles API call)
+      const success = await removeFromWishlist(propertyId);
+      
+      if (!success) {
+        // If removal failed, restore the property
+        setTimeout(() => refreshWishlist(), 100);
+      }
     } catch (error) {
       console.error('Error removing from wishlist:', error);
+      // On error, refresh to show correct state
+      setTimeout(() => refreshWishlist(), 100);
+    } finally {
+      // Remove from deleting set
+      setIsDeleting(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(propertyId);
+        return newSet;
+      });
     }
-  };
+  }, [removeFromWishlist, refreshWishlist, isDeleting]);
 
   // Update wishlist item
   const handleUpdate = async (propertyId: string) => {
@@ -180,14 +207,48 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
     setEditPriority('medium');
   };
 
-  // Format currency to show full amounts without abbreviations
+  // Format currency to show LACS format for large numbers (matching franchise display format)
   const formatCurrency = (value: number | string | undefined): string => {
     if (!value) return '₹0';
+    
+    // Handle range strings like "₹35,00,000 - ₹40,00,000"
+    if (typeof value === 'string' && value.includes('-')) {
+      // Extract numbers from range string
+      const numbers = value.match(/[\d,]+/g);
+      if (numbers && numbers.length >= 2) {
+        const minVal = parseFloat(numbers[0].replace(/,/g, ''));
+        const maxVal = parseFloat(numbers[1].replace(/,/g, ''));
+        
+        if (!isNaN(minVal) && !isNaN(maxVal)) {
+          // Convert to LACS format (matching your desired format)
+          const formatInvestment = (amount: number) => {
+            if (amount >= 10000000) {
+              return `₹${Math.round(amount / 10000000)} CRORES`;
+            } else if (amount >= 100000) {
+              return `₹${Math.round(amount / 100000)} LACS`;
+            } else {
+              return `₹${amount.toLocaleString()}`;
+            }
+          };
+          
+          return `${formatInvestment(minVal)} - ${formatInvestment(maxVal)}`;
+        }
+      }
+      return value; // Return original if parsing fails
+    }
+    
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(numValue)) return '₹0';
     
-    // Always show full amount with proper Indian number formatting
-    return `₹${numValue.toLocaleString('en-IN')}`;
+    // Convert to LACS format for large numbers (matching your desired format)
+    if (numValue >= 10000000) {
+      return `₹${Math.round(numValue / 10000000)} CRORES`;
+    } else if (numValue >= 100000) {
+      return `₹${Math.round(numValue / 100000)} LACS`;
+    } else {
+      // For smaller amounts, show full amount with proper Indian number formatting
+      return `₹${numValue.toLocaleString('en-IN')}`;
+    }
   };
 
   // Get priority color
@@ -260,7 +321,7 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
         )}
       </div>
 
-      {wishlistCount === 0 ? (
+      {wishlistProperties.length === 0 && !isLoading ? (
         <div className="text-center py-12">
           <FaHeart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Your wishlist is empty</h3>
@@ -274,7 +335,7 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
           </Link>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className={`${showAll ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : 'space-y-4'}`}>
           {(showAll ? wishlistProperties : wishlistProperties.slice(0, 3)).map((property) => (
             <div key={property.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
               <div className="flex gap-4">
@@ -292,8 +353,8 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
 
                 {/* Property Details */}
                 <div className="flex-grow">
-                  <div className="flex items-start justify-between">
-                    <div>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div className="flex-grow">
                       <h3 className="font-semibold text-gray-900 mb-1">
                         <Link 
                           href={`/vacant/${property.id}`}
@@ -306,7 +367,7 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
                         <FaMapMarkerAlt className="mr-1" />
                         {property.location}
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
                         <span className="font-semibold text-blue-600">
                           {property.priceDisplay || formatCurrency(property.price)}
                         </span>
@@ -319,7 +380,7 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
                       </div>
                     </div>
 
-                    {/* Actions */}
+                    {/* Actions - moved to be more responsive */}
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => startEditing(property)}
@@ -330,10 +391,19 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
                       </button>
                       <button
                         onClick={() => handleRemove(property.id)}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                        title="Remove from wishlist"
+                        disabled={isDeleting.has(property.id)}
+                        className={`p-2 transition-colors ${
+                          isDeleting.has(property.id) 
+                            ? 'text-gray-300 cursor-not-allowed' 
+                            : 'text-gray-400 hover:text-red-600'
+                        }`}
+                        title={isDeleting.has(property.id) ? 'Removing...' : 'Remove from wishlist'}
                       >
-                        <FaTrash />
+                        {isDeleting.has(property.id) ? (
+                          <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-red-500 rounded-full"></div>
+                        ) : (
+                          <FaTrash />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -368,7 +438,7 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
                           <select
                             value={editPriority}
                             onChange={(e) => setEditPriority(e.target.value as 'low' | 'medium' | 'high')}
-                            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             <option value="low">Low Priority</option>
                             <option value="medium">Medium Priority</option>

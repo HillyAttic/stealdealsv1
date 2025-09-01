@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useAuth } from '@clerk/nextjs';
 import { useEnhancedWishlistContext } from '@/contexts/EnhancedWishlistContext';
-import { useActivity } from '@/hooks/useActivity';
 import { useToast } from '@/contexts/ToastContext';
 
 interface WishlistButtonProps {
@@ -34,7 +33,6 @@ export function WishlistButton({
     error, 
     clearError
   } = wishlistContext;
-  const { logWishlistAdd, logWishlistRemove } = useActivity();
   const { showWarning } = useToast();
   const [showError, setShowError] = useState(false);
 
@@ -123,11 +121,12 @@ export function WishlistButton({
         console.log(`[WishlistButton] Successfully toggled property ${propertyId}, new state: ${!wasInWishlist}`);
         // Track successful wishlist action with new activity system
         try {
-          if (wasInWishlist) {
-            await logWishlistRemove(propertyId);
-          } else {
-            await logWishlistAdd(propertyId);
-          }
+          // Removed activity logging since we're removing the activity context
+          // if (wasInWishlist) {
+          //   await logWishlistRemove(propertyId);
+          // } else {
+          //   await logWishlistAdd(propertyId);
+          // }
         } catch (activityError) {
           console.warn('[WishlistButton] Failed to log activity:', activityError);
           // Don't fail wishlist operation if activity logging fails

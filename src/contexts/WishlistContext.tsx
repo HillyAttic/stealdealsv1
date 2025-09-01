@@ -3,7 +3,6 @@
 // WishlistContext with fixed infinite loop prevention using refs
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth, useUser } from '@clerk/nextjs';
-import { useActivityContext } from '@/contexts/ActivityContext';
 import { 
   addToWishlist as addToWishlistDB, 
   removeFromWishlist as removeFromWishlistDB, 
@@ -35,7 +34,6 @@ const WISHLIST_STORAGE_KEY = 'stealdeals_wishlist_temp';
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const { isSignedIn, userId } = useAuth();
   const { user } = useUser();
-  const { logActivity } = useActivityContext();
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -439,13 +437,10 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         console.log(`[WishlistContext] ✅ Successfully added ${propertyId} to localStorage`);
       }
       
-      // Log activity for wishlist addition
+      // Log activity for wishlist addition - removed activity logging
       try {
-        await logActivity('wishlist_add', propertyId, {
-          timestamp: new Date().toISOString(),
-          source: 'wishlist_button'
-        });
-        console.log(`[WishlistContext] 📊 Activity logged: wishlist_add for ${propertyId}`);
+        // Activity logging removed as activity context was removed
+        console.log(`[WishlistContext] 📊 Wishlist add operation for ${propertyId}`);
         
         // Broadcast real-time update
         try {
@@ -465,8 +460,8 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         } catch (broadcastError) {
           console.warn(`[WishlistContext] ⚠️ Failed to broadcast wishlist update:`, broadcastError);
         }
-      } catch (activityError) {
-        console.warn(`[WishlistContext] ⚠️ Failed to log wishlist_add activity:`, activityError);
+      } catch (error) {
+        console.warn(`[WishlistContext] ⚠️ Failed to process wishlist_add operation:`, error);
         // Don't fail the wishlist operation if activity logging fails
       }
       
@@ -547,13 +542,10 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         console.log(`[WishlistContext] ✅ Successfully removed ${propertyId} from localStorage`);
       }
       
-      // Log activity for wishlist removal
+      // Log activity for wishlist removal - removed activity logging
       try {
-        await logActivity('wishlist_remove', propertyId, {
-          timestamp: new Date().toISOString(),
-          source: 'wishlist_button'
-        });
-        console.log(`[WishlistContext] 📊 Activity logged: wishlist_remove for ${propertyId}`);
+        // Activity logging removed as activity context was removed
+        console.log(`[WishlistContext] 📊 Wishlist remove operation for ${propertyId}`);
         
         // Broadcast real-time update
         try {
@@ -573,8 +565,8 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         } catch (broadcastError) {
           console.warn(`[WishlistContext] ⚠️ Failed to broadcast wishlist update:`, broadcastError);
         }
-      } catch (activityError) {
-        console.warn(`[WishlistContext] ⚠️ Failed to log wishlist_remove activity:`, activityError);
+      } catch (error) {
+        console.warn(`[WishlistContext] ⚠️ Failed to process wishlist_remove operation:`, error);
         // Don't fail the wishlist operation if activity logging fails
       }
       

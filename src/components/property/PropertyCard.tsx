@@ -7,7 +7,7 @@ import { FaMapMarkerAlt, FaBuilding, FaRulerCombined } from 'react-icons/fa';
 import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
 import PropertyImage from '@/components/PropertyImage';
-import { useActivity } from '@/hooks/useActivity';
+// import { useActivity } from '@/hooks/useActivity';
 
 interface Property {
   id: string;
@@ -50,7 +50,7 @@ export function PropertyCard({
   showWishlist = true,
   onClick
 }: PropertyCardProps) {
-  const { logPropertyView } = useActivity();
+  // const { logPropertyView } = useActivity();
 
   // Memoized callback to prevent unnecessary re-renders
   const handleAuthRequired = useCallback(() => {
@@ -59,13 +59,14 @@ export function PropertyCard({
 
   // Handle property view tracking
   const handlePropertyView = useCallback(() => {
-    logPropertyView(property.id, {
-      propertyTitle: property.title || property.location,
-      source: 'search',
-      category: property.category,
-      location: property.location
-    });
-  }, [logPropertyView, property.id, property.title, property.location, property.category]);
+    // Removed activity logging since we're removing the activity context
+    // logPropertyView(property.id, {
+    //   propertyTitle: property.title || property.location,
+    //   source: 'search',
+    //   category: property.category,
+    //   location: property.location
+    // });
+  }, [/* logPropertyView, */ property.id, property.title, property.location, property.category]);
 
   // Format currency using Indian format
   const formatCurrency = (value: number | string | undefined): string => {

@@ -142,6 +142,7 @@ export async function removeFromWishlist(userId: string, propertyId: string): Pr
 
 /**
  * Get user's wishlist with property details from Firebase with caching - MIGRATED PROPERTIES ONLY
+ * Optimized version using batch property fetching
  */
 export async function getUserWishlist(userId: string): Promise<WishlistProperty[]> {
   try {
@@ -160,7 +161,7 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
     if (!snapshot.exists()) {
       console.log(`[Firebase Wishlist] No wishlist found for user ${userId}`);
       const emptyWishlist: WishlistProperty[] = [];
-      cacheService.setUserWishlist(userId, emptyWishlist, 30 * 1000); // Cache for 30 seconds
+      cacheService.setUserWishlist(userId, emptyWishlist, 5 * 60 * 1000); // Cache for 5 minutes
       return emptyWishlist;
     }
     
@@ -188,150 +189,179 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
     const propertyIds = wishlistItems.map(item => item.propertyId);
     console.log(`[Firebase Wishlist] Property IDs to lookup:`, propertyIds);
     
-    // Batch property lookups for better performance
-    const propertyPromises = propertyIds.map(async (propertyId) => {
-      // Check property cache first
-      let property = cacheService.getProperty(propertyId);
-      if (!property) {
-        console.log(`[Firebase Wishlist] Cache miss for ${propertyId}, fetching from MIGRATED collections`);
-        property = await getPropertyById(propertyId);
-        if (property) {
-          cacheService.setProperty(propertyId, property);
-          console.log(`[Firebase Wishlist] ✅ Found and cached property ${propertyId}: ${property.title || property.category}`);
-        } else {
-          console.warn(`[Firebase Wishlist] ⚠️ Property ${propertyId} NOT FOUND in any MIGRATED collection`);
-        }
-      } else {
-        console.log(`[Firebase Wishlist] Cache hit for ${propertyId}: ${property.title || property.category}`);
-      }
-      return { propertyId, property };
-    });
-    
-    const propertyResults = await Promise.all(propertyPromises);
-    const propertyMap = new Map();
-    let foundCount = 0;
-    let notFoundCount = 0;
-    
-    propertyResults.forEach(({ propertyId, property }) => {
-      if (property) {
-        propertyMap.set(propertyId, property);
-        foundCount++;
-      } else {
-        notFoundCount++;
-      }
-    });
-    
-    console.log(`[Firebase Wishlist] Property lookup results: ${foundCount} found, ${notFoundCount} not found in MIGRATED collections`);
-    
-    // Build wishlist properties with enriched data
-    for (const item of wishlistItems) {
-      const property = propertyMap.get(item.propertyId);
+    // Batch property fetching for better performance
+    if (propertyIds.length > 0) {
+      // Check property cache first for all properties
+      const uncachedPropertyIds: string[] = [];
+      const propertyMap = new Map<string, any>();
       
-      if (property) {
-        console.log(`[Firebase Wishlist] ✅ Found property: ${property.title || property.category || 'Property'} at ${property.location}`);
-        
-        // Create proper property title
-        const propertyTitle = property.title || property.project ||
-          `${property.category || 'Property'} in ${property.city || property.location || 'Unknown Location'}`;
-        
-        // Get property price (try different price fields, prioritizing franchise investment amounts)
-        // For franchises, show full investment range if both min and max are available
-        let propertyPrice = 0;
-        let priceDisplay = '';
-        
-        // Helper function to convert lakhs values to full rupee amounts
-        const convertToFullAmount = (value: number): number => {
-          // If value is less than 1000, it's likely in lakhs, so multiply by 100,000
-          if (value > 0 && value < 1000) {
-            return value * 100000;
-          }
-          return value;
-        };
-        
-        if (property.minInvestment && property.maxInvestment && property.minInvestment !== property.maxInvestment) {
-          // Show investment range for franchises - convert lakhs to full amounts
-          const minAmount = convertToFullAmount(property.minInvestment);
-          const maxAmount = convertToFullAmount(property.maxInvestment);
-          priceDisplay = `₹${minAmount.toLocaleString('en-IN')} - ₹${maxAmount.toLocaleString('en-IN')}`;
-          propertyPrice = minAmount; // Use min for sorting purposes
+      for (const propertyId of propertyIds) {
+        const cachedProperty = cacheService.getProperty(propertyId);
+        if (cachedProperty) {
+          console.log(`[Firebase Wishlist] Cache hit for ${propertyId}: ${cachedProperty.title || cachedProperty.category}`);
+          propertyMap.set(propertyId, cachedProperty);
         } else {
-          // Single price value - convert if needed
-          const singlePrice = property.price || property.rent || property.askingPrice || 
-            property.minInvestment || property.maxInvestment || property.investment ||
-            (property.investmentStartsFrom?.amount) || 0;
-          propertyPrice = convertToFullAmount(singlePrice);
+          console.log(`[Firebase Wishlist] Cache miss for ${propertyId}, will fetch from MIGRATED collections`);
+          uncachedPropertyIds.push(propertyId);
         }
-        
-        // Create image array (handle different image field formats)
-        let propertyImages: string[] = [];
-        if (property.image) {
-          propertyImages = [property.image];
-        } else if (property.images && Array.isArray(property.images)) {
-          propertyImages = property.images;
-        }
-        
-        // Handle plot size for plot properties (can be string or object)
-        let plotSizeValue: string | undefined;
-        if (property.plotSize) {
-          if (typeof property.plotSize === 'object' && property.plotSize.min && property.plotSize.max) {
-            // Handle plot size range object
-            plotSizeValue = `${property.plotSize.min}–${property.plotSize.max} ${property.plotSize.unit || 'sq.yds'}`;
-          } else if (typeof property.plotSize === 'string') {
-            plotSizeValue = property.plotSize;
-          }
-        } else {
-          // Fallback to other area fields
-          plotSizeValue = property.areaOnSale || property.superArea || undefined;
-        }
-        
-        wishlistProperties.push({
-          id: property.id || item.propertyId,
-          title: propertyTitle,
-          price: propertyPrice,
-          priceDisplay: priceDisplay || undefined, // Custom formatted price for display
-          location: property.location || 'Unknown Location',
-          images: propertyImages,
-          type: property.category || property.propertyType || 'Property',
-          addedAt: item.addedAt,
-          notes: item.notes,
-          priority: item.priority,
-          // Add missing fields that are defined in WishlistProperty interface
-          developer: property.developerName || property.developer || undefined,
-          plotSize: plotSizeValue,
-          category: property.category || undefined,
-          segment: property.segment || undefined,
-          description: property.description || 'Premium plot in prime location'
-        });
-      } else {
-        console.warn(`[Firebase Wishlist] ⚠️ Property not found in MIGRATED collections: ${item.propertyId}`);
-        console.warn(`[Firebase Wishlist] This property may exist only in legacy collections which are no longer searched`);
-        // Keep the wishlist item but mark as not found
-        wishlistProperties.push({
-          id: item.propertyId,
-          title: `Property ${item.propertyId} (Not Found in Migrated Data)`,
-          price: 0,
-          location: 'Property not found in migrated collections',
-          images: [],
-          type: 'Unknown',
-          addedAt: item.addedAt,
-          notes: item.notes,
-          priority: item.priority,
-          developer: undefined,
-          plotSize: undefined,
-          category: undefined,
-          segment: undefined,
-          description: 'Property data not available in migrated collections'
-        });
       }
+      
+      // Fetch uncached properties in batch
+      if (uncachedPropertyIds.length > 0) {
+        console.log(`[Firebase Wishlist] Batch fetching ${uncachedPropertyIds.length} uncached properties`);
+        try {
+          const { getPropertiesByIds } = await import('@/lib/firebase');
+          const uncachedProperties = await getPropertiesByIds(uncachedPropertyIds);
+          
+          // Cache the fetched properties
+          for (const property of uncachedProperties) {
+            if (property && property.id) {
+              cacheService.setProperty(property.id, property);
+              propertyMap.set(property.id, property);
+              console.log(`[Firebase Wishlist] ✅ Fetched and cached property ${property.id}: ${property.title || property.category}`);
+            }
+          }
+        } catch (batchError) {
+          console.error('[Firebase Wishlist] ❌ Batch property fetch failed, falling back to individual fetches:', batchError);
+          
+          // Fallback to individual property fetching
+          const propertyPromises = uncachedPropertyIds.map(async (propertyId) => {
+            try {
+              const { getPropertyById } = await import('@/lib/firebase');
+              const property = await getPropertyById(propertyId);
+              if (property) {
+                cacheService.setProperty(propertyId, property);
+                propertyMap.set(propertyId, property);
+                console.log(`[Firebase Wishlist] ✅ Fetched and cached property ${propertyId}: ${property.title || property.category}`);
+              }
+              return { propertyId, property };
+            } catch (error) {
+              console.error(`[Firebase Wishlist] ❌ Error fetching property ${propertyId}:`, error);
+              return { propertyId, property: null };
+            }
+          });
+          
+          await Promise.all(propertyPromises);
+        }
+      }
+      
+      // Build wishlist properties with enriched data
+      let foundCount = 0;
+      let notFoundCount = 0;
+      
+      for (const item of wishlistItems) {
+        const property = propertyMap.get(item.propertyId);
+        
+        if (property) {
+          console.log(`[Firebase Wishlist] ✅ Found property: ${property.title || property.category || 'Property'} at ${property.location}`);
+          foundCount++;
+          
+          // Create proper property title
+          const propertyTitle = property.title || property.project ||
+            `${property.category || 'Property'} in ${property.city || property.location || 'Unknown Location'}`;
+          
+          // Get property price (try different price fields, prioritizing franchise investment amounts)
+          // For franchises, show full investment range if both min and max are available
+          let propertyPrice = 0;
+          let priceDisplay = '';
+          
+          // Helper function to convert lakhs values to full rupee amounts
+          const convertToFullAmount = (value: number): number => {
+            // If value is less than 1000, it's likely in lakhs, so multiply by 100,000
+            if (value > 0 && value < 1000) {
+              return value * 100000;
+            }
+            return value;
+          };
+          
+          if (property.minInvestment && property.maxInvestment && property.minInvestment !== property.maxInvestment) {
+            // Show investment range for franchises - convert lakhs to full amounts
+            const minAmount = convertToFullAmount(property.minInvestment);
+            const maxAmount = convertToFullAmount(property.maxInvestment);
+            priceDisplay = `₹${minAmount.toLocaleString('en-IN')} - ₹${maxAmount.toLocaleString('en-IN')}`;
+            propertyPrice = minAmount; // Use min for sorting purposes
+          } else {
+            // Single price value - convert if needed
+            const singlePrice = property.price || property.rent || property.askingPrice || 
+              property.minInvestment || property.maxInvestment || property.investment ||
+              (property.investmentStartsFrom?.amount) || 0;
+            propertyPrice = convertToFullAmount(singlePrice);
+          }
+          
+          // Create image array (handle different image field formats)
+          let propertyImages: string[] = [];
+          if (property.image) {
+            propertyImages = [property.image];
+          } else if (property.images && Array.isArray(property.images)) {
+            propertyImages = property.images;
+          }
+          
+          // Handle plot size for plot properties (can be string or object)
+          let plotSizeValue: string | undefined;
+          if (property.plotSize) {
+            if (typeof property.plotSize === 'object' && property.plotSize.min && property.plotSize.max) {
+              // Handle plot size range object
+              plotSizeValue = `${property.plotSize.min}–${property.plotSize.max} ${property.plotSize.unit || 'sq.yds'}`;
+            } else if (typeof property.plotSize === 'string') {
+              plotSizeValue = property.plotSize;
+            }
+          } else {
+            // Fallback to other area fields
+            plotSizeValue = property.areaOnSale || property.superArea || undefined;
+          }
+          
+          wishlistProperties.push({
+            id: property.id || item.propertyId,
+            title: propertyTitle,
+            price: propertyPrice,
+            priceDisplay: priceDisplay || undefined, // Custom formatted price for display
+            location: property.location || 'Unknown Location',
+            images: propertyImages,
+            type: property.category || property.propertyType || 'Property',
+            addedAt: item.addedAt,
+            notes: item.notes,
+            priority: item.priority,
+            // Add missing fields that are defined in WishlistProperty interface
+            developer: property.developerName || property.developer || undefined,
+            plotSize: plotSizeValue,
+            category: property.category || undefined,
+            segment: property.segment || undefined,
+            description: property.description || 'Premium plot in prime location'
+          });
+        } else {
+          console.warn(`[Firebase Wishlist] ⚠️ Property not found in MIGRATED collections: ${item.propertyId}`);
+          console.warn(`[Firebase Wishlist] This property may exist only in legacy collections which are no longer searched`);
+          notFoundCount++;
+          // Keep the wishlist item but mark as not found
+          wishlistProperties.push({
+            id: item.propertyId,
+            title: `Property ${item.propertyId} (Not Found in Migrated Data)`,
+            price: 0,
+            location: 'Property not found in migrated collections',
+            images: [],
+            type: 'Unknown',
+            addedAt: item.addedAt,
+            notes: item.notes,
+            priority: item.priority,
+            developer: undefined,
+            plotSize: undefined,
+            category: undefined,
+            segment: undefined,
+            description: 'Property data not available in migrated collections'
+          });
+        }
+      }
+      
+      console.log(`[Firebase Wishlist] Property lookup results: ${foundCount} found, ${notFoundCount} not found in MIGRATED collections`);
     }
     
     // Sort by most recently added
     wishlistProperties.sort((a, b) => b.addedAt.getTime() - a.addedAt.getTime());
     
-    // Cache the result
-    cacheService.setUserWishlist(userId, wishlistProperties);
+    // Cache the result for 5 minutes (increased from 30 seconds)
+    cacheService.setUserWishlist(userId, wishlistProperties, 5 * 60 * 1000);
     
-    console.log(`[Firebase Wishlist] ✅ Returning ${wishlistProperties.length} wishlist properties from MIGRATED collections (${foundCount} with details, ${notFoundCount} placeholders)`);
+    console.log(`[Firebase Wishlist] ✅ Returning ${wishlistProperties.length} wishlist properties from MIGRATED collections`);
     return wishlistProperties;
     
   } catch (error) {

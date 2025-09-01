@@ -3,14 +3,14 @@
 import { useState } from 'react';
 import { FaSearch, FaMapMarkerAlt, FaHome, FaBuilding, FaDollarSign, FaArrowRight, FaListUl } from 'react-icons/fa';
 import Link from 'next/link';
-import { useActivity } from '@/hooks/useActivity';
+// import { useActivity } from '@/hooks/useActivity';
 
 const Hero = () => {
   const [searchType, setSearchType] = useState('buy');
   const [location, setLocation] = useState('');
   const [propertyType, setPropertyType] = useState('');
   const [priceRange, setPriceRange] = useState('');
-  const { logSearch } = useActivity();
+  // const { logSearch } = useActivity();
 
   // Handle search functionality
   const handleSearch = async () => {
@@ -19,23 +19,25 @@ const Hero = () => {
     
     if (!searchQuery.trim()) {
       // If no search criteria, still log the search attempt
-      await logSearch('empty search', {
-        searchType,
-        source: 'hero_search',
-        timestamp: new Date().toISOString()
-      });
+      // Removed activity logging since we're removing the activity context
+      // await logSearch('empty search', {
+      //   searchType,
+      //   source: 'hero_search',
+      //   timestamp: new Date().toISOString()
+      // });
       return;
     }
 
     // Log the search activity
-    await logSearch(searchQuery, {
-      searchType,
-      location: location || undefined,
-      propertyType: propertyType || undefined,
-      priceRange: priceRange || undefined,
-      source: 'hero_search',
-      timestamp: new Date().toISOString()
-    });
+    // Removed activity logging since we're removing the activity context
+    // await logSearch(searchQuery, {
+    //   searchType,
+    //   location: location || undefined,
+    //   propertyType: propertyType || undefined,
+    //   priceRange: priceRange || undefined,
+    //   source: 'hero_search',
+    //   timestamp: new Date().toISOString()
+    // });
 
     // Here you would typically navigate to search results or trigger search
     console.log('Search performed:', { searchType, location, propertyType, priceRange });
@@ -181,4 +183,4 @@ const Hero = () => {
   );
 };
 
-export default Hero; 
+export default Hero;

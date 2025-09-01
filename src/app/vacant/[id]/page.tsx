@@ -13,7 +13,7 @@ import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
 import { database, Property, vacantPropertiesRef } from '@/lib/firebase';
 import { ref, get, child } from 'firebase/database';
-import { trackPropertyView, trackContactInquiry } from '@/lib/activity-tracker';
+import { useActivity } from '@/hooks/useActivity';
 
 // Default fallback image
 const DEFAULT_IMAGE = 'https://images.pexels.com/photos/260931/pexels-photo-260931.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
@@ -26,6 +26,7 @@ const formatCurrency = (value: number | string | undefined): string => {
 };
 
 export default function VacantPropertyDetails() {
+  const { logPropertyView, logContactInquiry } = useActivity();
   const params = useParams();
   const router = useRouter();
   const propertyId = params?.id as string;
@@ -102,7 +103,7 @@ export default function VacantPropertyDetails() {
             setProperty(propertyWithId);
             
             // Track property view automatically
-            trackPropertyView(propertyId, {
+            logPropertyView(propertyId, {
               source: getTrafficSource(),
               propertyType: propertyData.propertyType,
               category: propertyData.category,
@@ -160,14 +161,14 @@ export default function VacantPropertyDetails() {
 
   // Track contact inquiry
   const handleContactClick = () => {
-    trackContactInquiry(propertyId, {
+    logContactInquiry(propertyId, {
       contactType: 'email',
       propertyTitle: property?.location || 'Unknown Property'
     });
   };
 
   const handlePhoneClick = () => {
-    trackContactInquiry(propertyId, {
+    logContactInquiry(propertyId, {
       contactType: 'phone',
       propertyTitle: property?.location || 'Unknown Property'
     });
@@ -183,7 +184,7 @@ export default function VacantPropertyDetails() {
     const handleBeforeUnload = () => {
       if (property) {
         const duration = Date.now() - viewStartTime;
-        trackPropertyView(propertyId, {
+        logPropertyView(propertyId, {
           source: getTrafficSource(),
           duration,
           propertyType: property.propertyType,

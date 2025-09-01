@@ -7,13 +7,14 @@ import { VacantModal } from '@/components/vacant';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { FaSearch, FaFilter, FaBuilding, FaMapMarkerAlt, FaRulerCombined, FaChevronDown, FaChevronUp, FaSort, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
 import { Property } from '@/lib/firebase';
-import { trackSearch } from '@/lib/activity-tracker';
+import { useActivity } from '@/hooks/useActivity';
 
 interface VacantPropertiesClientProps {
   properties: Property[];
 }
 
 export default function VacantPropertiesClient({ properties }: VacantPropertiesClientProps) {
+  const { logSearch } = useActivity();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
@@ -105,14 +106,14 @@ export default function VacantPropertiesClient({ properties }: VacantPropertiesC
     // Set new timeout to track search after user stops typing
     const timeout = setTimeout(() => {
       if (value.trim()) {
-        trackSearch(value, {
+        logSearch(value, {
           category: selectedCategory,
           city: selectedCity,
           propertyType: selectedPropertyType || 'Vacant',
           priceRange: minPrice || maxPrice ? `${minPrice}-${maxPrice}` : undefined,
           areaRange: minArea || maxArea ? `${minArea}-${maxArea}` : undefined,
           sortBy
-        }, filteredAndSortedProperties.length);
+        });
       }
     }, 1000);
     
@@ -122,14 +123,14 @@ export default function VacantPropertiesClient({ properties }: VacantPropertiesC
   // Track filter changes
   const trackFilterChange = () => {
     if (searchTerm.trim() || selectedCategory || selectedCity || selectedPropertyType || minPrice || maxPrice || minArea || maxArea) {
-      trackSearch(searchTerm, {
+      logSearch(searchTerm, {
         category: selectedCategory,
         city: selectedCity,
         propertyType: selectedPropertyType || 'Vacant',
         priceRange: minPrice || maxPrice ? `${minPrice}-${maxPrice}` : undefined,
         areaRange: minArea || maxArea ? `${minArea}-${maxArea}` : undefined,
         sortBy
-      }, filteredAndSortedProperties.length);
+      });
     }
   };
 

@@ -652,10 +652,85 @@ export async function getPropertyById(id: string): Promise<Property | null> {
       };
     }
     
-    console.log(`[Firebase] Property ${id} not found in any MIGRATED collection`);
+    console.log(`[Firebase] Property ${id} not found in MIGRATED collections, searching LEGACY collections as fallback...`);
+    
+    // FALLBACK: Search legacy collections for backward compatibility
+    const legacySearchOrder = [
+      { ref: franchisePropertiesRef, name: 'franchiseProperties' },
+      { ref: vacantPropertiesRef, name: 'vacantProperties' }, 
+      { ref: preleasedPropertiesRef, name: 'preleasedProperties' },
+      { ref: plotsRef, name: 'plots' },
+      { ref: propertiesRef, name: 'properties' }
+    ];
+    
+    for (const { ref: legacyRef, name: collectionName } of legacySearchOrder) {
+      try {
+        const legacySnapshot = await get(child(legacyRef, id));
+        if (legacySnapshot.exists()) {
+          console.log(`[Firebase] ✅ Found property ${id} in LEGACY collection: ${collectionName}`);
+          const legacyData = legacySnapshot.val();
+          
+          // Transform legacy data to match current Property interface
+          const property = {
+            id: legacySnapshot.key || id,
+            ...legacyData,
+            // Ensure required fields are present with fallbacks
+            title: legacyData.title || legacyData.name || legacyData.brand || `Property ${id}`,
+            location: legacyData.location || legacyData.headquarter || legacyData.city || 'Unknown Location',
+            category: legacyData.category || (collectionName === 'franchiseProperties' ? 'Franchise' : 'Property'),
+            propertyType: legacyData.propertyType || (collectionName === 'franchiseProperties' ? 'Franchise' : 'Property'),
+            price: legacyData.price || legacyData.investment || legacyData.minInvestment || 0,
+            image: legacyData.image || (legacyData.images && legacyData.images[0]) || '',
+            description: legacyData.description || legacyData.remarks || ''
+          };
+          
+          console.log(`[Firebase] ✅ Successfully retrieved property from legacy collection: ${property.title}`);
+          return property;
+        }
+      } catch (legacyError) {
+        console.warn(`[Firebase] ⚠️ Error searching legacy collection ${collectionName}:`, legacyError);
+        continue; // Continue to next legacy collection
+      }
+    }
+    
+    console.log(`[Firebase] ❌ Property ${id} not found in any collection (migrated or legacy)`);
     return null;
   } catch (error) {
     console.error(`[Firebase] Error fetching property ${id}:`, error);
+    throw error;
+  }
+}
+
+// Function to get multiple properties by IDs in batch (MIGRATED ONLY)
+export async function getPropertiesByIds(ids: string[]): Promise<Property[]> {
+  try {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+    
+    console.log(`[Firebase] Batch fetching ${ids.length} properties from MIGRATED collections only`);
+    
+    // Remove duplicates
+    const uniqueIds = [...new Set(ids)];
+    
+    // Get all properties in parallel using Promise.all
+    const propertyPromises = uniqueIds.map(async (id) => {
+      try {
+        const property = await getPropertyById(id);
+        return property ? { ...property, id } : null;
+      } catch (error) {
+        console.error(`[Firebase] Error fetching property ${id}:`, error);
+        return null;
+      }
+    });
+    
+    const results = await Promise.all(propertyPromises);
+    const properties = results.filter((p): p is Property => p !== null);
+    
+    console.log(`[Firebase] ✅ Batch fetch completed: ${properties.length}/${uniqueIds.length} properties found`);
+    return properties;
+  } catch (error) {
+    console.error('[Firebase] Error batch fetching properties:', error);
     throw error;
   }
 }

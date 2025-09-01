@@ -1,158 +1,118 @@
-'use client';
-
 import { useCallback } from 'react';
-import { useActivityContext } from '@/contexts/ActivityContext';
-import { UserActivity } from '@/types/auth';
+import { RealTimeService } from '@/lib/realtime/service';
 
 /**
- * Hook for logging user interactions and managing activity data
+ * Hook for logging user activities like property views and contact inquiries
+ * Provides a simple interface for tracking user interactions with properties
  */
 export function useActivity() {
-  const {
-    activities,
-    stats,
-    isLoading,
-    error,
-    logActivity: contextLogActivity,
-    getActivityHistory,
-    refreshActivities,
-    clearError
-  } = useActivityContext();
-
-  // Enhanced logging functions for specific activity types
+  /**
+   * Log a property view event
+   */
   const logPropertyView = useCallback(async (
-    propertyId: string,
-    metadata: {
-      propertyTitle?: string;
-      duration?: number;
-      source?: 'search' | 'wishlist' | 'direct' | 'recommendation';
+    propertyId: string, 
+    metadata?: { 
+      propertyTitle?: string; 
+      source?: string; 
+      timestamp?: string;
       [key: string]: any;
-    } = {}
+    }
   ) => {
-    await contextLogActivity('property_view', propertyId, {
-      ...metadata,
-      viewedAt: new Date().toISOString()
-    });
-  }, [contextLogActivity]);
+    try {
+      // In a real implementation, this would send data to your analytics service
+      // For now, we'll just log to console and broadcast via real-time service
+      console.log(`[Activity] Property viewed: ${propertyId}`, metadata);
+      
+      // Broadcast the activity via real-time service
+      const realTimeService = RealTimeService.getInstance();
+      realTimeService.broadcastActivityUpdate(
+        'anonymous', // In a real implementation, this would be the actual user ID
+        'property_view',
+        propertyId,
+        metadata
+      );
+      
+      // In a full implementation, you would also:
+      // 1. Save to database
+      // 2. Send to analytics service
+      // 3. Update user statistics
+      
+      return true;
+    } catch (error) {
+      console.error('[Activity] Failed to log property view:', error);
+      return false;
+    }
+  }, []);
 
-  const logSearch = useCallback(async (
-    searchQuery: string,
-    metadata: {
-      filters?: Record<string, any>;
-      resultsCount?: number;
-      [key: string]: any;
-    } = {}
-  ) => {
-    await contextLogActivity('search', undefined, {
-      query: searchQuery,
-      ...metadata,
-      searchedAt: new Date().toISOString()
-    });
-  }, [contextLogActivity]);
-
-  const logWishlistAdd = useCallback(async (
-    propertyId: string,
-    metadata: {
-      propertyTitle?: string;
-      [key: string]: any;
-    } = {}
-  ) => {
-    await contextLogActivity('wishlist_add', propertyId, {
-      ...metadata,
-      addedAt: new Date().toISOString()
-    });
-  }, [contextLogActivity]);
-
-  const logWishlistRemove = useCallback(async (
-    propertyId: string,
-    metadata: {
-      propertyTitle?: string;
-      [key: string]: any;
-    } = {}
-  ) => {
-    await contextLogActivity('wishlist_remove', propertyId, {
-      ...metadata,
-      removedAt: new Date().toISOString()
-    });
-  }, [contextLogActivity]);
-
+  /**
+   * Log a contact inquiry event
+   */
   const logContactInquiry = useCallback(async (
     propertyId: string,
-    metadata: {
-      propertyTitle?: string;
-      inquiryType?: 'phone' | 'email' | 'form';
+    metadata?: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      message?: string;
       [key: string]: any;
-    } = {}
+    }
   ) => {
-    await contextLogActivity('contact_inquiry', propertyId, {
-      ...metadata,
-      inquiredAt: new Date().toISOString()
-    });
-  }, [contextLogActivity]);
+    try {
+      // In a real implementation, this would send data to your analytics service
+      // For now, we'll just log to console and broadcast via real-time service
+      console.log(`[Activity] Contact inquiry for property: ${propertyId}`, metadata);
+      
+      // Broadcast the activity via real-time service
+      const realTimeService = RealTimeService.getInstance();
+      realTimeService.broadcastActivityUpdate(
+        'anonymous', // In a real implementation, this would be the actual user ID
+        'contact_inquiry',
+        propertyId,
+        metadata
+      );
+      
+      // In a full implementation, you would also:
+      // 1. Save to database
+      // 2. Send to analytics service
+      // 3. Update user statistics
+      // 4. Trigger email notifications
+      
+      return true;
+    } catch (error) {
+      console.error('[Activity] Failed to log contact inquiry:', error);
+      return false;
+    }
+  }, []);
 
-  // Generic activity logging
-  const logActivity = useCallback(async (
-    type: UserActivity['type'],
-    propertyId?: string,
-    metadata?: Record<string, any>
+  /**
+   * Log a search event
+   */
+  const logSearch = useCallback(async (
+    query: string,
+    filters?: Record<string, any>
   ) => {
-    await contextLogActivity(type, propertyId, metadata);
-  }, [contextLogActivity]);
-
-  // Activity analysis helpers
-  const getRecentPropertyViews = useCallback(() => {
-    return activities
-      .filter(activity => activity.type === 'property_view')
-      .slice(0, 10);
-  }, [activities]);
-
-  const getRecentSearches = useCallback(() => {
-    return activities
-      .filter(activity => activity.type === 'search')
-      .slice(0, 10);
-  }, [activities]);
-
-  const getWishlistActivities = useCallback(() => {
-    return activities
-      .filter(activity => activity.type === 'wishlist_add' || activity.type === 'wishlist_remove')
-      .slice(0, 10);
-  }, [activities]);
-
-  // Activity statistics
-  const getActivityStats = useCallback(() => {
-    return {
-      ...stats,
-      // Additional computed stats
-      averageViewsPerDay: stats.totalActivities > 0 ? stats.totalViews / 7 : 0, // Assuming 7-day window
-      wishlistConversionRate: stats.totalViews > 0 ? (stats.totalWishlistActions / stats.totalViews) * 100 : 0
-    };
-  }, [stats]);
+    try {
+      console.log(`[Activity] Search performed: ${query}`, filters);
+      
+      // Broadcast the activity via real-time service
+      const realTimeService = RealTimeService.getInstance();
+      realTimeService.broadcastActivityUpdate(
+        'anonymous', // In a real implementation, this would be the actual user ID
+        'search',
+        undefined,
+        { query, filters }
+      );
+      
+      return true;
+    } catch (error) {
+      console.error('[Activity] Failed to log search:', error);
+      return false;
+    }
+  }, []);
 
   return {
-    // Activity data
-    activities,
-    stats: getActivityStats(),
-    isLoading,
-    error,
-
-    // Logging functions
-    logActivity,
     logPropertyView,
-    logSearch,
-    logWishlistAdd,
-    logWishlistRemove,
     logContactInquiry,
-
-    // Data retrieval
-    getActivityHistory,
-    refreshActivities,
-
-    // Activity analysis
-    getRecentPropertyViews,
-    getRecentSearches,
-    getWishlistActivities,
-
-    // Utility functions
-    clearError
+    logSearch
   };
 }

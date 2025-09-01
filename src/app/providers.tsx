@@ -1,11 +1,11 @@
 'use client';
 
 import React, { ReactNode, useEffect } from 'react';
-import { ActivityProvider } from '@/contexts/ActivityContext';
+// import { ActivityProvider } from '@/contexts/ActivityContext';
 import { EnhancedWishlistProvider } from '@/contexts/EnhancedWishlistContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { WishlistErrorBoundary } from '@/components/error-boundaries/WishlistErrorBoundary';
-import { ActivityErrorBoundary } from '@/components/error-boundaries/ActivityErrorBoundary';
+// import { ActivityErrorBoundary } from '@/components/error-boundaries/ActivityErrorBoundary';
 import WishlistDebug from '@/components/debug/WishlistDebug';
 import { ConnectionStatus } from '@/components/ui/ConnectionStatus';
 
@@ -27,8 +27,10 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <div suppressHydrationWarning>
       <ToastProvider>
+        {/*
         <ActivityErrorBoundary>
           <ActivityProvider>
+        */}
             <WishlistErrorBoundary>
               <EnhancedWishlistProvider>
                 {children}
@@ -41,9 +43,11 @@ export function Providers({ children }: ProvidersProps) {
                 )}
               </EnhancedWishlistProvider>
             </WishlistErrorBoundary>
+          {/*
           </ActivityProvider>
         </ActivityErrorBoundary>
+        */}
       </ToastProvider>
     </div>
   );
-} 
+}
