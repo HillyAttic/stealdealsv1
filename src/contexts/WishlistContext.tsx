@@ -70,17 +70,48 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // Function to get current user ID - NO Firebase connections for development/anonymous users
+  // Function to get current user ID with production environment awareness
   const getCurrentUserId = useCallback((): string => {
-    if (userId) return userId;
-    // REMOVED: Development fallback that created Firebase connections
+    if (userId) {
+      console.log(`[WishlistContext] 🔑 Auth successful: userId=${userId}`);
+      return userId;
+    }
+    
+    // In production, we should wait for Clerk to initialize properly
+    // instead of immediately falling back to anonymous
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    if (isProduction && isSignedIn === undefined) {
+      // Clerk is still initializing in production, wait for it
+      console.log(`[WishlistContext] ⏳ Clerk initializing in production, waiting...`);
+      return 'initializing';
+    }
+    
+    if (isProduction && isSignedIn === false) {
+      // User is confirmed not signed in in production
+      console.log(`[WishlistContext] 🚫 User confirmed not signed in production`);
+      return 'anonymous';
+    }
+    
+    // Development fallback - only in development
+    if (!isProduction) {
+      console.log(`[WishlistContext] 🔧 Development mode: using anonymous`);
+      return 'anonymous';
+    }
+    
+    console.log(`[WishlistContext] ⚠️ Unexpected auth state in production: isSignedIn=${isSignedIn}, userId=${userId}`);
     return 'anonymous';
-  }, [userId]);
+  }, [userId, isSignedIn]);
 
   // Setup Firebase real-time listener
   const setupRealtimeListener = useCallback(() => {
     const userId = getCurrentUserId();
-    if (!userId || userId === 'anonymous' || userId === 'user-1' || isListenerActiveRef.current) return;
+    if (!userId || userId === 'anonymous' || userId === 'user-1' || userId === 'initializing' || isListenerActiveRef.current) {
+      if (userId === 'initializing') {
+        console.log(`[WishlistContext] ⏳ Skipping listener setup - Clerk still initializing`);
+      }
+      return;
+    }
 
     console.log(`[WishlistContext] 🔥 Setting up Firebase real-time listener for user ${userId}`);
     
@@ -161,8 +192,24 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
   // Initial load and listener setup with stable dependencies
   useEffect(() => {
-    // Get current user ID directly - NO Firebase connections for non-authenticated users
-    const currentUserId = userId || 'anonymous';
+    // Get current user ID with proper production handling
+    const currentUserId = getCurrentUserId();
+    
+    // Enhanced debugging for production
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction) {
+      console.log(`[WishlistContext] 🔍 Production Debug - Auth State:`, {
+        isSignedIn,
+        userId,
+        userObj: user ? {
+          id: user.id,
+          emailAddresses: user.emailAddresses?.length || 0,
+          hasImage: !!user.imageUrl
+        } : null,
+        currentUserId,
+        timestamp: new Date().toISOString()
+      });
+    }
     
     // Check if user changed - if so, reset everything
     if (lastUserIdRef.current && lastUserIdRef.current !== currentUserId) {
@@ -183,6 +230,12 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       setError(null);
     }
     
+    // Don't proceed if Clerk is still initializing in production
+    if (currentUserId === 'initializing') {
+      console.log(`[WishlistContext] ⏳ Clerk still initializing, will retry when ready`);
+      return;
+    }
+    
     lastUserIdRef.current = currentUserId;
     
     // Prevent double initialization during development mode or re-renders
@@ -191,7 +244,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     
-    console.log(`[WishlistContext] 🚀 Initializing for user: ${currentUserId}, authenticated: ${isSignedIn}`);
+    console.log(`[WishlistContext] 🚀 Initializing for user: ${currentUserId}, authenticated: ${isSignedIn}, production: ${process.env.NODE_ENV === 'production'}`);
     
     if (isSignedIn && currentUserId !== 'anonymous' && currentUserId !== 'user-1') {
       // Authenticated user - use Firebase with real-time listener
@@ -216,14 +269,18 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
             }
             
             const propertyIds = new Set<string>();
+            let processedCount = 0;
             snapshot.forEach((childSnapshot) => {
               const data = childSnapshot.val();
+              processedCount++;
               if (data && data.propertyId) {
                 propertyIds.add(data.propertyId);
+              } else {
+                console.warn(`[WishlistContext] ⚠️ Invalid wishlist item data at ${childSnapshot.key}:`, data);
               }
             });
             
-            console.log(`[WishlistContext] 🔄 Real-time update processed: ${propertyIds.size} items [${Array.from(propertyIds).join(', ')}]`);
+            console.log(`[WishlistContext] 🔄 Real-time update processed: ${processedCount} total items, ${propertyIds.size} valid items [${Array.from(propertyIds).join(', ')}]`);
             setWishlistItems(propertyIds);
             setIsLoading(false);
             isInitializedRef.current = true;
@@ -231,13 +288,31 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
             
           } catch (error) {
             console.error('[WishlistContext] ❌ Error processing real-time update:', error);
-            setError('Failed to process wishlist update');
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.error('[WishlistContext] Error details:', {
+              errorName: error instanceof Error ? error.name : 'Unknown',
+              errorStack: error instanceof Error ? error.stack : undefined,
+              userId: currentUserId,
+              timestamp: new Date().toISOString()
+            });
+            setError(`Failed to process wishlist update: ${errorMessage}`);
             setIsLoading(false);
             isInitializedRef.current = true;
           }
         }, (error) => {
-          console.error('[WishlistContext] ❌ Firebase listener error:', error);
-          setError('Connection to wishlist service failed');
+          console.error('[WishlistContext] ❌ Firebase listener error for user', currentUserId, ':', error);
+          console.error('[WishlistContext] Firebase error details:', {
+            errorCode: error.code || 'unknown',
+            errorMessage: error.message || 'Unknown error',
+            errorName: error.name || 'Unknown',
+            userId: currentUserId,
+            timestamp: new Date().toISOString(),
+            firebaseConfig: {
+              projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+              databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL
+            }
+          });
+          setError(`Connection to wishlist service failed: ${error.message || 'Unknown error'}`);
           setIsLoading(false);
           isInitializedRef.current = true;
         });
@@ -286,7 +361,11 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     const currentUserId = getCurrentUserId();
     console.log(`[WishlistContext] 🔄 Manual refresh requested for user ${currentUserId}`);
     
-    if (!isSignedIn || currentUserId === 'anonymous' || currentUserId === 'user-1') {
+    if (!isSignedIn || currentUserId === 'anonymous' || currentUserId === 'user-1' || currentUserId === 'initializing') {
+      if (currentUserId === 'initializing') {
+        console.log(`[WishlistContext] ⏳ Cannot refresh - Clerk still initializing`);
+        return;
+      }
       loadFromLocalStorage();
       return;
     }
@@ -308,6 +387,13 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const addToWishlist = async (propertyId: string): Promise<boolean> => {
     const userId = getCurrentUserId();
     console.log(`[WishlistContext] ➕ Adding property ${propertyId} for user ${userId}`);
+    
+    // Don't proceed if Clerk is still initializing
+    if (userId === 'initializing') {
+      console.log(`[WishlistContext] ⏳ Cannot add to wishlist - Clerk still initializing`);
+      setError('Authentication is loading. Please try again in a moment.');
+      return false;
+    }
     
     // Check if already exists
     if (wishlistItems.has(propertyId)) {
@@ -403,6 +489,13 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const removeFromWishlist = async (propertyId: string): Promise<boolean> => {
     const userId = getCurrentUserId();
     console.log(`[WishlistContext] ➖ Removing property ${propertyId} for user ${userId}`);
+    
+    // Don't proceed if Clerk is still initializing
+    if (userId === 'initializing') {
+      console.log(`[WishlistContext] ⏳ Cannot remove from wishlist - Clerk still initializing`);
+      setError('Authentication is loading. Please try again in a moment.');
+      return false;
+    }
     
     // Check if exists
     if (!wishlistItems.has(propertyId)) {

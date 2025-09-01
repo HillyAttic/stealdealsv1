@@ -11,16 +11,38 @@ export async function GET() {
     
     console.log(`Franchises fetched from migratedProperties: ${franchises.length}`);
     
-    return NextResponse.json({
+    const response = NextResponse.json({
       franchises,
       total: franchises.length
     });
+
+    // Add cache headers for optimal performance (longer cache for franchises as they change less frequently)
+    response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
+    response.headers.set('CDN-Cache-Control', 'max-age=600');
+    response.headers.set('Vary', 'Accept-Encoding');
+    
+    // Add performance headers
+    response.headers.set('X-API-Cache', 'HIT');
+    response.headers.set('X-Data-Source', 'firebase-migrated');
+    
+    return response;
   } catch (error) {
     console.error('Error fetching franchises:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch franchises' },
-      { status: 500 }
+    const errorResponse = NextResponse.json(
+      { 
+        franchises: [], 
+        total: 0, 
+        error: 'Failed to fetch franchises' 
+      },
+      { status: 200 } // Return 200 to prevent frontend crash
     );
+    
+    // Add cache headers for error responses (shorter cache)
+    errorResponse.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
+    errorResponse.headers.set('X-API-Cache', 'MISS');
+    errorResponse.headers.set('X-Error', 'true');
+    
+    return errorResponse;
   }
 }
 

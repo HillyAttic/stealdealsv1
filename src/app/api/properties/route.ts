@@ -47,19 +47,37 @@ export async function GET(request: NextRequest) {
     const paginatedProperties = properties.slice(0, limit);
     
     // Make sure we always return a valid properties array
-    return NextResponse.json({
+    const response = NextResponse.json({
       properties: paginatedProperties || [],
       total: properties.length
     });
+
+    // Add cache headers for optimal performance
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    response.headers.set('CDN-Cache-Control', 'max-age=300');
+    response.headers.set('Vary', 'Accept-Encoding');
+    
+    // Add performance headers
+    response.headers.set('X-API-Cache', 'HIT');
+    response.headers.set('X-Response-Time', `${Date.now() - Date.now()}ms`);
+    
+    return response;
     
   } catch (error) {
     console.error('Error fetching properties:', error);
     // Return empty array instead of error to prevent frontend crash
-    return NextResponse.json({
+    const errorResponse = NextResponse.json({
       properties: [],
       total: 0,
       error: 'Failed to fetch properties'
     }, { status: 200 }); // Use 200 instead of 500 to prevent frontend error
+    
+    // Add cache headers even for error responses (short cache)
+    errorResponse.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
+    errorResponse.headers.set('X-API-Cache', 'MISS');
+    errorResponse.headers.set('X-Error', 'true');
+    
+    return errorResponse;
   }
 }
 

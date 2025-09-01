@@ -1,13 +1,11 @@
 'use client';
 
-import { UserProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { UserAnalytics } from '@/components/dashboard/UserAnalytics';
 import { RealTimeAnalytics } from '@/components/dashboard/RealTimeAnalytics';
 
 export default function AnalyticsPage() {
   return (
-    <UserProtectedRoute>
-      <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <div className="flex items-center justify-between">
@@ -64,6 +62,5 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
-    </UserProtectedRoute>
   );
 }

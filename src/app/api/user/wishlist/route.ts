@@ -43,36 +43,98 @@ function logWishlistOperation(
   }
 }
 
-// Enhanced user ID extraction with Clerk integration and fallback
+// Enhanced user ID extraction with Clerk integration and environment-aware fallback
 async function extractUserId(request: NextRequest & { user?: any }): Promise<string | null> {
   try {
-    // First try to get user from Clerk
-    const clerkUser = await currentUser();
-    if (clerkUser?.id) {
-      logWishlistOperation('user_extraction', clerkUser.id, undefined, { source: 'clerk' });
-      return clerkUser.id;
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    // First try to get user from Clerk with better error handling
+    try {
+      const clerkUser = await currentUser();
+      if (clerkUser?.id) {
+        logWishlistOperation('user_extraction', clerkUser.id, undefined, { 
+          source: 'clerk',
+          environment: isProduction ? 'production' : 'development'
+        });
+        return clerkUser.id;
+      }
+    } catch (clerkError) {
+      console.warn('[Wishlist API] Clerk currentUser() failed:', clerkError);
+      logWishlistOperation('user_extraction_clerk_error', 'unknown', undefined, {
+        error: clerkError instanceof Error ? clerkError.message : 'Unknown clerk error',
+        environment: isProduction ? 'production' : 'development'
+      });
+    }
+    
+    // Try to extract from authorization header (for client-side authenticated requests)
+    const authHeader = request.headers.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      // In production, the client might send the user ID or session token
+      // Let's try to extract user info from the request
+      console.log('[Wishlist API] Found authorization header in request');
+    }
+    
+    // Check for Clerk session token in cookies
+    const clerkSession = request.cookies.get('__session')?.value || 
+                        request.cookies.get('__clerk_db_jwt')?.value;
+    if (clerkSession) {
+      console.log('[Wishlist API] Found Clerk session in cookies');
+      // We have a session but currentUser() failed - this might be a production issue
+    }
+    
+    // Check headers that the client might send
+    const userIdHeader = request.headers.get('x-user-id');
+    if (userIdHeader && isProduction) {
+      // In production, verify this is a valid user ID format (Clerk user IDs start with 'user_')
+      if (userIdHeader.startsWith('user_')) {
+        logWishlistOperation('user_extraction', userIdHeader, undefined, { 
+          source: 'user_id_header',
+          environment: 'production'
+        });
+        return userIdHeader;
+      }
     }
     
     // Fallback to middleware user (for development/testing)
     if (request.user?.id) {
-      logWishlistOperation('user_extraction', request.user.id, undefined, { source: 'middleware' });
+      logWishlistOperation('user_extraction', request.user.id, undefined, { 
+        source: 'middleware',
+        environment: isProduction ? 'production' : 'development'
+      });
       return request.user.id;
     }
     
-    // Development fallback - check for mock user headers
-    const mockUserId = request.headers.get('x-mock-user-id');
-    if (mockUserId) {
-      logWishlistOperation('user_extraction', mockUserId, undefined, { source: 'mock_header' });
-      return mockUserId;
+    // Development-only fallbacks
+    if (!isProduction) {
+      // Check for mock user headers in development
+      const mockUserId = request.headers.get('x-mock-user-id');
+      if (mockUserId) {
+        logWishlistOperation('user_extraction', mockUserId, undefined, { source: 'mock_header', environment: 'development' });
+        return mockUserId;
+      }
+      
+      // Final fallback for development only
+      const devUserId = 'user-1';
+      logWishlistOperation('user_extraction', devUserId, undefined, { source: 'development_fallback', environment: 'development' });
+      return devUserId;
     }
     
-    // Final fallback for development
-    const devUserId = 'user-1';
-    logWishlistOperation('user_extraction', devUserId, undefined, { source: 'development_fallback' });
-    return devUserId;
+    // Production: Enhanced debugging for auth failure
+    logWishlistOperation('user_extraction', 'null', undefined, { 
+      source: 'no_auth', 
+      environment: 'production',
+      hasAuthHeader: !!authHeader,
+      hasClerkSession: !!clerkSession,
+      hasUserIdHeader: !!userIdHeader,
+      middlewareUserExists: !!request.user,
+      requestHeaders: Object.fromEntries(request.headers.entries())
+    });
+    return null;
     
   } catch (error) {
-    logWishlistOperation('user_extraction', 'unknown', undefined, undefined, error as Error);
+    logWishlistOperation('user_extraction', 'unknown', undefined, { 
+      environment: process.env.NODE_ENV === 'production' ? 'production' : 'development'
+    }, error as Error);
     return null;
   }
 }

@@ -41,11 +41,22 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
           'Content-Type': 'application/json'
         };
         
-        // Add mock auth headers for development consistency
-        if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' && user) {
-          headers['x-mock-user-id'] = user.id;
-          headers['x-mock-user-email'] = user.primaryEmailAddress?.emailAddress || '';
+        // Add user identification headers for both development and production
+        if (typeof window !== 'undefined' && user?.id) {
+          headers['x-user-id'] = user.id;
+          if (process.env.NODE_ENV === 'development') {
+            // Development-specific headers
+            headers['x-mock-user-id'] = user.id;
+            headers['x-mock-user-email'] = user.primaryEmailAddress?.emailAddress || '';
+          }
         }
+
+        console.log(`[WishlistSection] Making API request with headers:`, {
+          hasUserId: !!headers['x-user-id'],
+          hasMockUserId: !!headers['x-mock-user-id'],
+          isSignedIn,
+          userId: user?.id
+        });
 
         const response = await fetch('/api/user/wishlist', {
           method: 'GET',
@@ -112,11 +123,22 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
   // Update wishlist item
   const handleUpdate = async (propertyId: string) => {
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Add user identification headers
+      if (typeof window !== 'undefined' && user?.id) {
+        headers['x-user-id'] = user.id;
+        if (process.env.NODE_ENV === 'development') {
+          headers['x-mock-user-id'] = user.id;
+          headers['x-mock-user-email'] = user.primaryEmailAddress?.emailAddress || '';
+        }
+      }
+
       const response = await fetch(`/api/user/wishlist/${propertyId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify({
           notes: editNotes.trim() || undefined,
           priority: editPriority

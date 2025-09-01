@@ -21,18 +21,9 @@ export function ProtectedRoute({
   message = 'Please sign in to access this feature',
   fallback
 }: ProtectedRouteProps) {
-  console.warn('⚠️ [DEPRECATED] ProtectedRoute is deprecated. Use Clerk authentication directly with useAuth() hook instead.');
-  
   // For backward compatibility, just render children
-  // This prevents breaking changes while encouraging migration to Clerk
+  // Routes are protected by Clerk middleware at the application level
   return <>{children}</>;
 }
 
-// Specific protected route for user dashboard
-export function UserProtectedRoute({ children }: { children: React.ReactNode }) {
-  console.warn('⚠️ [DEPRECATED] UserProtectedRoute is deprecated. Use Clerk authentication directly with useAuth() hook instead.');
-  
-  // For backward compatibility, just render children
-  // This prevents breaking changes while encouraging migration to Clerk
-  return <>{children}</>;
-}
+// UserProtectedRoute has been removed - use Clerk authentication directly with useAuth() hook

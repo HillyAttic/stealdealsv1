@@ -2,6 +2,24 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, set, get, push, child, update, remove, DataSnapshot } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
+import { validateConfigOrThrow, logConfigValidation } from '@/lib/config/validation';
+
+// Validate environment configuration before initializing Firebase
+try {
+  // Only enforce strict validation in actual production deployment, not local builds
+  const isActualProduction = process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production';
+  if (isActualProduction) {
+    validateConfigOrThrow();
+  } else {
+    // Just log validation results for local builds
+    logConfigValidation();
+  }
+} catch (error) {
+  console.error('[Firebase] Configuration validation failed:', error);
+  if (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production') {
+    throw error; // Only fail fast in actual production deployment
+  }
+}
 
 // Your Firebase configuration
 const firebaseConfig = {
@@ -15,9 +33,19 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ""
 };
 
-// Validate that we have the required Firebase configuration
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.databaseURL) {
-  console.error('Firebase configuration is missing. Make sure your environment variables are set properly.');
+// Enhanced Firebase configuration validation
+const requiredFields = ['apiKey', 'projectId', 'databaseURL'];
+const missingFields = requiredFields.filter(field => !firebaseConfig[field as keyof typeof firebaseConfig]);
+
+if (missingFields.length > 0) {
+  const errorMessage = `Firebase configuration is missing required fields: ${missingFields.join(', ')}. Make sure your environment variables are set properly.`;
+  console.error('[Firebase]', errorMessage);
+  
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(errorMessage);
+  }
+} else {
+  console.log('[Firebase] ✅ Configuration validation passed');
 }
 
 // Initialize Firebase
@@ -167,26 +195,26 @@ export interface Plot {
   updatedAt?: number;
 }
 
-// Function to get the appropriate reference based on property type (uses migrated structure)
+// Function to get the appropriate reference based on property type (MIGRATED ONLY)
 export function getPropertyRefByType(propertyType: string) {
-  console.log(`Getting reference for property type: "${propertyType}"`);
+  console.log(`[Firebase] Getting MIGRATED reference for property type: "${propertyType}"`);
   
   if (propertyType === 'Vacant' || propertyType === 'vacant') {
-    console.log('Using migratedVacantRef');
+    console.log('[Firebase] Using migratedVacantRef');
     return migratedVacantRef;
   } else if (propertyType === 'Pre-Leased' || propertyType === 'preleased') {
-    console.log('Using migratedPreleasedRef');
+    console.log('[Firebase] Using migratedPreleasedRef');
     return migratedPreleasedRef;
   } else if (propertyType === 'Franchise' || propertyType === 'franchise') {
-    console.log('Using migratedFranchiseRef');
+    console.log('[Firebase] Using migratedFranchiseRef');
     return migratedFranchiseRef;
   } else if (propertyType === 'Plot' || propertyType === 'plot') {
-    console.log('Using migratedPlotsRef');
+    console.log('[Firebase] Using migratedPlotsRef');
     return migratedPlotsRef;
   }
   
-  console.log('Using default propertiesRef (legacy)');
-  return propertiesRef; // Fallback to legacy reference
+  console.log(`[Firebase] Unknown property type "${propertyType}" - returning vacant ref as default`);
+  return migratedVacantRef; // Default to migrated vacant instead of legacy
 }
 
 // Function to get all properties (combines all property collections from migrated structure)
@@ -404,12 +432,14 @@ export async function getAllProperties(): Promise<Property[]> {
   }
 }
 
-// Function to get all vacant properties (uses migrated structure first)
+// Function to get all vacant properties (MIGRATED ONLY)
 export async function getVacantProperties(): Promise<Property[]> {
   try {
     const properties: Property[] = [];
     
-    // Get from migrated structure first
+    console.log('[Firebase] Fetching vacant properties from MIGRATED collections only');
+    
+    // Get from migrated structure ONLY
     const migratedSnapshot = await get(migratedVacantRef);
     if (migratedSnapshot.exists()) {
       migratedSnapshot.forEach((childSnapshot: DataSnapshot) => {
@@ -420,31 +450,7 @@ export async function getVacantProperties(): Promise<Property[]> {
       });
     }
     
-    // Fallback to legacy collections
-    const legacySnapshot = await get(vacantPropertiesRef);
-    if (legacySnapshot.exists()) {
-      legacySnapshot.forEach((childSnapshot: DataSnapshot) => {
-        properties.push({
-          id: childSnapshot.key,
-          ...childSnapshot.val()
-        });
-      });
-    }
-    
-    // Also check legacy properties for backward compatibility
-    const propertiesSnapshot = await get(propertiesRef);
-    if (propertiesSnapshot.exists()) {
-      propertiesSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        const property = childSnapshot.val();
-        if (property.propertyType === 'Vacant') {
-          properties.push({
-            id: childSnapshot.key,
-            ...property
-          });
-        }
-      });
-    }
-    
+    console.log(`[Firebase] Found ${properties.length} vacant properties in migrated collection`);
     return properties;
   } catch (error) {
     console.error('Error fetching vacant properties from Firebase:', error);
@@ -452,12 +458,14 @@ export async function getVacantProperties(): Promise<Property[]> {
   }
 }
 
-// Function to get all preleased properties (uses migrated structure first)
+// Function to get all preleased properties (MIGRATED ONLY)
 export async function getPreleasedProperties(): Promise<Property[]> {
   try {
     const properties: Property[] = [];
     
-    // Get from migrated structure first
+    console.log('[Firebase] Fetching preleased properties from MIGRATED collections only');
+    
+    // Get from migrated structure ONLY
     const migratedSnapshot = await get(migratedPreleasedRef);
     if (migratedSnapshot.exists()) {
       migratedSnapshot.forEach((childSnapshot: DataSnapshot) => {
@@ -468,31 +476,7 @@ export async function getPreleasedProperties(): Promise<Property[]> {
       });
     }
     
-    // Fallback to legacy collections
-    const legacySnapshot = await get(preleasedPropertiesRef);
-    if (legacySnapshot.exists()) {
-      legacySnapshot.forEach((childSnapshot: DataSnapshot) => {
-        properties.push({
-          id: childSnapshot.key,
-          ...childSnapshot.val()
-        });
-      });
-    }
-    
-    // Also check legacy properties for backward compatibility
-    const propertiesSnapshot = await get(propertiesRef);
-    if (propertiesSnapshot.exists()) {
-      propertiesSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        const property = childSnapshot.val();
-        if (property.propertyType === 'Pre-Leased') {
-          properties.push({
-            id: childSnapshot.key,
-            ...property
-          });
-        }
-      });
-    }
-    
+    console.log(`[Firebase] Found ${properties.length} preleased properties in migrated collection`);
     return properties;
   } catch (error) {
     console.error('Error fetching preleased properties from Firebase:', error);
@@ -508,21 +492,16 @@ export async function getPropertyById(id: string): Promise<Property | null> {
       return null;
     }
     
-    console.log(`[Firebase] Searching for property ID: "${id}" across all collections`);
+    console.log(`[Firebase] Searching for property ID: "${id}" in MIGRATED collections only`);
     
-    // Log the search pattern to help debug production issues
+    // Log the search pattern to help debug production issues - MIGRATED ONLY
     const searchOrder = [
       'migratedProperties/vacant',
       'migratedProperties/preleased', 
       'migratedProperties/franchise',
-      'migratedProperties/plots',
-      'legacy vacantProperties',
-      'legacy preleasedProperties',
-      'legacy franchiseProperties', 
-      'legacy plots',
-      'legacy properties'
+      'migratedProperties/plots'
     ];
-    console.log(`[Firebase] Search order for ${id}:`, searchOrder);
+    console.log(`[Firebase] Migrated-only search order for ${id}:`, searchOrder);
     
     // Try migrated collections first
     let snapshot = await get(child(migratedVacantRef, id));
@@ -673,86 +652,7 @@ export async function getPropertyById(id: string): Promise<Property | null> {
       };
     }
     
-    // Fallback: Try legacy collections
-    snapshot = await get(child(vacantPropertiesRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in legacy vacantProperties`);
-      return { id: snapshot.key, ...snapshot.val() };
-    }
-    
-    snapshot = await get(child(preleasedPropertiesRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in legacy preleasedProperties`);
-      return { id: snapshot.key, ...snapshot.val() };
-    }
-    
-    snapshot = await get(child(franchisePropertiesRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in legacy franchiseProperties`);
-      const franchiseData = snapshot.val();
-      return {
-        id: snapshot.key,
-        title: franchiseData.name || franchiseData.title,
-        category: 'Franchise',
-        location: franchiseData.location || franchiseData.headquarter,
-        price: franchiseData.investment || franchiseData.minInvestment,
-        description: franchiseData.description,
-        image: franchiseData.image,
-        propertyType: 'Franchise',
-        ...franchiseData
-      };
-    }
-    
-    snapshot = await get(child(plotsRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in legacy plots`);
-      const plotData = snapshot.val();
-      return {
-        id: snapshot.key,
-        title: plotData.project || plotData.title,
-        category: 'Plot',
-        location: plotData.location,
-        price: plotData.investmentStartsFrom?.amount,
-        description: plotData.description,
-        image: plotData.images?.[0],
-        propertyType: 'Plot',
-        ...plotData
-      };
-    }
-    
-    // Try legacy type-specific collections
-    snapshot = await get(child(vacantPropertiesRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in legacy vacantProperties`);
-      return { id: snapshot.key, ...snapshot.val() };
-    }
-    
-    snapshot = await get(child(preleasedPropertiesRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in legacy preleasedProperties`);
-      return { id: snapshot.key, ...snapshot.val() };
-    }
-    
-    snapshot = await get(child(franchisePropertiesRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in legacy franchiseProperties`);
-      return { id: snapshot.key, ...snapshot.val() };
-    }
-    
-    snapshot = await get(child(plotsRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in legacy plots`);
-      return { id: snapshot.key, ...snapshot.val() };
-    }
-    
-    // Finally try generic properties collection
-    snapshot = await get(child(propertiesRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in legacy properties`);
-      return { id: snapshot.key, ...snapshot.val() };
-    }
-    
-    console.log(`[Firebase] Property ${id} not found in any collection (searched migrated and legacy collections)`);
+    console.log(`[Firebase] Property ${id} not found in any MIGRATED collection`);
     return null;
   } catch (error) {
     console.error(`[Firebase] Error fetching property ${id}:`, error);

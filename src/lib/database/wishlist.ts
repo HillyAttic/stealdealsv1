@@ -141,16 +141,16 @@ export async function removeFromWishlist(userId: string, propertyId: string): Pr
 }
 
 /**
- * Get user's wishlist with property details from Firebase with caching
+ * Get user's wishlist with property details from Firebase with caching - MIGRATED PROPERTIES ONLY
  */
 export async function getUserWishlist(userId: string): Promise<WishlistProperty[]> {
   try {
-    console.log(`[Firebase Wishlist] Getting wishlist for user ${userId}`);
+    console.log(`[Firebase Wishlist] Getting wishlist for user ${userId} (MIGRATED PROPERTIES ONLY)`);
     
     // Check cache first
     const cachedWishlist = cacheService.getUserWishlist(userId);
     if (cachedWishlist) {
-      console.log(`[Firebase Wishlist] ✅ Returning cached wishlist for user ${userId}`);
+      console.log(`[Firebase Wishlist] ✅ Returning cached wishlist for user ${userId} (${cachedWishlist.length} items)`);
       return cachedWishlist;
     }
     
@@ -181,32 +181,47 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
       }
     });
     
-    console.log(`[Firebase Wishlist] Found ${wishlistItems.length} items in wishlist`);
+    console.log(`[Firebase Wishlist] Found ${wishlistItems.length} items in wishlist - fetching MIGRATED property details`);
     
-    // Get property details with caching
+    // Get property details with caching - MIGRATED ONLY
     const wishlistProperties: WishlistProperty[] = [];
     const propertyIds = wishlistItems.map(item => item.propertyId);
+    console.log(`[Firebase Wishlist] Property IDs to lookup:`, propertyIds);
     
     // Batch property lookups for better performance
     const propertyPromises = propertyIds.map(async (propertyId) => {
       // Check property cache first
       let property = cacheService.getProperty(propertyId);
       if (!property) {
+        console.log(`[Firebase Wishlist] Cache miss for ${propertyId}, fetching from MIGRATED collections`);
         property = await getPropertyById(propertyId);
         if (property) {
           cacheService.setProperty(propertyId, property);
+          console.log(`[Firebase Wishlist] ✅ Found and cached property ${propertyId}: ${property.title || property.category}`);
+        } else {
+          console.warn(`[Firebase Wishlist] ⚠️ Property ${propertyId} NOT FOUND in any MIGRATED collection`);
         }
+      } else {
+        console.log(`[Firebase Wishlist] Cache hit for ${propertyId}: ${property.title || property.category}`);
       }
       return { propertyId, property };
     });
     
     const propertyResults = await Promise.all(propertyPromises);
     const propertyMap = new Map();
+    let foundCount = 0;
+    let notFoundCount = 0;
+    
     propertyResults.forEach(({ propertyId, property }) => {
       if (property) {
         propertyMap.set(propertyId, property);
+        foundCount++;
+      } else {
+        notFoundCount++;
       }
     });
+    
+    console.log(`[Firebase Wishlist] Property lookup results: ${foundCount} found, ${notFoundCount} not found in MIGRATED collections`);
     
     // Build wishlist properties with enriched data
     for (const item of wishlistItems) {
@@ -288,13 +303,14 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
           description: property.description || 'Premium plot in prime location'
         });
       } else {
-        console.warn(`[Firebase Wishlist] ⚠️ Property not found: ${item.propertyId}`);
+        console.warn(`[Firebase Wishlist] ⚠️ Property not found in MIGRATED collections: ${item.propertyId}`);
+        console.warn(`[Firebase Wishlist] This property may exist only in legacy collections which are no longer searched`);
         // Keep the wishlist item but mark as not found
         wishlistProperties.push({
           id: item.propertyId,
-          title: `Property ${item.propertyId} (Not Found)`,
+          title: `Property ${item.propertyId} (Not Found in Migrated Data)`,
           price: 0,
-          location: 'Property not found',
+          location: 'Property not found in migrated collections',
           images: [],
           type: 'Unknown',
           addedAt: item.addedAt,
@@ -304,7 +320,7 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
           plotSize: undefined,
           category: undefined,
           segment: undefined,
-          description: 'Property data not available'
+          description: 'Property data not available in migrated collections'
         });
       }
     }
@@ -315,7 +331,7 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
     // Cache the result
     cacheService.setUserWishlist(userId, wishlistProperties);
     
-    console.log(`[Firebase Wishlist] ✅ Returning ${wishlistProperties.length} wishlist properties`);
+    console.log(`[Firebase Wishlist] ✅ Returning ${wishlistProperties.length} wishlist properties from MIGRATED collections (${foundCount} with details, ${notFoundCount} placeholders)`);
     return wishlistProperties;
     
   } catch (error) {
