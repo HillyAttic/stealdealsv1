@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { ref, get, update, remove, child } from 'firebase/database';
 import { database, migratedFranchiseRef } from '@/lib/firebase';
 import { resolveIdParam, RouteParams } from '../../../../lib/params-utils';
+import { revalidateTag } from 'next/cache';
 
 const legacyFranchiseRef = ref(database, 'franchiseProperties');
 
@@ -18,10 +19,10 @@ export async function GET(
     console.log(`[API] 🎯 Resolved franchise ID: ${id}`);
     
     // First try the migrated structure (primary location)
-    const migratedFranchiseRef = ref(database, `migratedProperties/franchise/${id}`);
+    const migratedFranchisePathRef = child(migratedFranchiseRef, id);
     console.log(`[API] 🔥 Trying migrated path: migratedProperties/franchise/${id}`);
     
-    const migratedSnapshot = await get(migratedFranchiseRef);
+    const migratedSnapshot = await get(migratedFranchisePathRef);
     console.log(`[API] 📊 Migrated snapshot exists: ${migratedSnapshot.exists()}`);
     
     if (migratedSnapshot.exists()) {
@@ -167,7 +168,7 @@ export async function PUT(
       }
     }
     
-    if (!foundFranchise) {
+    if (!foundFranchise || !targetRef) {
       return NextResponse.json(
         { error: 'Franchise not found' },
         { status: 404 }
@@ -202,6 +203,9 @@ export async function PUT(
     await update(targetRef, updatedFranchise);
     console.log(`[API] ✅ Franchise ${id} updated successfully`);
     
+    // Invalidate the cache to ensure fresh data on next request
+    revalidateTag('franchises');
+    
     return NextResponse.json({
       success: true,
       franchise: {
@@ -230,10 +234,18 @@ export async function PATCH(
     const id = await resolveIdParam(params);
     const body = await request.json();
     
-    // Validate the franchise exists
-    const singleFranchiseRef = ref(database, `franchiseProperties/${id}`);
-    const snapshot = await get(singleFranchiseRef);
+    // Check migrated structure first (new location)
+    let franchiseRef = child(migratedFranchiseRef, id);
+    let snapshot = await get(franchiseRef);
+    let existingData = null;
     
+    // If not found in migrated structure, check legacy structure
+    if (!snapshot.exists()) {
+      franchiseRef = ref(database, `franchiseProperties/${id}`);
+      snapshot = await get(franchiseRef);
+    }
+    
+    // If still not found, return 404
     if (!snapshot.exists()) {
       return NextResponse.json(
         { error: 'Franchise not found' },
@@ -241,43 +253,45 @@ export async function PATCH(
       );
     }
     
-    // Prepare updated data
-    const currentData = snapshot.val();
+    existingData = snapshot.val();
     
-    // Update the franchise with new data
+    // Prepare updated data
     const updatedFranchise = {
-      ...currentData,
-      name: body.brand || body.name || currentData.name || currentData.brand || `Franchise ${id}`, // Ensure name is always set for main title
-      industry: body.industry || currentData.industry,
-      segment: body.segment || currentData.segment || "",
-      product: body.brand || body.product || currentData.product || currentData.name || currentData.brand || `Product ${id}`, // Ensure product is always set
-      model: body.model || currentData.model || "",
-      minArea: body.minArea !== undefined ? body.minArea : currentData.minArea || "",
-      maxArea: body.maxArea !== undefined ? body.maxArea : currentData.maxArea || "",
-      minInvestment: body.minInvestment !== undefined ? body.minInvestment : currentData.minInvestment || currentData.investment || "",
-      maxInvestment: body.maxInvestment !== undefined ? body.maxInvestment : currentData.maxInvestment || "",
-      royalty: body.royalty || currentData.royalty || currentData.roi || "",
-      establishmentYear: body.establishmentYear || currentData.establishmentYear || "",
-      franchiseStartedYear: body.franchiseStartedYear || currentData.franchiseStartedYear || "",
-      numberOutlets: body.numberOutlets || currentData.numberOutlets || "",
-      minPaybackPeriod: body.minPaybackPeriod || currentData.minPaybackPeriod || "",
-      maxPaybackPeriod: body.maxPaybackPeriod || currentData.maxPaybackPeriod || "",
-      headquarter: body.headquarter || currentData.headquarter || currentData.location || "",
-      remarks: body.remarks || currentData.remarks || currentData.description || "",
-      brandDeck: body.brandDeck || currentData.brandDeck || "",
-      productList: body.productList || currentData.productList || "",
-      roiSheet: body.roiSheet || currentData.roiSheet || "",
+      ...existingData,
+      name: body.brand || body.name || existingData.name || existingData.brand || `Franchise ${id}`, // Ensure name is always set for main title
+      industry: body.industry || existingData.industry,
+      segment: body.segment || existingData.segment || "",
+      product: body.brand || body.product || existingData.product || existingData.name || existingData.brand || `Product ${id}`, // Ensure product is always set
+      model: body.model || existingData.model || "",
+      minArea: body.minArea !== undefined ? body.minArea : existingData.minArea || "",
+      maxArea: body.maxArea !== undefined ? body.maxArea : existingData.maxArea || "",
+      minInvestment: body.minInvestment !== undefined ? body.minInvestment : existingData.minInvestment || existingData.investment || "",
+      maxInvestment: body.maxInvestment !== undefined ? body.maxInvestment : existingData.maxInvestment || "",
+      royalty: body.royalty || existingData.royalty || existingData.roi || "",
+      establishmentYear: body.establishmentYear || existingData.establishmentYear || "",
+      franchiseStartedYear: body.franchiseStartedYear || existingData.franchiseStartedYear || "",
+      numberOutlets: body.numberOutlets || existingData.numberOutlets || "",
+      minPaybackPeriod: body.minPaybackPeriod || existingData.minPaybackPeriod || "",
+      maxPaybackPeriod: body.maxPaybackPeriod || existingData.maxPaybackPeriod || "",
+      headquarter: body.headquarter || existingData.headquarter || existingData.location || "",
+      remarks: body.remarks || existingData.remarks || existingData.description || "",
+      brandDeck: body.brandDeck || existingData.brandDeck || "",
+      productList: body.productList || existingData.productList || "",
+      roiSheet: body.roiSheet || existingData.roiSheet || "",
       // Keep backward compatibility fields
-      investment: body.minInvestment !== undefined ? body.minInvestment : currentData.investment,
-      location: body.headquarter || currentData.location,
-      roi: body.royalty || currentData.roi,
-      description: body.remarks || currentData.description,
-      status: body.status || currentData.status,
-      image: body.image || currentData.image,
+      investment: body.minInvestment !== undefined ? body.minInvestment : existingData.investment,
+      location: body.headquarter || existingData.location,
+      roi: body.royalty || existingData.roi,
+      description: body.remarks || existingData.description,
+      status: body.status || existingData.status,
+      image: body.image || existingData.image,
       updatedAt: Date.now()
     };
     
-    await update(singleFranchiseRef, updatedFranchise);
+    await update(franchiseRef, updatedFranchise);
+    
+    // Invalidate the cache to ensure fresh data on next request
+    revalidateTag('franchises');
     
     return NextResponse.json({
       success: true,
@@ -303,10 +317,17 @@ export async function DELETE(
   try {
     const id = await resolveIdParam(params);
     
-    // Validate the franchise exists
-    const singleFranchiseRef = ref(database, `franchiseProperties/${id}`);
-    const snapshot = await get(singleFranchiseRef);
+    // Check migrated structure first (new location)
+    let franchiseRef = child(migratedFranchiseRef, id);
+    let snapshot = await get(franchiseRef);
     
+    // If not found in migrated structure, check legacy structure
+    if (!snapshot.exists()) {
+      franchiseRef = ref(database, `franchiseProperties/${id}`);
+      snapshot = await get(franchiseRef);
+    }
+    
+    // If still not found, return 404
     if (!snapshot.exists()) {
       return NextResponse.json(
         { error: 'Franchise not found' },
@@ -314,8 +335,8 @@ export async function DELETE(
       );
     }
     
-    // Delete the franchise
-    await remove(singleFranchiseRef);
+    // Delete the franchise from wherever it was found
+    await remove(franchiseRef);
     
     return NextResponse.json({
       success: true,

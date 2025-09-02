@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAllPlots, addPlot, Plot } from '../../../lib/firebase';
+import { revalidateTag } from 'next/cache';
 
 // Get all plots with optional filtering - no authentication required for public access
 export async function GET(request: NextRequest) {
@@ -101,6 +102,9 @@ export async function POST(request: NextRequest) {
       const newPlot = await addPlot(plotData);
       
       console.log('New plot added to Firebase:', newPlot);
+      
+      // Invalidate the cache to ensure fresh data on next request
+      revalidateTag('plots');
       
       return NextResponse.json({
         success: true,

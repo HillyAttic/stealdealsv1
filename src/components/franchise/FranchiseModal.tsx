@@ -31,6 +31,9 @@ interface Franchise {
   productList?: string;
   roiSheet?: string;
   investorDiscoveryKitUrl?: string;
+  franchiseDetails?: {
+    investorDiscoveryKitUrl?: string;
+  };
   investment: number | string;
   location: string;
   status: string;
@@ -60,22 +63,23 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
   const [showContactModal, setShowContactModal] = useState(false);
   const isUnlocked = isContentUnlocked(franchiseId);
 
+  // Helper function to get investor kit URL from both possible locations
+  const getInvestorKitUrl = useCallback(() => {
+    return franchise?.investorDiscoveryKitUrl || franchise?.franchiseDetails?.investorDiscoveryKitUrl || null;
+  }, [franchise]);
+
   // Handle investor discovery kit click
   const handleInvestorKitClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent any parent click handlers
-    
-    if (!franchise?.investorDiscoveryKitUrl) {
-      return; // Do nothing if no URL
-    }
+    e.stopPropagation();
+    const kitUrl = getInvestorKitUrl();
+    if (!kitUrl) return;
     
     if (isUnlocked) {
-      // Content is unlocked, open the Google Drive link
-      window.open(franchise.investorDiscoveryKitUrl, '_blank', 'noopener,noreferrer');
+      window.open(kitUrl, '_blank', 'noopener,noreferrer');
     } else {
-      // Content is locked, show the gated modal
       setShowGatedModal(true);
     }
-  }, [franchise?.investorDiscoveryKitUrl, isUnlocked]);
+  }, [getInvestorKitUrl, isUnlocked]);
 
   // Handle successful form submission
   const handleGatedSuccess = useCallback(async () => {
@@ -92,10 +96,11 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
   // Handle download from success message
   const handleDownloadFromSuccess = useCallback(() => {
     setShowSuccessMessage(false);
-    if (franchise?.investorDiscoveryKitUrl) {
-      window.open(franchise.investorDiscoveryKitUrl, '_blank', 'noopener,noreferrer');
+    const kitUrl = getInvestorKitUrl();
+    if (kitUrl) {
+      window.open(kitUrl, '_blank', 'noopener,noreferrer');
     }
-  }, [franchise?.investorDiscoveryKitUrl]);
+  }, [getInvestorKitUrl]);
 
   // Reset image index when franchise changes
   useEffect(() => {
@@ -223,7 +228,12 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
         <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-primary text-white">
           <div>
             <h2 className="text-2xl font-bold">{franchise.name}</h2>
-            <p className="text-primary/20 text-sm">{franchise.industry} • {franchise.segment}</p>
+            <p className="text-sm" style={{ 
+              color: '#ffffff', 
+              textShadow: '0 0 2px rgba(0, 0, 0, 0.5)' 
+            }}>
+              {franchise.industry} • {franchise.segment}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -429,7 +439,10 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
 
               {/* Company Timeline */}
               <div className="bg-white rounded-xl shadow-lg border border-highlight/20">
-                <div className="bg-gradient-to-r from-primary to-secondary px-6 py-4 rounded-t-xl">
+                <div 
+                  className="bg-gradient-to-r from-primary to-secondary px-6 py-4 rounded-t-xl"
+                  style={{ background: 'linear-gradient(to right, #154D71, #1C6EA4)' }}
+                >
                   <h3 className="text-xl font-bold text-white flex items-center">
                     <FaCalendarAlt className="mr-3" />
                     Company Timeline
@@ -525,28 +538,36 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                     <FaPhone className="mr-2" />
                     Call Now
                   </a>
-                  {franchise.investorDiscoveryKitUrl && (
-                    <button
-                      onClick={handleInvestorKitClick}
-                      className={`w-full text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center ${
-                        isUnlocked 
-                          ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' 
-                          : 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700'
-                      }`}
-                    >
-                      {isUnlocked ? (
-                        <>
-                          <FaDownload className="mr-2" />
-                          Investor Discovery Kit
-                        </>
-                      ) : (
-                        <>
-                          <FaLock className="mr-2" />
-                          Unlock Discovery Kit
-                        </>
-                      )}
-                    </button>
-                  )}
+                  {(() => {
+                    const investorKitUrl = getInvestorKitUrl();
+                    return investorKitUrl ? (
+                      <button
+                        onClick={handleInvestorKitClick}
+                        className={`w-full text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center ${
+                          isUnlocked 
+                            ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700' 
+                            : 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700'
+                        }`}
+                      >
+                        {isUnlocked ? (
+                          <>
+                            <FaDownload className="mr-2" />
+                            Investor Discovery Kit
+                          </>
+                        ) : (
+                          <>
+                            <FaLock className="mr-2" />
+                            Unlock Discovery Kit
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <div className="w-full flex justify-center items-center bg-gray-400 text-gray-200 py-3 px-4 rounded-lg cursor-not-allowed">
+                        <FaDownload className="mr-2" />
+                        Investor Discovery Kit
+                      </div>
+                    );
+                  })()}
                   
                   <button 
                     onClick={() => {
@@ -645,7 +666,10 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                   <FaTimes className="text-lg md:text-xl" />
                 </button>
               </div>
-              <p className="text-primary/20 text-xs md:text-sm mt-1">
+              <p className="text-xs md:text-sm mt-1" style={{ 
+                color: '#ffffff', 
+                textShadow: '0 0 2px rgba(0, 0, 0, 0.5)' 
+              }}>
                 Get detailed information about {franchise.name}
               </p>
             </div>

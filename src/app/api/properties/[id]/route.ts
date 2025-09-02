@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getPropertyById, Property } from '../../../../lib/firebase';
+import { getPropertyById, Property, updateProperty, deleteProperty } from '../../../../lib/firebase';
 import { resolveIdParam, RouteParams } from '../../../../lib/params-utils';
 import { optionalAuth } from '@/lib/auth/middleware';
+import { revalidateTag } from 'next/cache';
 
 export async function GET(
   request: NextRequest,
@@ -82,11 +83,13 @@ export async function PUT(
       );
     }
     
-    // Use the existing updateProperty function from firebase.ts
-    const { updateProperty } = await import('../../../../lib/firebase');
     const result = await updateProperty(id, updatedProperty);
     
     console.log(`[Properties API] Property ${id} updated successfully`);
+    
+    // Invalidate the cache to ensure fresh data on next request
+    revalidateTag('vacant-properties');
+    revalidateTag('all-properties');
     
     return NextResponse.json({
       success: true,
@@ -122,12 +125,21 @@ export async function DELETE(
       );
     }
     
-    // Delete property (Note: deleteProperty function would need to be implemented)
-    // For now, return success message indicating delete would happen
-    return NextResponse.json({
-      success: true,
-      message: 'Property deletion not fully implemented - Firebase deleteProperty needed'
-    });
+    // Delete property
+    const success = await deleteProperty(id);
+    
+    if (success) {
+      // Invalidate the cache to ensure fresh data on next request
+      revalidateTag('vacant-properties');
+      revalidateTag('all-properties');
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Property deleted successfully'
+      });
+    } else {
+      throw new Error('Failed to delete property');
+    }
   } catch (error) {
     console.error('[Properties API] Error deleting property:', error);
     return NextResponse.json(

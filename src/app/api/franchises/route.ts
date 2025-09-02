@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { push, get, set, ref, child } from 'firebase/database';
 import { getAllFranchises, migratedFranchiseRef, generateUniquePropertyId, getNextSequenceNumber } from '@/lib/firebase';
+import { revalidateTag } from 'next/cache';
 
 // Get all franchises from migrated structure
 export async function GET() {
@@ -52,8 +53,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('Received franchise data:', body);
     
-    // Validate required fields
-    if (!body.brand || !body.industry) {
+    // Validate required fields - check both root level and franchiseDetails
+    const brand = body.brand || body.franchiseDetails?.brand;
+    const industry = body.industry || body.franchiseDetails?.industry;
+    
+    if (!brand || !industry) {
       return NextResponse.json(
         { error: 'Missing required fields: brand and industry are required' },
         { status: 400 }
@@ -73,48 +77,50 @@ export async function POST(request: NextRequest) {
       // Essential root-level fields only
       id: newId,
       type: 'franchise',
-      title: body.brand || body.name || `Franchise ${newId}`,
-      description: body.remarks || body.description || '',
-      location: body.headquarter || 'Multiple Locations',
-      price: parseFloat(body.minInvestment) || 0,
-      images: body.image ? [body.image] : ['https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'],
+      title: brand || body.name || `Franchise ${newId}`,
+      description: body.remarks || body.description || body.franchiseDetails?.remarks || '',
+      location: body.headquarter || body.franchiseDetails?.headquarter || 'Multiple Locations',
+      price: parseFloat(body.minInvestment || body.franchiseDetails?.minInvestment) || 0,
+      images: body.image ? [body.image] : body.franchiseDetails?.image ? [body.franchiseDetails.image] : ['https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'],
       createdAt: body.createdAt || Date.now(),
       updatedAt: Date.now(),
       
       // All franchise-specific data in franchiseDetails object
       franchiseDetails: {
-        brand: body.brand || body.name || `Franchise ${newId}`,
-        name: body.brand || body.name || `Franchise ${newId}`,
-        industry: body.industry || 'Not specified',
-        segment: body.segment || '',
-        product: body.brand || body.product || body.name || `Product ${newId}`,
-        model: body.model || '',
-        minArea: body.minArea || '',
-        maxArea: body.maxArea || '',
-        minInvestment: body.minInvestment || '0',
-        maxInvestment: body.maxInvestment || '0',
-        royalty: body.royalty || 'Varies',
-        establishmentYear: body.establishmentYear || '',
-        franchiseStartedYear: body.franchiseStartedYear || '',
-        numberOfOutlets: body.numberOutlets || '', // Standardized naming
-        minPaybackPeriod: body.minPaybackPeriod || '',
-        maxPaybackPeriod: body.maxPaybackPeriod || '',
-        headquarter: body.headquarter || 'Multiple Locations',
-        remarks: body.remarks || '',
-        brandDeck: body.brandDeck || '',
-        productList: body.productList || '',
-        roiSheet: body.roiSheet || '',
-        investorDiscoveryKitUrl: body.investorDiscoveryKitUrl || ''
+        brand: brand,
+        name: brand,
+        industry: industry,
+        segment: body.segment || body.franchiseDetails?.segment || '',
+        product: brand || body.product || body.name || body.franchiseDetails?.product || `Product ${newId}`,
+        model: body.model || body.franchiseDetails?.model || '',
+        minArea: body.minArea || body.franchiseDetails?.minArea || '',
+        maxArea: body.maxArea || body.franchiseDetails?.maxArea || '',
+        minInvestment: body.minInvestment || body.franchiseDetails?.minInvestment || '0',
+        maxInvestment: body.maxInvestment || body.franchiseDetails?.maxInvestment || '0',
+        royalty: body.royalty || body.franchiseDetails?.royalty || 'Varies',
+        establishmentYear: body.establishmentYear || body.franchiseDetails?.establishmentYear || '',
+        franchiseStartedYear: body.franchiseStartedYear || body.franchiseDetails?.franchiseStartedYear || '',
+        numberOfOutlets: body.numberOutlets || body.franchiseDetails?.numberOfOutlets || '',
+        minPaybackPeriod: body.minPaybackPeriod || body.franchiseDetails?.minPaybackPeriod || '',
+        maxPaybackPeriod: body.maxPaybackPeriod || body.franchiseDetails?.maxPaybackPeriod || '',
+        headquarter: body.headquarter || body.franchiseDetails?.headquarter || 'Multiple Locations',
+        remarks: body.remarks || body.franchiseDetails?.remarks || '',
+        brandDeck: body.brandDeck || body.franchiseDetails?.brandDeck || '',
+        productList: body.productList || body.franchiseDetails?.productList || '',
+        roiSheet: body.roiSheet || body.franchiseDetails?.roiSheet || '',
+        investorDiscoveryKitUrl: body.investorDiscoveryKitUrl || body.franchiseDetails?.investorDiscoveryKitUrl || ''
       }
     };
     
     console.log('Saving franchise data:', newFranchise);
     await set(newFranchiseRef, newFranchise);
     
+    // Invalidate the cache to ensure fresh data on next request
+    revalidateTag('franchises');
+    
     return NextResponse.json({
       success: true,
       franchise: {
-        id: newId,
         ...newFranchise
       }
     });

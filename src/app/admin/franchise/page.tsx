@@ -148,11 +148,27 @@ function FranchiseContent() {
   // Format currency similar to plots page
   const formatCurrency = (amount: number | string): string => {
     if (!amount) return 'Not specified';
-    if (typeof amount === 'string' && isNaN(Number(amount))) {
-      return amount; // Return formatted string like "20 LACS"
+    
+    // If it's already a formatted string with LACS, return as is
+    if (typeof amount === 'string' && amount.includes('LACS')) {
+      return amount.startsWith('₹') ? amount : `₹${amount}`;
     }
+    
+    // If it's a string that can't be converted to number, return as is
+    if (typeof amount === 'string' && isNaN(Number(amount))) {
+      return amount;
+    }
+    
+    // Convert to number and format
     const numAmount = typeof amount === 'string' ? Number(amount) : amount;
     if (isNaN(numAmount)) return 'Not specified';
+    
+    // For amounts in lakhs (typically > 100000), display as LACS
+    if (numAmount >= 100000) {
+      const lakhs = numAmount / 100000;
+      return `₹${lakhs} LACS`;
+    }
+    
     return `₹${numAmount.toLocaleString('en-IN')}`;
   };
 

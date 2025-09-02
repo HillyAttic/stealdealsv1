@@ -7,10 +7,51 @@ import { FranchiseCard, FranchiseModal, FranchiseContactModal } from '@/componen
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 
 // Franchise interface to match the database
+interface FranchiseDetails {
+  brand?: string;
+  name?: string;
+  industry?: string;
+  segment?: string;
+  product?: string;
+  model?: string;
+  minArea?: string;
+  maxArea?: string;
+  minInvestment?: string;
+  maxInvestment?: string;
+  royalty?: string;
+  establishmentYear?: string;
+  franchiseStartedYear?: string;
+  numberOfOutlets?: string;
+  numberOutlets?: string; // Legacy naming
+  minPaybackPeriod?: string;
+  maxPaybackPeriod?: string;
+  headquarter?: string;
+  remarks?: string;
+  brandDeck?: string;
+  productList?: string;
+  roiSheet?: string;
+  investorDiscoveryKitUrl?: string;
+}
+
 interface Franchise {
   id?: string | null;
-  name: string;
-  industry: string;
+  type?: string;
+  title?: string;
+  description?: string;
+  location?: string;
+  price?: number;
+  images?: string[];
+  image?: string;
+  createdAt?: number;
+  updatedAt?: number;
+  status?: string;
+  
+  // franchiseDetails is the primary source of franchise-specific data
+  franchiseDetails?: FranchiseDetails;
+  
+  // Legacy fields for backward compatibility
+  name?: string;
+  industry?: string;
   segment?: string;
   product?: string;
   model?: string;
@@ -30,15 +71,9 @@ interface Franchise {
   productList?: string;
   roiSheet?: string;
   investorDiscoveryKitUrl?: string;
-  investment: number | string;
-  location: string;
-  status: string;
-  roi: string;
-  description?: string;
+  investment?: number | string;
+  roi?: string;
   requirements?: string;
-  image?: string;
-  createdAt?: number;
-  updatedAt?: number;
 }
 
 interface FranchisePageClientProps {
@@ -71,17 +106,41 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
     }
   }, []);
 
+  // Helper function to get franchise field value with fallback support
+  const getFranchiseField = (franchise: Franchise, field: keyof FranchiseDetails): string => {
+    if (!franchise) return '';
+    
+    const details = franchise.franchiseDetails;
+    
+    switch (field) {
+      case 'name':
+        return details?.name || details?.brand || franchise.name || franchise.title || '';
+      case 'brand':
+        return details?.brand || details?.name || franchise.name || franchise.title || '';
+      case 'industry':
+        return details?.industry || franchise.industry || '';
+      case 'segment':
+        return details?.segment || franchise.segment || '';
+      case 'model':
+        return details?.model || franchise.model || '';
+      case 'headquarter':
+        return details?.headquarter || franchise.headquarter || franchise.location || '';
+      default:
+        return details?.[field] || (franchise as any)[field] || '';
+    }
+  };
+
   // Memoized filter options
   const filterOptions = useMemo(() => {
-    const industries = Array.from(new Set(franchises.map(f => f.industry))).filter(Boolean);
+    const industries = Array.from(new Set(franchises.map(f => getFranchiseField(f, 'industry')))).filter(Boolean);
     // Only use locations that exist in the database (from both location and headquarter fields)
     const allLocations = Array.from(new Set([
       ...franchises.map(f => f.location).filter(Boolean),
-      ...franchises.map(f => f.headquarter).filter(Boolean)
+      ...franchises.map(f => getFranchiseField(f, 'headquarter')).filter(Boolean)
     ])).filter(Boolean).sort();
     
-    const segments = Array.from(new Set(franchises.map(f => f.segment))).filter(Boolean);
-    const models = Array.from(new Set(franchises.map(f => f.model))).filter(Boolean);
+    const segments = Array.from(new Set(franchises.map(f => getFranchiseField(f, 'segment')))).filter(Boolean);
+    const models = Array.from(new Set(franchises.map(f => getFranchiseField(f, 'model')))).filter(Boolean);
 
     return { industries, allLocations, segments, models };
   }, [franchises]);
@@ -101,7 +160,12 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
   
   // Helper function to get investment amount as number with improved parsing
   const getInvestmentAmount = (franchise: Franchise) => {
-    const investment = franchise.minInvestment || franchise.investment;
+    // Get investment from franchiseDetails first, then fallback to legacy fields
+    const details = franchise.franchiseDetails;
+    const investment = details?.minInvestment || 
+                     franchise.minInvestment || 
+                     franchise.investment ||
+                     franchise.price;
     
     if (typeof investment === 'string') {
       // Handle different string formats
@@ -135,17 +199,24 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
   const filteredFranchises = useMemo(() => {
     return franchises.filter(franchise => {
       const searchStr = searchTerm.toLowerCase();
+      
+      // Get fields from franchiseDetails with fallback to root level
+      const franchiseName = getFranchiseField(franchise, 'name');
+      const franchiseIndustry = getFranchiseField(franchise, 'industry');
+      const franchiseLocation = getFranchiseField(franchise, 'headquarter');
+      const franchiseDescription = franchise.franchiseDetails?.remarks || franchise.description || franchise.remarks || '';
+      
       const matchesSearch = 
-        (franchise.name?.toLowerCase().includes(searchStr) || '') ||
-        (franchise.industry?.toLowerCase().includes(searchStr) || '') ||
-        (franchise.location?.toLowerCase().includes(searchStr) || '') ||
-        (franchise.description?.toLowerCase().includes(searchStr) || '');
+        (franchiseName.toLowerCase().includes(searchStr)) ||
+        (franchiseIndustry.toLowerCase().includes(searchStr)) ||
+        (franchiseLocation.toLowerCase().includes(searchStr)) ||
+        (franchiseDescription.toLowerCase().includes(searchStr));
         
-      const matchesIndustry = selectedIndustry ? franchise.industry === selectedIndustry : true;
+      const matchesIndustry = selectedIndustry ? franchiseIndustry === selectedIndustry : true;
       const matchesLocation = selectedLocation ? 
-        (franchise.location === selectedLocation || franchise.headquarter === selectedLocation) : true;
-      const matchesSegment = selectedSegment ? franchise.segment === selectedSegment : true;
-      const matchesModel = selectedModel ? franchise.model === selectedModel : true;
+        (franchise.location === selectedLocation || franchiseLocation === selectedLocation) : true;
+      const matchesSegment = selectedSegment ? getFranchiseField(franchise, 'segment') === selectedSegment : true;
+      const matchesModel = selectedModel ? getFranchiseField(franchise, 'model') === selectedModel : true;
       
       // Investment range filter
       let matchesInvestment = true;

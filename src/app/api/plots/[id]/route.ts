@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getPlotById, updatePlot, deletePlot, Plot } from '../../../../lib/firebase';
+import { revalidateTag } from 'next/cache';
 
 // Get a specific plot by ID
 export async function GET(
@@ -86,6 +87,9 @@ export async function PUT(
     };
 
     const updatedPlot = await updatePlot(id, plotData);
+    
+    // Invalidate the cache to ensure fresh data on next request
+    revalidateTag('plots');
 
     return NextResponse.json({
       success: true,
@@ -118,6 +122,9 @@ export async function DELETE(
     const success = await deletePlot(id);
     
     if (success) {
+      // Invalidate the cache to ensure fresh data on next request
+      revalidateTag('plots');
+      
       return NextResponse.json({ success: true });
     } else {
       throw new Error('Failed to delete plot');

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAllProperties, addProperty, Property } from '../../../lib/firebase';
+import { revalidateTag } from 'next/cache';
 
 // Get all properties with optional filtering - no authentication required
 export async function GET(request: NextRequest) {
@@ -38,7 +39,8 @@ export async function GET(request: NextRequest) {
       
       properties = properties.filter(p => {
         // Handle both the migrated structure (type field) and legacy structure (propertyType field)
-        const itemType = p.type || p.propertyType || '';
+        // Using type assertion since the flattened properties do have a 'type' field added
+        const itemType = (p as any).type || p.propertyType || '';
         return itemType.toLowerCase() === propertyType.toLowerCase();
       });
     }
@@ -200,6 +202,10 @@ export async function POST(request: NextRequest) {
       
       console.log('New property added to Firebase:', newProperty);
       
+      // Invalidate the cache to ensure fresh data on next request
+      revalidateTag('vacant-properties');
+      revalidateTag('all-properties');
+      
       return NextResponse.json({
         success: true,
         property: newProperty
@@ -219,4 +225,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
