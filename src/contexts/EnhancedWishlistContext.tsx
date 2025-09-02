@@ -127,7 +127,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     return 'anonymous';
   }, [user?.id]);
 
-  // Enhanced add to wishlist with retry and offline support
+  // Enhanced add to wishlist with retry and production resilience
   const addToWishlist = async (propertyId: string): Promise<boolean> => {
     const userId = getCurrentUserId();
     
@@ -144,83 +144,132 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     const newItems = new Set([...wishlistItems, propertyId]);
     setWishlistItems(newItems);
     
-    try {
-      if (isSignedIn && userId !== 'anonymous') {
-        if (isOnline) {
-          // Use API endpoint instead of direct database calls
-          const response = await fetch('/api/user/wishlist', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'x-user-id': userId,
-              ...(process.env.NODE_ENV === 'development' && {
-                'x-mock-user-id': userId,
-                'x-mock-user-email': 'user@example.com'
-              })
-            },
-            body: JSON.stringify({
-              propertyId,
-              action: 'add',
-              priority: 'medium'
-            })
-          });
-          
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `HTTP ${response.status}`);
-          }
-          
-          const data = await response.json();
-          if (!data.success) {
-            throw new Error(data.error || 'Failed to add to wishlist');
-          }
-          
-          showSuccessRef('Added to wishlist', 'Property saved to your wishlist');
-          // The Firebase listener will update the UI automatically
-        } else {
-          // For offline mode, just show warning - we'll implement proper offline support later
-          showWarningRef('No internet connection', 'Please check your connection and try again');
-          throw new Error('No internet connection');
-        }
-      } else {
-        // localStorage operation for non-authenticated users
-        saveToLocalStorage(newItems);
-        showSuccessRef('Added to wishlist', 'Property saved locally');
-      }
-      
-      // Log activity
+    // Enhanced retry mechanism
+    const maxRetries = process.env.NODE_ENV === 'production' ? 3 : 1;
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        // Removed activity logging since we're removing the activity context
-        // await logActivity('wishlist_add', propertyId, {
-        //   timestamp: new Date().toISOString(),
-        //   source: 'wishlist_button'
-        // });
-      } catch (activityError) {
-        console.warn(`[EnhancedWishlistContext] ⚠️ Failed to log wishlist_add activity:`, activityError);
+        if (isSignedIn && userId !== 'anonymous') {
+          if (isOnline) {
+            // Enhanced headers for production authentication
+            const headers: Record<string, string> = {
+              'Content-Type': 'application/json',
+              'x-user-id': userId
+            };
+            
+            // Production-specific headers
+            if (process.env.NODE_ENV === 'production') {
+              headers['x-fallback-user-id'] = userId;
+            } else {
+              headers['x-mock-user-id'] = userId;
+              headers['x-mock-user-email'] = 'user@example.com';
+            }
+            
+            console.log(`[EnhancedWishlistContext] Adding to wishlist (attempt ${attempt + 1}):`, {
+              propertyId,
+              userId,
+              environment: process.env.NODE_ENV,
+              headers: Object.keys(headers)
+            });
+            
+            // Use API endpoint with retry parameter
+            const response = await fetch(`/api/user/wishlist?retry=${attempt}`, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                propertyId,
+                action: 'add',
+                priority: 'medium'
+              })
+            });
+            
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              const error = new Error(errorData.error || `HTTP ${response.status}`);
+              
+              // Check if this is a retryable error
+              if (response.status === 401 && attempt < maxRetries) {
+                console.warn(`[EnhancedWishlistContext] Authentication failed (attempt ${attempt + 1}), retrying...`);
+                lastError = error;
+                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                continue;
+              }
+              
+              throw error;
+            }
+            
+            const data = await response.json();
+            if (!data.success) {
+              const error = new Error(data.error || 'Failed to add to wishlist');
+              
+              // Retry on server errors
+              if (attempt < maxRetries) {
+                console.warn(`[EnhancedWishlistContext] Server error (attempt ${attempt + 1}), retrying...`);
+                lastError = error;
+                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                continue;
+              }
+              
+              throw error;
+            }
+            
+            showSuccessRef('Added to wishlist', 'Property saved to your wishlist');
+            console.log(`[EnhancedWishlistContext] ✅ Successfully added ${propertyId} after ${attempt + 1} attempts`);
+            // The Firebase listener will update the UI automatically
+            break;
+          } else {
+            // For offline mode, just show warning
+            showWarningRef('No internet connection', 'Please check your connection and try again');
+            throw new Error('No internet connection');
+          }
+        } else {
+          // localStorage operation for non-authenticated users
+          saveToLocalStorage(newItems);
+          showSuccessRef('Added to wishlist', 'Property saved locally');
+          break;
+        }
+        
+      } catch (error) {
+        lastError = error as Error;
+        console.error(`[EnhancedWishlistContext] ❌ Attempt ${attempt + 1} failed for ${propertyId}:`, error);
+        
+        // If this is the last attempt, break and handle error below
+        if (attempt === maxRetries) {
+          break;
+        }
+      }
+    }
+    
+    // Handle final results
+    try {
+      // If we got here and have an error, all attempts failed
+      if (lastError) {
+        console.error(`[EnhancedWishlistContext] ❌ All ${maxRetries + 1} attempts failed for ${propertyId}:`, lastError);
+        
+        // Revert optimistic update
+        setWishlistItems(previousItems);
+        
+        const errorMessage = process.env.NODE_ENV === 'production' 
+          ? `Unable to add property to wishlist. Please try again.`
+          : `Failed to add property to wishlist: ${lastError.message}`;
+        
+        setError(errorMessage);
+        showErrorRef('Wishlist Error', errorMessage);
+        
+        return false;
       }
       
-      // Clear any previous errors
+      // Clear any previous errors on success
       setError(null);
       return true;
-      
-    } catch (error) {
-      console.error(`[EnhancedWishlistContext] ❌ Failed to add ${propertyId}:`, error);
-      
-      // Revert optimistic update
-      setWishlistItems(previousItems);
-      
-      const errorMessage = `Failed to add property to wishlist`;
-      setError(errorMessage);
-      showErrorRef('Wishlist Error', errorMessage);
-      
-      return false;
     } finally {
-      // Clear loading state for this property
+      // Always clear loading state
       setOperationLoadingState(propertyId, false);
     }
   };
 
-  // Enhanced remove from wishlist with retry and offline support
+  // Enhanced remove from wishlist with retry and production resilience
   const removeFromWishlist = async (propertyId: string): Promise<boolean> => {
     const userId = getCurrentUserId();
     console.log(`[EnhancedWishlistContext] ➖ Removing property ${propertyId} for user ${userId}`);
@@ -240,76 +289,124 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     newItems.delete(propertyId);
     setWishlistItems(newItems);
     
+    // Enhanced retry mechanism
+    const maxRetries = process.env.NODE_ENV === 'production' ? 3 : 1;
+    let lastError: Error | null = null;
+    
     try {
-      if (isSignedIn && userId !== 'anonymous') {
-        if (isOnline) {
-          // Use API endpoint instead of direct database calls
-          const response = await fetch('/api/user/wishlist', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'x-user-id': userId,
-              ...(process.env.NODE_ENV === 'development' && {
-                'x-mock-user-id': userId,
-                'x-mock-user-email': 'user@example.com'
-              })
-            },
-            body: JSON.stringify({
-              propertyId,
-              action: 'remove'
-            })
-          });
-          
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `HTTP ${response.status}`);
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          if (isSignedIn && userId !== 'anonymous') {
+            if (isOnline) {
+              // Enhanced headers for production authentication
+              const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+                'x-user-id': userId
+              };
+              
+              // Production-specific headers
+              if (process.env.NODE_ENV === 'production') {
+                headers['x-fallback-user-id'] = userId;
+              } else {
+                headers['x-mock-user-id'] = userId;
+                headers['x-mock-user-email'] = 'user@example.com';
+              }
+              
+              console.log(`[EnhancedWishlistContext] Removing from wishlist (attempt ${attempt + 1}):`, {
+                propertyId,
+                userId,
+                environment: process.env.NODE_ENV
+              });
+              
+              // Use API endpoint with retry parameter
+              const response = await fetch(`/api/user/wishlist?retry=${attempt}`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                  propertyId,
+                  action: 'remove'
+                })
+              });
+              
+              if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                const error = new Error(errorData.error || `HTTP ${response.status}`);
+                
+                // Check if this is a retryable error
+                if (response.status === 401 && attempt < maxRetries) {
+                  console.warn(`[EnhancedWishlistContext] Authentication failed (attempt ${attempt + 1}), retrying...`);
+                  lastError = error;
+                  await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                  continue;
+                }
+                
+                throw error;
+              }
+              
+              const data = await response.json();
+              if (!data.success) {
+                const error = new Error(data.error || 'Failed to remove from wishlist');
+                
+                // Retry on server errors
+                if (attempt < maxRetries) {
+                  console.warn(`[EnhancedWishlistContext] Server error (attempt ${attempt + 1}), retrying...`);
+                  lastError = error;
+                  await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                  continue;
+                }
+                
+                throw error;
+              }
+              
+              console.log(`[EnhancedWishlistContext] ✅ Successfully removed ${propertyId} after ${attempt + 1} attempts`);
+              showSuccessRef('Removed from wishlist', 'Property removed from your wishlist');
+              // The Firebase listener will update the UI automatically
+              break;
+            } else {
+              // For offline mode, just show warning
+              showWarningRef('No internet connection', 'Please check your connection and try again');
+              throw new Error('No internet connection');
+            }
+          } else {
+            // localStorage operation for non-authenticated users
+            saveToLocalStorage(newItems);
+            console.log(`[EnhancedWishlistContext] ✅ Successfully removed ${propertyId} from localStorage`);
+            showSuccessRef('Removed from wishlist', 'Property removed locally');
+            break;
           }
           
-          const data = await response.json();
-          if (!data.success) {
-            throw new Error(data.error || 'Failed to remove from wishlist');
-          }
+        } catch (error) {
+          lastError = error as Error;
+          console.error(`[EnhancedWishlistContext] ❌ Attempt ${attempt + 1} failed for removing ${propertyId}:`, error);
           
-          console.log(`[EnhancedWishlistContext] ✅ Successfully removed ${propertyId} via API`);
-          showSuccessRef('Removed from wishlist', 'Property removed from your wishlist');
-          // The Firebase listener will update the UI automatically
-        } else {
-          // For offline mode, just show warning - we'll implement proper offline support later
-          showWarningRef('No internet connection', 'Please check your connection and try again');
-          throw new Error('No internet connection');
+          // If this is the last attempt, break and handle error below
+          if (attempt === maxRetries) {
+            break;
+          }
         }
-      } else {
-        // localStorage operation for non-authenticated users
-        saveToLocalStorage(newItems);
-        console.log(`[EnhancedWishlistContext] ✅ Successfully removed ${propertyId} from localStorage`);
-        showSuccessRef('Removed from wishlist', 'Property removed locally');
       }
       
-      // Log activity - removed since activity context was removed
-      // try {
-      //   await logActivity('wishlist_remove', propertyId, {
-      //     timestamp: new Date().toISOString(),
-      //     source: 'wishlist_button'
-      //   });
-      // } catch (activityError) {
-      //   console.warn(`[EnhancedWishlistContext] ⚠️ Failed to log wishlist_remove activity:`, activityError);
-      // }
+      // If we got here and have an error, all attempts failed
+      if (lastError) {
+        console.error(`[EnhancedWishlistContext] ❌ All ${maxRetries + 1} attempts failed for removing ${propertyId}:`, lastError);
+        
+        // Revert optimistic update
+        setWishlistItems(previousItems);
+        
+        const errorMessage = process.env.NODE_ENV === 'production' 
+          ? `Unable to remove property from wishlist. Please try again.`
+          : `Failed to remove property from wishlist: ${lastError.message}`;
+        
+        setError(errorMessage);
+        showErrorRef('Wishlist Error', errorMessage);
+        
+        return false;
+      }
       
       // Clear any previous errors
       setError(null);
       return true;
       
-    } catch (error) {
-      console.error(`[EnhancedWishlistContext] ❌ Failed to remove ${propertyId}:`, error);
-      
-      // Revert optimistic update
-      setWishlistItems(previousItems);
-      
-      const errorMessage = `Failed to remove property from wishlist`;
-      setError(errorMessage);
-      showErrorRef('Wishlist Error', errorMessage);
-      
-      return false;
     } finally {
       // Clear loading state for this property
       setOperationLoadingState(propertyId, false);
@@ -400,91 +497,187 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     }
   };
 
-  // Initial load and listener setup with error handling - stable dependencies only
+  // Enhanced initial load and listener setup with production resilience
   useEffect(() => {
     const userId = user?.id || (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' ? 'user-1' : 'anonymous');
+    const isProduction = process.env.NODE_ENV === 'production';
     
-    console.log(`[EnhancedWishlistContext] 🚀 Initializing for user: ${userId}, authenticated: ${isSignedIn}`);
+    console.log(`[EnhancedWishlistContext] 🚀 Initializing for user: ${userId}, authenticated: ${isSignedIn}, environment: ${isProduction ? 'production' : 'development'}`);
     
     try {
-      if (isSignedIn && userId !== 'anonymous' && userId !== 'user-1') {
+      // Production-aware authentication check
+      const shouldUseFirebase = () => {
+        if (!isSignedIn) return false;
+        
+        // In production, be more lenient about user ID requirements
+        if (isProduction) {
+          // Allow Firebase setup if we have any valid user indicator
+          return userId !== 'anonymous' && userId !== null && userId !== undefined;
+        } else {
+          // Development: strict checks
+          return userId !== 'anonymous' && userId !== 'user-1' && userId;
+        }
+      };
+      
+      if (shouldUseFirebase()) {
         // Authenticated user - use Firebase with real-time listener
         if (!isListenerActive) {
           setIsLoading(true);
           
-          // Setup Firebase real-time listener inline to avoid dependency issues
-          const wishlistRef = getUserWishlistRef(userId);
-          
-          const unsubscribe = onValue(wishlistRef, (snapshot) => {
+          // Enhanced Firebase setup with error recovery
+          const setupFirebaseListener = (attempt: number = 0) => {
             try {
-              console.log(`[EnhancedWishlistContext] 🔄 Real-time update received`);
+              console.log(`[EnhancedWishlistContext] Setting up Firebase listener (attempt ${attempt + 1}) for user: ${userId}`);
               
-              if (!snapshot.exists()) {
-                console.log(`[EnhancedWishlistContext] 📭 No wishlist data, setting empty`);
-                setWishlistItems(new Set());
-                setIsLoading(false);
-                setIsInitialized(true);
-                return;
-              }
+              // Setup Firebase real-time listener
+              const wishlistRef = getUserWishlistRef(userId);
               
-              const propertyIds = new Set<string>();
-              snapshot.forEach((childSnapshot) => {
-                const data = childSnapshot.val();
-                if (data && data.propertyId) {
-                  propertyIds.add(data.propertyId);
+              const unsubscribe = onValue(wishlistRef, (snapshot) => {
+                try {
+                  console.log(`[EnhancedWishlistContext] 🔄 Real-time update received for user: ${userId}`);
+                  
+                  if (!snapshot.exists()) {
+                    console.log(`[EnhancedWishlistContext] 📭 No wishlist data, setting empty`);
+                    setWishlistItems(new Set());
+                    setIsLoading(false);
+                    setIsInitialized(true);
+                    setError(null); // Clear any previous errors
+                    return;
+                  }
+                  
+                  const propertyIds = new Set<string>();
+                  snapshot.forEach((childSnapshot) => {
+                    const data = childSnapshot.val();
+                    if (data && data.propertyId) {
+                      propertyIds.add(data.propertyId);
+                    }
+                  });
+                  
+                  console.log(`[EnhancedWishlistContext] 🔄 Real-time update: ${propertyIds.size} items`);
+                  setWishlistItems(propertyIds);
+                  setIsLoading(false);
+                  setIsInitialized(true);
+                  setError(null);
+                  
+                } catch (error) {
+                  console.error('[EnhancedWishlistContext] ❌ Error processing real-time update:', error);
+                  
+                  // In production, be more resilient to processing errors
+                  if (isProduction) {
+                    setError(null); // Don't show error to user for processing issues
+                    setIsLoading(false);
+                    setIsInitialized(true);
+                  } else {
+                    setError('Failed to process wishlist update');
+                    setIsLoading(false);
+                  }
+                }
+              }, (error) => {
+                console.error(`[EnhancedWishlistContext] ❌ Firebase listener error (attempt ${attempt + 1}):`, error);
+                
+                // Enhanced error handling with retry logic
+                if (isProduction && attempt < 2) {
+                  console.log(`[EnhancedWishlistContext] Production: Retrying Firebase connection in 3 seconds...`);
+                  setTimeout(() => {
+                    setupFirebaseListener(attempt + 1);
+                  }, 3000 * (attempt + 1));
+                } else {
+                  const errorMsg = isProduction 
+                    ? 'Unable to sync wishlist. Using local data.'
+                    : 'Connection to wishlist service failed';
+                  setError(errorMsg);
+                  setIsLoading(false);
+                  
+                  // In production, fall back to local storage even for authenticated users
+                  if (isProduction) {
+                    console.log('[EnhancedWishlistContext] Production: Falling back to localStorage due to Firebase issues');
+                    try {
+                      const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
+                      if (stored) {
+                        const items = JSON.parse(stored);
+                        setWishlistItems(new Set(items));
+                        console.log(`[EnhancedWishlistContext] 📱 Production fallback: Loaded ${items.length} items from localStorage`);
+                        setIsInitialized(true);
+                      }
+                    } catch (localError) {
+                      console.error('[EnhancedWishlistContext] ❌ Production: Failed localStorage fallback:', localError);
+                      setIsInitialized(true);
+                    }
+                  }
                 }
               });
-              
-              console.log(`[EnhancedWishlistContext] 🔄 Real-time update: ${propertyIds.size} items`);
-              setWishlistItems(propertyIds);
-              setIsLoading(false);
-              setIsInitialized(true);
-              setError(null);
-              
-            } catch (error) {
-              console.error('[EnhancedWishlistContext] ❌ Error processing real-time update:', error);
-              setError('Failed to process wishlist update');
-              setIsLoading(false);
-            }
-          }, (error) => {
-            console.error('[EnhancedWishlistContext] ❌ Firebase listener error:', error);
-            setError('Connection to wishlist service failed');
-            setIsLoading(false);
-          });
 
-          setIsListenerActive(true);
-          
-          return () => {
-            console.log(`[EnhancedWishlistContext] 🔥 Cleaning up Firebase listener for user ${userId}`);
-            unsubscribe();
-            setIsListenerActive(false);
+              setIsListenerActive(true);
+              
+              return () => {
+                console.log(`[EnhancedWishlistContext] 🔥 Cleaning up Firebase listener for user ${userId}`);
+                unsubscribe();
+                setIsListenerActive(false);
+              };
+            } catch (setupError) {
+              console.error(`[EnhancedWishlistContext] ❌ Firebase setup error (attempt ${attempt + 1}):`, setupError);
+              
+              if (isProduction && attempt < 2) {
+                setTimeout(() => {
+                  setupFirebaseListener(attempt + 1);
+                }, 2000 * (attempt + 1));
+              } else {
+                setError(isProduction ? 'Using local wishlist storage' : 'Failed to setup wishlist service');
+                setIsLoading(false);
+                setIsInitialized(true);
+              }
+            }
           };
+          
+          return setupFirebaseListener();
         }
       } else {
-        // Non-authenticated user - use localStorage
-        console.log(`[EnhancedWishlistContext] 📱 Using localStorage for non-authenticated user`);
+        // Non-authenticated user or production fallback - use localStorage
+        console.log(`[EnhancedWishlistContext] 📱 Using localStorage (authenticated: ${isSignedIn}, production: ${isProduction})`);
         setIsLoading(false);
         setIsInitialized(true);
         
-        // Load from localStorage inline to avoid dependency issues
+        // Load from localStorage with enhanced error handling
         if (typeof window !== 'undefined') {
           try {
             const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
             if (stored) {
               const items = JSON.parse(stored);
-              setWishlistItems(new Set(items));
-              console.log(`[EnhancedWishlistContext] 📱 Loaded ${items.length} items from localStorage`);
+              if (Array.isArray(items)) {
+                setWishlistItems(new Set(items));
+                console.log(`[EnhancedWishlistContext] 📱 Loaded ${items.length} items from localStorage`);
+              } else {
+                console.warn('[EnhancedWishlistContext] Invalid localStorage data format, resetting');
+                localStorage.removeItem(WISHLIST_STORAGE_KEY);
+              }
             }
+            setError(null); // Clear any previous errors
           } catch (error) {
             console.error('[EnhancedWishlistContext] ❌ Failed to load from localStorage:', error);
-            setError('Failed to load saved wishlist items');
+            
+            // Clear corrupted localStorage data
+            try {
+              localStorage.removeItem(WISHLIST_STORAGE_KEY);
+            } catch (clearError) {
+              console.error('[EnhancedWishlistContext] ❌ Failed to clear corrupted localStorage:', clearError);
+            }
+            
+            const errorMsg = isProduction 
+              ? null // Don't show localStorage errors to production users
+              : 'Failed to load saved wishlist items';
+            setError(errorMsg);
           }
         }
       }
     } catch (error) {
       console.error('[EnhancedWishlistContext] ❌ Initialization error:', error);
-      setError('Failed to initialize wishlist');
+      
+      const errorMsg = isProduction 
+        ? null // Don't show initialization errors to production users
+        : 'Failed to initialize wishlist';
+      setError(errorMsg);
       setIsLoading(false);
+      setIsInitialized(true);
     }
   }, [isSignedIn, user?.id]);
 

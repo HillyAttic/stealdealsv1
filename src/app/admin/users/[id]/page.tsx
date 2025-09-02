@@ -55,8 +55,8 @@ export default function AdminUserDetailsPage() {
       setIsLoading(true);
       setError(null);
 
-      // Fetch user from the users list API with search by ID
-      const response = await fetch(`/api/admin/users?search=${userId}&limit=1`, {
+      // Fetch user from the dedicated user details API
+      const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -70,13 +70,7 @@ export default function AdminUserDetailsPage() {
         throw new Error(data.error || 'Failed to fetch user details');
       }
 
-      // Find the user in the response
-      const foundUser = data.users.find((u: ClerkUser) => u.id === userId);
-      if (!foundUser) {
-        throw new Error('User not found');
-      }
-
-      setUser(foundUser);
+      setUser(data.user);
     } catch (err) {
       console.error('Error fetching user details:', err);
       setError(err instanceof Error ? err.message : 'Failed to load user details');

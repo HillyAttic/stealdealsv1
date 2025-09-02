@@ -23,6 +23,12 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
   const [editNotes, setEditNotes] = useState('');
   const [editPriority, setEditPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [isDeleting, setIsDeleting] = useState<Set<string>>(new Set());
+  
+  // Enhanced retry mechanism for authentication failures
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000; // 2 seconds
 
   // Fetch detailed wishlist data when wishlist items change
   useEffect(() => {

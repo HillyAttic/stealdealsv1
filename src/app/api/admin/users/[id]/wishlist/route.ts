@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { getUserWishlist, getWishlistStats, getRawWishlistItems } from '@/lib/database/wishlist';
+import { ActivityLogger } from '@/lib/services/activityLogger';
 
 interface AdminWishlistParams {
   id: string;
@@ -321,6 +322,24 @@ export async function POST(
             },
             { status: 404 }
           );
+        }
+
+        // Log real-time activity for admin action
+        try {
+          const activityLogger = ActivityLogger.getInstance();
+          await activityLogger.logWishlistActivity({
+            userId: userId,
+            action: 'remove',
+            propertyId,
+            metadata: {
+              reason: 'admin_action',
+              adminUserId: adminUserId
+            }
+          });
+          console.log(`[Admin Wishlist API] 📝 Activity logged: admin remove ${propertyId} for user ${userId}`);
+        } catch (activityError) {
+          console.warn(`[Admin Wishlist API] ⚠️ Failed to log activity:`, activityError);
+          // Don't fail the operation if activity logging fails
         }
 
         const duration = Date.now() - startTime;

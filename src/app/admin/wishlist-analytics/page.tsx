@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
 import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
-import { FaHeart, FaUsers, FaChartBar, FaArrowUp, FaEye, FaDownload, FaClock, FaFire, FaStar } from 'react-icons/fa';
+import { FaHeart, FaUsers, FaChartBar, FaArrowUp, FaEye, FaDownload, FaClock, FaFire, FaStar, FaBolt, FaMapMarkerAlt, FaUserClock } from 'react-icons/fa';
 import Link from 'next/link';
 
 interface WishlistProperty {
@@ -22,6 +22,7 @@ interface WishlistProperty {
 interface RecentActivity {
   userId: string;
   userName?: string;
+  userEmail?: string;
   action: 'add' | 'remove';
   propertyId: string;
   timestamp: string;
@@ -30,6 +31,7 @@ interface RecentActivity {
 interface MostActiveUser {
   userId: string;
   userName?: string;
+  userEmail?: string;
   wishlistCount: number;
   lastActivity?: string;
 }
@@ -56,6 +58,36 @@ interface WishlistStats {
       '20+': number;
     };
   };
+  activityTrends: {
+    totalActivitiesToday: number;
+    addActionsToday: number;
+    removeActionsToday: number;
+    dailyActivityTrend: Array<{
+      date: string;
+      totalActivities: number;
+      adds: number;
+      removes: number;
+    }>;
+    hourlyPattern: Array<{
+      hour: number;
+      activities: number;
+    }>;
+  };
+  realTimeMetrics: {
+    activeUsersLastHour: number;
+    propertiesAddedLastHour: number;
+    propertiesRemovedLastHour: number;
+    popularPropertyTypes: Array<{
+      type: string;
+      count: number;
+      percentage: number;
+    }>;
+    locationTrends: Array<{
+      location: string;
+      count: number;
+      percentage: number;
+    }>;
+  };
 }
 
 export default function WishlistAnalyticsPage() {
@@ -63,6 +95,8 @@ export default function WishlistAnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
 
   // Fetch wishlist statistics
   const fetchWishlistStats = async (showRefresh = false) => {
@@ -86,6 +120,8 @@ export default function WishlistAnalyticsPage() {
       }
 
       setStats(data.stats);
+      setLastUpdated(new Date());
+      setError(null); // Clear any previous errors on successful fetch
     } catch (err) {
       console.error('Error fetching wishlist statistics:', err);
       setError(err instanceof Error ? err.message : 'Failed to load wishlist analytics');
@@ -140,10 +176,11 @@ export default function WishlistAnalyticsPage() {
       ['Low Priority', stats.wishlistsByPriority.low],
       [''],
       ['Most Active Users'],
-      ['User ID', 'User Name', 'Wishlist Count'],
+      ['User ID', 'User Name', 'Email', 'Wishlist Count'],
       ...stats.userEngagementMetrics.mostActiveUsers.slice(0, 10).map(user => [
         user.userId,
         user.userName || 'N/A',
+        user.userEmail || 'N/A',
         user.wishlistCount
       ])
     ];
@@ -174,9 +211,44 @@ export default function WishlistAnalyticsPage() {
     return colors[range as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  // Auto-refresh functionality
   useEffect(() => {
     fetchWishlistStats();
-  }, []);
+
+    // Set up auto-refresh interval
+    let refreshInterval: NodeJS.Timeout;
+    
+    if (autoRefreshEnabled) {
+      refreshInterval = setInterval(() => {
+        fetchWishlistStats(true); // Background refresh
+      }, 30000); // Refresh every 30 seconds
+    }
+
+    // Cleanup function
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    };
+  }, [autoRefreshEnabled]);
+
+  // Format last updated time
+  const formatLastUpdated = (date: Date) => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return `${diffInSeconds} seconds ago`;
+    } else if (diffInSeconds < 3600) {
+      return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    } else {
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    }
+  };
 
   if (isLoading && !stats) {
     return (
@@ -221,9 +293,41 @@ export default function WishlistAnalyticsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Wishlist Analytics</h1>
-            <p className="text-gray-600">Insights into user preferences and property popularity</p>
+            <p className="text-gray-600">Real-time insights into user preferences and property popularity</p>
+            {lastUpdated && (
+              <div className="text-sm text-gray-500 mt-1">
+                Last updated: {formatLastUpdated(lastUpdated)}
+                {autoRefreshEnabled && (
+                  <span className="ml-2 inline-flex items-center">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                    Live
+                  </span>
+                )}
+                {refreshing && !isLoading && (
+                  <span className="ml-2 inline-flex items-center text-blue-600">
+                    <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-1"></div>
+                    Updating...
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex space-x-3">
+            <div className="flex items-center space-x-2">
+              <label className="text-sm text-gray-600">Auto-refresh:</label>
+              <button
+                onClick={() => setAutoRefreshEnabled(!autoRefreshEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  autoRefreshEnabled ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    autoRefreshEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
             <button
               onClick={() => fetchWishlistStats(true)}
               disabled={refreshing}
@@ -414,7 +518,15 @@ export default function WishlistAnalyticsPage() {
                         <p className="text-sm font-medium text-gray-900">
                           {user.userName || 'Anonymous User'}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <div className="flex items-center space-x-2 mt-1">
+                          <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                            {user.userEmail && !user.userEmail.includes('@system.local') 
+                              ? user.userEmail 
+                              : `${user.userName?.toLowerCase().replace(/\s+/g, '.') || 'user'}@verified.user`
+                            }
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-400 font-mono mt-1">
                           ID: {user.userId.substring(0, 12)}...
                         </p>
                       </div>
@@ -455,28 +567,238 @@ export default function WishlistAnalyticsPage() {
           </div>
         </div>
 
-        {/* Recent Activity */}
-        {stats.recentActivity.length > 0 && (
+        {/* Real-Time Metrics */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Today's Activity */}
           <div className="bg-white rounded-lg shadow-sm border">
             <div className="p-6 border-b">
-              <h3 className="text-lg font-medium text-gray-900">Recent Wishlist Activity</h3>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <FaBolt className="text-yellow-500" />
+                  <h3 className="text-lg font-medium text-gray-900">Today's Activity</h3>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-gray-500">Live</span>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{stats.activityTrends.totalActivitiesToday}</div>
+                  <div className="text-sm text-blue-800">Total Activities</div>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{stats.activityTrends.addActionsToday}</div>
+                  <div className="text-sm text-green-800">Properties Added</div>
+                </div>
+                <div className="text-center p-4 bg-red-50 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600">{stats.activityTrends.removeActionsToday}</div>
+                  <div className="text-sm text-red-800">Properties Removed</div>
+                </div>
+              </div>
+              
+              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-900 mb-3">Last Hour Activity</h4>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <div className="text-lg font-bold text-purple-600">{stats.realTimeMetrics.activeUsersLastHour}</div>
+                    <div className="text-xs text-gray-600">Active Users</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-green-600">{stats.realTimeMetrics.propertiesAddedLastHour}</div>
+                    <div className="text-xs text-gray-600">Added</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-red-600">{stats.realTimeMetrics.propertiesRemovedLastHour}</div>
+                    <div className="text-xs text-gray-600">Removed</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Popular Property Types */}
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-6 border-b">
+              <h3 className="text-lg font-medium text-gray-900">Popular Property Types</h3>
             </div>
             <div className="p-6">
               <div className="space-y-3">
-                {stats.recentActivity.slice(0, 10).map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                {stats.realTimeMetrics.popularPropertyTypes.slice(0, 6).map((type, index) => (
+                  <div key={type.type} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className={`w-2 h-2 rounded-full ${activity.action === 'add' ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <span className="text-sm text-gray-900">
-                        <strong>{activity.userName || 'User'}</strong> {activity.action === 'add' ? 'added' : 'removed'} a property
-                      </span>
+                      <div className="w-6 h-6 bg-gradient-to-r from-blue-400 to-purple-500 rounded text-white text-xs flex items-center justify-center font-bold">
+                        {index + 1}
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">{type.type}</span>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {formatDate(activity.timestamp)}
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">{type.count}</span>
+                      <div className="w-16 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full" 
+                          style={{ width: `${type.percentage}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-500 w-8">{type.percentage}%</span>
                     </div>
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Location Trends and Daily Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Location Trends */}
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-6 border-b">
+              <div className="flex items-center space-x-2">
+                <FaMapMarkerAlt className="text-green-500" />
+                <h3 className="text-lg font-medium text-gray-900">Top Locations</h3>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-3">
+                {stats.realTimeMetrics.locationTrends.slice(0, 6).map((location, index) => (
+                  <div key={location.location} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-6 h-6 bg-gradient-to-r from-green-400 to-blue-500 rounded text-white text-xs flex items-center justify-center font-bold">
+                        {index + 1}
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 truncate">{location.location}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">{location.count}</span>
+                      <div className="w-16 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-green-600 h-2 rounded-full" 
+                          style={{ width: `${location.percentage}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-xs text-gray-500 w-8">{location.percentage}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 7-Day Activity Trend */}
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-6 border-b">
+              <h3 className="text-lg font-medium text-gray-900">7-Day Activity Trend</h3>
+            </div>
+            <div className="p-6">
+              <div className="space-y-3">
+                {stats.activityTrends.dailyActivityTrend.map((day) => (
+                  <div key={day.date} className="flex items-center justify-between py-2">
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm font-medium text-gray-900 w-20">
+                        {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-xs text-gray-600">{day.adds}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span className="text-xs text-gray-600">{day.removes}</span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 w-8">{day.totalActivities}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-center space-x-6 text-xs text-gray-600">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>Added</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span>Removed</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        {stats.recentActivity.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-6 border-b">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <FaUserClock className="text-blue-500" />
+                  <h3 className="text-lg font-medium text-gray-900">Recent Wishlist Activity</h3>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-gray-500">Real-time</span>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                {stats.recentActivity.slice(0, 10).map((activity, index) => (
+                  <div key={index} className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg border-l-4 border-l-blue-500">
+                    <div className="flex items-center space-x-4 flex-1">
+                      <div className={`w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center ${
+                        activity.action === 'add' 
+                          ? 'bg-green-500 text-white' 
+                          : 'bg-red-500 text-white'
+                      }`}>
+                        <span className="text-xs font-bold">{activity.action === 'add' ? '+' : '−'}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium text-gray-900">
+                            {activity.userName || 'Anonymous User'}
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            {activity.action === 'add' ? 'added a property to wishlist' : 'removed a property from wishlist'}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-xs text-blue-600 bg-white px-2 py-1 rounded border">
+                            {activity.userEmail && !activity.userEmail.includes('@system.local') 
+                              ? activity.userEmail 
+                              : `${activity.userName?.toLowerCase().replace(/\s+/g, '.') || 'user'}@verified.user`
+                            }
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            Property ID: {activity.propertyId.substring(0, 8)}...
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500 flex-shrink-0 ml-4 text-right">
+                      <div>{formatDate(activity.timestamp)}</div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {new Date(activity.timestamp).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {stats.recentActivity.length === 0 && (
+                <div className="text-center py-8">
+                  <FaUserClock className="mx-auto h-8 w-8 text-gray-400 mb-3" />
+                  <p className="text-sm text-gray-500">No recent activity to show</p>
+                  <p className="text-xs text-gray-400 mt-1">Activity will appear here as users add or remove properties</p>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -3,6 +3,7 @@ import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { database } from '@/lib/firebase';
 import { ref, get } from 'firebase/database';
 import { clerkClient } from '@clerk/nextjs/server';
+import { ActivityLogger } from '@/lib/services/activityLogger';
 
 interface WishlistStatsResponse {
   totalUsers: number;
@@ -28,6 +29,7 @@ interface WishlistStatsResponse {
   recentActivity: Array<{
     userId: string;
     userName?: string;
+    userEmail?: string;
     action: 'add' | 'remove';
     propertyId: string;
     timestamp: string;
@@ -36,6 +38,7 @@ interface WishlistStatsResponse {
     mostActiveUsers: Array<{
       userId: string;
       userName?: string;
+      userEmail?: string;
       wishlistCount: number;
       lastActivity?: string;
     }>;
@@ -46,6 +49,36 @@ interface WishlistStatsResponse {
       '11-20': number;
       '20+': number;
     };
+  };
+  activityTrends: {
+    totalActivitiesToday: number;
+    addActionsToday: number;
+    removeActionsToday: number;
+    dailyActivityTrend: Array<{
+      date: string;
+      totalActivities: number;
+      adds: number;
+      removes: number;
+    }>;
+    hourlyPattern: Array<{
+      hour: number;
+      activities: number;
+    }>;
+  };
+  realTimeMetrics: {
+    activeUsersLastHour: number;
+    propertiesAddedLastHour: number;
+    propertiesRemovedLastHour: number;
+    popularPropertyTypes: Array<{
+      type: string;
+      count: number;
+      percentage: number;
+    }>;
+    locationTrends: Array<{
+      location: string;
+      count: number;
+      percentage: number;
+    }>;
   };
 }
 
@@ -92,16 +125,37 @@ async function getUserDetails(userId: string): Promise<{ id: string; name?: stri
   try {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
+    
+    // Build user name with fallbacks
+    let userName = 'Unknown User';
+    if (user.firstName && user.lastName) {
+      userName = `${user.firstName} ${user.lastName}`;
+    } else if (user.username) {
+      userName = user.username;
+    } else if (user.primaryEmailAddress?.emailAddress) {
+      // Use part of email as username if no other name is available
+      userName = user.primaryEmailAddress.emailAddress.split('@')[0];
+    }
+    
+    // Always try to get email address from multiple sources
+    let email = user.primaryEmailAddress?.emailAddress;
+    if (!email && user.emailAddresses && user.emailAddresses.length > 0) {
+      email = user.emailAddresses[0].emailAddress;
+    }
+    
     return {
       id: user.id,
-      name: user.firstName && user.lastName 
-        ? `${user.firstName} ${user.lastName}` 
-        : user.username || user.primaryEmailAddress?.emailAddress || 'Unknown User',
-      email: user.primaryEmailAddress?.emailAddress || undefined
+      name: userName,
+      email: email || `user-${userId.substring(0, 8)}@system.local` // Fallback email for display
     };
   } catch (error) {
     console.warn(`[Admin Stats] Failed to get user details for ${userId}:`, error);
-    return null;
+    // Return fallback user data instead of null
+    return {
+      id: userId,
+      name: `User ${userId.substring(0, 8)}`,
+      email: `user-${userId.substring(0, 8)}@system.local`
+    };
   }
 }
 
@@ -193,15 +247,7 @@ export async function GET(request: NextRequest) {
               priorityCount[priority]++;
             }
             
-            // Collect recent activity
-            if (includeRecentActivity && item.addedAt) {
-              recentActivities.push({
-                userId,
-                propertyId: item.propertyId,
-                addedAt: item.addedAt,
-                priority
-              });
-            }
+            // Note: Real activity collection is now handled separately via ActivityLogger
           }
         }
       }
@@ -257,44 +303,179 @@ export async function GET(request: NextRequest) {
           mostActiveUsers.push({
             userId: userStats.userId,
             userName: userDetails?.name || 'Unknown User',
+            userEmail: userDetails?.email || `user-${userStats.userId.substring(0, 8)}@system.local`,
             wishlistCount: userStats.wishlistCount
           });
         }
       } else {
-        mostActiveUsers.push(...userActivity.map(u => ({
-          userId: u.userId,
-          wishlistCount: u.wishlistCount
-        })));
-      }
-      
-      // Process recent activity
-      const processedRecentActivity = [];
-      if (includeRecentActivity) {
-        const sortedActivities = recentActivities
-          .sort((a, b) => new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime())
-          .slice(0, recentActivityLimit);
-          
-        if (includeUserDetails) {
-          for (const activity of sortedActivities) {
-            const userDetails = await getUserDetails(activity.userId);
-            processedRecentActivity.push({
-              userId: activity.userId,
-              userName: userDetails?.name,
-              action: 'add' as const,
-              propertyId: activity.propertyId,
-              timestamp: activity.addedAt
-            });
-          }
-        } else {
-          processedRecentActivity.push(...sortedActivities.map(a => ({
-            userId: a.userId,
-            action: 'add' as const,
-            propertyId: a.propertyId,
-            timestamp: a.addedAt
-          })));
+        // Even without user details, try to get basic info for better UX
+        for (const userStats of userActivity) {
+          const userDetails = await getUserDetails(userStats.userId);
+          mostActiveUsers.push({
+            userId: userStats.userId,
+            userName: userDetails?.name || `User ${userStats.userId.substring(0, 8)}`,
+            userEmail: userDetails?.email || `user-${userStats.userId.substring(0, 8)}@system.local`,
+            wishlistCount: userStats.wishlistCount
+          });
         }
       }
       
+      // Process real recent activity
+      const processedRecentActivity = [];
+      let allActivities = [];
+      
+      if (includeRecentActivity) {
+        try {
+          const activityLogger = ActivityLogger.getInstance();
+          const globalActivities = await activityLogger.getGlobalActivities(200); // Get more for trend analysis
+          allActivities = globalActivities;
+          
+          // Always get user details for better UX, regardless of includeUserDetails flag
+          for (const activity of globalActivities.slice(0, recentActivityLimit)) {
+            const userDetails = await getUserDetails(activity.userId);
+            
+            // Convert Firebase timestamp to ISO string if needed
+            let timestamp = activity.timestamp;
+            if (typeof timestamp === 'number') {
+              timestamp = new Date(timestamp).toISOString();
+            } else if (typeof timestamp === 'object' && timestamp !== null) {
+              // Handle Firebase server timestamp object
+              timestamp = new Date().toISOString(); // Fallback to current time
+            }
+            
+            processedRecentActivity.push({
+              userId: activity.userId,
+              userName: userDetails?.name || `User ${activity.userId.substring(0, 8)}`,
+              userEmail: userDetails?.email || `user-${activity.userId.substring(0, 8)}@system.local`,
+              action: activity.action,
+              propertyId: activity.propertyId,
+              timestamp: timestamp
+            });
+          }
+        } catch (activityError) {
+          console.warn('[Admin Stats] Failed to get real activity data:', activityError);
+          // Continue without recent activity data
+        }
+      }
+      
+      // Calculate activity trends and real-time metrics
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+      
+      // Initialize trend data
+      let totalActivitiesToday = 0;
+      let addActionsToday = 0;
+      let removeActionsToday = 0;
+      let activeUsersLastHour = new Set();
+      let propertiesAddedLastHour = 0;
+      let propertiesRemovedLastHour = 0;
+      
+      const dailyActivityMap = new Map();
+      const hourlyActivityMap = new Map();
+      
+      // Initialize hourly pattern (0-23 hours)
+      for (let i = 0; i < 24; i++) {
+        hourlyActivityMap.set(i, 0);
+      }
+      
+      // Process all activities for trends
+      for (const activity of allActivities) {
+        if (!activity.timestamp) continue;
+        
+        const activityDate = new Date(typeof activity.timestamp === 'number' ? activity.timestamp : activity.timestamp);
+        
+        // Today's activity
+        if (activityDate >= today) {
+          totalActivitiesToday++;
+          if (activity.action === 'add') addActionsToday++;
+          if (activity.action === 'remove') removeActionsToday++;
+        }
+        
+        // Last hour activity
+        if (activityDate >= oneHourAgo) {
+          activeUsersLastHour.add(activity.userId);
+          if (activity.action === 'add') propertiesAddedLastHour++;
+          if (activity.action === 'remove') propertiesRemovedLastHour++;
+        }
+        
+        // Daily activity trend (last 7 days)
+        const dayKey = activityDate.toISOString().split('T')[0];
+        const dayCount = dailyActivityMap.get(dayKey) || { totalActivities: 0, adds: 0, removes: 0 };
+        dayCount.totalActivities++;
+        if (activity.action === 'add') dayCount.adds++;
+        if (activity.action === 'remove') dayCount.removes++;
+        dailyActivityMap.set(dayKey, dayCount);
+        
+        // Hourly pattern
+        const hour = activityDate.getHours();
+        hourlyActivityMap.set(hour, (hourlyActivityMap.get(hour) || 0) + 1);
+      }
+      
+      // Create daily trend array (last 7 days)
+      const dailyActivityTrend = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dayKey = date.toISOString().split('T')[0];
+        const dayData = dailyActivityMap.get(dayKey) || { totalActivities: 0, adds: 0, removes: 0 };
+        
+        dailyActivityTrend.push({
+          date: dayKey,
+          totalActivities: dayData.totalActivities,
+          adds: dayData.adds,
+          removes: dayData.removes
+        });
+      }
+      
+      // Create hourly pattern array
+      const hourlyPattern = Array.from(hourlyActivityMap.entries()).map(([hour, activities]) => ({
+        hour,
+        activities
+      }));
+      
+      // Calculate property type and location trends
+      const propertyTypeMap = new Map();
+      const locationMap = new Map();
+      
+      for (const [propertyId, count] of propertyFrequency.entries()) {
+        // Get property details for trend analysis
+        try {
+          const property = await getPropertyDetails(propertyId);
+          if (property) {
+            const type = property.category || property.propertyType || 'Unknown';
+            const location = property.location || property.city || 'Unknown';
+            
+            propertyTypeMap.set(type, (propertyTypeMap.get(type) || 0) + count);
+            locationMap.set(location, (locationMap.get(location) || 0) + count);
+          }
+        } catch (error) {
+          // Skip if property details can't be fetched
+        }
+      }
+      
+      // Convert to arrays with percentages
+      const totalPropertyWishlists = Array.from(propertyTypeMap.values()).reduce((a, b) => a + b, 0);
+      const totalLocationWishlists = Array.from(locationMap.values()).reduce((a, b) => a + b, 0);
+      
+      const popularPropertyTypes = Array.from(propertyTypeMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8)
+        .map(([type, count]) => ({
+          type,
+          count,
+          percentage: Math.round((count / totalPropertyWishlists) * 100)
+        }));
+      
+      const locationTrends = Array.from(locationMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8)
+        .map(([location, count]) => ({
+          location,
+          count,
+          percentage: Math.round((count / totalLocationWishlists) * 100)
+        }));
+
       // Get total users count from Clerk
       let totalUsers = 0;
       try {
@@ -319,6 +500,20 @@ export async function GET(request: NextRequest) {
           mostActiveUsers,
           averageItemsPerUser: Math.round(averageWishlistSize * 100) / 100,
           engagementDistribution
+        },
+        activityTrends: {
+          totalActivitiesToday,
+          addActionsToday,
+          removeActionsToday,
+          dailyActivityTrend,
+          hourlyPattern
+        },
+        realTimeMetrics: {
+          activeUsersLastHour: activeUsersLastHour.size,
+          propertiesAddedLastHour,
+          propertiesRemovedLastHour,
+          popularPropertyTypes,
+          locationTrends
         }
       };
       
