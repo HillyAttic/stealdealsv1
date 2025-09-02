@@ -115,7 +115,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-white p-3 rounded-lg">
                     <h5 className="text-gray-500 text-sm uppercase mb-1">Property Category</h5>
-                    <p className="font-semibold text-gray-800">{property.category || 'Industrial'}</p>
+                    <p className="font-semibold text-gray-800">{property.category || 'Not specified'}</p>
                   </div>
                   <div className="bg-white p-3 rounded-lg">
                     <h5 className="text-gray-500 text-sm uppercase mb-1">Property Type</h5>
@@ -127,12 +127,12 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                       <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" style={{ color: 'rgb(28, 110, 164)' }}>
                         <path d="M436 480h-20V24c0-13.255-10.745-24-24-24H56C42.745 0 32 10.745 32 24v456H12c-6.627 0-12 5.373-12 12v20h448v-20c0-6.627-5.373-12-12-12zM128 76c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40c0 6.627-5.373 12-12 12h-40c-6.627 0-12-5.373-12-12V76zm0 96c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40c0 6.627-5.373 12-12 12h-40c-6.627 0-12-5.373-12-12v-40zm52 148h-40c-6.627 0-12-5.373-12-12v-40c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40c0 6.627-5.373 12-12 12zm76 160h-64v-84c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v84zm64-172c0 6.627-5.373 12-12 12h-40c-6.627 0-12-5.373-12-12v-40c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40zm0-96c0 6.627-5.373 12-12 12h-40c-6.627 0-12-5.373-12-12v-40c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40zm0-96c0 6.627-5.373 12-12 12h-40c-6.627 0-12-5.373-12-12V76c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40z"></path>
                       </svg>
-                      <p className="font-semibold text-gray-800">{property.floor || 'Lower Ground'}</p>
+                      <p className="font-semibold text-gray-800">{property.floor || 'Not specified'}</p>
                     </div>
                   </div>
                   <div className="bg-white p-3 rounded-lg">
                     <h5 className="text-gray-500 text-sm uppercase mb-1">Facing</h5>
-                    <p className="font-semibold text-gray-800">{property.facing || 'Main Road'}</p>
+                    <p className="font-semibold text-gray-800">{property.facing || 'Not specified'}</p>
                   </div>
                 </div>
               </div>
@@ -147,7 +147,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                       <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 384 512" className="mr-2 text-green-600" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                         <path d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"></path>
                       </svg>
-                      <p className="font-semibold text-gray-800">{property.state || 'DELHI'}</p>
+                      <p className="font-semibold text-gray-800">{property.state || 'Not specified'}</p>
                     </div>
                   </div>
                   <div className="bg-white p-3 rounded-lg">
@@ -156,7 +156,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                       <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 384 512" className="mr-2 text-green-600" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                         <path d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"></path>
                       </svg>
-                      <p className="font-semibold text-gray-800">{property.city || 'SOUTH DELHI'}</p>
+                      <p className="font-semibold text-gray-800">{property.city || 'Not specified'}</p>
                     </div>
                   </div>
                   <div className="bg-white p-3 rounded-lg">
@@ -180,7 +180,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                       <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" style={{ color: 'rgb(28, 110, 164)' }}>
                         <path d="M160 288h-56c-4.42 0-8-3.58-8-8v-16c0-4.42 3.58-8 8-8h56v-64h-56c-4.42 0-8-3.58-8-8v-16c0-4.42 3.58-8 8-8h56V96h-56c-4.42 0-8-3.58-8-8V72c0-4.42 3.58-8 8-8h56V32c0-17.67-14.33-32-32-32H32C14.33 0 0 14.33 0 32v448c0 2.77.91 5.24 1.57 7.8L160 329.38V288zm320 64h-32v56c0 4.42-3.58 8-8 8h-16c-4.42 0-8-3.58-8-8v-56h-64v56c0 4.42-3.58 8-8 8h-16c-4.42 0-8-3.58-8-8v-56h-64v56c0 4.42-3.58 8-8 8h-16c-4.42 0-8-3.58-8-8v-56h-41.37L24.2 510.43c2.56.66 5.04 1.57 7.8 1.57h448c17.67 0 32-14.33 32-32v-96c0-17.67-14.33-32-32-32z"></path>
                       </svg>
-                      <p className="font-semibold text-gray-800">{property.superArea || '3600'} Sq.Ft</p>
+                      <p className="font-semibold text-gray-800">{property.superArea ? `${property.superArea} Sq.Ft` : 'Not specified'}</p>
                     </div>
                   </div>
                   <div className="bg-white p-3 rounded-lg">
@@ -189,7 +189,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                       <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" style={{ color: 'rgb(28, 110, 164)' }}>
                         <path d="M160 288h-56c-4.42 0-8-3.58-8-8v-16c0-4.42 3.58-8 8-8h56v-64h-56c-4.42 0-8-3.58-8-8v-16c0-4.42 3.58-8 8-8h56V96h-56c-4.42 0-8-3.58-8-8V72c0-4.42 3.58-8 8-8h56V32c0-17.67-14.33-32-32-32H32C14.33 0 0 14.33 0 32v448c0 2.77.91 5.24 1.57 7.8L160 329.38V288zm320 64h-32v56c0 4.42-3.58 8-8 8h-16c-4.42 0-8-3.58-8-8v-56h-64v56c0 4.42-3.58 8-8 8h-16c-4.42 0-8-3.58-8-8v-56h-64v56c0 4.42-3.58 8-8 8h-16c-4.42 0-8-3.58-8-8v-56h-41.37L24.2 510.43c2.56.66 5.04 1.57 7.8 1.57h448c17.67 0 32-14.33 32-32v-96c0-17.67-14.33-32-32-32z"></path>
                       </svg>
-                      <p className="font-semibold text-gray-800">{property.carpetArea || '2700'} Sq.Ft</p>
+                      <p className="font-semibold text-gray-800">{property.carpetArea ? `${property.carpetArea} Sq.Ft` : 'Not specified'}</p>
                     </div>
                   </div>
                 </div>
@@ -206,7 +206,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                         <path d="M308 96c6.627 0 12-5.373 12-12V44c0-6.627-5.373-12-12-12H12C5.373 32 0 37.373 0 44v44.748c0 6.627 5.373 12 12 12h85.28c27.308 0 48.261 9.958 60.97 27.252H12c-6.627 0-12 5.373-12 12v40c0 6.627 5.373 12 12 12h158.757c-6.217 36.086-32.961 58.632-74.757 58.632H12c-6.627 0-12 5.373-12 12v53.012c0 3.349 1.4 6.546 3.861 8.818l165.052 152.356a12.001 12.001 0 0 0 8.139 3.182h82.562c10.924 0 16.166-13.408 8.139-20.818L116.871 319.906c76.499-2.34 131.144-53.395 138.318-127.906H308c6.627 0 12-5.373 12-12v-40c0-6.627-5.373-12-12-12h-58.69c-3.486-11.541-8.28-22.246-14.252-32H308z"></path>
                       </svg>
                       <div>
-                        <p className="text-xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>{property.rent ? formatCurrency(property.rent) : '₹3,50,000'}</p>
+                        <p className="text-xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>{property.rent ? formatCurrency(property.rent) : 'Not specified'}</p>
                         <p className="text-xs text-gray-600">per month</p>
                       </div>
                     </div>
@@ -253,19 +253,19 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-white/80">Location:</span>
-                      <span className="text-white font-medium">{property.city || 'SOUTH DELHI'}</span>
+                      <span className="text-white font-medium">{property.city || 'Not specified'}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-white/80">Area:</span>
-                      <span className="text-white font-medium">{property.superArea || '3600'} Sq.Ft</span>
+                      <span className="text-white font-medium">{property.superArea ? `${property.superArea} Sq.Ft` : 'Not specified'}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-white/80">Rent:</span>
-                      <span className="text-white font-medium">{property.rent ? formatCurrency(property.rent) + '/mo' : '₹3,50,000/mo'}</span>
+                      <span className="text-white font-medium">{property.rent ? formatCurrency(property.rent) + '/mo' : 'Not specified'}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-white/80">Floor:</span>
-                      <span className="text-white font-medium">{property.floor || 'Lower Ground'}</span>
+                      <span className="text-white font-medium">{property.floor || 'Not specified'}</span>
                     </div>
                   </div>
                 </div>
@@ -355,9 +355,9 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                 <input type="hidden" value="https://stealdeals.co.in/vacant?success=true" name="_next" />
                 <input type="hidden" value="false" name="_captcha" />
                 <input type="hidden" value={property.location} name="property_location" />
-                <input type="hidden" value={property.category || 'Industrial'} name="property_category" />
-                <input type="hidden" value={property.rent ? formatCurrency(property.rent) + '/month' : '₹3,50,000/month'} name="property_rent" />
-                <input type="hidden" value={`${property.city || 'SOUTH DELHI'}, ${property.state || 'DELHI'}`} name="property_city" />
+                <input type="hidden" value={property.category || 'Not specified'} name="property_category" />
+                <input type="hidden" value={property.rent ? formatCurrency(property.rent) + '/month' : 'Not specified'} name="property_rent" />
+                <input type="hidden" value={`${property.city || 'Not specified'}, ${property.state || 'Not specified'}`} name="property_city" />
                 <input type="hidden" value="Vacant" name="property_type" />
                 <input type="hidden" value="Vacant Property Contact Modal" name="form_type" />
                 
