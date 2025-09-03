@@ -51,10 +51,9 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
         // Add user identification headers
         if (typeof window !== 'undefined' && user?.id) {
           headers['x-user-id'] = user.id;
-          if (process.env.NODE_ENV === 'development') {
-            headers['x-mock-user-id'] = user.id;
-            headers['x-mock-user-email'] = user.primaryEmailAddress?.emailAddress || '';
-          }
+          // Always send user headers when authenticated (both dev and production)
+          headers['x-mock-user-id'] = user.id;
+          headers['x-mock-user-email'] = user.primaryEmailAddress?.emailAddress || '';
         } else if (!isSignedIn && typeof window !== 'undefined') {
           // For non-authenticated users, try to get from localStorage
           const stored = localStorage.getItem('stealdeals_wishlist_temp');
@@ -163,10 +162,9 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
       // Add user identification headers
       if (typeof window !== 'undefined' && user?.id) {
         headers['x-user-id'] = user.id;
-        if (process.env.NODE_ENV === 'development') {
-          headers['x-mock-user-id'] = user.id;
-          headers['x-mock-user-email'] = user.primaryEmailAddress?.emailAddress || '';
-        }
+        // Always send user headers when authenticated (both dev and production)
+        headers['x-mock-user-id'] = user.id;
+        headers['x-mock-user-email'] = user.primaryEmailAddress?.emailAddress || '';
       }
 
       const response = await fetch(`/api/user/wishlist/${propertyId}`, {

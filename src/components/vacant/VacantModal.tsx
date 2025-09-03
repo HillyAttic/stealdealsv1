@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Property } from '@/lib/firebase';
 import { useActivity } from '@/hooks/useActivity';
+import PropertyImage from '@/components/PropertyImage';
 
 interface VacantModalProps {
   vacant: Property | null;
@@ -11,9 +12,32 @@ interface VacantModalProps {
 }
 
 export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalProps) {
-  const [viewStartTime] = useState(Date.now());
+  const [viewStartTime] = useState(Date.now()); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [showContactForm, setShowContactForm] = useState(false);
+  const [imageOrientation, setImageOrientation] = useState<'portrait' | 'landscape' | 'square'>('landscape');
+  const [imageLoaded, setImageLoaded] = useState(false);
   const { logPropertyView, logContactInquiry } = useActivity();
+
+  // Function to detect image orientation
+  const handleImageLoad = (img: HTMLImageElement) => {
+    const { naturalWidth, naturalHeight } = img;
+    if (naturalWidth > naturalHeight) {
+      setImageOrientation('landscape');
+    } else if (naturalHeight > naturalWidth) {
+      setImageOrientation('portrait');
+    } else {
+      setImageOrientation('square');
+    }
+    setImageLoaded(true);
+  };
+
+  // Reset image state when property changes
+  useEffect(() => {
+    if (property) {
+      setImageLoaded(false);
+      setImageOrientation('landscape');
+    }
+  }, [property]);
 
   // Log property view when modal opens
   useEffect(() => {
@@ -102,6 +126,96 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
             </button>
           </div>
         </div>
+
+        {/* Property Image Section with Smart Orientation & Blur Background */}
+        {property.image ? (
+          <div 
+            className={`relative w-full overflow-hidden transition-all duration-500 ${
+              imageOrientation === 'portrait' 
+                ? 'h-80 md:h-96 lg:h-[28rem]' 
+                : imageOrientation === 'landscape'
+                ? 'h-56 md:h-72 lg:h-80'
+                : 'h-64 md:h-80 lg:h-88'
+            }`}
+          >
+            {/* Blurred Background Image - Full Coverage */}
+            <div className="absolute inset-0">
+              <div className="w-full h-full scale-110 transform">
+                <PropertyImage
+                  src={property.image}
+                  alt={`${property.location} - Background`}
+                  className="blur-lg scale-110 opacity-30"
+                  fill={true}
+                />
+              </div>
+            </div>
+            
+            {/* Gradient Overlay for Depth */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30"></div>
+            
+            {/* Main Image Container with Dynamic Sizing */}
+            <div className="relative w-full h-full flex items-center justify-center p-3 md:p-6">
+              <div 
+                className={`relative bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl border border-white/10 transition-all duration-500 ${
+                  imageOrientation === 'portrait' 
+                    ? 'max-h-full w-auto aspect-[3/4]' 
+                    : imageOrientation === 'landscape'
+                    ? 'max-w-full h-auto aspect-[4/3]'
+                    : 'max-h-full max-w-full aspect-square'
+                } ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={property.image}
+                  alt={property.location || property.title || 'Property'}
+                  className={`w-full h-full transition-all duration-700 ${
+                    imageOrientation === 'portrait' 
+                      ? 'object-cover' 
+                      : 'object-contain'
+                  }`}
+                  onLoad={(e) => handleImageLoad(e.target as HTMLImageElement)}
+                  style={{
+                    filter: 'drop-shadow(0 10px 25px rgba(0,0,0,0.3))'
+                  }}
+                />
+                
+                {/* Image Loading Shimmer */}
+                {!imageLoaded && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 animate-pulse"></div>
+                )}
+              </div>
+            </div>
+            
+            {/* Property Type Badge */}
+            <div className="absolute top-4 left-4 bg-blue-600/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium border border-white/20">
+              Vacant Property
+            </div>
+            
+            {/* Image Orientation Indicator (for debugging - can be removed) */}
+            {imageLoaded && (
+              <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-xs capitalize opacity-70">
+                {imageOrientation}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Fallback section when no image is available */
+          <div className="relative h-32 md:h-40 lg:h-48 w-full overflow-hidden bg-gradient-to-r from-gray-100 to-gray-200">
+            <div className="absolute inset-0 bg-gradient-to-b from-blue-50 to-gray-100"></div>
+            <div className="relative w-full h-full flex items-center justify-center">
+              <div className="text-center p-6">
+                <svg className="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <p className="text-sm text-gray-500">No image available</p>
+              </div>
+            </div>
+            {/* Property Type Badge for No Image Case */}
+            <div className="absolute top-4 left-4 bg-blue-600/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium border border-white/20">
+              Vacant Property
+            </div>
+          </div>
+        )}
 
         <div className="p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -347,7 +461,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
             
             <div className="p-4 md:p-6">
               <form
-                action="https://formsubmit.co/info@stealdeals.co.in"
+                action="https://formsubmit.co/stealdeals.co.in@gmail.com"
                 method="POST"
                 className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"
               >

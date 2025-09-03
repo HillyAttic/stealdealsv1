@@ -158,12 +158,13 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               'x-user-id': userId
             };
             
-            // Production-specific headers
+            // Always send user headers when authenticated (both dev and production)
+            headers['x-user-id'] = userId;
+            headers['x-mock-user-id'] = userId;
+            headers['x-mock-user-email'] = 'user@example.com';
+            // Production-specific fallback headers
             if (process.env.NODE_ENV === 'production') {
               headers['x-fallback-user-id'] = userId;
-            } else {
-              headers['x-mock-user-id'] = userId;
-              headers['x-mock-user-email'] = 'user@example.com';
             }
             
             console.log(`[EnhancedWishlistContext] Adding to wishlist (attempt ${attempt + 1}):`, {
@@ -304,12 +305,13 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
                 'x-user-id': userId
               };
               
-              // Production-specific headers
+              // Always send user headers when authenticated (both dev and production)
+              headers['x-user-id'] = userId;
+              headers['x-mock-user-id'] = userId;
+              headers['x-mock-user-email'] = 'user@example.com';
+              // Production-specific fallback headers
               if (process.env.NODE_ENV === 'production') {
                 headers['x-fallback-user-id'] = userId;
-              } else {
-                headers['x-mock-user-id'] = userId;
-                headers['x-mock-user-email'] = 'user@example.com';
               }
               
               console.log(`[EnhancedWishlistContext] Removing from wishlist (attempt ${attempt + 1}):`, {

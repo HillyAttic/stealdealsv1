@@ -227,7 +227,7 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
     <>
       {/* Success Message Modal */}
       {showSuccessMessage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1001] p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -524,7 +524,7 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
             >
               {/* Hidden fields for FormSubmit configuration */}
               <input type="hidden" name="_subject" value="New Franchise Listing Request" />
-              <input type="hidden" name="_next" value={`${typeof window !== 'undefined' ? window.location.origin : ''}/franchise?success=true`} />
+              <input type="hidden" name="_next" value={`${typeof window !== 'undefined' ? window.location.origin : 'https://stealdeals.co.in'}/franchise?success=true`} />
               <input type="hidden" name="_captcha" value="false" />
               <input type="hidden" name="form_type" value="Franchise Listing Request" />
 

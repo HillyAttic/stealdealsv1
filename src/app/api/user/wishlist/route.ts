@@ -152,17 +152,28 @@ async function extractUserId(request: NextRequest & { user?: any }): Promise<str
       return request.user.id;
     }
     
+    // Check for mock user headers in both development and production
+    const mockUserId = request.headers.get('x-mock-user-id');
+    if (mockUserId) {
+      logWishlistOperation('user_extraction', mockUserId, undefined, { 
+        source: 'mock_header_' + (isProduction ? 'production' : 'development'), 
+        environment: isProduction ? 'production' : 'development'
+      });
+      return mockUserId;
+    }
+    
+    // Additional fallback for x-fallback-user-id header
+    const fallbackUserId = request.headers.get('x-fallback-user-id');
+    if (fallbackUserId) {
+      logWishlistOperation('user_extraction', fallbackUserId, undefined, { 
+        source: 'fallback_header_' + (isProduction ? 'production' : 'development'), 
+        environment: isProduction ? 'production' : 'development'
+      });
+      return fallbackUserId;
+    }
+
     // Development-specific fallbacks
     if (!isProduction) {
-      // Check for mock user headers in development
-      const mockUserId = request.headers.get('x-mock-user-id');
-      if (mockUserId) {
-        logWishlistOperation('user_extraction', mockUserId, undefined, { 
-          source: 'mock_header_dev', 
-          environment: 'development' 
-        });
-        return mockUserId;
-      }
       
       // Final fallback for development only
       const devUserId = 'user-1';
