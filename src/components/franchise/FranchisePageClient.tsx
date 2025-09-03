@@ -5,76 +5,8 @@ import Link from 'next/link';
 import { FaMapMarkerAlt, FaSearch, FaFilter, FaChevronDown, FaBuilding, FaMoneyBillWave, FaUsers, FaHandshake, FaStar, FaBriefcase, FaChartLine } from 'react-icons/fa';
 import { FranchiseCard, FranchiseModal, FranchiseContactModal } from '@/components/franchise';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
-
-// Franchise interface to match the database
-interface FranchiseDetails {
-  brand?: string;
-  name?: string;
-  industry?: string;
-  segment?: string;
-  product?: string;
-  model?: string;
-  minArea?: string;
-  maxArea?: string;
-  minInvestment?: string;
-  maxInvestment?: string;
-  royalty?: string;
-  establishmentYear?: string;
-  franchiseStartedYear?: string;
-  numberOfOutlets?: string;
-  numberOutlets?: string; // Legacy naming
-  minPaybackPeriod?: string;
-  maxPaybackPeriod?: string;
-  headquarter?: string;
-  remarks?: string;
-  brandDeck?: string;
-  productList?: string;
-  roiSheet?: string;
-  investorDiscoveryKitUrl?: string;
-}
-
-interface Franchise {
-  id?: string | null;
-  type?: string;
-  title?: string;
-  description?: string;
-  location?: string;
-  price?: number;
-  images?: string[];
-  image?: string;
-  createdAt?: number;
-  updatedAt?: number;
-  status?: string;
-  
-  // franchiseDetails is the primary source of franchise-specific data
-  franchiseDetails?: FranchiseDetails;
-  
-  // Legacy fields for backward compatibility
-  name?: string;
-  industry?: string;
-  segment?: string;
-  product?: string;
-  model?: string;
-  minArea?: string;
-  maxArea?: string;
-  minInvestment?: number | string;
-  maxInvestment?: number | string;
-  royalty?: string;
-  establishmentYear?: string;
-  franchiseStartedYear?: string;
-  numberOutlets?: string;
-  minPaybackPeriod?: string;
-  maxPaybackPeriod?: string;
-  headquarter?: string;
-  remarks?: string;
-  brandDeck?: string;
-  productList?: string;
-  roiSheet?: string;
-  investorDiscoveryKitUrl?: string;
-  investment?: number | string;
-  roi?: string;
-  requirements?: string;
-}
+import { SuccessMessage } from './SuccessMessage';
+import { Franchise, FranchiseDetails } from '@/types/franchise';
 
 interface FranchisePageClientProps {
   franchises: Franchise[];
@@ -82,7 +14,9 @@ interface FranchisePageClientProps {
 
 export default function FranchisePageClient({ franchises }: FranchisePageClientProps) {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showInvestorKitSuccess, setShowInvestorKitSuccess] = useState(false);
   const [selectedFranchise, setSelectedFranchise] = useState<Franchise | null>(null);
+  const [investorKitFranchise, setInvestorKitFranchise] = useState<Franchise | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -103,6 +37,23 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
       window.history.replaceState({}, '', newUrl);
       // Auto-hide success message after 5 seconds
       setTimeout(() => setShowSuccessMessage(false), 5000);
+    }
+    
+    // Check for kit_unlocked parameter
+    if (urlParams.get('kit_unlocked') === 'true') {
+      setShowInvestorKitSuccess(true);
+      // Get franchise ID if available
+      const franchiseId = urlParams.get('franchise_id');
+      if (franchiseId) {
+        // Find the franchise in our list
+        const franchise = franchises.find(f => f.id === franchiseId);
+        if (franchise) {
+          setInvestorKitFranchise(franchise);
+        }
+      }
+      // Remove the kit_unlocked parameter from URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
     }
   }, []);
 
@@ -256,6 +207,22 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
     setSelectedFranchise(null);
   };
 
+  // Handle investor kit download
+  const handleInvestorKitDownload = () => {
+    // Use franchise-specific URL if available, otherwise use default
+    let kitUrl = 'https://drive.google.com/uc?id=1riwKqNbD9XWu7IT1mq3sJA1-ehwHWvdR&export=download';
+    
+    if (investorKitFranchise) {
+      // Try to get the URL from franchiseDetails first, then fallback to root level
+      kitUrl = investorKitFranchise.franchiseDetails?.investorDiscoveryKitUrl || 
+               investorKitFranchise.investorDiscoveryKitUrl || 
+               kitUrl;
+    }
+    
+    window.open(kitUrl, '_blank', 'noopener,noreferrer');
+    setShowInvestorKitSuccess(false);
+  };
+
   return (
     <>
       {/* Success Message Modal */}
@@ -277,6 +244,17 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
             </button>
           </div>
         </div>
+      )}
+      
+      {/* Investor Kit Success Message */}
+      {showInvestorKitSuccess && (
+        <SuccessMessage
+          isOpen={showInvestorKitSuccess}
+          onClose={() => setShowInvestorKitSuccess(false)}
+          onDownload={handleInvestorKitDownload}
+          franchiseName={investorKitFranchise ? (investorKitFranchise.franchiseDetails?.name || investorKitFranchise.franchiseDetails?.brand || investorKitFranchise.name || investorKitFranchise.title || "Investor Discovery Kit") : "Investor Discovery Kit"}
+          autoClose={false}
+        />
       )}
       
       {/* Stats Section */}
@@ -631,6 +609,17 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
       
       {/* Scroll to Bottom Button */}
       <ScrollToBottom showProgress={true} />
+      
+      {/* Investor Kit Success Message */}
+      {showInvestorKitSuccess && (
+        <SuccessMessage
+          isOpen={showInvestorKitSuccess}
+          onClose={() => setShowInvestorKitSuccess(false)}
+          onDownload={handleInvestorKitDownload}
+          franchiseName={investorKitFranchise ? (investorKitFranchise.franchiseDetails?.name || investorKitFranchise.franchiseDetails?.brand || investorKitFranchise.name || investorKitFranchise.title || "Investor Discovery Kit") : "Investor Discovery Kit"}
+          autoClose={false}
+        />
+      )}
     </>
   );
 }

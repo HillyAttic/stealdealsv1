@@ -6,44 +6,7 @@ import PropertyImage from '@/components/PropertyImage';
 import { useSecureGatedContent } from '@/hooks/useSecureGatedContent';
 import { GatedContentModal } from './GatedContentModal';
 import { SuccessMessage } from './SuccessMessage';
-
-// Define the Franchise interface to match the database
-interface Franchise {
-  id?: string | null;
-  name: string;
-  industry: string;
-  segment?: string;
-  product?: string;
-  model?: string;
-  minArea?: string;
-  maxArea?: string;
-  minInvestment?: number | string;
-  maxInvestment?: number | string;
-  royalty?: string;
-  establishmentYear?: string;
-  franchiseStartedYear?: string;
-  numberOutlets?: string;
-  minPaybackPeriod?: string;
-  maxPaybackPeriod?: string;
-  headquarter?: string;
-  remarks?: string;
-  brandDeck?: string;
-  productList?: string;
-  roiSheet?: string;
-  investorDiscoveryKitUrl?: string;
-  franchiseDetails?: {
-    investorDiscoveryKitUrl?: string;
-  };
-  investment: number | string;
-  location: string;
-  status: string;
-  roi: string;
-  description?: string;
-  requirements?: string;
-  image?: string;
-  createdAt?: number;
-  updatedAt?: number;
-}
+import { Franchise } from '@/types/franchise';
 
 interface FranchiseModalProps {
   franchise: Franchise | null;

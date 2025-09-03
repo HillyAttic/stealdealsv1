@@ -162,7 +162,7 @@ export function GatedContentModal({ franchise, isOpen, onClose, onSuccess }: Gat
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             {/* Hidden fields */}
             <input type="hidden" name="_subject" value={`Investor Discovery Kit Request - ${franchise.product || franchise.name} (Gated Content)`} />
-            <input type="hidden" name="_next" value={`${typeof window !== 'undefined' ? window.location.origin : ''}/franchise?kit_unlocked=true`} />
+            <input type="hidden" name="_next" value={`${typeof window !== 'undefined' ? window.location.origin : ''}/franchise?kit_unlocked=true&franchise_id=${franchise.id || ''}`} />
             <input type="hidden" name="_captcha" value="false" />
             
             <input type="hidden" name="franchise_name" value={franchise.product || franchise.name} />

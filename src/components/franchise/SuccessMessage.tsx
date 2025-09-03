@@ -8,18 +8,19 @@ interface SuccessMessageProps {
   onClose: () => void;
   onDownload: () => void;
   franchiseName: string;
+  autoClose?: boolean; // New prop to control auto-close behavior
 }
 
-export function SuccessMessage({ isOpen, onClose, onDownload, franchiseName }: SuccessMessageProps) {
-  // Auto close after 10 seconds
+export function SuccessMessage({ isOpen, onClose, onDownload, franchiseName, autoClose = true }: SuccessMessageProps) {
+  // Auto close after 10 seconds (only if autoClose is true)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && autoClose) {
       const timer = setTimeout(() => {
         onClose();
       }, 10000);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, autoClose]);
 
   if (!isOpen) return null;
 

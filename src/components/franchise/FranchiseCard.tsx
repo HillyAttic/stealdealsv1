@@ -6,76 +6,7 @@ import { WishlistButton } from '@/components/wishlist';
 import { useSecureGatedContent } from '@/hooks/useSecureGatedContent';
 import { GatedContentModal } from './GatedContentModal';
 import { SuccessMessage } from './SuccessMessage';
-
-// Define the Franchise interface to match the optimized database structure
-interface FranchiseDetails {
-  brand?: string;
-  name?: string;
-  industry?: string;
-  segment?: string;
-  product?: string;
-  model?: string;
-  minArea?: string;
-  maxArea?: string;
-  minInvestment?: number | string;
-  maxInvestment?: number | string;
-  royalty?: string;
-  establishmentYear?: string;
-  franchiseStartedYear?: string;
-  numberOfOutlets?: string;
-  numberOutlets?: string;
-  minPaybackPeriod?: string;
-  maxPaybackPeriod?: string;
-  headquarter?: string;
-  remarks?: string;
-  brandDeck?: string;
-  productList?: string;
-  roiSheet?: string;
-  investorDiscoveryKitUrl?: string;
-}
-
-interface Franchise {
-  id?: string | null;
-  type?: string;
-  title?: string;
-  description?: string;
-  location?: string;
-  price?: number;
-  images?: string[];
-  image?: string;
-  createdAt?: number;
-  updatedAt?: number;
-  
-  // franchiseDetails is the primary source of franchise-specific data
-  franchiseDetails?: FranchiseDetails;
-  
-  // Legacy fields for backward compatibility (may be redundant after cleanup)
-  name?: string;
-  industry?: string;
-  segment?: string;
-  product?: string;
-  model?: string;
-  minArea?: string;
-  maxArea?: string;
-  minInvestment?: number | string;
-  maxInvestment?: number | string;
-  royalty?: string;
-  establishmentYear?: string;
-  franchiseStartedYear?: string;
-  numberOutlets?: string;
-  minPaybackPeriod?: string;
-  maxPaybackPeriod?: string;
-  headquarter?: string;
-  remarks?: string;
-  brandDeck?: string;
-  productList?: string;
-  roiSheet?: string;
-  investorDiscoveryKitUrl?: string;
-  investment?: number | string;
-  status?: string;
-  roi?: string;
-  requirements?: string;
-}
+import { Franchise, FranchiseDetails } from '@/types/franchise';
 
 interface FranchiseCardProps {
   franchise: Franchise;
