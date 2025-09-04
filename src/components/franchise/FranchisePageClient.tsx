@@ -184,8 +184,30 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
   }, [franchises, searchTerm, selectedIndustry, selectedLocation, selectedSegment, selectedModel, selectedInvestmentRange]);
 
   // Handle franchise card click to open modal
-  const handleFranchiseClick = (franchise: Franchise) => {
-    setSelectedFranchise(franchise);
+  const handleFranchiseClick = async (franchise: Franchise) => {
+    try {
+      // Fetch fresh data from the API to ensure we have the latest information
+      const response = await fetch(`/api/franchises/${franchise.id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store' // Prevent caching issues
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedFranchise(data.franchise);
+      } else {
+        // If API call fails, use the existing data
+        setSelectedFranchise(franchise);
+      }
+    } catch (error) {
+      // If API call fails, use the existing data
+      console.error('Error fetching fresh franchise data:', error);
+      setSelectedFranchise(franchise);
+    }
+    
     setIsModalOpen(true);
   };
 

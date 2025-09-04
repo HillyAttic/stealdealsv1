@@ -25,13 +25,13 @@ const Footer = () => {
               Discover your dream property with Stealdeals. We make the process of finding and purchasing real estate simple and enjoyable.
             </p>
             <div className="flex space-x-4">
-              <a href="https://www.facebook.com/stealdeals.co.in/" className="bg-[rgb(28,110,164)] text-white p-2 rounded-full hover:bg-[rgb(21,77,113)] transition-all duration-300 transform hover:scale-110">
+              <a href="https://www.facebook.com/stealdeals.co.in/" className="bg-[rgb(28,110,164)] text-white p-2 rounded-full hover:bg-[rgb(21,77,113)] transition-all duration-300 transform hover:scale-110" target='_blank'>
                 <FaFacebook size={16} />
               </a>
-              <a href="http://instagram.com/stealdeals.co.in/" className="bg-[rgb(28,110,164)] text-white p-2 rounded-full hover:bg-[rgb(21,77,113)] transition-all duration-300 transform hover:scale-110">
+              <a href="http://instagram.com/stealdeals.co.in/" className="bg-[rgb(28,110,164)] text-white p-2 rounded-full hover:bg-[rgb(21,77,113)] transition-all duration-300 transform hover:scale-110" target='_blank'>
                 <FaInstagram size={16} />
               </a>
-              <a href="https://www.linkedin.com/company/steal-deals/posts/?feedView=all" className="bg-[rgb(28,110,164)] text-white p-2 rounded-full hover:bg-[rgb(21,77,113)] transition-all duration-300 transform hover:scale-110">
+              <a href="https://www.linkedin.com/company/steal-deals/posts/?feedView=all" className="bg-[rgb(28,110,164)] text-white p-2 rounded-full hover:bg-[rgb(21,77,113)] transition-all duration-300 transform hover:scale-110" target='_blank'>
                 <FaLinkedin size={16} />
               </a>
             </div>

@@ -155,10 +155,10 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
   // Get payback period display
   const getPaybackDisplay = () => {
     if (franchise.minPaybackPeriod && franchise.maxPaybackPeriod) {
-      return `${franchise.minPaybackPeriod}-${franchise.maxPaybackPeriod} (months)`;
+      return `${franchise.minPaybackPeriod}-${franchise.maxPaybackPeriod}`;
     }
     const period = franchise.minPaybackPeriod || franchise.maxPaybackPeriod;
-    return period ? `${period} (months)` : 'Contact for details';
+    return period ? `${period}` : 'Contact for details';
   };
 
   // Default image if none provided
@@ -589,9 +589,17 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
       </div>
       
       {/* Gated Content Modal */}
-      {franchise && (
+      {franchise && franchise.name && franchise.industry && (
         <GatedContentModal
-          franchise={franchise}
+          franchise={{ 
+            ...franchise, 
+            name: franchise.name,
+            industry: franchise.industry,
+            investment: franchise.investment || franchise.minInvestment || 0,
+            location: franchise.location || franchise.headquarter || '',
+            status: franchise.status || 'Active',
+            roi: franchise.roi || ''
+          }}
           isOpen={showGatedModal}
           onClose={() => setShowGatedModal(false)}
           onSuccess={handleGatedSuccess}
@@ -604,7 +612,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
           isOpen={showSuccessMessage}
           onClose={() => setShowSuccessMessage(false)}
           onDownload={handleDownloadFromSuccess}
-          franchiseName={franchise.product || franchise.name}
+          franchiseName={franchise.product || franchise.name || 'Franchise'}
         />
       )}
       

@@ -151,7 +151,7 @@ export function PlotModal({ plot, isOpen, onClose }: PlotModalProps) {
       WebkitBackdropFilter: 'blur(10px)',
       background: 'rgba(0, 0, 0, 0.3)'
     }}>
-      <div className="bg-white/95 backdrop-blur-md md:rounded-lg max-w-4xl w-full h-full md:h-auto md:max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
+      <div className="bg-white/95 backdrop-blur-md md:rounded-lg max-w-4xl w-full h-full md:h-auto md:max-h-[90vh] overflow-y-auto overflow-x-hidden shadow-2xl border border-white/20">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-800">{plot.project}</h2>
