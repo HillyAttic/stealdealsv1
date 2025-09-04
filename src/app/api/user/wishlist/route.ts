@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { optionalAuth } from '@/lib/auth/middleware';
 import { currentUser } from '@clerk/nextjs/server';
-
-// Force dynamic rendering to prevent caching in production
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 import { 
   getUserWishlist, 
   addToWishlist, 
@@ -18,6 +14,9 @@ import { withWishlistMonitoring } from '@/lib/monitoring/middleware';
 import { PerformanceMonitor } from '@/lib/monitoring/performance';
 import { AnalyticsTracker } from '@/lib/monitoring/analytics';
 import { ActivityLogger } from '@/lib/services/activityLogger';
+
+// Force dynamic rendering to prevent caching in production
+export const dynamic = 'force-dynamic';
 
 // Enhanced logging utility for wishlist operations
 function logWishlistOperation(
@@ -378,7 +377,7 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
       // Production debug logging for Firebase reads
       console.log(`[WISHLIST_DEBUG] About to fetch wishlist for user: ${userId} in ${process.env.NODE_ENV}`);
       console.log(`[WISHLIST_DEBUG] Firebase config present: ${!!process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL}`);
-      console.log(`[WISHLIST_DEBUG] User authentication status: ${isSignedIn}`);
+      console.log(`[WISHLIST_DEBUG] User authentication status: ${userId !== null}`);
       
       const wishlistProperties = await getUserWishlist(userId!);
       
