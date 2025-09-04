@@ -107,8 +107,32 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
       } catch (err) {
         console.error('Error fetching detailed wishlist:', err);
         const errorMessage = err instanceof Error ? err.message : 'Failed to load wishlist details';
-        setError(errorMessage);
-        setWishlistProperties([]);
+        
+        // If we have wishlist item IDs but can't fetch details, show placeholder items
+        if (wishlistItems.size > 0) {
+          console.log(`[WishlistSection] 🔄 Creating placeholder items for ${wishlistItems.size} wishlist entries`);
+          const placeholderProperties: WishlistProperty[] = Array.from(wishlistItems).map((propertyId, index) => ({
+            id: propertyId,
+            title: `Property ${propertyId}`,
+            price: 0,
+            location: 'Loading location...',
+            images: [],
+            type: 'Property',
+            addedAt: new Date(),
+            notes: undefined,
+            priority: 'medium' as const,
+            developer: undefined,
+            plotSize: undefined,
+            category: undefined,
+            segment: undefined,
+            description: 'Property details loading...'
+          }));
+          setWishlistProperties(placeholderProperties);
+          setError(`Unable to load complete property details: ${errorMessage}`);
+        } else {
+          setError(errorMessage);
+          setWishlistProperties([]);
+        }
       }
     };
 

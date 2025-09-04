@@ -6,7 +6,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getFirebaseOptimizationManager } from '@/FirebaseOptimizationManager';
+import { FirebaseOptimizationManager } from '@/FirebaseOptimizationManager';
 import { DegradationStatus, DegradationLevel } from '@/degradation/DegradedModeHandler';
 
 interface DegradedModeBannerProps {
@@ -27,8 +27,8 @@ export function DegradedModeBanner({
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    const manager = getFirebaseOptimizationManager();
-    let statusCheckInterval: NodeJS.Timer | undefined;
+    const manager = FirebaseOptimizationManager.getInstance();
+    let statusCheckInterval: NodeJS.Timeout | undefined;
 
     // Set up degradation status monitoring
     const checkStatus = () => {
@@ -141,7 +141,7 @@ export function DegradedModeBanner({
                 <div className="mb-2">
                   <p className="text-xs font-medium mb-1">Affected features:</p>
                   <ul className="text-xs space-y-1">
-                    {status.features.slice(0, isExpanded ? undefined : 2).map((feature, index) => (
+                    {status.features.slice(0, isExpanded ? undefined : 2).map((feature: any, index: number) => (
                       <li key={index} className="flex items-center space-x-2">
                         <span className="flex-shrink-0">
                           {feature.impact === 'disabled' && '❌'}
@@ -189,7 +189,7 @@ export function DegradedModeBanner({
                     <div>
                       <p className="text-xs font-medium mb-1">Recommendations:</p>
                       <ul className="text-xs space-y-1">
-                        {status.recommendations.map((rec, index) => (
+                        {status.recommendations.map((rec: string, index: number) => (
                           <li key={index} className="flex items-start space-x-1">
                             <span className="flex-shrink-0 mt-0.5">•</span>
                             <span>{rec}</span>
@@ -232,7 +232,7 @@ export function DegradedModeBanner({
         <div className="flex items-center space-x-3 mt-3">
           <button
             onClick={() => {
-              const manager = getFirebaseOptimizationManager();
+              const manager = FirebaseOptimizationManager.getInstance();
               manager.optimize();
             }}
             className="

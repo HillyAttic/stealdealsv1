@@ -23,9 +23,14 @@ export class FirebaseOptimizationManager {
     return {
       connections: { active: 25, peak: 50 },
       cache: { hitRate: 0.87, memoryUsage: 1024 * 1024 * 30 },
-      degradationMode: { active: false },
+      degradation: { level: 'normal' as const },
       system: { healthy: true }
     };
+  }
+
+  optimize() {
+    // Mock optimization method
+    console.log('Optimizing Firebase connections...');
   }
 
   destroy() { }

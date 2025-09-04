@@ -224,7 +224,7 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
         } catch (batchError) {
           console.error('[Firebase Wishlist] ❌ Batch property fetch failed, falling back to individual fetches:', batchError);
           
-          // Fallback to individual property fetching
+          // Fallback to individual property fetching with legacy collection support
           const propertyPromises = uncachedPropertyIds.map(async (propertyId) => {
             try {
               const { getPropertyById } = await import('@/lib/firebase');
@@ -233,6 +233,8 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
                 cacheService.setProperty(propertyId, property);
                 propertyMap.set(propertyId, property);
                 console.log(`[Firebase Wishlist] ✅ Fetched and cached property ${propertyId}: ${property.title || property.category}`);
+              } else {
+                console.warn(`[Firebase Wishlist] ⚠️ Property ${propertyId} not found in ANY collection (migrated or legacy)`);
               }
               return { propertyId, property };
             } catch (error) {
