@@ -119,6 +119,21 @@ const nextConfig: NextConfig = {
   },
   // Suppress browser extension related errors
   assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
+  
+  // Debug route generation
+  ...(process.env.NODE_ENV === 'production' && {
+    generateBuildId: async () => {
+      console.log('[BUILD_DEBUG] Generating build ID...');
+      return `build-${Date.now()}`;
+    },
+    onDemandEntries: {
+      maxInactiveAge: 60 * 1000,
+      pagesBufferLength: 5,
+    },
+    // Ensure all routes are included
+    trailingSlash: false,
+    skipMiddlewareUrlNormalize: true,
+  }),
 };
 
 export default nextConfig;
