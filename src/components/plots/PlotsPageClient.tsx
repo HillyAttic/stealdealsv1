@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { PlotCard, PlotModal } from '@/components/plots';
+import { PlotSuccessMessage } from '@/components/plots/PlotSuccessMessage';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { FaSearch, FaFilter, FaBuilding, FaChevronDown } from 'react-icons/fa';
 import { Plot } from '@/lib/firebase';
@@ -20,6 +21,8 @@ export default function PlotsPageClient({ plots }: PlotsPageClientProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showInvestorKitSuccess, setShowInvestorKitSuccess] = useState(false);
+  const [investorKitPlot, setInvestorKitPlot] = useState<Plot | null>(null);
 
   // Memoized filter options
   const filterOptions = useMemo(() => ({
@@ -28,6 +31,27 @@ export default function PlotsPageClient({ plots }: PlotsPageClientProps) {
     developers: Array.from(new Set(plots.map(p => p.developerName))).filter(Boolean).sort(),
     plotSizeUnits: Array.from(new Set(plots.map(p => p.plotSize?.unit))).filter(Boolean),
   }), [plots]);
+
+  // Check for URL parameters (kit_unlocked)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Check for kit_unlocked parameter
+    if (urlParams.get('kit_unlocked') === 'true') {
+      setShowInvestorKitSuccess(true);
+      // Get plot ID if available
+      const plotId = urlParams.get('plot_id');
+      if (plotId) {
+        const plot = plots.find(p => p.id === plotId);
+        if (plot) {
+          setInvestorKitPlot(plot);
+        }
+      }
+      // Remove URL parameters from the URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [plots]);
   
   // Investment range options for plots
   const investmentRanges = [
@@ -285,6 +309,20 @@ export default function PlotsPageClient({ plots }: PlotsPageClientProps) {
         plot={selectedPlot}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+      />
+      
+      {/* Success Message for URL parameter unlocks */}
+      <PlotSuccessMessage
+        isOpen={showInvestorKitSuccess}
+        onClose={() => setShowInvestorKitSuccess(false)}
+        onDownload={() => {
+          if (investorKitPlot?.investorDiscoveryKit?.url) {
+            window.open(investorKitPlot.investorDiscoveryKit.url, '_blank', 'noopener,noreferrer');
+          }
+          setShowInvestorKitSuccess(false);
+        }}
+        plotName={investorKitPlot?.project || 'Plot'}
+        autoClose={false}
       />
       
       {/* Scroll to Bottom Button */}
