@@ -120,6 +120,24 @@ const nextConfig: NextConfig = {
   // Suppress browser extension related errors
   assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
   
+  // Explicit redirects for broken routes
+  async redirects() {
+    return [
+      {
+        source: '/wishlist',
+        destination: '/my-wishlist',
+        permanent: false,
+        has: [
+          {
+            type: 'header',
+            key: 'user-agent',
+            value: '.*Chrome.*'
+          }
+        ]
+      }
+    ];
+  },
+
   // Debug route generation
   ...(process.env.NODE_ENV === 'production' && {
     generateBuildId: async () => {

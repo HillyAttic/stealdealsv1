@@ -19,6 +19,9 @@ const ADMIN_PATHS = [
 // Define user paths that should be protected by Clerk
 const isUserProtectedRoute = createRouteMatcher([
   '/wishlist',
+  '/my-wishlist',
+  '/saved-properties', 
+  '/wishlist-simple',
   '/api/user(.*)',
   '/api/wishlist(.*)',
   '/api/activity(.*)'
@@ -51,6 +54,14 @@ export default clerkMiddleware(async (auth, req) => {
       pathname.includes('.') ||
       pathname === '/development.png') {
     return NextResponse.next();
+  }
+
+  // Emergency redirect for broken wishlist route
+  if (pathname === '/wishlist' && req.headers.get('user-agent')?.includes('Chrome')) {
+    console.log('[MIDDLEWARE] Redirecting broken wishlist to backup route');
+    const backupUrl = new URL('/my-wishlist', req.url);
+    backupUrl.search = req.nextUrl.search;
+    return NextResponse.redirect(backupUrl, 307); // Temporary redirect
   }
 
   // Skip Clerk auth for admin paths - let Firebase handle them

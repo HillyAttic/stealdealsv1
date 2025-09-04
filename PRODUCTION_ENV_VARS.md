@@ -1,19 +1,33 @@
-# CRITICAL: Production Environment Variables Fix
+# 🚨 URGENT: Complete Production Environment Fix Guide
 
-## 🚨 Immediate Issue
-The Clerk secret key is invalid in production, causing authentication failures.
+## Current Error Analysis
+```
+x-clerk-auth-reason: secret-key-invalid
+x-matched-path: /404 (route missing from build)
+Status: 404 Not Found (from disk cache)
+```
 
-## Required Environment Variables
+## IMMEDIATE ACTION REQUIRED
 
-### 1. Clerk Authentication (CRITICAL)
+### 1. Clerk Authentication (CRITICAL - DO THIS FIRST)
 ```bash
-# Get these from https://dashboard.clerk.com
-CLERK_SECRET_KEY=sk_live_...  # Must match your domain
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...  # Must match your domain
+# WRONG (current production): sk_test_... or missing
+# CORRECT (required for production):
+CLERK_SECRET_KEY=sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-# Domain Configuration
+# Must match domain stealdeals.co.in
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsuc3RlYWxkZWFscy5jby5pbiQ
+
+# Additional Clerk settings
 CLERK_WEBHOOK_SECRET=whsec_...  # If using webhooks
 ```
+
+**WHERE TO GET THESE:**
+1. Go to https://dashboard.clerk.com
+2. Select your project 
+3. Go to "API Keys"
+4. Copy the "Secret key" (starts with sk_live_)
+5. Copy the "Publishable key" (starts with pk_live_)
 
 ### 2. Firebase Configuration
 ```bash
