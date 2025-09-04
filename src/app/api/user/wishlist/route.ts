@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { optionalAuth } from '@/lib/auth/middleware';
 import { currentUser } from '@clerk/nextjs/server';
+
+// Force dynamic rendering to prevent caching in production
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { 
   getUserWishlist, 
   addToWishlist, 
@@ -361,14 +365,27 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
         });
       }
       
-      // Add cache control headers to prevent browser caching
+      // Enhanced cache control headers to prevent any caching in production
       const headers = {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
         'Pragma': 'no-cache',
-        'Expires': '0'
+        'Expires': '0',
+        'Surrogate-Control': 'no-store',
+        'Vary': '*',
+        'X-Robots-Tag': 'noindex, nofollow, nosnippet, noarchive'
       };
       
+      // Production debug logging for Firebase reads
+      console.log(`[WISHLIST_DEBUG] About to fetch wishlist for user: ${userId} in ${process.env.NODE_ENV}`);
+      console.log(`[WISHLIST_DEBUG] Firebase config present: ${!!process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL}`);
+      console.log(`[WISHLIST_DEBUG] User authentication status: ${isSignedIn}`);
+      
       const wishlistProperties = await getUserWishlist(userId!);
+      
+      console.log(`[WISHLIST_DEBUG] Firebase read result: ${wishlistProperties.length} properties found`);
+      if (wishlistProperties.length > 0) {
+        console.log(`[WISHLIST_DEBUG] Sample property titles:`, wishlistProperties.slice(0, 3).map(p => p.title));
+      }
       
       // Apply pagination
       const paginatedProperties = wishlistProperties.slice(offset, offset + limit);
@@ -430,9 +447,11 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
         { 
           status: 500,
           headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
             'Pragma': 'no-cache',
-            'Expires': '0'
+            'Expires': '0',
+            'Surrogate-Control': 'no-store',
+            'Vary': '*'
           }
         }
       );
