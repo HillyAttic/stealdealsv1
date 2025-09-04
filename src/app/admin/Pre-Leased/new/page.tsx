@@ -694,8 +694,8 @@ function NewPreLeasedPropertyContent() {
           {/* File Upload Section - Replaced with Image URL Input */}
           <div className="mt-6 mb-6">
             <div className="list-group list-group-item border border-gray-200 rounded p-4">
-              <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-                <label htmlFor="image" className="col-span-2 text-gray-700">Image URL</label>
+              <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-start">
+                <label htmlFor="image" className="col-span-2 text-gray-700 pt-2">Image URL</label>
                 <div className="col-span-8 position-relative">
                   <input 
                     type="text"
@@ -703,13 +703,13 @@ function NewPreLeasedPropertyContent() {
                     name="image"
                     value={formData.image}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black h-10"
                     placeholder="Enter image URL"
                     autoComplete="off"
                   />
                   <p className="text-xs text-gray-500 mt-1">Enter a direct URL to an image (e.g., https://example.com/image.jpg)</p>
                 </div>
-                <div className="col-span-2 flex justify-center">
+                <div className="col-span-2 flex items-start pt-0">
                   <ImageUploader 
                     onImageUrlGenerated={handleImageUrlGenerated}
                     disabled={isLoading}

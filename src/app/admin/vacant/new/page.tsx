@@ -141,7 +141,7 @@ function NewVacantPropertyContent() {
     length: '',
     width: '',
     height: '',
-    image: '',
+    images: Array(10).fill(''),
     status: 'Available'
   });
   
@@ -197,12 +197,26 @@ function NewVacantPropertyContent() {
     }
   };
   
-  // Handle image URL generated from ImageUploader
-  const handleImageUrlGenerated = (url: string) => {
+  // Handle image array changes
+  const handleImageChange = (index: number, value: string) => {
     setFormData(prev => ({
       ...prev,
-      image: url
+      images: prev.images.map((img, i) => i === index ? value : img)
     }));
+    
+    // Clear images validation error when user starts adding images
+    if (errors.images) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.images;
+        return newErrors;
+      });
+    }
+  };
+  
+  // Handle image URL generated from ImageUploader
+  const handleImageUrlGenerated = (index: number, url: string) => {
+    handleImageChange(index, url);
   };
   
   // Validate form data
@@ -239,6 +253,12 @@ function NewVacantPropertyContent() {
     
     if (!formData.reference) {
       newErrors.reference = 'Reference is required';
+    }
+    
+    // Validate that at least one image exists
+    const hasImages = formData.images.some(img => img.trim() !== '');
+    if (!hasImages) {
+      newErrors.images = 'At least one image is required';
     }
     
     setErrors(newErrors);
@@ -291,7 +311,7 @@ function NewVacantPropertyContent() {
         rent: formData.rent ? Number(formData.rent) : 0,
         
         // Media
-        image: formData.image || 'https://images.pexels.com/photos/260931/pexels-photo-260931.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+        images: formData.images.filter(img => img.trim() !== ''),
         
         // Metadata
         status: formData.status || 'Available',
@@ -670,43 +690,54 @@ function NewVacantPropertyContent() {
             </div>
           </div>
           
-          {/* Image URL Input Section */}
+          {/* Images URL Input Section */}
           <div className="mt-6 mb-6">
             <div className="list-group list-group-item border border-gray-200 rounded p-4">
-              <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-                <label htmlFor="image" className="col-span-2 text-gray-700">Image URL</label>
-                <div className="col-span-8">
-                  <input 
-                    type="text"
-                    id="image"
-                    name="image"
-                    value={formData.image}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                    placeholder="Enter image URL"
-                    autoComplete="off"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Enter a direct URL to an image (e.g., https://example.com/image.jpg)</p>
-                </div>
-                <div className="col-span-2">
-                  <ImageUploader 
-                    onImageUrlGenerated={handleImageUrlGenerated}
-                    disabled={isLoading}
-                    hideUrlDisplay={true}
-                  />
-                </div>
+              <div className="flex items-center justify-between mb-2">
+                <h6 className="font-bold text-gray-700">PROPERTY IMAGES</h6>
               </div>
+              <hr className="mb-4" />
               
-              {formData.image && (
-                <div id="imagePreview" className="mt-4">
-                  <img 
-                    src={formData.image} 
-                    alt="Property Preview" 
-                    className="w-64 h-48 object-cover rounded" 
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/260931/pexels-photo-260931.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
-                    }}
-                  />
+              {formData.images.map((image, index) => (
+                <div key={index} className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-start">
+                  <label className="col-span-2 text-gray-700 pt-2">Image {index + 1}</label>
+                  <div className="col-span-8">
+                    <input 
+                      type="text"
+                      value={image}
+                      onChange={(e) => handleImageChange(index, e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black h-10"
+                      placeholder={`Enter image ${index + 1} URL`}
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div className="col-span-2 flex items-start pt-0">
+                    <ImageUploader 
+                      onImageUrlGenerated={(url) => handleImageUrlGenerated(index, url)}
+                      disabled={isLoading}
+                      hideUrlDisplay={true}
+                    />
+                  </div>
+                </div>
+              ))}
+              
+              {errors.images && (
+                <div className="text-red-500 text-sm mt-2">{errors.images}</div>
+              )}
+              
+              {formData.images.some(img => img.trim() !== '') && (
+                <div id="imagePreview" className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {formData.images.filter(img => img.trim() !== '').map((image, index) => (
+                    <img 
+                      key={index}
+                      src={image} 
+                      alt={`Property Preview ${index + 1}`} 
+                      className="w-full h-32 object-cover rounded border" 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/260931/pexels-photo-260931.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
+                      }}
+                    />
+                  ))}
                 </div>
               )}
             </div>

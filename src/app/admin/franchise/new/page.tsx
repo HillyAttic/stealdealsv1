@@ -50,7 +50,7 @@ function FranchiseForm() {
     maxPaybackPeriod: '',
     headquarter: '',
     remarks: '',
-    image: '',
+    images: Array(5).fill(''),
     investorDiscoveryKitUrl: ''
   });
   
@@ -59,11 +59,19 @@ function FranchiseForm() {
     setFranchise(prev => ({ ...prev, [name]: value }));
   };
   
-  // Handle image URL generated from ImageUploader
-  const handleImageUrlGenerated = (url: string) => {
+  // Handle image array changes
+  const handleImageChange = (index: number, value: string) => {
     setFranchise(prev => ({
       ...prev,
-      image: url
+      images: prev.images.map((img, i) => i === index ? value : img)
+    }));
+  };
+  
+  // Handle image URL generated from ImageUploader
+  const handleImageUrlGenerated = (index: number, url: string) => {
+    setFranchise(prev => ({
+      ...prev,
+      images: prev.images.map((img, i) => i === index ? url : img)
     }));
   };
   
@@ -87,7 +95,7 @@ function FranchiseForm() {
         // Don't force parsing to float - keep as strings if they contain text like "20 LACS"
         minInvestment: franchise.minInvestment || "0",
         maxInvestment: franchise.maxInvestment || "0",
-        image: franchise.image || 'https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'
+        images: franchise.images.filter(img => img.trim() !== '')
       });
       
       // Debug what's being sent
@@ -424,41 +432,42 @@ function FranchiseForm() {
             </div>
           </div>
 
-          <div className="row mb-3 flex">
-            <label htmlFor="inputImage" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Image URL</label>
-            <div className="col-sm-8 position-relative w-4/6">
-              <input 
-                type="text" 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
-                id="inputImage"
-                name="image"
-                value={franchise.image}
-                onChange={handleChange} 
-                placeholder="https://example.com/image.jpg"
-              />
-              <div className="text-xs text-gray-500 mt-1">Enter a URL for the franchise image (shows in listings)</div>
+          <div className="row mb-3 flex items-start">
+            <div className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium pt-2">
+              <label>Image URLs</label>
+              <div className="text-xs text-gray-500 mt-1">(Max 5 images)</div>
             </div>
-            <div className="col-sm-2 position-relative w-1/6 flex items-center justify-center pl-2">
-              <div className="flex items-center space-x-2">
-                <ImageUploader 
-                  onImageUrlGenerated={handleImageUrlGenerated}
-                  disabled={isSubmitting}
-                  hideUrlDisplay={true}
-                />
-                {franchise.image && (
-                  <div className="ml-2">
-                    <img 
-                      src={franchise.image} 
-                      alt="Franchise Preview" 
-                      className="h-10 w-10 object-cover border border-gray-300 rounded"
-                      onError={(e) => {
-                        // If image fails to load, show placeholder
-                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=Error';
-                      }}
+            <div className="col-sm-10 position-relative w-5/6">
+              {franchise.images.map((image, index) => (
+                <div key={index} className="mb-3 flex items-start">
+                  <div className="w-4/6">
+                    <input 
+                      type="text" 
+                      className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white h-10" 
+                      value={image}
+                      onChange={(e) => handleImageChange(index, e.target.value)} 
+                      placeholder={`Image ${index + 1} URL`}
                     />
                   </div>
-                )}
-              </div>
+                  <div className="w-2/6 flex items-start justify-center pl-2">
+                    <ImageUploader 
+                      onImageUrlGenerated={(url) => handleImageUrlGenerated(index, url)}
+                      disabled={isSubmitting}
+                      hideUrlDisplay={true}
+                    />
+                    {image && (
+                      <img 
+                        src={image} 
+                        alt={`Preview ${index + 1}`} 
+                        className="h-10 w-10 object-cover border border-gray-300 rounded ml-2"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=Error';
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

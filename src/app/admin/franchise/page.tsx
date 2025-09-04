@@ -149,27 +149,33 @@ function FranchiseContent() {
   const formatCurrency = (amount: number | string): string => {
     if (!amount) return 'Not specified';
     
-    // If it's already a formatted string with LACS, return as is
-    if (typeof amount === 'string' && amount.includes('LACS')) {
+    // If it's already a string with text (like "20 LACS"), add currency symbol and return
+    if (typeof amount === 'string' && (amount.includes('LACS') || amount.includes('CR') || amount.includes('LAKHS') || amount.includes('CRORE'))) {
       return amount.startsWith('₹') ? amount : `₹${amount}`;
     }
     
-    // If it's a string that can't be converted to number, return as is
+    // If it's a string with text but no units, return as is with currency
     if (typeof amount === 'string' && isNaN(Number(amount))) {
-      return amount;
+      return `₹${amount}`;
     }
     
-    // Convert to number and format
+    // Convert to number for formatting
     const numAmount = typeof amount === 'string' ? Number(amount) : amount;
+    
     if (isNaN(numAmount)) return 'Not specified';
     
-    // For amounts in lakhs (typically > 100000), display as LACS
-    if (numAmount >= 100000) {
-      const lakhs = numAmount / 100000;
-      return `₹${lakhs} LACS`;
+    // Check if it's a small number that should be interpreted as lakhs
+    if (numAmount < 1000) {
+      return `₹${numAmount} LACS`;
     }
     
-    return `₹${numAmount.toLocaleString('en-IN')}`;
+    if (numAmount >= 10000000) {
+      return `₹${(numAmount / 10000000).toFixed(1)} Cr`;
+    } else if (numAmount >= 100000) {
+      return `₹${(numAmount / 100000).toFixed(1)} Lakhs`;
+    } else {
+      return `₹${numAmount.toLocaleString('en-IN')}`;
+    }
   };
 
 
