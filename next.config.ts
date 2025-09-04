@@ -120,20 +120,18 @@ const nextConfig: NextConfig = {
   // Suppress browser extension related errors
   assetPrefix: process.env.NODE_ENV === 'production' ? '' : '',
   
-  // Explicit redirects for broken routes
+  // Redirect all wishlist traffic to working route
   async redirects() {
     return [
       {
         source: '/wishlist',
         destination: '/my-wishlist',
-        permanent: false,
-        has: [
-          {
-            type: 'header',
-            key: 'user-agent',
-            value: '.*Chrome.*'
-          }
-        ]
+        permanent: true, // 301 redirect - tells search engines this is the new location
+      },
+      {
+        source: '/wishlist/:path*',
+        destination: '/my-wishlist/:path*',
+        permanent: true,
       }
     ];
   },

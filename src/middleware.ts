@@ -56,12 +56,12 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next();
   }
 
-  // Emergency redirect for broken wishlist route
-  if (pathname === '/wishlist' && req.headers.get('user-agent')?.includes('Chrome')) {
-    console.log('[MIDDLEWARE] Redirecting broken wishlist to backup route');
-    const backupUrl = new URL('/my-wishlist', req.url);
-    backupUrl.search = req.nextUrl.search;
-    return NextResponse.redirect(backupUrl, 307); // Temporary redirect
+  // Primary redirect for all wishlist traffic (fallback if Next.js redirects don't work)
+  if (pathname === '/wishlist') {
+    console.log('[MIDDLEWARE] Redirecting wishlist to primary route');
+    const primaryUrl = new URL('/my-wishlist', req.url);
+    primaryUrl.search = req.nextUrl.search;
+    return NextResponse.redirect(primaryUrl, 301); // Permanent redirect
   }
 
   // Skip Clerk auth for admin paths - let Firebase handle them

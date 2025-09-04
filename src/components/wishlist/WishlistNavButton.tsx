@@ -114,7 +114,7 @@ export function WishlistNavButton({ className = '', showText = false }: Wishlist
     <>
       {isSignedIn ? (
         <Link
-          href="/wishlist"
+          href="/my-wishlist"
           className={baseClassName}
           title="View Wishlist"
         >

@@ -20,7 +20,7 @@ export function WishlistIndicator({ className = '', showText = false }: Wishlist
 
   return (
     <Link
-      href="/wishlist"
+      href="/my-wishlist"
       className={`
         relative inline-flex items-center justify-center
         p-2 rounded-full

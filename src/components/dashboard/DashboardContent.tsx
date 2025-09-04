@@ -85,7 +85,7 @@ export function DashboardContent({ userProfile }: DashboardContentProps) {
             Browse Properties
           </Link>
           <Link 
-            href="/wishlist"
+            href="/my-wishlist"
             className="flex items-center justify-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
