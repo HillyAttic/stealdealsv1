@@ -69,7 +69,7 @@ export function FranchiseContactModal({ franchise, isOpen, onClose }: FranchiseC
 
         <div className="p-4 md:p-6">
           <form 
-            action="https://formsubmit.co/hello@stealdeals.co.in" 
+            action="https://formsubmit.co/ishank@stealdeals.co.in" 
             method="POST"
             className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"
           >

@@ -771,7 +771,7 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
 
                   <div className="bg-white rounded-2xl shadow-xl p-8">
                     <form 
-                      action="https://formsubmit.co/hello@stealdeals.co.in" 
+                      action="https://formsubmit.co/ishank@stealdeals.co.in" 
                       method="POST"
                       className="grid grid-cols-1 md:grid-cols-2 gap-6"
                     >
@@ -899,7 +899,7 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
                   {/* Modal Content */}
                   <div className="p-6">
                     <form 
-                      action="https://formsubmit.co/hello@stealdeals.co.in" 
+                      action="https://formsubmit.co/ishank@stealdeals.co.in" 
                       method="POST"
                       className="space-y-4"
                     >

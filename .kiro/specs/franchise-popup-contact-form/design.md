@@ -73,7 +73,7 @@ interface FranchiseContext {
 ### 3. FormSubmit.co Integration
 
 **Configuration:**
-- **Action URL**: `https://formsubmit.co/hello@stealdeals.co.in`
+- **Action URL**: `https://formsubmit.co/ishank@stealdeals.co.in`
 - **Method**: POST
 - **Subject Line**: `Franchise Inquiry - {franchise_name}`
 - **Redirect**: Back to franchise page with success parameter

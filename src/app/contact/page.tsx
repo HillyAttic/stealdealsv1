@@ -188,7 +188,7 @@ export default function ContactPage() {
 
                   {!showSuccessMessage && (
                     <form
-                      action="https://formsubmit.co/hello@stealdeals.co.in"
+                      action="https://formsubmit.co/ishank@stealdeals.co.in"
                       method="POST"
                       className="space-y-6"
                     >

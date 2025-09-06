@@ -540,7 +540,7 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
             </h2>
             
             <form 
-              action="https://formsubmit.co/hello@stealdeals.co.in" 
+              action="https://formsubmit.co/ishank@stealdeals.co.in" 
               method="POST"
               className="bg-gray-50 p-8 rounded-lg shadow-md"
             >

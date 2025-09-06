@@ -61,7 +61,7 @@ export function PlotGatedContentModal({ plot, isOpen, onClose, onSuccess }: Plot
       
       // Create a temporary form for submission
       const tempForm = document.createElement('form');
-      tempForm.action = 'https://formsubmit.co/hello@stealdeals.co.in';
+      tempForm.action = 'https://formsubmit.co/ishank@stealdeals.co.in';
       tempForm.method = 'POST';
       tempForm.style.display = 'none';
       

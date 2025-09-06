@@ -344,7 +344,7 @@ export function VacantWishlistModal({ property, isOpen, onClose }: VacantWishlis
               <p className="text-white/80 text-xs md:text-sm mt-1">Get detailed information about {property.title || 'A2/9, SAFDARJUNG ENCLAVE'}</p>
             </div>
             <div className="p-4 md:p-6">
-              <form action="https://formsubmit.co/hello@stealdeals.co.in" method="POST" className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <form action="https://formsubmit.co/ishank@stealdeals.co.in" method="POST" className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <input type="hidden" value={`Vacant Property Inquiry - ${property.title || 'A2/9, SAFDARJUNG ENCLAVE'} (Contact Modal)`} name="_subject" />
                 <input type="hidden" value="https://stealdeals.co.in/vacant?success=true" name="_next" />
                 <input type="hidden" value="false" name="_captcha" />
@@ -497,7 +497,7 @@ export function VacantWishlistModal({ property, isOpen, onClose }: VacantWishlis
             </div>
             
             <div className="p-4 md:p-6">
-              <form action="https://formsubmit.co/hello@stealdeals.co.in" method="POST" className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <form action="https://formsubmit.co/ishank@stealdeals.co.in" method="POST" className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <input type="hidden" value={`Investor Discovery Kit Request - ${property.title} (Gated Content)`} name="_subject" />
                 <input type="hidden" value="http://localhost:3000/wishlist?kit_unlocked=true" name="_next" />
                 <input type="hidden" value="false" name="_captcha" />

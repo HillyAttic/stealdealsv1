@@ -68,7 +68,7 @@ export default function TermsOfServicePage() {
               <div className="border-l-4 p-2 sm:p-3 md:p-6 rounded-r-lg" style={{backgroundColor: 'rgba(28, 110, 164, 0.05)', borderColor: 'rgb(28, 110, 164)'}}>
                 <p className="text-gray-700 font-medium flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm md:text-base">
                   <FaEnvelope className="mr-0 sm:mr-3 mb-1 sm:mb-0 w-fit" style={{color: 'rgb(28, 110, 164)'}} />
-                  For any questions about these Terms, contact us at <a href="mailto:hello@stealdeals.co.in" className="hover:underline font-semibold break-all" style={{ color: 'rgb(28, 110, 164)' }}>hello@stealdeals.co.in</a>.
+                  For any questions about these Terms, contact us at <a href="mailto:ishank@stealdeals.co.in" className="hover:underline font-semibold break-all" style={{ color: 'rgb(28, 110, 164)' }}>ishank@stealdeals.co.in</a>.
                 </p>
               </div>
             </div>
@@ -355,8 +355,8 @@ export default function TermsOfServicePage() {
                       </div>
                       <div>
                         <h4 className="font-semibold text-gray-800 mb-1 md:mb-2 text-xs sm:text-sm md:text-lg">Email Address</h4>
-                        <a href="mailto:hello@stealdeals.co.in" className="hover:underline font-semibold break-all text-xs sm:text-sm md:text-lg" style={{ color: 'rgb(28, 110, 164)' }}>
-                          hello@stealdeals.co.in
+                        <a href="mailto:ishank@stealdeals.co.in" className="hover:underline font-semibold break-all text-xs sm:text-sm md:text-lg" style={{ color: 'rgb(28, 110, 164)' }}>
+                          ishank@stealdeals.co.in
                         </a>
                       </div>
                     </div>
@@ -415,7 +415,7 @@ export default function TermsOfServicePage() {
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 px-4">
                 <a 
-                  href="mailto:hello@stealdeals.co.in" 
+                  href="mailto:ishank@stealdeals.co.in" 
                   className="bg-white text-white font-medium py-2.5 sm:py-3 px-6 sm:px-8 rounded-lg transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 inline-flex items-center justify-center text-sm sm:text-base"
                   style={{color: 'rgb(28, 110, 164)'}}
                   onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255, 255, 255, 0.95)'}
