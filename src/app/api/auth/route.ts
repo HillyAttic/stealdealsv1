@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 
 // In a real app, this would be in a database
 // For demo purposes, we'll hash the password once at startup
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'stealdeals.co.in@gmail.com';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'hello@stealdeals.co.in';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Stealdeals@821';
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_jwt_secret_for_development';
 

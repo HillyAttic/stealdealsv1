@@ -34,7 +34,7 @@ This feature enhances the franchise detail page with a popup contact form that a
 
 #### Acceptance Criteria
 
-1. WHEN a user submits the form THEN I SHALL receive an email at stealdeals.co.in@gmail.com
+1. WHEN a user submits the form THEN I SHALL receive an email at hello@stealdeals.co.in
 2. WHEN I receive the email THEN the subject line SHALL clearly indicate the franchise name
 3. WHEN I read the email THEN it SHALL contain all user details (name, email, phone, budget, message)
 4. WHEN I review the inquiry THEN it SHALL include complete franchise context (name, industry, investment, location, ROI)

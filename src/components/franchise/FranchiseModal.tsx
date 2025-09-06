@@ -646,7 +646,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
             </div>
             <div className="p-4 md:p-6">
               <form 
-                action="https://formsubmit.co/stealdeals.co.in@gmail.com" 
+                action="https://formsubmit.co/hello@stealdeals.co.in" 
                 method="POST" 
                 className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"
               >

@@ -307,7 +307,7 @@ export function PlotWishlistModal({ property, isOpen, onClose }: PlotWishlistMod
         <div className="fixed inset-0 flex items-center justify-center z-[60] p-4 bg-black/50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-lg font-bold mb-4">Unlock Discovery Kit</h3>
-            <p className="mb-4">Contact us at stealdeals.co.in@gmail.com or call +91 96 3040 3080</p>
+            <p className="mb-4">Contact us at hello@stealdeals.co.in or call +91 96 3040 3080</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowGatedModal(false)}
