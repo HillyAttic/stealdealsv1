@@ -6,7 +6,7 @@ import PropertyImage from '@/components/PropertyImage';
 import { useSecureGatedContent } from '@/hooks/useSecureGatedContent';
 import { GatedContentModal } from './GatedContentModal';
 import { SuccessMessage } from './SuccessMessage';
-import { Franchise } from '@/types/franchise';
+import { Franchise, FranchiseDetails } from '@/types/franchise';
 
 interface FranchiseModalProps {
   franchise: Franchise | null;
@@ -18,8 +18,42 @@ interface FranchiseModalProps {
 export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal }: FranchiseModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
+  // Helper function to get data from franchiseDetails with fallbacks to legacy fields
+  const getField = (field: keyof FranchiseDetails): string => {
+    if (!franchise) return '';
+    
+    const details = franchise.franchiseDetails;
+    switch (field) {
+      case 'name':
+        return details?.name || details?.brand || franchise.name || franchise.title || '';
+      case 'brand':
+        return details?.brand || details?.name || franchise.name || franchise.title || '';
+      case 'industry':
+        return details?.industry || franchise.industry || '';
+      case 'segment':
+        return details?.segment || franchise.segment || '';
+      case 'product':
+        return details?.product || details?.name || details?.brand || franchise.product || franchise.name || '';
+      case 'model':
+        return details?.model || franchise.model || '';
+      case 'minArea':
+        return details?.minArea || franchise.minArea || '';
+      case 'maxArea':
+        return details?.maxArea || franchise.maxArea || '';
+      case 'royalty':
+        return details?.royalty || franchise.royalty || franchise.roi || '';
+      case 'headquarter':
+        return details?.headquarter || franchise.headquarter || franchise.location || '';
+      case 'investorDiscoveryKitUrl':
+        return details?.investorDiscoveryKitUrl || franchise.investorDiscoveryKitUrl || '';
+      default:
+        // For dynamic field access, we need to use a type assertion
+        return String(details?.[field as keyof FranchiseDetails] || franchise[field as keyof Franchise] || '');
+    }
+  };
+
   // Secure gated content functionality - Generate consistent ID like FranchiseCard
-  const franchiseId = franchise?.id || `franchise-${franchise?.name?.replace(/\s+/g, '-').toLowerCase()}-${franchise?.industry?.replace(/\s+/g, '-').toLowerCase()}`;
+  const franchiseId = franchise?.id || `franchise-${getField('name')?.replace(/\s+/g, '-').toLowerCase()}-${getField('industry')?.replace(/\s+/g, '-').toLowerCase()}`;
   const { isContentUnlocked, unlockContent } = useSecureGatedContent('franchise');
   const [showGatedModal, setShowGatedModal] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -28,7 +62,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
 
   // Helper function to get investor kit URL from both possible locations
   const getInvestorKitUrl = useCallback(() => {
-    return franchise?.investorDiscoveryKitUrl || franchise?.franchiseDetails?.investorDiscoveryKitUrl || null;
+    return getField('investorDiscoveryKitUrl');
   }, [franchise]);
 
   // Handle investor discovery kit click
@@ -190,12 +224,12 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-primary text-white">
           <div>
-            <h2 className="text-2xl font-bold">{franchise.name}</h2>
+            <h2 className="text-2xl font-bold">{getField('name')}</h2>
             <p className="text-sm" style={{ 
               color: '#ffffff', 
               textShadow: '0 0 2px rgba(0, 0, 0, 0.5)' 
             }}>
-              {franchise.industry} • {franchise.segment}
+              {getField('industry')} • {getField('segment')}
             </p>
           </div>
           <button
@@ -264,11 +298,11 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                   Product/Brand
                 </h3>
                 <p className="text-2xl font-bold text-gray-900">
-                  {franchise.product || franchise.name || 'Product Information Available'}
+                  {getField('product') || getField('name') || 'Product Information Available'}
                 </p>
-                {franchise.segment && (
+                {getField('segment') && (
                   <p className="text-sm text-secondary mt-1">
-                    Category: {franchise.segment}
+                    Category: {getField('segment')}
                   </p>
                 )}
               </div>
@@ -285,7 +319,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                   {/* Description */}
                   <div className="mb-6">
                     <p className="text-gray-700 leading-relaxed">
-                      {franchise.description || franchise.remarks || `${franchise.name} is a leading franchise opportunity in the ${franchise.industry} sector, offering excellent business potential for entrepreneurs.`}
+                      {getField('remarks') || `${getField('name')} is a leading franchise opportunity in the ${getField('industry')} sector, offering excellent business potential for entrepreneurs.`}
                     </p>
                   </div>
 
@@ -296,7 +330,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                         <FaRocket className="mr-2 text-primary" />
                         Business Model
                       </h4>
-                      <p className="text-gray-700">{franchise.model || 'Franchise Model'}</p>
+                      <p className="text-gray-700">{getField('model') || 'Franchise Model'}</p>
                     </div>
                     
                     <div className="bg-secondary/5 p-4 rounded-lg border border-secondary/20">
@@ -304,7 +338,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                         <FaMapMarkerAlt className="mr-2 text-secondary" />
                         Target Market
                       </h4>
-                      <p className="text-gray-700">{franchise.industry} Industry</p>
+                      <p className="text-gray-700">{getField('industry')} Industry</p>
                     </div>
                   </div>
                 </div>
@@ -356,7 +390,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                           <FaHandshake className="mr-2 text-primary" />
                           Royalty Fee
                         </h4>
-                        <p className="text-lg font-semibold text-primary">{franchise.royalty || 'Contact for details'}</p>
+                        <p className="text-lg font-semibold text-primary">{getField('royalty') || 'Contact for details'}</p>
                       </div>
                     </div>
                   </div>
@@ -386,7 +420,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                         <FaMapMarkerAlt className="mr-2 text-secondary" />
                         Location
                       </h4>
-                      <p className="text-gray-700">{franchise.headquarter || franchise.location}</p>
+                      <p className="text-gray-700">{getField('headquarter') || franchise.location}</p>
                     </div>
 
                     <div className="bg-accent/5 p-4 rounded-lg border border-accent/20">
@@ -394,7 +428,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                         <FaStoreAlt className="mr-2 text-accent" />
                         Current Outlets
                       </h4>
-                      <p className="text-gray-700">{franchise.numberOutlets || 'Contact for details'}</p>
+                      <p className="text-gray-700">{getField('numberOfOutlets') || getField('numberOutlets') || franchise.numberOutlets || 'Contact for details'}</p>
                     </div>
                   </div>
                 </div>
@@ -418,7 +452,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                         <FaTrophy className="mr-2 text-primary" />
                         Company Established
                       </h4>
-                      <p className="text-xl font-bold text-secondary">{franchise.establishmentYear || 'Not specified'}</p>
+                      <p className="text-xl font-bold text-secondary">{getField('establishmentYear') || 'Not specified'}</p>
                     </div>
                     
                     <div className="bg-accent/5 p-4 rounded-lg border border-accent/20">
@@ -426,7 +460,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                         <FaRocket className="mr-2 text-accent" />
                         Franchising Started
                       </h4>
-                      <p className="text-xl font-bold text-primary">{franchise.franchiseStartedYear || 'Not specified'}</p>
+                      <p className="text-xl font-bold text-primary">{getField('franchiseStartedYear') || 'Not specified'}</p>
                     </div>
                   </div>
                 </div>
@@ -536,8 +570,8 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                     onClick={() => {
                       if (navigator.share) {
                         navigator.share({
-                          title: `${franchise.name} Franchise Opportunity`,
-                          text: `Check out this ${franchise.industry} franchise opportunity: ${franchise.name}`,
+                          title: `${getField('name')} Franchise Opportunity`,
+                          text: `Check out this ${getField('industry')} franchise opportunity: ${getField('name')}`,
                           url: window.location.href
                         });
                       } else {
@@ -558,7 +592,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                   <div className="space-y-3">
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-600">Industry</span>
-                      <span className="font-semibold text-primary">{franchise.industry}</span>
+                      <span className="font-semibold text-primary">{getField('industry')}</span>
                     </div>
                     
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
@@ -568,7 +602,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                     
                     <div className="flex justify-between items-center py-2 border-b border-gray-100">
                       <span className="text-gray-600">ROI</span>
-                      <span className="font-semibold text-accent">Contact for details</span>
+                      <span className="font-semibold text-accent">{getField('royalty') || 'Contact for details'}</span>
                     </div>
                     
                     <div className="flex justify-between items-center py-2">
@@ -589,16 +623,16 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
       </div>
       
       {/* Gated Content Modal */}
-      {franchise && franchise.name && franchise.industry && (
+      {franchise && getField('name') && getField('industry') && (
         <GatedContentModal
           franchise={{ 
             ...franchise, 
-            name: franchise.name,
-            industry: franchise.industry,
-            investment: franchise.investment || franchise.minInvestment || 0,
-            location: franchise.location || franchise.headquarter || '',
+            name: getField('name'),
+            industry: getField('industry'),
+            investment: franchise.investment || franchise.price || 0,
+            location: getField('headquarter') || franchise.location || '',
             status: franchise.status || 'Active',
-            roi: franchise.roi || ''
+            roi: getField('royalty') || ''
           }}
           isOpen={showGatedModal}
           onClose={() => setShowGatedModal(false)}
@@ -612,7 +646,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
           isOpen={showSuccessMessage}
           onClose={() => setShowSuccessMessage(false)}
           onDownload={handleDownloadFromSuccess}
-          franchiseName={franchise.product || franchise.name || 'Franchise'}
+          franchiseName={getField('product') || getField('name') || 'Franchise'}
         />
       )}
       
@@ -641,7 +675,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                 color: '#ffffff', 
                 textShadow: '0 0 2px rgba(0, 0, 0, 0.5)' 
               }}>
-                Get detailed information about {franchise.name}
+                Get detailed information about {getField('name')}
               </p>
             </div>
             <div className="p-4 md:p-6">
@@ -650,14 +684,14 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                 method="POST" 
                 className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"
               >
-                <input type="hidden" value={`Franchise Inquiry - ${franchise.name} (Contact Modal)`} name="_subject" />
+                <input type="hidden" value={`Franchise Inquiry - ${getField('name')} (Contact Modal)`} name="_subject" />
                 <input type="hidden" value="https://stealdeals.co.in/franchise?success=true" name="_next" />
                 <input type="hidden" value="false" name="_captcha" />
-                <input type="hidden" value={franchise.name} name="franchise_name" />
-                <input type="hidden" value={franchise.industry} name="franchise_industry" />
+                <input type="hidden" value={getField('name')} name="franchise_name" />
+                <input type="hidden" value={getField('industry')} name="franchise_industry" />
                 <input type="hidden" value={typeof franchise.investment === 'string' ? franchise.investment : `₹${franchise.investment}`} name="franchise_investment" />
-                <input type="hidden" value={franchise.location} name="franchise_location" />
-                <input type="hidden" value={franchise.roi || 'NA'} name="franchise_roi" />
+                <input type="hidden" value={getField('headquarter') || franchise.location} name="franchise_location" />
+                <input type="hidden" value={getField('royalty') || 'NA'} name="franchise_roi" />
                 <input type="hidden" value="Separate Contact Modal" name="form_type" />
                 
                 <div className="md:col-span-2">
@@ -666,7 +700,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                     readOnly
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-primary/5 text-gray-700 cursor-not-allowed"
                     type="text"
-                    value={franchise.name}
+                    value={getField('name')}
                   />
                 </div>
                 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { FaMapMarkerAlt, FaSearch, FaFilter, FaChevronDown, FaBuilding, FaMoneyBillWave, FaUsers, FaHandshake, FaStar, FaBriefcase, FaChartLine } from 'react-icons/fa';
 import { FranchiseCard, FranchiseModal, FranchiseContactModal } from '@/components/franchise';
@@ -26,6 +26,44 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedInvestmentRange, setSelectedInvestmentRange] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+
+  // Category to Segment mapping based on your requirements
+  const categorySegmentMapping = {
+    "Education": [
+      "Play Schools"
+    ],
+    "F&B": [
+      "Pizzeria",
+      "Tea & Coffee",
+      "Fine Dine Restaurants",
+      "Quick Service Restaurants",
+      "Hospitality Services",
+      "Mughlai",
+      "Bakery, Sweets & Ice Creams",
+      "Express Food Joints / Drive Through",
+      "Multi Cuisine Restaurants",
+      "Bars, Pubs & Lounge"
+    ],
+    "Fashion": [
+      "Clothing",
+      "Footwear"
+    ],
+    "Pharmaceutical": [
+      "Labs",
+      "Chemist Shops",
+      "Opticals"
+    ],
+    "Retail": [
+      "Home Decor",
+      "Grocery",
+      "Supermarkets & Marts",
+      "Gift & Toys",
+      "Laundary Services"
+    ],
+    "Sports, Fitness & Entertainments": [
+      "Gymnasium"
+    ]
+  };
 
   // Check for success message from FormSubmit
   React.useEffect(() => {
@@ -90,11 +128,27 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
       ...franchises.map(f => getFranchiseField(f, 'headquarter')).filter(Boolean)
     ])).filter(Boolean).sort();
     
-    const segments = Array.from(new Set(franchises.map(f => getFranchiseField(f, 'segment')))).filter(Boolean);
+    // Filter segments based on selected industry
+    let segments = Array.from(new Set(franchises.map(f => getFranchiseField(f, 'segment')))).filter(Boolean);
+    if (selectedIndustry && categorySegmentMapping[selectedIndustry as keyof typeof categorySegmentMapping]) {
+      segments = categorySegmentMapping[selectedIndustry as keyof typeof categorySegmentMapping];
+    }
+    
     const models = Array.from(new Set(franchises.map(f => getFranchiseField(f, 'model')))).filter(Boolean);
 
     return { industries, allLocations, segments, models };
-  }, [franchises]);
+  }, [franchises, selectedIndustry]);
+
+  // Reset segment when industry changes
+  useEffect(() => {
+    if (selectedIndustry) {
+      // If current selected segment is not in the new category's segments, reset it
+      const validSegments = categorySegmentMapping[selectedIndustry as keyof typeof categorySegmentMapping] || [];
+      if (selectedSegment && !validSegments.includes(selectedSegment)) {
+        setSelectedSegment('');
+      }
+    }
+  }, [selectedIndustry, selectedSegment]);
 
   // Investment range options
   const investmentRanges = [
@@ -377,6 +431,7 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
                       className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
                       value={selectedSegment}
                       onChange={(e) => setSelectedSegment(e.target.value)}
+                      disabled={!selectedIndustry}
                     >
                       <option value="">All Segments</option>
                       {filterOptions.segments.map(segment => (
@@ -385,6 +440,9 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
                     </select>
                     <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
                   </div>
+                  {!selectedIndustry && (
+                    <p className="text-xs text-gray-500 mt-1">Select a category first</p>
+                  )}
                 </div>
                 
                 {/* Model Filter */}
@@ -397,10 +455,6 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
                       onChange={(e) => setSelectedModel(e.target.value)}
                     >
                       <option value="">All Models</option>
-                      <option value="FOFO">FOFO</option>
-                      <option value="COCO">COCO</option>
-                      <option value="FOCO">FOCO</option>
-                      <option value="Hybrid">Hybrid</option>
                       {filterOptions.models.map(model => (
                         <option key={model} value={model}>{model}</option>
                       ))}

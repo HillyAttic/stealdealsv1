@@ -598,14 +598,14 @@ export default function AboutPage() {
             <div className="text-center max-w-4xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Ready to Find Your Next Investment?</h2>
               <p className="text-white/80 text-lg mb-10 leading-relaxed">
-                Whether you're looking for pre-leased properties, commercial plots, or development opportunities, we have the expertise to help you succeed.
+                Whether you're looking for Investment in Plots or setting up your own Franchise, we have the expertise to help you succeed.
               </p>
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                 <Link 
-                  href="/inventory" 
+                  href="/franchise" 
                   className="bg-white text-[rgb(21,77,113)] hover:bg-white/90 hover:text-[rgb(28,110,164)] px-8 py-4 rounded-lg text-lg font-bold transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
                 >
-                  Browse Properties
+                  Browse Franchise
                 </Link>
                 <Link 
                   href="/contact" 
