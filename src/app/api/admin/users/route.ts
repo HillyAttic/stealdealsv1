@@ -49,8 +49,7 @@ export async function GET(request: NextRequest) {
       console.log(`[Admin Users API] Fetching users from Clerk: page=${page}, limit=${limit}, search='${search}'`);
       
       // Fetch users from Clerk with search and pagination
-      const client = await clerkClient();
-      const usersResponse = await client.users.getUserList({
+      const usersResponse = await clerkClient.users.getUserList({
         limit,
         offset,
         ...(search && { query: search })
@@ -115,7 +114,7 @@ export async function GET(request: NextRequest) {
       }));
       
       // Get total count for pagination
-      const totalUsersResponse = await client.users.getCount();
+      const totalUsersResponse = await clerkClient.users.getCount();
       
       // Calculate statistics
       const totalUsers = totalUsersResponse;

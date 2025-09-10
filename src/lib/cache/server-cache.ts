@@ -88,18 +88,51 @@ export const getCachedPlots = unstable_cache(
  * Cache invalidation helpers
  */
 export const revalidateCachedData = {
-  vacantProperties: () => {
+  vacantProperties: async () => {
     console.log('[Cache] Revalidating vacant properties cache');
-    // This will be called when data is updated via API
+    try {
+      const { revalidateTag } = await import('next/cache');
+      revalidateTag(CACHE_TAGS.VACANT_PROPERTIES);
+      revalidateTag(CACHE_TAGS.ALL_PROPERTIES);
+      console.log('[Cache] Successfully revalidated vacant properties cache');
+    } catch (error) {
+      console.error('[Cache] Failed to revalidate vacant properties cache:', error);
+    }
   },
-  franchises: () => {
+  franchises: async () => {
     console.log('[Cache] Revalidating franchises cache');
+    try {
+      const { revalidateTag } = await import('next/cache');
+      revalidateTag(CACHE_TAGS.FRANCHISES);
+      revalidateTag(CACHE_TAGS.ALL_PROPERTIES);
+      console.log('[Cache] Successfully revalidated franchises cache');
+    } catch (error) {
+      console.error('[Cache] Failed to revalidate franchises cache:', error);
+    }
   },
-  plots: () => {
+  plots: async () => {
     console.log('[Cache] Revalidating plots cache');
+    try {
+      const { revalidateTag } = await import('next/cache');
+      revalidateTag(CACHE_TAGS.PLOTS);
+      revalidateTag(CACHE_TAGS.ALL_PROPERTIES);
+      console.log('[Cache] Successfully revalidated plots cache');
+    } catch (error) {
+      console.error('[Cache] Failed to revalidate plots cache:', error);
+    }
   },
-  all: () => {
+  all: async () => {
     console.log('[Cache] Revalidating all property caches');
+    try {
+      const { revalidateTag } = await import('next/cache');
+      revalidateTag(CACHE_TAGS.VACANT_PROPERTIES);
+      revalidateTag(CACHE_TAGS.FRANCHISES);
+      revalidateTag(CACHE_TAGS.PLOTS);
+      revalidateTag(CACHE_TAGS.ALL_PROPERTIES);
+      console.log('[Cache] Successfully revalidated all property caches');
+    } catch (error) {
+      console.error('[Cache] Failed to revalidate all property caches:', error);
+    }
   }
 };
 

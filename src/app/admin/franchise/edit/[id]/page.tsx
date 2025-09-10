@@ -178,7 +178,33 @@ function EditFranchiseContent() {
       if (response.ok) {
         const result = await response.json();
         console.log('Franchise updated successfully via API:', result);
-        toast.success('Franchise updated successfully');
+        
+        // Trigger cache revalidation after successful update
+        try {
+          console.log('Triggering cache revalidation...');
+          const revalidateResponse = await fetch('/api/revalidate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              type: 'franchises',
+              secret: process.env.NEXT_PUBLIC_REVALIDATION_SECRET || 'dev-secret-key'
+            })
+          });
+          
+          if (revalidateResponse.ok) {
+            console.log('Cache revalidation successful');
+            toast.success('Franchise updated and cache refreshed successfully');
+          } else {
+            console.warn('Cache revalidation failed, but franchise was updated');
+            toast.success('Franchise updated successfully (cache refresh pending)');
+          }
+        } catch (revalidateError) {
+          console.warn('Cache revalidation error:', revalidateError);
+          toast.success('Franchise updated successfully (cache refresh pending)');
+        }
+        
         router.push('/admin/franchise');
       } else {
         const errorData = await response.json().catch(() => ({}));

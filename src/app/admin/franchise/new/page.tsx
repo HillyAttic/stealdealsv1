@@ -119,7 +119,32 @@ function FranchiseForm() {
       
       const result = await response.json();
       console.log('Franchise added successfully:', result);
-      setSuccess('Franchise added successfully! It will now appear on the franchise listings page.');
+      
+      // Trigger cache revalidation after successful creation
+      try {
+        console.log('Triggering cache revalidation...');
+        const revalidateResponse = await fetch('/api/revalidate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            type: 'franchises',
+            secret: process.env.NEXT_PUBLIC_REVALIDATION_SECRET || 'dev-secret-key'
+          })
+        });
+        
+        if (revalidateResponse.ok) {
+          console.log('Cache revalidation successful');
+          setSuccess('Franchise added and cache refreshed successfully! It will now appear on the franchise listings page.');
+        } else {
+          console.warn('Cache revalidation failed, but franchise was created');
+          setSuccess('Franchise added successfully! Cache refresh pending - it will appear shortly on the franchise listings page.');
+        }
+      } catch (revalidateError) {
+        console.warn('Cache revalidation error:', revalidateError);
+        setSuccess('Franchise added successfully! Cache refresh pending - it will appear shortly on the franchise listings page.');
+      }
       
       // Redirect after successful submission
       setTimeout(() => {

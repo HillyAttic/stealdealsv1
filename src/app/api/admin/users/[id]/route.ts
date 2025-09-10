@@ -37,8 +37,7 @@ export async function GET(
       console.log(`[Admin User Details API] Fetching user details for ID: ${userId}`);
       
       // Fetch user from Clerk
-      const client = await clerkClient();
-      const user = await client.users.getUser(userId);
+      const user = await clerkClient.users.getUser(userId);
       
       if (!user) {
         return NextResponse.json(
