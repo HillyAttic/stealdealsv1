@@ -6,9 +6,21 @@ import { clerkClient } from '@clerk/nextjs/server';
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {
     try {
+      // Debug logging for environment and configuration
+      console.log('[Admin Users API] 🚀 Starting request processing');
+      console.log('[Admin Users API] Environment:', process.env.NODE_ENV);
+      console.log('[Admin Users API] Admin user:', authenticatedRequest.user.email);
+      
       // Validate Clerk configuration first
       const clerkSecretKey = process.env.CLERK_SECRET_KEY;
       const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+      
+      // Enhanced debug logging for Clerk configuration
+      console.log('[Admin Users API] 🔑 Clerk config check:');
+      console.log(`[Admin Users API] - Secret key exists: ${!!clerkSecretKey}`);
+      console.log(`[Admin Users API] - Secret key format: ${clerkSecretKey ? clerkSecretKey.substring(0, 15) + '...' : 'MISSING'}`);
+      console.log(`[Admin Users API] - Publishable key exists: ${!!clerkPublishableKey}`);
+      console.log(`[Admin Users API] - Publishable key format: ${clerkPublishableKey ? clerkPublishableKey.substring(0, 15) + '...' : 'MISSING'}`);
       
       if (!clerkSecretKey || clerkSecretKey.includes('YOUR_CLERK_SECRET_KEY_HERE')) {
         console.error('[Admin Users API] Missing or invalid CLERK_SECRET_KEY in production environment');
@@ -46,7 +58,8 @@ export async function GET(request: NextRequest) {
       // Calculate offset for pagination
       const offset = (page - 1) * limit;
       
-      console.log(`[Admin Users API] Fetching users from Clerk: page=${page}, limit=${limit}, search='${search}'`);
+      console.log(`[Admin Users API] 📋 Fetching users from Clerk: page=${page}, limit=${limit}, search='${search}'`);
+      console.log('[Admin Users API] 🔄 Calling clerkClient.users.getUserList...');
       
       // Fetch users from Clerk with search and pagination
       const usersResponse = await clerkClient.users.getUserList({
@@ -54,6 +67,8 @@ export async function GET(request: NextRequest) {
         offset,
         ...(search && { query: search })
       });
+      
+      console.log(`[Admin Users API] ✅ Clerk API response received: ${usersResponse.data?.length || 0} users`);
       
       // Get wishlist counts for all users
       console.log(`[Admin Users API] Fetching wishlist counts for ${usersResponse.data.length} users`);

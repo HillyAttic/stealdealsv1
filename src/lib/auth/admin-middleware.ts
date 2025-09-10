@@ -21,11 +21,21 @@ export async function requireAdminAuth(
   handler: (authenticatedRequest: AuthenticatedAdminRequest) => Promise<NextResponse>
 ): Promise<NextResponse> {
   try {
-    console.log('[Admin Auth] Checking authentication...');
+    console.log('[Admin Auth] 🔐 Checking authentication...');
+    console.log('[Admin Auth] Environment:', process.env.NODE_ENV);
+    console.log('[Admin Auth] Request URL:', request.url);
+    console.log('[Admin Auth] Request method:', request.method);
+    
+    // Debug all cookies
+    const allCookies = request.cookies.getAll();
+    console.log('[Admin Auth] 🍪 All cookies:', allCookies.map(c => `${c.name}=${c.value.substring(0, 20)}...`));
     
     // Get token from cookies
     const token = request.cookies.get('adminToken')?.value;
-    console.log('[Admin Auth] Token present:', !!token);
+    console.log('[Admin Auth] 🎫 AdminToken present:', !!token);
+    if (token) {
+      console.log('[Admin Auth] Token preview:', token.substring(0, 30) + '...');
+    }
     
     if (!token) {
       console.log('[Admin Auth] No admin token found in cookies');

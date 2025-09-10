@@ -109,12 +109,13 @@ export async function POST(request: NextRequest) {
     });
     
     // Set HTTP-only cookie for enhanced security (can't be accessed by JavaScript)
+    // Using more permissive settings for production compatibility
     response.cookies.set({
       name: 'adminToken',
       value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // Only use HTTPS in production
-      sameSite: 'strict',
+      sameSite: 'lax', // Changed from 'strict' to 'lax' for better production compatibility
       maxAge: 60 * 60 * 24, // 24 hours
       path: '/'
     });
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
       }),
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax', // Changed from 'strict' to 'lax' for better production compatibility
       maxAge: 60 * 60 * 24, // 24 hours
       path: '/'
     });
