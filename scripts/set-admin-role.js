@@ -9,8 +9,11 @@ async function setAdminRole(userEmail) {
   try {
     console.log(`Setting admin role for user: ${userEmail}`);
     
+    // Initialize Clerk client using the async pattern
+    const client = await clerkClient();
+    
     // Find user by email
-    const users = await clerkClient.users.getUserList({
+    const users = await client.users.getUserList({
       emailAddress: [userEmail]
     });
     
@@ -23,7 +26,7 @@ async function setAdminRole(userEmail) {
     console.log(`Found user: ${user.id} - ${user.firstName} ${user.lastName}`);
     
     // Update user's public metadata to set admin role
-    await clerkClient.users.updateUserMetadata(user.id, {
+    await client.users.updateUserMetadata(user.id, {
       publicMetadata: {
         ...user.publicMetadata,
         role: 'admin'

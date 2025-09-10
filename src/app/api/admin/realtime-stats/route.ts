@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if current user is admin
-    const currentUser = await clerkClient.users.getUser(currentUserId);
+    const client = await clerkClient();
+    const currentUser = await client.users.getUser(currentUserId);
     const isAdmin = currentUser.publicMetadata?.role === 'admin';
     
     if (!isAdmin) {
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all users count
-    const users = await clerkClient.users.getUserList({ limit: 1000 });
+    const users = await client.users.getUserList({ limit: 1000 });
     
     // Calculate stats (this is a simplified version)
     const now = new Date();

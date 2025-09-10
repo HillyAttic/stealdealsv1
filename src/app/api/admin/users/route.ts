@@ -64,13 +64,17 @@ export async function GET(request: NextRequest) {
       // Enhanced debug logging for production troubleshooting
       console.log('[Admin Users API] 🚨 PRODUCTION DEBUG:');
       console.log(`[Admin Users API] - Current domain: ${process.env.NEXT_PUBLIC_APP_URL}`);
-      console.log(`[Admin Users API] - Clerk instance type: ${typeof clerkClient}`);
-      console.log(`[Admin Users API] - Clerk users method exists: ${typeof clerkClient.users?.getUserList}`);
-      console.log(`[Admin Users API] - Request parameters:`, { limit, offset, search: search || 'none' });
+      
+      // Initialize Clerk client using the async pattern for SDK 6.31.4+
+      console.log('[Admin Users API] 🔥 Initializing Clerk client with async pattern...');
+      const client = await clerkClient();
+      console.log(`[Admin Users API] - Clerk client initialized successfully`);
+      console.log(`[Admin Users API] - Client type: ${typeof client}`);
+      console.log(`[Admin Users API] - Client users method exists: ${typeof client.users?.getUserList}`);
       
       // Fetch users from Clerk with search and pagination
       console.log('[Admin Users API] 🔥 About to call Clerk API...');
-      const usersResponse = await clerkClient.users.getUserList({
+      const usersResponse = await client.users.getUserList({
         limit,
         offset,
         ...(search && { query: search })
@@ -140,7 +144,7 @@ export async function GET(request: NextRequest) {
       }));
       
       // Get total count for pagination
-      const totalUsersResponse = await clerkClient.users.getCount();
+      const totalUsersResponse = await client.users.getCount();
       
       // Calculate statistics
       const totalUsers = totalUsersResponse;

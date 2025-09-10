@@ -123,7 +123,8 @@ async function getPropertyDetails(propertyId: string): Promise<any> {
 // Helper function to get user details from Clerk
 async function getUserDetails(userId: string): Promise<{ id: string; name?: string; email?: string } | null> {
   try {
-    const user = await clerkClient.users.getUser(userId);
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
     
     // Build user name with fallbacks
     let userName = 'Unknown User';
@@ -478,7 +479,8 @@ export async function GET(request: NextRequest) {
       // Get total users count from Clerk
       let totalUsers = 0;
       try {
-        totalUsers = await clerkClient.users.getCount();
+        const client = await clerkClient();
+        totalUsers = await client.users.getCount();
       } catch (clerkError) {
         console.warn('[Admin Stats] Failed to get total users count from Clerk:', clerkError);
         totalUsers = usersWithWishlists; // Fallback to users with wishlists

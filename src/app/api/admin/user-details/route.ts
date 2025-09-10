@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
       }
 
       // Get user details from Clerk
-      const targetUser = await clerkClient.users.getUser(targetUserId);
+      const client = await clerkClient();
+      const targetUser = await client.users.getUser(targetUserId);
       
       // Get user's wishlist items with full property details
       let wishlist = [];
