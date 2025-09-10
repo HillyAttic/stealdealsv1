@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { clerkClient } from '@clerk/nextjs/server';
 import { getUserWishlist } from '@/lib/database/wishlist';
+import { WishlistProperty, UserActivity } from '@/types/auth';
+
+// Interface for admin UI wishlist items (extends WishlistProperty with UI-specific fields)
+interface AdminWishlistItem extends Omit<WishlistProperty, 'price' | 'addedAt'> {
+  price: number | string;
+  addedAt: string; // ISO string format
+  bedrooms: number | null;
+  bathrooms: number | null;
+  area: number | null;
+}
 
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {
@@ -22,7 +32,7 @@ export async function GET(request: NextRequest) {
       const targetUser = await client.users.getUser(targetUserId);
       
       // Get user's wishlist items with full property details
-      let wishlist = [];
+      let wishlist: AdminWishlistItem[] = [];
       try {
         console.log(`[API] Fetching wishlist with full property details for user: ${targetUserId}`);
         let wishlistProperties = await getUserWishlist(targetUserId);
@@ -40,7 +50,8 @@ export async function GET(request: NextRequest) {
           id: property.id,
           title: property.title,
           location: property.location,
-          price: typeof property.price === 'number' ? `₹${property.price.toLocaleString('en-IN')}` : property.price,
+          price: typeof property.price === 'number' ? property.price : property.price,
+          priceDisplay: typeof property.price === 'number' ? `₹${property.price.toLocaleString('en-IN')}` : property.price,
           imageUrl: property.images && property.images.length > 0 ? property.images[0] : '/api/placeholder/300/200',
           addedAt: property.addedAt.toISOString(),
           type: property.type,
@@ -51,7 +62,13 @@ export async function GET(request: NextRequest) {
           notes: property.notes,
           priority: property.priority,
           // Add more property details for rich display
-          images: property.images || []
+          images: property.images || [],
+          developer: property.developer,
+          plotSize: property.plotSize,
+          category: property.category,
+          segment: property.segment,
+          description: property.description,
+          investorDiscoveryKitUrl: property.investorDiscoveryKitUrl
         }));
         
         console.log(`[API] Successfully processed ${wishlist.length} wishlist items with full property details`);
@@ -60,7 +77,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Get user's activity (placeholder - activity tracking temporarily unavailable)
-      let activity = [];
+      let activity: UserActivity[] = [];
 
       // Calculate analytics
       const analytics = {
@@ -119,7 +136,7 @@ export async function GET(request: NextRequest) {
   });
 }
 
-function getActivityDescription(activity: any): string {
+function getActivityDescription(activity: UserActivity): string {
   switch (activity.type) {
     case 'property_view':
       return `Viewed property ${activity.metadata?.propertyId || 'unknown'}`;

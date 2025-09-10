@@ -82,6 +82,9 @@ interface WishlistStatsResponse {
   };
 }
 
+// Import the WishlistActivity type
+import { WishlistActivity } from '@/lib/services/activityLogger';
+
 // Enhanced logging utility for admin stats operations
 function logAdminStatsOperation(
   operation: string,
@@ -322,7 +325,7 @@ export async function GET(request: NextRequest) {
       
       // Process real recent activity
       const processedRecentActivity = [];
-      let allActivities = [];
+      let allActivities: WishlistActivity[] = [];
       
       if (includeRecentActivity) {
         try {
@@ -331,7 +334,13 @@ export async function GET(request: NextRequest) {
           allActivities = globalActivities;
           
           // Always get user details for better UX, regardless of includeUserDetails flag
+          // Filter activities to only include 'add' and 'remove' actions for recentActivity
           for (const activity of globalActivities.slice(0, recentActivityLimit)) {
+            // Only include 'add' and 'remove' actions in recentActivity
+            if (activity.action !== 'add' && activity.action !== 'remove') {
+              continue;
+            }
+            
             const userDetails = await getUserDetails(activity.userId);
             
             // Convert Firebase timestamp to ISO string if needed
