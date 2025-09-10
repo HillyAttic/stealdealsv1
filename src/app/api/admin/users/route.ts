@@ -61,14 +61,25 @@ export async function GET(request: NextRequest) {
       console.log(`[Admin Users API] 📋 Fetching users from Clerk: page=${page}, limit=${limit}, search='${search}'`);
       console.log('[Admin Users API] 🔄 Calling clerkClient.users.getUserList...');
       
+      // Enhanced debug logging for production troubleshooting
+      console.log('[Admin Users API] 🚨 PRODUCTION DEBUG:');
+      console.log(`[Admin Users API] - Current domain: ${process.env.NEXT_PUBLIC_APP_URL}`);
+      console.log(`[Admin Users API] - Clerk instance type: ${typeof clerkClient}`);
+      console.log(`[Admin Users API] - Clerk users method exists: ${typeof clerkClient.users?.getUserList}`);
+      console.log(`[Admin Users API] - Request parameters:`, { limit, offset, search: search || 'none' });
+      
       // Fetch users from Clerk with search and pagination
+      console.log('[Admin Users API] 🔥 About to call Clerk API...');
       const usersResponse = await clerkClient.users.getUserList({
         limit,
         offset,
         ...(search && { query: search })
       });
       
-      console.log(`[Admin Users API] ✅ Clerk API response received: ${usersResponse.data?.length || 0} users`);
+      console.log(`[Admin Users API] ✅ Clerk API response received successfully`);
+      console.log(`[Admin Users API] - Response type: ${typeof usersResponse}`);
+      console.log(`[Admin Users API] - Users count: ${usersResponse.data?.length || 0}`);
+      console.log(`[Admin Users API] - Response structure:`, Object.keys(usersResponse || {}));
       
       // Get wishlist counts for all users
       console.log(`[Admin Users API] Fetching wishlist counts for ${usersResponse.data.length} users`);
