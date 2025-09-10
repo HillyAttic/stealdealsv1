@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       value: token,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // Only use HTTPS in production
-      sameSite: 'lax', // Changed from 'strict' to 'lax' for better production compatibility
+      sameSite: 'none', // Changed from 'strict' to 'none' for production compatibility
       maxAge: 60 * 60 * 24, // 24 hours
       path: '/'
     });
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       }),
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax', // Changed from 'strict' to 'lax' for better production compatibility
+      sameSite: 'none', // Changed from 'strict' to 'none' for production compatibility
       maxAge: 60 * 60 * 24, // 24 hours
       path: '/'
     });
