@@ -610,6 +610,15 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
           );
         }
         
+        // COMPLETELY CLEAR ALL CACHES to ensure consistency
+        try {
+          const { cacheService } = await import('@/lib/database/cache');
+          cacheService.clearAll();
+          console.log(`[Wishlist API] ✅ Completely cleared all caches after removing property ${propertyId} for user ${userId}`);
+        } catch (cacheError) {
+          console.warn(`[Wishlist API] ⚠️ Failed to clear all caches:`, cacheError);
+        }
+        
         // Log real-time activity
         try {
           const activityLogger = ActivityLogger.getInstance();
@@ -979,6 +988,15 @@ export const DELETE = withWishlistMonitoring(async (request: NextRequest, contex
           },
           { status: 404 }
         );
+      }
+      
+      // COMPLETELY CLEAR ALL CACHES to ensure consistency
+      try {
+        const { cacheService } = await import('@/lib/database/cache');
+        cacheService.clearAll();
+        console.log(`[Wishlist API] ✅ Completely cleared all caches after deleting property ${propertyId} for user ${userId}`);
+      } catch (cacheError) {
+        console.warn(`[Wishlist API] ⚠️ Failed to clear all caches:`, cacheError);
       }
       
       // Broadcast real-time update

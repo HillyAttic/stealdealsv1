@@ -313,8 +313,9 @@ export async function POST(
           );
         }
 
-        // Import the remove function
+        // Import the remove function and cache service
         const { removeFromWishlist } = await import('@/lib/database/wishlist');
+        const { cacheService } = await import('@/lib/database/cache');
         const removed = await removeFromWishlist(userId, propertyId);
         
         if (!removed) {
@@ -332,6 +333,14 @@ export async function POST(
             },
             { status: 404 }
           );
+        }
+
+        // COMPLETELY CLEAR ALL CACHES to ensure consistency
+        try {
+          cacheService.clearAll();
+          console.log(`[Admin Wishlist API] ✅ Completely cleared all caches after removing property ${propertyId} for user ${userId}`);
+        } catch (cacheError) {
+          console.warn(`[Admin Wishlist API] ⚠️ Failed to clear all caches:`, cacheError);
         }
 
         // Log real-time activity for admin action
@@ -375,8 +384,9 @@ export async function POST(
         });
 
       } else if (action === 'clear_all') {
-        // Import the clear function
+        // Import the clear function and cache service
         const { clearWishlist } = await import('@/lib/database/wishlist');
+        const { cacheService } = await import('@/lib/database/cache');
         const cleared = await clearWishlist(userId);
         
         if (!cleared) {
@@ -394,6 +404,14 @@ export async function POST(
             },
             { status: 500 }
           );
+        }
+
+        // COMPLETELY CLEAR ALL CACHES to ensure consistency
+        try {
+          cacheService.clearAll();
+          console.log(`[Admin Wishlist API] ✅ Completely cleared all caches after clearing wishlist for user ${userId}`);
+        } catch (cacheError) {
+          console.warn(`[Admin Wishlist API] ⚠️ Failed to clear all caches:`, cacheError);
         }
 
         const duration = Date.now() - startTime;

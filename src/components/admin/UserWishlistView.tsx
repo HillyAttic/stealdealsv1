@@ -65,10 +65,8 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
         params.append('priority', priority);
       }
       
-      // Add cache bypass parameter for admin operations
-      if (bypassCache) {
-        params.append('bypassCache', 'true');
-      }
+      // ALWAYS bypass cache for admin operations to ensure consistency
+      params.append('bypassCache', 'true');
 
       const response = await fetch(`/api/admin/users/${userId}/wishlist?${params}`, {
         method: 'GET',
@@ -136,9 +134,9 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
         setWishlistStats(prev => prev ? { ...prev, total: prev.total - 1 } : null);
       }
       
-      // Force refresh to ensure cache consistency
+      // Force refresh to ensure cache consistency - ALWAYS bypass cache
       setTimeout(() => {
-        fetchUserWishlist(1, priorityFilter, true); // Bypass cache on remove
+        fetchUserWishlist(1, priorityFilter, true); // Always bypass cache on remove
       }, 500);
 
     } catch (err) {
@@ -177,6 +175,11 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
 
       setWishlistProperties([]);
       setWishlistStats({ total: 0, byPriority: {}, byType: {} });
+      
+      // Force refresh to ensure cache consistency - ALWAYS bypass cache
+      setTimeout(() => {
+        fetchUserWishlist(1, 'all', true); // Always bypass cache after clear
+      }, 500);
     } catch (err) {
       console.error('Error clearing wishlist:', err);
       setError(err instanceof Error ? err.message : 'Failed to clear wishlist');

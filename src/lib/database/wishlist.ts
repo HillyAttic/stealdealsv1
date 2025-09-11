@@ -82,8 +82,13 @@ export async function addToWishlist(
       priority
     };
     
-    // Invalidate only the specific user's wishlist cache, not all caches
-    cacheService.invalidateUserWishlist(userId);
+    // COMPLETELY CLEAR ALL CACHES to ensure consistency
+    try {
+      cacheService.clearAll();
+      console.log(`[Firebase Wishlist] ✅ Completely cleared all caches after adding property ${propertyId} for user ${userId}`);
+    } catch (cacheError) {
+      console.warn(`[Firebase Wishlist] ⚠️ Failed to clear all caches:`, cacheError);
+    }
     
     console.log(`[Firebase Wishlist] ✅ Successfully added property ${propertyId} with item ID ${itemId}`);
     return wishlistItem;
@@ -131,8 +136,13 @@ export async function removeFromWishlist(userId: string, propertyId: string): Pr
     // Use batch operation for better performance (use root reference for batch updates)
     await dbPool.optimizedUpdate('', updates);
     
-    // Invalidate only the specific user's wishlist cache
-    cacheService.invalidateUserWishlist(userId);
+    // COMPLETELY CLEAR ALL CACHES to ensure consistency
+    try {
+      cacheService.clearAll();
+      console.log(`[Firebase Wishlist] ✅ Completely cleared all caches after removing property ${propertyId} for user ${userId}`);
+    } catch (cacheError) {
+      console.warn(`[Firebase Wishlist] ⚠️ Failed to clear all caches:`, cacheError);
+    }
     
     console.log(`[Firebase Wishlist] ✅ Successfully removed property ${propertyId}`);
     return true;
@@ -625,6 +635,14 @@ export async function updateWishlistItem(
       return null;
     }
     
+    // COMPLETELY CLEAR ALL CACHES to ensure consistency
+    try {
+      cacheService.clearAll();
+      console.log(`[Firebase Wishlist] ✅ Completely cleared all caches after updating wishlist item ${propertyId} for user ${userId}`);
+    } catch (cacheError) {
+      console.warn(`[Firebase Wishlist] ⚠️ Failed to clear all caches:`, cacheError);
+    }
+    
     console.log(`[Firebase Wishlist] ✅ Successfully updated wishlist item ${propertyId}`);
     return updatedItem;
     
@@ -701,6 +719,14 @@ export async function clearWishlist(userId: string): Promise<boolean> {
     
     const userWishlistRef = getUserWishlistRef(userId);
     await remove(userWishlistRef);
+    
+    // COMPLETELY CLEAR ALL CACHES to ensure consistency
+    try {
+      cacheService.clearAll();
+      console.log(`[Firebase Wishlist] ✅ Completely cleared all caches after clearing wishlist for user ${userId}`);
+    } catch (cacheError) {
+      console.warn(`[Firebase Wishlist] ⚠️ Failed to clear all caches:`, cacheError);
+    }
     
     console.log(`[Firebase Wishlist] ✅ Successfully cleared wishlist for user ${userId}`);
     return true;
