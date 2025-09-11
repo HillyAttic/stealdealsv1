@@ -30,6 +30,18 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 2000; // 2 seconds
 
+  // OPTIMIZATION: Memoize the wishlist items array to prevent unnecessary re-renders
+  const memoizedWishlistItems = useMemo(() => Array.from(wishlistItems), [wishlistItems]);
+
+  // OPTIMIZATION: Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    wishlistItems,
+    wishlistCount,
+    isLoading,
+    refreshWishlist,
+    removeFromWishlist
+  }), [wishlistItems, wishlistCount, isLoading, refreshWishlist, removeFromWishlist]);
+
   // Fetch detailed wishlist data when wishlist items change
   useEffect(() => {
     const fetchDetailedWishlist = async () => {
@@ -76,12 +88,18 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
           userId: user?.id
         });
 
+        // OPTIMIZATION: Add performance timing
+        const fetchStartTime = Date.now();
+        
         // Add cache-busting parameter to prevent browser caching
         const response = await fetch(`/api/user/wishlist?_t=${Date.now()}&limit=1000`, {
           method: 'GET',
           headers,
           credentials: 'include'
         });
+
+        const fetchDuration = Date.now() - fetchStartTime;
+        console.log(`[WishlistSection] API request completed in ${fetchDuration}ms`);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -142,7 +160,7 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
     } else if (wishlistItems.size === 0) {
       setWishlistProperties([]);
     }
-  }, [wishlistItems, user?.id, isSignedIn]);
+  }, [memoizedWishlistItems, user?.id, isSignedIn]); // Use memoized wishlist items
 
   // Remove property from wishlist with immediate UI update
   const handleRemove = useCallback(async (propertyId: string) => {
@@ -177,7 +195,7 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
   }, [removeFromWishlist, refreshWishlist, isDeleting]);
 
   // Update wishlist item
-  const handleUpdate = async (propertyId: string) => {
+  const handleUpdate = useCallback(async (propertyId: string) => {
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json'
@@ -219,24 +237,24 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
     } catch (error) {
       console.error('Error updating wishlist item:', error);
     }
-  };
+  }, [user?.id, editNotes, editPriority]);
 
   // Start editing
-  const startEditing = (property: WishlistProperty) => {
+  const startEditing = useCallback((property: WishlistProperty) => {
     setEditingItem(property.id);
     setEditNotes(property.notes || '');
     setEditPriority(property.priority);
-  };
+  }, []);
 
   // Cancel editing
-  const cancelEditing = () => {
+  const cancelEditing = useCallback(() => {
     setEditingItem(null);
     setEditNotes('');
     setEditPriority('medium');
-  };
+  }, []);
 
   // Format currency to show LACS format for large numbers (matching franchise display format)
-  const formatCurrency = (value: number | string | undefined): string => {
+  const formatCurrency = useCallback((value: number | string | undefined): string => {
     if (!value) return '₹0';
     
     // Handle range strings like "₹35,00,000 - ₹40,00,000"
@@ -277,17 +295,17 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
       // For smaller amounts, show full amount with proper Indian number formatting
       return `₹${numValue.toLocaleString('en-IN')}`;
     }
-  };
+  }, []);
 
   // Get priority color
-  const getPriorityColor = (priority: 'low' | 'medium' | 'high') => {
+  const getPriorityColor = useCallback((priority: 'low' | 'medium' | 'high') => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'low': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
-  };
+  }, []);
 
   // Remove the authentication check since we now support guest wishlist via localStorage
 

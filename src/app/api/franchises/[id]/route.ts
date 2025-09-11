@@ -18,7 +18,7 @@ export async function GET(
     const id = await resolveIdParam(params);
     console.log(`[API] 🎯 Resolved franchise ID: ${id}`);
     
-    // First try the migrated structure (primary location)
+    // ONLY check the migrated structure (primary location) for performance
     const migratedFranchisePathRef = child(migratedFranchiseRef, id);
     console.log(`[API] 🔥 Trying migrated path: migratedProperties/franchise/${id}`);
     
@@ -77,46 +77,10 @@ export async function GET(
       return NextResponse.json({ franchise });
     }
     
-    // Fallback to legacy franchiseProperties location
-    console.log(`[API] 🔄 Trying legacy franchiseProperties path: franchiseProperties/${id}`);
-    const legacyFranchiseRef = ref(database, `franchiseProperties/${id}`);
-    const legacySnapshot = await get(legacyFranchiseRef);
-    console.log(`[API] 📊 Legacy snapshot exists: ${legacySnapshot.exists()}`);
-    
-    if (legacySnapshot.exists()) {
-      const legacyData = legacySnapshot.val();
-      console.log(`[API] ✅ Found franchise in legacy location: ${legacyData?.name || legacyData?.brand || 'Unknown'}`);
-      
-      return NextResponse.json({
-        franchise: {
-          id: legacySnapshot.key,
-          ...legacyData
-        }
-      });
-    }
-    
-    // Final fallback to general properties collection
-    console.log(`[API] 🔄 Trying general properties path: properties/${id}`);
-    const propertiesRef = ref(database, `properties/${id}`);
-    const propertiesSnapshot = await get(propertiesRef);
-    console.log(`[API] 📊 Properties snapshot exists: ${propertiesSnapshot.exists()}`);
-    
-    if (propertiesSnapshot.exists()) {
-      const propertiesData = propertiesSnapshot.val();
-      console.log(`[API] ✅ Found franchise in properties collection: ${propertiesData?.name || 'Unknown'}`);
-      
-      return NextResponse.json({
-        franchise: {
-          id: propertiesSnapshot.key,
-          ...propertiesData
-        }
-      });
-    }
-    
-    // Not found in any location
-    console.warn(`[API] ❌ Franchise not found in any location with ID: ${id}`);
+    // Not found in migrated location
+    console.warn(`[API] ❌ Franchise not found in migrated location with ID: ${id}`);
     return NextResponse.json(
-      { error: `Franchise not found with ID: ${id}. Checked migrated, legacy, and properties collections.` },
+      { error: `Franchise not found with ID: ${id}. Only checking migrated collections for performance.` },
       { status: 404 }
     );
     

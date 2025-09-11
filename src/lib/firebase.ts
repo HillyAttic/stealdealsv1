@@ -234,22 +234,27 @@ export async function getAllProperties(): Promise<Property[]> {
           id: childSnapshot.key,
           title: data.title || data.location || 'Vacant Property',
           // Extract from vacantDetails
-          category: vacantDetails.category || data.category || 'Vacant',
+          category: vacantDetails.category || data.category || 'Industrial',
           location: data.location || vacantDetails.location || 'Location not specified',
           city: vacantDetails.city || data.city || '',
           state: vacantDetails.state || data.state || '',
           district: vacantDetails.district || data.district || '',
+          subDistrict: vacantDetails.subDistrict || data.subDistrict || '',
           floor: vacantDetails.floor || data.floor || '',
           facing: vacantDetails.facing || data.facing || '',
           carpetArea: vacantDetails.carpetArea || data.carpetArea || '',
           superArea: vacantDetails.superArea || data.superArea || '',
+          length: vacantDetails.length || data.length || '',
+          width: vacantDetails.width || data.width || '',
+          height: vacantDetails.height || data.height || '',
           rent: vacantDetails.rent || data.rent || data.price || 0,
           price: data.price || vacantDetails.rent || 0,
           contactName: vacantDetails.contactName || data.contactName || '',
           contactNumber: vacantDetails.contactNumber || data.contactNumber || '',
           reference: vacantDetails.reference || data.reference || '',
           propertyType: vacantDetails.propertyType || 'Vacant',
-          type: 'vacant',
+          unitType: vacantDetails.unitType || data.unitType || '',
+          image: data.image || vacantDetails.image || '',
           // Include all original data
           ...data
         });
@@ -473,27 +478,7 @@ export async function getVacantProperties(): Promise<Property[]> {
           unitType: vacantDetails.unitType || data.unitType || '',
           image: data.image || vacantDetails.image || '',
           // Include all original data
-          ...data,
-          // Override with flattened data to ensure consistency
-          category: vacantDetails.category || data.category || 'Industrial',
-          location: data.location || vacantDetails.location || 'Location not specified',
-          city: vacantDetails.city || data.city || '',
-          state: vacantDetails.state || data.state || '',
-          district: vacantDetails.district || data.district || '',
-          subDistrict: vacantDetails.subDistrict || data.subDistrict || '',
-          floor: vacantDetails.floor || data.floor || '',
-          facing: vacantDetails.facing || data.facing || '',
-          carpetArea: vacantDetails.carpetArea || data.carpetArea || '',
-          superArea: vacantDetails.superArea || data.superArea || '',
-          length: vacantDetails.length || data.length || '',
-          width: vacantDetails.width || data.width || '',
-          height: vacantDetails.height || data.height || '',
-          rent: vacantDetails.rent || data.rent || data.price || 0,
-          contactName: vacantDetails.contactName || data.contactName || '',
-          contactNumber: vacantDetails.contactNumber || data.contactNumber || '',
-          reference: vacantDetails.reference || data.reference || '',
-          propertyType: vacantDetails.propertyType || 'Vacant',
-          unitType: vacantDetails.unitType || data.unitType || ''
+          ...data
         });
       });
     }

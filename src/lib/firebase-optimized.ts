@@ -1,313 +1,384 @@
-/**
- * Optimized Firebase configuration with connection pooling and caching
- * This reduces CPU usage by reusing connections and caching frequently accessed data
- */
-
-import { App, cert, getApp, getApps, initializeApp } from 'firebase-admin/app';
-import { getDatabase, Database } from 'firebase-admin/database';
-import { unstable_cache } from 'next/cache';
-
-// Singleton pattern for Firebase Admin App
-let adminApp: App | null = null;
-let database: Database | null = null;
+// Firebase optimized functions for StealDeals app
+import { Property } from '@/lib/firebase';
+import { get, child, DataSnapshot } from 'firebase/database';
+import { 
+  migratedVacantRef, 
+  migratedPreleasedRef, 
+  migratedFranchiseRef, 
+  migratedPlotsRef 
+} from '@/lib/firebase';
 
 /**
- * Get or initialize Firebase Admin App with singleton pattern
+ * Get a property by ID (OPTIMIZED VERSION - MIGRATED ONLY)
+ * This function fetches all collections in parallel and searches for the property
  */
-function getAdminApp(): App {
-  if (!adminApp) {
-    try {
-      // Check if any apps are already initialized
-      const existingApps = getApps();
-      if (existingApps.length > 0) {
-        adminApp = existingApps[0];
-      } else {
-        // Initialize new app
-        adminApp = initializeApp({
-          credential: cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-          }),
-          databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
-        });
-      }
-      
-      console.log('[Firebase] Admin app initialized successfully');
-    } catch (error) {
-      console.error('[Firebase] Error initializing admin app:', error);
-      throw error;
-    }
-  }
-  
-  return adminApp;
-}
-
-/**
- * Get database instance with connection reuse
- */
-function getOptimizedDatabase(): Database {
-  if (!database) {
-    database = getDatabase(getAdminApp());
-    console.log('[Firebase] Database connection established');
-  }
-  return database;
-}
-
-// In-memory cache for frequently accessed data
-const memoryCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
-const CACHE_TTL = {
-  PROPERTIES: 5 * 60 * 1000, // 5 minutes
-  FRANCHISES: 10 * 60 * 1000, // 10 minutes
-  PLOTS: 10 * 60 * 1000, // 10 minutes
-};
-
-/**
- * Memory cache functions
- */
-export const MemoryCache = {
-  get(key: string): any | null {
-    const entry = memoryCache.get(key);
-    if (!entry) return null;
-    
-    // Check if cache entry is still valid
-    if (Date.now() - entry.timestamp > entry.ttl) {
-      memoryCache.delete(key);
+export async function getPropertyByIdOptimized(id: string): Promise<Property | null> {
+  try {
+    if (!id || id.trim() === '') {
+      console.log(`[Firebase Optimized] Invalid property ID provided: "${id}"`);
       return null;
     }
     
-    console.log(`[Cache] Memory cache HIT for key: ${key}`);
-    return entry.data;
-  },
-
-  set(key: string, data: any, ttl: number): void {
-    memoryCache.set(key, {
-      data,
-      timestamp: Date.now(),
-      ttl
-    });
-    console.log(`[Cache] Memory cache SET for key: ${key} (TTL: ${ttl}ms)`);
-  },
-
-  clear(keyPattern?: string): void {
-    if (keyPattern) {
-      const keysToDelete = Array.from(memoryCache.keys()).filter(key => 
-        key.includes(keyPattern)
-      );
-      keysToDelete.forEach(key => memoryCache.delete(key));
-      console.log(`[Cache] Cleared ${keysToDelete.length} entries matching pattern: ${keyPattern}`);
-    } else {
-      memoryCache.clear();
-      console.log('[Cache] Memory cache cleared completely');
-    }
-  },
-
-  stats(): { size: number; keys: string[] } {
-    return {
-      size: memoryCache.size,
-      keys: Array.from(memoryCache.keys())
-    };
-  }
-};
-
-/**
- * Optimized Firebase data fetcher with multi-layer caching
- */
-export async function getOptimizedData(
-  path: string, 
-  cacheKey: string, 
-  ttl: number = CACHE_TTL.PROPERTIES
-): Promise<any> {
-  const startTime = Date.now();
-  
-  try {
-    // Layer 1: Memory cache
-    const cachedData = MemoryCache.get(cacheKey);
-    if (cachedData) {
-      console.log(`[Firebase] Data retrieved from memory cache in ${Date.now() - startTime}ms`);
-      return cachedData;
-    }
-
-    // Layer 2: Firebase fetch with connection reuse
-    console.log(`[Firebase] Fetching data from path: ${path}`);
-    const db = getOptimizedDatabase();
-    const snapshot = await db.ref(path).once('value');
-    const data = snapshot.val();
-
-    // Store in memory cache
-    if (data) {
-      MemoryCache.set(cacheKey, data, ttl);
-    }
-
-    const duration = Date.now() - startTime;
-    console.log(`[Firebase] Data fetched from Firebase in ${duration}ms`);
+    console.log(`[Firebase Optimized] Optimized search for property ID: "${id}" in MIGRATED collections only`);
     
-    return data;
+    // OPTIMIZATION: Fetch all collections in parallel and search
+    const [vacantSnapshot, preleasedSnapshot, franchiseSnapshot, plotsSnapshot] = await Promise.all([
+      get(child(migratedVacantRef, id)),
+      get(child(migratedPreleasedRef, id)),
+      get(child(migratedFranchiseRef, id)),
+      get(child(migratedPlotsRef, id))
+    ]);
     
-  } catch (error) {
-    console.error(`[Firebase] Error fetching data from path ${path}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Batch data fetcher for multiple paths
- */
-export async function getBatchData(requests: Array<{
-  path: string;
-  cacheKey: string;
-  ttl?: number;
-}>): Promise<any[]> {
-  const startTime = Date.now();
-  
-  console.log(`[Firebase] Batch fetching ${requests.length} data requests`);
-  
-  // First check memory cache for all requests
-  const results: any[] = [];
-  const uncachedRequests: typeof requests = [];
-  
-  for (const request of requests) {
-    const cachedData = MemoryCache.get(request.cacheKey);
-    if (cachedData) {
-      results.push(cachedData);
-    } else {
-      results.push(null);
-      uncachedRequests.push(request);
-    }
-  }
-  
-  // Fetch uncached data in parallel
-  if (uncachedRequests.length > 0) {
-    const db = getOptimizedDatabase();
-    const fetchPromises = uncachedRequests.map(async (request) => {
-      const snapshot = await db.ref(request.path).once('value');
-      const data = snapshot.val();
+    // Check vacant properties
+    if (vacantSnapshot.exists()) {
+      console.log(`[Firebase Optimized] Found property ${id} in migratedProperties/vacant`);
+      const data = vacantSnapshot.val();
       
-      if (data) {
-        MemoryCache.set(request.cacheKey, data, request.ttl || CACHE_TTL.PROPERTIES);
+      // Handle nested vacant details structure
+      let property = { id: vacantSnapshot.key, ...data };
+      if (data.vacantDetails) {
+        const details = data.vacantDetails;
+        property = {
+          ...property,
+          category: details.category || data.category || 'Vacant',
+          city: details.city || data.city || '',
+          state: details.state || data.state || '',
+          district: details.district || data.district || '',
+          floor: details.floor || data.floor || '',
+          facing: details.facing || data.facing || '',
+          carpetArea: details.carpetArea || data.carpetArea || '',
+          superArea: details.superArea || data.superArea || '',
+          rent: details.rent || data.rent || data.price || 0,
+          contactName: details.contactName || data.contactName || '',
+          contactNumber: details.contactNumber || data.contactNumber || '',
+          reference: details.reference || data.reference || '',
+          propertyType: details.propertyType || data.propertyType || 'Vacant'
+        };
       }
       
-      return data;
-    });
+      return property;
+    }
     
-    const fetchedData = await Promise.all(fetchPromises);
-    
-    // Merge fetched data with cached results
-    let fetchIndex = 0;
-    for (let i = 0; i < results.length; i++) {
-      if (results[i] === null) {
-        results[i] = fetchedData[fetchIndex++];
+    // Check preleased properties
+    if (preleasedSnapshot.exists()) {
+      console.log(`[Firebase Optimized] Found property ${id} in migratedProperties/preleased`);
+      const data = preleasedSnapshot.val();
+      
+      // Handle nested preleased details structure
+      let property = { id: preleasedSnapshot.key, ...data };
+      if (data.preleasedDetails) {
+        const details = data.preleasedDetails;
+        property = {
+          ...property,
+          tenant: details.tenant || data.tenant || '',
+          category: details.category || data.category || 'Pre-Leased',
+          buildingName: details.buildingName || data.buildingName || '',
+          floor: details.floor || data.floor || '',
+          totalArea: details.totalArea || data.totalArea || '',
+          areaOnSale: details.areaOnSale || data.areaOnSale || '',
+          rent: parseFloat(typeof details.rent === 'string' ? details.rent.replace(/[^0-9.]/g, '') : details.rent || '0') || data.rent || 0,
+          leaseTerm: details.leaseTerm || data.leaseTerm || '',
+          remainingLease: details.remainingLease || data.remainingLease || '',
+          lockIn: details.lockIn || data.lockIn || '',
+          escalation: details.escalation || data.escalation || '',
+          securityDeposit: details.securityDeposit || data.securityDeposit || '',
+          roi: details.roi || data.roi || '',
+          propertyStatus: details.propertyStatus || data.propertyStatus || '',
+          reference: details.reference || data.reference || '',
+          channel: details.channel || data.channel || '',
+          propertyType: details.propertyType || data.propertyType || 'Pre-Leased'
+        };
       }
-    }
-  }
-  
-  const duration = Date.now() - startTime;
-  console.log(`[Firebase] Batch operation completed in ${duration}ms (${uncachedRequests.length} fetches)`);
-  
-  return results;
-}
-
-/**
- * Write operations with cache invalidation
- */
-export async function writeOptimizedData(path: string, data: any, invalidatePattern?: string): Promise<void> {
-  const startTime = Date.now();
-  
-  try {
-    const db = getOptimizedDatabase();
-    await db.ref(path).set(data);
-    
-    // Invalidate related cache entries
-    if (invalidatePattern) {
-      MemoryCache.clear(invalidatePattern);
+      
+      return property;
     }
     
-    const duration = Date.now() - startTime;
-    console.log(`[Firebase] Data written to ${path} in ${duration}ms`);
+    // Check franchise properties
+    if (franchiseSnapshot.exists()) {
+      console.log(`[Firebase Optimized] Found property ${id} in migratedProperties/franchise`);
+      const data = franchiseSnapshot.val();
+      
+      // Handle nested franchise details structure
+      let franchiseData = data;
+      if (data.franchiseDetails) {
+        const details = data.franchiseDetails;
+        franchiseData = {
+          ...data,
+          // Map nested fields to root level for compatibility
+          name: data.title || data.name || details.name || details.brand || '',
+          industry: details.industry || data.industry || '',
+          segment: details.segment || data.segment || '',
+          model: details.model || data.model || '',
+          minArea: details.minArea || data.minArea || '',
+          maxArea: details.maxArea || data.maxArea || '',
+          minInvestment: details.minInvestment || data.minInvestment || '',
+          maxInvestment: details.maxInvestment || data.maxInvestment || '',
+          royalty: details.royalty || data.royalty || '',
+          establishmentYear: details.establishmentYear || data.establishmentYear || '',
+          franchiseStartedYear: details.franchiseStartedYear || data.franchiseStartedYear || '',
+          numberOutlets: details.numberOfOutlets || details.numberOutlets || data.numberOutlets || '',
+          minPaybackPeriod: details.minPaybackPeriod || data.minPaybackPeriod || '',
+          maxPaybackPeriod: details.maxPaybackPeriod || data.maxPaybackPeriod || '',
+          headquarter: details.headquarter || data.headquarter || data.location || '',
+          remarks: data.description || details.remarks || data.remarks || '',
+          image: data.images?.[0] || data.image || ''
+        };
+      }
+      
+      return {
+        id: franchiseSnapshot.key,
+        title: franchiseData.name || franchiseData.title,
+        category: 'Franchise',
+        location: franchiseData.location || franchiseData.headquarter,
+        price: franchiseData.investment || franchiseData.minInvestment,
+        description: franchiseData.description,
+        image: franchiseData.image,
+        propertyType: 'Franchise',
+        ...franchiseData
+      };
+    }
     
+    // Check plot properties
+    if (plotsSnapshot.exists()) {
+      console.log(`[Firebase Optimized] Found property ${id} in migratedProperties/plots`);
+      const data = plotsSnapshot.val();
+      
+      // Handle nested plot details structure
+      let plotData = data;
+      if (data.plotDetails) {
+        const details = data.plotDetails;
+        plotData = {
+          ...data,
+          // Extract from plotDetails if available
+          project: details.project || data.title || 'Plot Project',
+          developerName: details.developerName || 'Developer not specified',
+          status: details.status || 'Available',
+          plotSize: details.plotSize || { min: 0, max: 0, unit: 'sq.ft' },
+          investmentStartsFrom: details.investmentStartsFrom || { amount: 0, unit: 'sq.ft' },
+          investorDiscoveryKit: details.investorDiscoveryKit || {
+            title: 'Investor Discovery Kit',
+            url: '',
+            description: 'Investment information package'
+          },
+          keySalientFeatures: details.keySalientFeatures || []
+        };
+      }
+      
+      return {
+        id: plotsSnapshot.key,
+        title: plotData.project || plotData.title,
+        category: 'Plot',
+        location: plotData.location,
+        price: plotData.investmentStartsFrom?.amount,
+        description: plotData.description,
+        image: plotData.images?.[0],
+        propertyType: 'Plot',
+        ...plotData
+      };
+    }
+    
+    console.log(`[Firebase Optimized] ❌ Property ${id} not found in any MIGRATED collections`);
+    return null;
   } catch (error) {
-    console.error(`[Firebase] Error writing data to ${path}:`, error);
+    console.error(`[Firebase Optimized] Error fetching property ${id}:`, error);
     throw error;
   }
 }
 
 /**
- * Update operations with cache invalidation
+ * Get multiple properties by IDs in batch (OPTIMIZED VERSION - MIGRATED ONLY)
+ * This function fetches all properties in parallel from each collection to avoid the N+1 problem
  */
-export async function updateOptimizedData(
-  path: string, 
-  updates: any, 
-  invalidatePattern?: string
-): Promise<void> {
-  const startTime = Date.now();
-  
+export async function getPropertiesByIdsOptimized(ids: string[]): Promise<Property[]> {
   try {
-    const db = getOptimizedDatabase();
-    await db.ref(path).update(updates);
-    
-    // Invalidate related cache entries
-    if (invalidatePattern) {
-      MemoryCache.clear(invalidatePattern);
+    if (!ids || ids.length === 0) {
+      return [];
     }
     
-    const duration = Date.now() - startTime;
-    console.log(`[Firebase] Data updated at ${path} in ${duration}ms`);
+    console.log(`[Firebase Optimized] Optimized batch fetching ${ids.length} properties from MIGRATED collections only`);
     
+    // Remove duplicates
+    const uniqueIds = [...new Set(ids)];
+    
+    // OPTIMIZATION: Fetch all properties in parallel from each collection
+    // This avoids the N+1 problem of individual property lookups
+    const allProperties: Property[] = [];
+    
+    // Fetch from all migrated collections in parallel
+    const [vacantSnapshot, preleasedSnapshot, franchiseSnapshot, plotsSnapshot] = await Promise.all([
+      get(migratedVacantRef),
+      get(migratedPreleasedRef),
+      get(migratedFranchiseRef),
+      get(migratedPlotsRef)
+    ]);
+    
+    // Process vacant properties
+    if (vacantSnapshot.exists()) {
+      vacantSnapshot.forEach((childSnapshot: DataSnapshot) => {
+        if (uniqueIds.includes(childSnapshot.key!)) {
+          const data = childSnapshot.val();
+          const vacantDetails = data.vacantDetails || {};
+          
+          // Flatten the nested structure for vacant properties
+          allProperties.push({
+            id: childSnapshot.key,
+            title: data.title || data.location || 'Vacant Property',
+            // Extract from vacantDetails
+            category: vacantDetails.category || data.category || 'Industrial',
+            location: data.location || vacantDetails.location || 'Location not specified',
+            city: vacantDetails.city || data.city || '',
+            state: vacantDetails.state || data.state || '',
+            district: vacantDetails.district || data.district || '',
+            subDistrict: vacantDetails.subDistrict || data.subDistrict || '',
+            floor: vacantDetails.floor || data.floor || '',
+            facing: vacantDetails.facing || data.facing || '',
+            carpetArea: vacantDetails.carpetArea || data.carpetArea || '',
+            superArea: vacantDetails.superArea || data.superArea || '',
+            length: vacantDetails.length || data.length || '',
+            width: vacantDetails.width || data.width || '',
+            height: vacantDetails.height || data.height || '',
+            rent: vacantDetails.rent || data.rent || data.price || 0,
+            price: data.price || vacantDetails.rent || 0,
+            contactName: vacantDetails.contactName || data.contactName || '',
+            contactNumber: vacantDetails.contactNumber || data.contactNumber || '',
+            reference: vacantDetails.reference || data.reference || '',
+            propertyType: vacantDetails.propertyType || 'Vacant',
+            unitType: vacantDetails.unitType || data.unitType || '',
+            image: data.image || vacantDetails.image || '',
+            // Include all original data
+            ...data
+          });
+        }
+      });
+    }
+    
+    // Process preleased properties
+    if (preleasedSnapshot.exists()) {
+      preleasedSnapshot.forEach((childSnapshot: DataSnapshot) => {
+        if (uniqueIds.includes(childSnapshot.key!)) {
+          const data = childSnapshot.val();
+          const preleasedDetails = data.preleasedDetails || {};
+          
+          // Flatten the nested structure for preleased properties
+          allProperties.push({
+            id: childSnapshot.key,
+            title: data.title || preleasedDetails.tenant || 'Preleased Property',
+            // Extract from preleasedDetails
+            tenant: preleasedDetails.tenant || data.tenant || '',
+            category: preleasedDetails.category || data.category || 'Preleased',
+            buildingName: preleasedDetails.buildingName || data.buildingName || '',
+            location: data.location || preleasedDetails.location || 'Location not specified',
+            floor: preleasedDetails.floor || data.floor || '',
+            totalArea: preleasedDetails.totalArea || data.totalArea || '',
+            areaOnSale: preleasedDetails.areaOnSale || data.areaOnSale || '',
+            rent: parseFloat(typeof preleasedDetails.rent === 'string' ? preleasedDetails.rent.replace(/[^0-9.]/g, '') : preleasedDetails.rent || '0') || data.rent || 0,
+            price: data.price || parseFloat(typeof preleasedDetails.rent === 'string' ? preleasedDetails.rent.replace(/[^0-9.]/g, '') : preleasedDetails.rent || '0') || 0,
+            leaseTerm: preleasedDetails.leaseTerm || data.leaseTerm || '',
+            remainingLease: preleasedDetails.remainingLease || data.remainingLease || '',
+            lockIn: preleasedDetails.lockIn || data.lockIn || '',
+            escalation: preleasedDetails.escalation || data.escalation || '',
+            securityDeposit: preleasedDetails.securityDeposit || data.securityDeposit || '',
+            roi: preleasedDetails.roi || data.roi || '',
+            propertyStatus: preleasedDetails.propertyStatus || data.propertyStatus || '',
+            reference: preleasedDetails.reference || data.reference || '',
+            channel: preleasedDetails.channel || data.channel || '',
+            propertyType: preleasedDetails.propertyType || 'Preleased',
+            type: 'preleased',
+            // Include all original data
+            ...data
+          });
+        }
+      });
+    }
+    
+    // Process franchise properties
+    if (franchiseSnapshot.exists()) {
+      franchiseSnapshot.forEach((childSnapshot: DataSnapshot) => {
+        if (uniqueIds.includes(childSnapshot.key!)) {
+          const data = childSnapshot.val();
+          const franchiseDetails = data.franchiseDetails || {};
+          
+          // Flatten the nested structure for franchise properties
+          const franchiseData = {
+            ...data,
+            // Map nested fields to root level for compatibility
+            name: data.title || data.name || franchiseDetails.name || franchiseDetails.brand || '',
+            industry: franchiseDetails.industry || data.industry || '',
+            segment: franchiseDetails.segment || data.segment || '',
+            model: franchiseDetails.model || data.model || '',
+            minArea: franchiseDetails.minArea || data.minArea || '',
+            maxArea: franchiseDetails.maxArea || data.maxArea || '',
+            minInvestment: franchiseDetails.minInvestment || data.minInvestment || '',
+            maxInvestment: franchiseDetails.maxInvestment || data.maxInvestment || '',
+            royalty: franchiseDetails.royalty || data.royalty || '',
+            establishmentYear: franchiseDetails.establishmentYear || data.establishmentYear || '',
+            franchiseStartedYear: franchiseDetails.franchiseStartedYear || data.franchiseStartedYear || '',
+            numberOutlets: franchiseDetails.numberOfOutlets || franchiseDetails.numberOutlets || data.numberOutlets || '',
+            minPaybackPeriod: franchiseDetails.minPaybackPeriod || data.minPaybackPeriod || '',
+            maxPaybackPeriod: franchiseDetails.maxPaybackPeriod || data.maxPaybackPeriod || '',
+            headquarter: franchiseDetails.headquarter || data.headquarter || data.location || '',
+            remarks: data.description || franchiseDetails.remarks || data.remarks || '',
+            image: data.images?.[0] || data.image || ''
+          };
+          
+          allProperties.push({
+            id: childSnapshot.key,
+            title: franchiseData.name || franchiseData.title,
+            category: 'Franchise',
+            location: franchiseData.location || franchiseData.headquarter,
+            price: franchiseData.investment || franchiseData.minInvestment,
+            description: franchiseData.description,
+            image: franchiseData.image,
+            propertyType: 'Franchise',
+            ...franchiseData
+          });
+        }
+      });
+    }
+    
+    // Process plot properties
+    if (plotsSnapshot.exists()) {
+      plotsSnapshot.forEach((childSnapshot: DataSnapshot) => {
+        if (uniqueIds.includes(childSnapshot.key!)) {
+          const data = childSnapshot.val();
+          const plotDetails = data.plotDetails || {};
+          
+          // Flatten the nested structure for plot properties
+          const plotData = {
+            ...data,
+            // Extract from plotDetails if available
+            project: plotDetails.project || data.title || 'Plot Project',
+            developerName: plotDetails.developerName || 'Developer not specified',
+            status: plotDetails.status || 'Available',
+            plotSize: plotDetails.plotSize || { min: 0, max: 0, unit: 'sq.ft' },
+            investmentStartsFrom: plotDetails.investmentStartsFrom || { amount: 0, unit: 'sq.ft' },
+            investorDiscoveryKit: plotDetails.investorDiscoveryKit || {
+              title: 'Investor Discovery Kit',
+              url: '',
+              description: 'Investment information package'
+            },
+            keySalientFeatures: plotDetails.keySalientFeatures || []
+          };
+          
+          allProperties.push({
+            id: childSnapshot.key,
+            title: plotData.project || plotData.title,
+            category: 'Plot',
+            location: plotData.location,
+            price: plotData.investmentStartsFrom?.amount,
+            description: plotData.description,
+            image: plotData.images?.[0],
+            propertyType: 'Plot',
+            ...plotData
+          });
+        }
+      });
+    }
+    
+    console.log(`[Firebase Optimized] ✅ Optimized batch fetch completed: ${allProperties.length}/${uniqueIds.length} properties found`);
+    return allProperties;
   } catch (error) {
-    console.error(`[Firebase] Error updating data at ${path}:`, error);
+    console.error('[Firebase Optimized] Error optimized batch fetching properties:', error);
     throw error;
   }
 }
-
-/**
- * Connection health check
- */
-export async function checkFirebaseConnection(): Promise<boolean> {
-  try {
-    const db = getOptimizedDatabase();
-    await db.ref('.info/connected').once('value');
-    return true;
-  } catch (error) {
-    console.error('[Firebase] Connection check failed:', error);
-    return false;
-  }
-}
-
-/**
- * Performance monitoring
- */
-export const FirebasePerformance = {
-  getCacheStats: () => MemoryCache.stats(),
-  
-  getConnectionInfo: () => ({
-    appName: adminApp?.name || 'Not initialized',
-    databaseURL: database ? 'Connected' : 'Not connected',
-    cacheSize: memoryCache.size,
-  }),
-  
-  clearAllCaches: () => {
-    MemoryCache.clear();
-    console.log('[Firebase] All caches cleared');
-  }
-};
-
-// Export constants for use in other modules
-export const CACHE_KEYS = {
-  VACANT_PROPERTIES: 'vacant_properties',
-  PRELEASED_PROPERTIES: 'preleased_properties', 
-  FRANCHISES: 'franchises',
-  PLOTS: 'plots',
-  ALL_PROPERTIES: 'all_properties',
-  PROPERTY_BY_ID: (id: string) => `property_${id}`,
-  FRANCHISE_BY_ID: (id: string) => `franchise_${id}`,
-  PLOT_BY_ID: (id: string) => `plot_${id}`,
-} as const;
-
-export { CACHE_TTL };
-
-// Export optimized functions for backward compatibility
-export {
-  getOptimizedDatabase as getDatabase,
-  getAdminApp,
-  getOptimizedData as getCachedData,
-};

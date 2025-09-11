@@ -379,9 +379,12 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
       console.log(`[WISHLIST_DEBUG] Firebase config present: ${!!process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL}`);
       console.log(`[WISHLIST_DEBUG] User authentication status: ${userId !== null}`);
       
+      // OPTIMIZATION: Add performance tracing
+      const fetchStartTime = Date.now();
       const wishlistProperties = await getUserWishlist(userId!);
+      const fetchDuration = Date.now() - fetchStartTime;
       
-      console.log(`[WISHLIST_DEBUG] Firebase read result: ${wishlistProperties.length} properties found`);
+      console.log(`[WISHLIST_DEBUG] Firebase read result: ${wishlistProperties.length} properties found in ${fetchDuration}ms`);
       if (wishlistProperties.length > 0) {
         console.log(`[WISHLIST_DEBUG] Sample property titles:`, wishlistProperties.slice(0, 3).map(p => p.title));
       }
@@ -398,7 +401,8 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
         limit,
         offset,
         hasMore,
-        duration: `${duration}ms`
+        duration: `${duration}ms`,
+        fetchDuration: `${fetchDuration}ms`
       });
       
       return NextResponse.json({
@@ -415,6 +419,7 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
           requestId: crypto.randomUUID(),
           timestamp: new Date().toISOString(),
           duration: `${duration}ms`,
+          fetchDuration: `${fetchDuration}ms`,
           userSource: requestWithUser.user ? 'authenticated' : 'guest'
         }
       }, { headers });

@@ -55,7 +55,12 @@ export class ActivityLogger {
         action: activity.action,
         propertyId: activity.propertyId,
         timestamp: serverTimestamp(),
-        metadata: activity.metadata || {}
+        metadata: activity.metadata ? {
+          ...(activity.metadata.notes !== undefined && { notes: activity.metadata.notes }),
+          ...(activity.metadata.priority !== undefined && { priority: activity.metadata.priority }),
+          ...(activity.metadata.reason !== undefined && { reason: activity.metadata.reason }),
+          ...(activity.metadata.adminUserId !== undefined && { adminUserId: activity.metadata.adminUserId })
+        } : {}
       };
 
       // Save to Firebase

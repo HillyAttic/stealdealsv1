@@ -4,6 +4,9 @@ import { ref, push, set, get, remove, query, orderByChild, equalTo, update, Data
 import { cacheService } from './cache';
 import { dbPool } from './connection-pool';
 
+// Import the optimized functions
+import { getPropertyByIdOptimized, getPropertiesByIdsOptimized } from '@/lib/firebase-optimized';
+
 // Firebase references
 const wishlistsRef = ref(database, 'wishlists');
 
@@ -161,7 +164,7 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
     if (!snapshot.exists()) {
       console.log(`[Firebase Wishlist] No wishlist found for user ${userId}`);
       const emptyWishlist: WishlistProperty[] = [];
-      cacheService.setUserWishlist(userId, emptyWishlist, 5 * 60 * 1000); // Cache for 5 minutes
+      cacheService.setUserWishlist(userId, emptyWishlist, 15 * 60 * 1000); // Cache for 15 minutes (increased from 10 minutes)
       return emptyWishlist;
     }
     
@@ -189,7 +192,7 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
     const propertyIds = wishlistItems.map(item => item.propertyId);
     console.log(`[Firebase Wishlist] Property IDs to lookup:`, propertyIds);
     
-    // Batch property fetching for better performance
+    // OPTIMIZATION: Batch property fetching for better performance
     if (propertyIds.length > 0) {
       // Check property cache first for all properties
       const uncachedPropertyIds: string[] = [];
@@ -206,12 +209,12 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
         }
       }
       
-      // Fetch uncached properties in batch
+      // OPTIMIZATION: Fetch uncached properties in a single batch operation
       if (uncachedPropertyIds.length > 0) {
         console.log(`[Firebase Wishlist] Batch fetching ${uncachedPropertyIds.length} uncached properties`);
         try {
-          const { getPropertiesByIds } = await import('@/lib/firebase');
-          const uncachedProperties = await getPropertiesByIds(uncachedPropertyIds);
+          // Use the optimized batch fetching function
+          const uncachedProperties = await getPropertiesByIdsOptimized(uncachedPropertyIds);
           
           // Cache the fetched properties
           for (const property of uncachedProperties) {
@@ -227,8 +230,7 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
           // Fallback to individual property fetching with legacy collection support
           const propertyPromises = uncachedPropertyIds.map(async (propertyId) => {
             try {
-              const { getPropertyById } = await import('@/lib/firebase');
-              const property = await getPropertyById(propertyId);
+              const property = await getPropertyByIdOptimized(propertyId);
               if (property) {
                 cacheService.setProperty(propertyId, property);
                 propertyMap.set(propertyId, property);
@@ -360,8 +362,8 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
     // Sort by most recently added
     wishlistProperties.sort((a, b) => b.addedAt.getTime() - a.addedAt.getTime());
     
-    // Cache the result for 5 minutes (increased from 30 seconds)
-    cacheService.setUserWishlist(userId, wishlistProperties, 5 * 60 * 1000);
+    // Cache the result for 15 minutes (increased from 5 minutes for better performance)
+    cacheService.setUserWishlist(userId, wishlistProperties, 15 * 60 * 1000);
     
     console.log(`[Firebase Wishlist] ✅ Returning ${wishlistProperties.length} wishlist properties from MIGRATED collections`);
     return wishlistProperties;
@@ -507,18 +509,10 @@ export async function getWishlistStats(userId: string): Promise<{
     // Count by priority
     for (const item of wishlistItems) {
       stats.byPriority[item.priority]++;
-      
-      // Get property type for counting
-      try {
-        const property = await getPropertyById(item.propertyId);
-        if (property && property.category) {
-          stats.byType[property.category] = (stats.byType[property.category] || 0) + 1;
-        }
-      } catch (error) {
-        console.warn(`[Firebase Wishlist] Could not get property type for stats: ${item.propertyId}`);
-      }
     }
     
+    // For performance, we'll skip detailed type counting in stats
+    // This avoids expensive property lookups just for stats
     console.log(`[Firebase Wishlist] ✅ Stats:`, stats);
     return stats;
     
