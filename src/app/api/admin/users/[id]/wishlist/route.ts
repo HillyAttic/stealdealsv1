@@ -71,6 +71,7 @@ export async function GET(
       const limit = parseInt(searchParams.get('limit') || '50');
       const offset = parseInt(searchParams.get('offset') || '0');
       const priority = searchParams.get('priority') as 'low' | 'medium' | 'high' | null;
+      const bypassCache = searchParams.get('bypassCache') === 'true';
 
       // Validate query parameters
       if (limit < 1 || limit > 100) {
@@ -111,11 +112,18 @@ export async function GET(
         'get_user_wishlist',
         adminUserId,
         userId,
-        { includeStats, limit, offset, priority }
+        { includeStats, limit, offset, priority, bypassCache }
       );
 
       // Get user's complete wishlist with property details
-      const wishlistProperties = await getUserWishlist(userId);
+      // Import the function to bypass cache if needed
+      let wishlistProperties;
+      if (bypassCache) {
+        const { getUserWishlistUncached } = await import('@/lib/database/wishlist');
+        wishlistProperties = await getUserWishlistUncached(userId);
+      } else {
+        wishlistProperties = await getUserWishlist(userId);
+      }
       
       // Filter by priority if specified
       const filteredProperties = priority 
@@ -148,7 +156,8 @@ export async function GET(
           filteredItems: filteredProperties.length,
           returnedItems: paginatedProperties.length,
           hasStats: !!stats,
-          duration: `${duration}ms`
+          duration: `${duration}ms`,
+          bypassCache
         }
       );
 
@@ -173,7 +182,8 @@ export async function GET(
           adminUserId,
           filters: {
             priority: priority || null,
-            includeStats
+            includeStats,
+            bypassCache
           }
         }
       });
@@ -407,6 +417,22 @@ export async function POST(
           }
         });
       }
+
+      // If we reach here, it means an invalid action was provided
+      logAdminWishlistOperation(
+        'admin_wishlist_action',
+        adminUserId,
+        userId,
+        { action, error: 'Unhandled action' }
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid action provided',
+          code: 'INVALID_ACTION'
+        },
+        { status: 400 }
+      );
 
     } catch (error) {
       const duration = Date.now() - startTime;

@@ -50,7 +50,7 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
   const itemsPerPage = 12;
 
   // Fetch user's wishlist
-  const fetchUserWishlist = async (page: number = 1, priority: string = 'all') => {
+  const fetchUserWishlist = async (page: number = 1, priority: string = 'all', bypassCache: boolean = false) => {
     try {
       setIsLoading(page === 1);
       setError(null);
@@ -63,6 +63,11 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
 
       if (priority !== 'all') {
         params.append('priority', priority);
+      }
+      
+      // Add cache bypass parameter for admin operations
+      if (bypassCache) {
+        params.append('bypassCache', 'true');
       }
 
       const response = await fetch(`/api/admin/users/${userId}/wishlist?${params}`, {
@@ -130,6 +135,11 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
       if (wishlistStats) {
         setWishlistStats(prev => prev ? { ...prev, total: prev.total - 1 } : null);
       }
+      
+      // Force refresh to ensure cache consistency
+      setTimeout(() => {
+        fetchUserWishlist(1, priorityFilter, true); // Bypass cache on remove
+      }, 500);
 
     } catch (err) {
       console.error('Error removing from wishlist:', err);
@@ -192,7 +202,7 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
     const headers = Object.keys(csvData[0] || {});
     const csvContent = [
       headers.join(','),
-      ...csvData.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
+      ...csvData.map(row => headers.map(header => `"${(row as any)[header] || ''}"`).join(','))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });

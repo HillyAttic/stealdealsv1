@@ -278,6 +278,53 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     }
   }, [wishlistItems, isSignedIn, isOnline, getCurrentUserId, showSuccessRef, showErrorRef, showWarningRef, setOperationLoadingState, saveToLocalStorage]);
 
+  // Manual refresh function with error handling
+  const refreshWishlist = useCallback(async () => {
+    const userId = getCurrentUserId();
+    console.log(`[EnhancedWishlistContext] 🔄 Manual refresh requested for user ${userId}`);
+    
+    if (!isSignedIn || userId === 'anonymous') {
+      // Load from localStorage inline to avoid dependency issues
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
+          if (stored) {
+            const items = JSON.parse(stored);
+            setWishlistItems(new Set(items));
+            console.log(`[EnhancedWishlistContext] 📱 Refreshed ${items.length} items from localStorage`);
+          }
+        } catch (error) {
+          console.error('[EnhancedWishlistContext] ❌ Failed to refresh from localStorage:', error);
+          setError('Failed to load saved wishlist items');
+        }
+      }
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // OPTIMIZATION: Add performance timing
+      const fetchStartTime = Date.now();
+      const items = await getRawWishlistItems(userId);
+      const fetchDuration = Date.now() - fetchStartTime;
+      
+      const propertyIds = new Set(items.map(item => item.propertyId));
+      setWishlistItems(propertyIds);
+      console.log(`[EnhancedWishlistContext] ✅ Manual refresh: ${propertyIds.size} items in ${fetchDuration}ms`);
+      showSuccessRef('Wishlist refreshed', 'Your wishlist has been updated');
+      
+    } catch (error) {
+      console.error('[EnhancedWishlistContext] ❌ Manual refresh error:', error);
+      const errorMessage = 'Failed to refresh wishlist';
+      setError(errorMessage);
+      showErrorRef('Refresh Error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isSignedIn, getCurrentUserId, showSuccessRef, showErrorRef]);
+
   // Enhanced remove from wishlist with retry and production resilience
   const removeFromWishlist = useCallback(async (propertyId: string): Promise<boolean> => {
     const userId = getCurrentUserId();
@@ -367,6 +414,12 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               
               console.log(`[EnhancedWishlistContext] ✅ Successfully removed ${propertyId} after ${attempt + 1} attempts`);
               showSuccessRef('Removed from wishlist', 'Property removed from your wishlist');
+              
+              // Force refresh to ensure cache consistency
+              setTimeout(() => {
+                refreshWishlist();
+              }, 1000);
+              
               // The Firebase listener will update the UI automatically
               break;
             } else {
@@ -418,57 +471,10 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
       // Clear loading state for this property
       setOperationLoadingState(propertyId, false);
     }
-  }, [wishlistItems, isSignedIn, isOnline, getCurrentUserId, showSuccessRef, showErrorRef, showWarningRef, setOperationLoadingState, saveToLocalStorage]);
+  }, [wishlistItems, isSignedIn, isOnline, getCurrentUserId, showSuccessRef, showErrorRef, showWarningRef, setOperationLoadingState, saveToLocalStorage, refreshWishlist]);
 
   // Simplified listener management - removed redundant function
   // Firebase listener is now only managed in the main useEffect
-
-  // Manual refresh function with error handling
-  const refreshWishlist = useCallback(async () => {
-    const userId = getCurrentUserId();
-    console.log(`[EnhancedWishlistContext] 🔄 Manual refresh requested for user ${userId}`);
-    
-    if (!isSignedIn || userId === 'anonymous') {
-      // Load from localStorage inline to avoid dependency issues
-      if (typeof window !== 'undefined') {
-        try {
-          const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
-          if (stored) {
-            const items = JSON.parse(stored);
-            setWishlistItems(new Set(items));
-            console.log(`[EnhancedWishlistContext] 📱 Refreshed ${items.length} items from localStorage`);
-          }
-        } catch (error) {
-          console.error('[EnhancedWishlistContext] ❌ Failed to refresh from localStorage:', error);
-          setError('Failed to load saved wishlist items');
-        }
-      }
-      return;
-    }
-    
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      // OPTIMIZATION: Add performance timing
-      const fetchStartTime = Date.now();
-      const items = await getRawWishlistItems(userId);
-      const fetchDuration = Date.now() - fetchStartTime;
-      
-      const propertyIds = new Set(items.map(item => item.propertyId));
-      setWishlistItems(propertyIds);
-      console.log(`[EnhancedWishlistContext] ✅ Manual refresh: ${propertyIds.size} items in ${fetchDuration}ms`);
-      showSuccessRef('Wishlist refreshed', 'Your wishlist has been updated');
-      
-    } catch (error) {
-      console.error('[EnhancedWishlistContext] ❌ Manual refresh error:', error);
-      const errorMessage = 'Failed to refresh wishlist';
-      setError(errorMessage);
-      showErrorRef('Refresh Error', errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isSignedIn, getCurrentUserId, showSuccessRef, showErrorRef]);
 
   // Retry failed operations - simplified without offline queue
   const retryFailedOperations = useCallback(async () => {

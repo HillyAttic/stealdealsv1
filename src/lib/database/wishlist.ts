@@ -375,6 +375,176 @@ export async function getUserWishlist(userId: string): Promise<WishlistProperty[
 }
 
 /**
+ * Get user's wishlist with property details from Firebase WITHOUT caching
+ * This function bypasses all caching for admin operations that need fresh data
+ */
+export async function getUserWishlistUncached(userId: string): Promise<WishlistProperty[]> {
+  try {
+    console.log(`[Firebase Wishlist] Getting UN-CACHED wishlist for user ${userId}`);
+    
+    const userWishlistPath = `wishlists/${userId}`;
+    const snapshot = await dbPool.optimizedGet(userWishlistPath);
+    
+    if (!snapshot.exists()) {
+      console.log(`[Firebase Wishlist] No wishlist found for user ${userId}`);
+      return [];
+    }
+    
+    const wishlistItems: WishlistItem[] = [];
+    
+    // Convert Firebase data back to WishlistItem objects
+    snapshot.forEach((childSnapshot: DataSnapshot) => {
+      const data = childSnapshot.val();
+      if (data) {
+        wishlistItems.push({
+          id: childSnapshot.key!,
+          userId: data.userId,
+          propertyId: data.propertyId,
+          addedAt: new Date(data.addedAt),
+          notes: data.notes || undefined,
+          priority: data.priority || 'medium'
+        });
+      }
+    });
+    
+    console.log(`[Firebase Wishlist] Found ${wishlistItems.length} items in wishlist - fetching property details`);
+    
+    // Get property details WITHOUT caching
+    const wishlistProperties: WishlistProperty[] = [];
+    const propertyIds = wishlistItems.map(item => item.propertyId);
+    console.log(`[Firebase Wishlist] Property IDs to lookup:`, propertyIds);
+    
+    // Fetch properties without checking cache
+    if (propertyIds.length > 0) {
+      try {
+        // Use the optimized batch fetching function directly
+        const properties = await getPropertiesByIdsOptimized(propertyIds);
+        console.log(`[Firebase Wishlist] Batch fetched ${properties.length} properties`);
+        
+        // Create a map for quick lookup
+        const propertyMap = new Map<string, any>();
+        for (const property of properties) {
+          if (property && property.id) {
+            propertyMap.set(property.id, property);
+          }
+        }
+        
+        // Build wishlist properties with enriched data
+        for (const item of wishlistItems) {
+          const property = propertyMap.get(item.propertyId);
+          
+          if (property) {
+            console.log(`[Firebase Wishlist] ✅ Found property: ${property.title || property.category || 'Property'} at ${property.location}`);
+            
+            // Create proper property title
+            const propertyTitle = property.title || property.project ||
+              `${property.category || 'Property'} in ${property.city || property.location || 'Unknown Location'}`;
+            
+            // Get property price (try different price fields, prioritizing franchise investment amounts)
+            // For franchises, show full investment range if both min and max are available
+            let propertyPrice = 0;
+            let priceDisplay = '';
+            
+            // Helper function to convert lakhs values to full rupee amounts
+            const convertToFullAmount = (value: number): number => {
+              // If value is less than 1000, it's likely in lakhs, so multiply by 100,000
+              if (value > 0 && value < 1000) {
+                return value * 100000;
+              }
+              return value;
+            };
+            
+            if (property.minInvestment && property.maxInvestment && property.minInvestment !== property.maxInvestment) {
+              // Show investment range for franchises - convert lakhs to full amounts
+              const minAmount = convertToFullAmount(property.minInvestment);
+              const maxAmount = convertToFullAmount(property.maxInvestment);
+              priceDisplay = `₹${minAmount.toLocaleString('en-IN')} - ₹${maxAmount.toLocaleString('en-IN')}`;
+              propertyPrice = minAmount; // Use min for sorting purposes
+            } else {
+              // Single price value - convert if needed
+              const singlePrice = property.price || property.rent || property.askingPrice || 
+                property.minInvestment || property.maxInvestment || property.investment ||
+                (property.investmentStartsFrom?.amount) || 0;
+              propertyPrice = convertToFullAmount(singlePrice);
+            }
+            
+            // Create image array (handle different image field formats)
+            let propertyImages: string[] = [];
+            if (property.image) {
+              propertyImages = [property.image];
+            } else if (property.images && Array.isArray(property.images)) {
+              propertyImages = property.images;
+            }
+            
+            // Handle plot size for plot properties (can be string or object)
+            let plotSizeValue: string | undefined;
+            if (property.plotSize) {
+              if (typeof property.plotSize === 'object' && property.plotSize.min && property.plotSize.max) {
+                // Handle plot size range object
+                plotSizeValue = `${property.plotSize.min}–${property.plotSize.max} ${property.plotSize.unit || 'sq.yds'}`;
+              } else if (typeof property.plotSize === 'string') {
+                plotSizeValue = property.plotSize;
+              }
+            } else {
+              // Fallback to other area fields
+              plotSizeValue = property.areaOnSale || property.superArea || undefined;
+            }
+            
+            wishlistProperties.push({
+              id: property.id || item.propertyId,
+              title: propertyTitle,
+              price: propertyPrice,
+              priceDisplay: priceDisplay || undefined, // Custom formatted price for display
+              location: property.location || 'Unknown Location',
+              images: propertyImages,
+              type: property.category || property.propertyType || 'Property',
+              addedAt: item.addedAt,
+              notes: item.notes,
+              priority: item.priority,
+              // Add missing fields that are defined in WishlistProperty interface
+              developer: property.developerName || property.developer || undefined,
+              plotSize: plotSizeValue,
+              category: property.category || undefined,
+              segment: property.segment || undefined,
+              description: property.description || 'Premium plot in prime location'
+            });
+          } else {
+            console.warn(`[Firebase Wishlist] ⚠️ Property not found: ${item.propertyId}`);
+            // Keep the wishlist item but mark as not found
+            wishlistProperties.push({
+              id: item.propertyId,
+              title: `Property ${item.propertyId} (Not Found)`,
+              price: 0,
+              location: 'Property not found',
+              images: [],
+              type: 'Unknown',
+              addedAt: item.addedAt,
+              notes: item.notes,
+              priority: item.priority,
+              developer: undefined,
+              plotSize: undefined,
+              category: undefined,
+              segment: undefined,
+              description: 'Property details not available'
+            });
+          }
+        }
+      } catch (batchError) {
+        console.error('[Firebase Wishlist] ❌ Batch property fetch failed:', batchError);
+        throw batchError;
+      }
+    }
+    
+    console.log(`[Firebase Wishlist] ✅ Returning ${wishlistProperties.length} wishlist properties for user ${userId}`);
+    return wishlistProperties;
+    
+  } catch (error) {
+    console.error(`[Firebase Wishlist] ❌ Error getting UN-CACHED wishlist:`, error);
+    throw error;
+  }
+}
+
+/**
  * Check if property is in user's wishlist
  */
 export async function isInWishlist(userId: string, propertyId: string): Promise<boolean> {
