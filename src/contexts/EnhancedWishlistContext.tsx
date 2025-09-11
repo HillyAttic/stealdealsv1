@@ -156,41 +156,31 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     const newItems = new Set([...wishlistItems, propertyId]);
     setWishlistItems(newItems);
     
-    // Enhanced retry mechanism
-    const maxRetries = process.env.NODE_ENV === 'production' ? 3 : 1;
+    // Simplified retry mechanism - reduce retries in production
+    const maxRetries = process.env.NODE_ENV === 'production' ? 1 : 1; // Changed from 3 to 1
     let lastError: Error | null = null;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         if (isSignedIn && userId !== 'anonymous') {
           if (isOnline) {
-            // Enhanced headers for production authentication
+            // Simplified headers for production authentication
             const headers: Record<string, string> = {
               'Content-Type': 'application/json',
               'x-user-id': userId
             };
             
-            // Always send user headers when authenticated (both dev and production)
-            headers['x-user-id'] = userId;
-            headers['x-mock-user-id'] = userId;
-            headers['x-mock-user-email'] = 'user@example.com';
-            // Production-specific fallback headers
-            if (process.env.NODE_ENV === 'production') {
-              headers['x-fallback-user-id'] = userId;
-            }
-            
             console.log(`[EnhancedWishlistContext] Adding to wishlist (attempt ${attempt + 1}):`, {
               propertyId,
               userId,
-              environment: process.env.NODE_ENV,
-              headers: Object.keys(headers)
+              environment: process.env.NODE_ENV
             });
             
             // OPTIMIZATION: Add performance timing
             const fetchStartTime = Date.now();
             
-            // Use API endpoint with retry parameter
-            const response = await fetch(`/api/user/wishlist?retry=${attempt}`, {
+            // Use API endpoint without retry parameter to reduce complexity
+            const response = await fetch(`/api/user/wishlist`, {
               method: 'POST',
               headers,
               body: JSON.stringify({
@@ -207,11 +197,11 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               const errorData = await response.json().catch(() => ({}));
               const error = new Error(errorData.error || `HTTP ${response.status}`);
               
-              // Check if this is a retryable error
-              if (response.status === 401 && attempt < maxRetries) {
-                console.warn(`[EnhancedWishlistContext] Authentication failed (attempt ${attempt + 1}), retrying...`);
+              // Only retry on specific transient errors
+              if ((response.status === 401 || response.status === 503) && attempt < maxRetries) {
+                console.warn(`[EnhancedWishlistContext] Transient error (attempt ${attempt + 1}), retrying...`);
                 lastError = error;
-                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1))); // Reduced delay
                 continue;
               }
               
@@ -222,11 +212,11 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
             if (!data.success) {
               const error = new Error(data.error || 'Failed to add to wishlist');
               
-              // Retry on server errors
-              if (attempt < maxRetries) {
+              // Only retry on server errors
+              if ((response.status >= 500) && attempt < maxRetries) {
                 console.warn(`[EnhancedWishlistContext] Server error (attempt ${attempt + 1}), retrying...`);
                 lastError = error;
-                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1))); // Reduced delay
                 continue;
               }
               
@@ -308,8 +298,8 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     newItems.delete(propertyId);
     setWishlistItems(newItems);
     
-    // Enhanced retry mechanism
-    const maxRetries = process.env.NODE_ENV === 'production' ? 3 : 1;
+    // Simplified retry mechanism - reduce retries in production
+    const maxRetries = process.env.NODE_ENV === 'production' ? 1 : 1; // Changed from 3 to 1
     let lastError: Error | null = null;
     
     try {
@@ -317,20 +307,11 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
         try {
           if (isSignedIn && userId !== 'anonymous') {
             if (isOnline) {
-              // Enhanced headers for production authentication
+              // Simplified headers for production authentication
               const headers: Record<string, string> = {
                 'Content-Type': 'application/json',
                 'x-user-id': userId
               };
-              
-              // Always send user headers when authenticated (both dev and production)
-              headers['x-user-id'] = userId;
-              headers['x-mock-user-id'] = userId;
-              headers['x-mock-user-email'] = 'user@example.com';
-              // Production-specific fallback headers
-              if (process.env.NODE_ENV === 'production') {
-                headers['x-fallback-user-id'] = userId;
-              }
               
               console.log(`[EnhancedWishlistContext] Removing from wishlist (attempt ${attempt + 1}):`, {
                 propertyId,
@@ -341,8 +322,8 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               // OPTIMIZATION: Add performance timing
               const fetchStartTime = Date.now();
               
-              // Use API endpoint with retry parameter
-              const response = await fetch(`/api/user/wishlist?retry=${attempt}`, {
+              // Use API endpoint without retry parameter to reduce complexity
+              const response = await fetch(`/api/user/wishlist`, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
@@ -358,11 +339,11 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
                 const errorData = await response.json().catch(() => ({}));
                 const error = new Error(errorData.error || `HTTP ${response.status}`);
                 
-                // Check if this is a retryable error
-                if (response.status === 401 && attempt < maxRetries) {
-                  console.warn(`[EnhancedWishlistContext] Authentication failed (attempt ${attempt + 1}), retrying...`);
+                // Only retry on specific transient errors
+                if ((response.status === 401 || response.status === 503) && attempt < maxRetries) {
+                  console.warn(`[EnhancedWishlistContext] Transient error (attempt ${attempt + 1}), retrying...`);
                   lastError = error;
-                  await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                  await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1))); // Reduced delay
                   continue;
                 }
                 
@@ -373,11 +354,11 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               if (!data.success) {
                 const error = new Error(data.error || 'Failed to remove from wishlist');
                 
-                // Retry on server errors
-                if (attempt < maxRetries) {
+                // Only retry on server errors
+                if ((response.status >= 500) && attempt < maxRetries) {
                   console.warn(`[EnhancedWishlistContext] Server error (attempt ${attempt + 1}), retrying...`);
                   lastError = error;
-                  await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                  await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1))); // Reduced delay
                   continue;
                 }
                 

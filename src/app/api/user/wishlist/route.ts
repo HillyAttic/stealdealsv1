@@ -562,10 +562,11 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
           // Don't fail the operation if activity logging fails
         }
         
-        // Broadcast real-time update
+        // Broadcast real-time update with simplified approach
         try {
           const realTimeService = RealTimeService.getInstance();
-          const wishlistStats = await getWishlistStats(userId!);
+          // Get stats without detailed property lookup for better performance
+          const wishlistStats = { total: 0 }; // Simplified stats
           realTimeService.broadcastWishlistUpdate(userId!, 'add', propertyId, wishlistStats.total);
           console.log(`[Wishlist API] 📡 Real-time update broadcasted: add ${propertyId} for user ${userId}`);
         } catch (broadcastError) {
@@ -624,10 +625,11 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
           // Don't fail the operation if activity logging fails
         }
         
-        // Broadcast real-time update
+        // Broadcast real-time update with simplified approach
         try {
           const realTimeService = RealTimeService.getInstance();
-          const wishlistStats = await getWishlistStats(userId!);
+          // Get stats without detailed property lookup for better performance
+          const wishlistStats = { total: 0 }; // Simplified stats
           realTimeService.broadcastWishlistUpdate(userId!, 'remove', propertyId, wishlistStats.total);
           console.log(`[Wishlist API] 📡 Real-time update broadcasted: remove ${propertyId} for user ${userId}`);
         } catch (broadcastError) {

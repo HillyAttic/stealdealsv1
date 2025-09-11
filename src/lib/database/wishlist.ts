@@ -62,14 +62,16 @@ export async function addToWishlist(
       }
     }
     
-    // Create new wishlist item
-    const itemId = await dbPool.optimizedPush(userWishlistPath, {
+    // Create new wishlist item with simplified data
+    const newItemData = {
       userId,
       propertyId,
       addedAt: new Date().toISOString(),
       notes: notes || null,
       priority
-    });
+    };
+    
+    const itemId = await dbPool.optimizedPush(userWishlistPath, newItemData);
     
     const wishlistItem: WishlistItem = {
       id: itemId,
@@ -80,9 +82,8 @@ export async function addToWishlist(
       priority
     };
     
-    // Invalidate cache
+    // Invalidate only the specific user's wishlist cache, not all caches
     cacheService.invalidateUserWishlist(userId);
-    cacheService.invalidateUserStats(userId, 'wishlist');
     
     console.log(`[Firebase Wishlist] ✅ Successfully added property ${propertyId} with item ID ${itemId}`);
     return wishlistItem;
@@ -130,9 +131,8 @@ export async function removeFromWishlist(userId: string, propertyId: string): Pr
     // Use batch operation for better performance (use root reference for batch updates)
     await dbPool.optimizedUpdate('', updates);
     
-    // Invalidate cache
+    // Invalidate only the specific user's wishlist cache
     cacheService.invalidateUserWishlist(userId);
-    cacheService.invalidateUserStats(userId, 'wishlist');
     
     console.log(`[Firebase Wishlist] ✅ Successfully removed property ${propertyId}`);
     return true;
