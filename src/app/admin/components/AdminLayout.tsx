@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FaBuilding, FaTachometerAlt, FaUser, FaSignOutAlt, FaDatabase, FaHeart, FaChartBar } from 'react-icons/fa';
+import { FaBuilding, FaTachometerAlt, FaUser, FaSignOutAlt, FaDatabase, FaHeart, FaChartBar, FaBars, FaTimes } from 'react-icons/fa';
 import Cookies from 'js-cookie';
 import ClientOnly from '@/components/ClientOnly';
 
@@ -41,6 +41,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   const [userName, setUserName] = useState('Admin');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   useEffect(() => {
     // Clean any Bitdefender attributes if the global cleaner function exists
@@ -177,17 +178,29 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Admin header */}
-      <header className="bg-blue-900 text-white py-4 px-6 shadow-md">
+      <header className="bg-blue-900 text-white py-4 px-4 md:px-6 shadow-md">
         <div className="flex justify-between items-center">
-          <Link href="/admin/dashboard" className="text-xl font-bold flex items-center">
-            <FaBuilding className="mr-2" />
-            StealDeals Admin
-          </Link>
+          <div className="flex items-center">
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 mr-2 rounded hover:bg-blue-800 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+            </button>
+            
+            <Link href="/admin/dashboard" className="text-lg md:text-xl font-bold flex items-center">
+              <FaBuilding className="mr-2" />
+              <span className="hidden sm:inline">StealDeals Admin</span>
+              <span className="sm:hidden">Admin</span>
+            </Link>
+          </div>
           
           <div className="flex items-center">
-            <div className="mr-4">
-              <div className="text-sm text-blue-100">Welcome,</div>
-              <div className="font-semibold">{userName}</div>
+            <div className="mr-2 md:mr-4 text-right">
+              <div className="text-xs md:text-sm text-blue-100">Welcome,</div>
+              <div className="text-sm md:text-base font-semibold">{userName}</div>
             </div>
             <button 
               onClick={handleLogout}
@@ -201,15 +214,42 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         </div>
       </header>
       
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 shadow-md hidden md:block">
+      <div className="flex flex-1 relative">
+        {/* Mobile menu overlay */}
+        {isMobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+        
+        {/* Sidebar - Desktop: always visible, Mobile: slide-in */}
+        <aside className={`
+          fixed md:relative top-0 left-0 h-full md:h-auto
+          w-64 bg-white border-r border-gray-200 shadow-md
+          transform transition-transform duration-300 ease-in-out
+          z-50 md:z-auto
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          md:block
+          pt-16 md:pt-0
+        `}>
+          {/* Mobile close button */}
+          <div className="md:hidden absolute top-4 right-4">
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2 rounded hover:bg-gray-100"
+            >
+              <FaTimes className="text-gray-600" />
+            </button>
+          </div>
+          
           <nav className="p-4">
             <ul className="space-y-2">
               {navItems.map((item) => (
                 <li key={item.name}>
                   <Link 
                     href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center p-3 rounded-md transition-colors ${
                       pathname === item.href 
                         ? 'bg-blue-50 font-medium' 
@@ -227,7 +267,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         </aside>
         
         {/* Main content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 md:p-6 w-full overflow-x-hidden">
           {children}
         </main>
       </div>

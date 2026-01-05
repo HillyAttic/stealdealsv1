@@ -182,15 +182,16 @@ function FranchiseContent() {
 
   return (
     <>
-      <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Franchise Inventory List</h1>
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Franchise Inventory</h1>
         <div className="flex gap-2">
           <Link
             href="/admin/franchise/new"
-            className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center"
+            className="px-3 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center text-sm"
           >
-            <FaPlus className="mr-2" />
-            Add New Franchise
+            <FaPlus className="mr-1" />
+            <span className="hidden sm:inline">Add New Franchise</span>
+            <span className="sm:hidden">Add</span>
           </Link>
         </div>
       </div>
@@ -247,30 +248,30 @@ function FranchiseContent() {
             </div>
           ) : (
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="overflow-hidden">
-                <table className="w-full divide-y divide-gray-200 table-fixed">
-                  <thead className="table-light">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <th className="w-12 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FID</th>
-                      <th className="w-1/4 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">BRAND/NAME</th>
-                      <th className="w-1/6 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INDUSTRY</th>
-                      <th className="w-1/6 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LOCATION</th>
-                      <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STATUS</th>
-                      <th className="w-1/6 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INVESTMENT</th>
-                      <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ROYALTY</th>
-                      <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">FID</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[150px]">BRAND/NAME</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">INDUSTRY</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">LOCATION</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">STATUS</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[120px]">INVESTMENT</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">ROYALTY</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredFranchises.map((franchise, index) => (
                       <tr key={franchise.id} className="hover:bg-gray-50">
-                        <td className="w-12 px-2 py-2 text-sm text-gray-900">
+                        <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
                           <span className="font-mono text-xs text-gray-500">
                             F{String(index + 1).padStart(3, '0')}
                           </span>
                         </td>
-                        <td className="w-1/4 px-2 py-2">
-                          <div className="text-sm font-medium text-gray-900 truncate" title={getFranchiseDisplayName(franchise)}>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900" title={getFranchiseDisplayName(franchise)}>
                             {getFranchiseDisplayName(franchise)}
                           </div>
                           {franchise.image && (
@@ -284,66 +285,56 @@ function FranchiseContent() {
                             />
                           )}
                         </td>
-                        <td className="w-1/6 px-2 py-2">
-                          <div className="text-sm text-gray-900 truncate" title={getFieldFromFranchise(franchise, 'industry')}>{getFieldFromFranchise(franchise, 'industry')}</div>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{getFieldFromFranchise(franchise, 'industry')}</div>
                           {getFieldFromFranchise(franchise, 'segment') && (
-                            <div className="text-xs text-gray-500 truncate" title={getFieldFromFranchise(franchise, 'segment')}>{getFieldFromFranchise(franchise, 'segment')}</div>
+                            <div className="text-xs text-gray-500">{getFieldFromFranchise(franchise, 'segment')}</div>
                           )}
                         </td>
-                        <td className="w-1/6 px-2 py-2 text-sm text-gray-500">
-                          <div className="truncate" title={getFieldFromFranchise(franchise, 'headquarter')}>
-                            {getFieldFromFranchise(franchise, 'headquarter')}
-                          </div>
+                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">
+                          {getFieldFromFranchise(franchise, 'headquarter')}
                         </td>
-                        <td className="w-16 px-2 py-2">
-                          <span className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded-full ${
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             franchise.status === 'Active' 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-yellow-100 text-yellow-800'
                           }`}>
-                            {(franchise.status || 'Active').substring(0, 6)}
+                            {franchise.status || 'Active'}
                           </span>
                         </td>
-                        <td className="w-1/6 px-2 py-2 text-sm text-gray-900">
-                          <div className="truncate" title={
-                            getInvestmentFromFranchise(franchise, 'max') && getInvestmentFromFranchise(franchise, 'max') !== getInvestmentFromFranchise(franchise, 'min')
-                              ? `${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)} - ${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'max')) || 0)}`
-                              : formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)
-                          }>
-                            {getInvestmentFromFranchise(franchise, 'max') && getInvestmentFromFranchise(franchise, 'max') !== getInvestmentFromFranchise(franchise, 'min')
-                              ? `${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)} - ${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'max')) || 0)}`
-                              : formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)
-                            }
-                          </div>
+                        <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
+                          {getInvestmentFromFranchise(franchise, 'max') && getInvestmentFromFranchise(franchise, 'max') !== getInvestmentFromFranchise(franchise, 'min')
+                            ? `${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)} - ${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'max')) || 0)}`
+                            : formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)
+                          }
                         </td>
-                        <td className="w-20 px-2 py-2 text-sm text-gray-500">
-                          <div className="truncate" title={getFieldFromFranchise(franchise, 'royalty') || 'Contact for details'}>
-                            {(getFieldFromFranchise(franchise, 'royalty') || 'Contact').substring(0, 10)}
-                          </div>
+                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">
+                          {getFieldFromFranchise(franchise, 'royalty') || 'Contact'}
                         </td>
-                        <td className="w-20 px-2 py-2 text-sm font-medium">
-                          <div className="flex space-x-0.5">
+                        <td className="px-3 py-3 text-sm font-medium whitespace-nowrap">
+                          <div className="flex space-x-2">
                             <Link
                               href={`/franchise/${franchise.id}`}
-                              className="text-indigo-600 hover:text-indigo-900 p-0.5"
+                              className="text-indigo-600 hover:text-indigo-900 p-1"
                               target="_blank"
                               title="View Franchise"
                             >
-                              <FaEye className="text-xs" />
+                              <FaEye />
                             </Link>
                             <Link
                               href={`/admin/franchise/edit/${franchise.id}`}
-                              className="text-yellow-600 hover:text-yellow-900 p-0.5"
+                              className="text-yellow-600 hover:text-yellow-900 p-1"
                               title="Edit Franchise"
                             >
-                              <FaPencilAlt className="text-xs" />
+                              <FaPencilAlt />
                             </Link>
                             <button
                               onClick={() => setDeleteConfirm(franchise.id || null)}
-                              className="text-red-600 hover:text-red-900 p-0.5"
+                              className="text-red-600 hover:text-red-900 p-1"
                               title="Delete Franchise"
                             >
-                              <FaTrash className="text-xs" />
+                              <FaTrash />
                             </button>
                           </div>
                         </td>

@@ -388,12 +388,12 @@ function AdminDashboardContent() {
   }, [isLoading]);
 
   return (
-    <div className="px-4">
+    <div className="px-2 sm:px-4">
       {/* Admin Dashboard Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 sm:mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
-          <p className="text-gray-600">Overview of property listings and statistics</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Admin Dashboard</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Overview of property listings</p>
         </div>
       </div>
       
@@ -405,65 +405,65 @@ function AdminDashboardContent() {
       ) : (
         <>
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-6 rounded-lg shadow-md">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-3 sm:p-6 rounded-lg shadow-md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm opacity-80">Pre-leased Properties</p>
-                  <h2 className="text-3xl font-bold mt-1">{stats.preleased}</h2>
+                  <p className="text-xs sm:text-sm opacity-80">Pre-leased</p>
+                  <h2 className="text-xl sm:text-3xl font-bold mt-1">{stats.preleased}</h2>
                 </div>
-                <FaBuilding className="text-3xl opacity-80" />
+                <FaBuilding className="text-xl sm:text-3xl opacity-80" />
               </div>
-              <div className="mt-6 text-sm font-medium">
-                <span className="opacity-80">{stats.total > 0 ? ((stats.preleased / stats.total) * 100).toFixed(1) : "0"}% of total</span>
+              <div className="mt-3 sm:mt-6 text-xs sm:text-sm font-medium">
+                <span className="opacity-80 hidden sm:inline">{stats.total > 0 ? ((stats.preleased / stats.total) * 100).toFixed(1) : "0"}% of total</span>
               </div>
             </div>
             
-            <div className="bg-gradient-to-br from-green-500 to-green-700 text-white p-6 rounded-lg shadow-md">
+            <div className="bg-gradient-to-br from-green-500 to-green-700 text-white p-3 sm:p-6 rounded-lg shadow-md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm opacity-80">Vacant Properties</p>
-                  <h2 className="text-3xl font-bold mt-1">{stats.vacant}</h2>
+                  <p className="text-xs sm:text-sm opacity-80">Vacant</p>
+                  <h2 className="text-xl sm:text-3xl font-bold mt-1">{stats.vacant}</h2>
                 </div>
-                <FaHome className="text-3xl opacity-80" />
+                <FaHome className="text-xl sm:text-3xl opacity-80" />
               </div>
-              <div className="mt-6 text-sm font-medium">
-                <span className="opacity-80">{stats.total > 0 ? ((stats.vacant / stats.total) * 100).toFixed(1) : "0"}% of total</span>
+              <div className="mt-3 sm:mt-6 text-xs sm:text-sm font-medium">
+                <span className="opacity-80 hidden sm:inline">{stats.total > 0 ? ((stats.vacant / stats.total) * 100).toFixed(1) : "0"}% of total</span>
               </div>
             </div>
             
-            <div className="bg-gradient-to-br from-red-400 to-red-600 text-white p-6 rounded-lg shadow-md">
+            <div className="bg-gradient-to-br from-red-400 to-red-600 text-white p-3 sm:p-6 rounded-lg shadow-md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm opacity-80">Franchise Opportunities</p>
-                  <h2 className="text-3xl font-bold mt-1">{stats.franchise}</h2>
+                  <p className="text-xs sm:text-sm opacity-80">Franchise</p>
+                  <h2 className="text-xl sm:text-3xl font-bold mt-1">{stats.franchise}</h2>
                 </div>
-                <FaStore className="text-3xl opacity-80" />
+                <FaStore className="text-xl sm:text-3xl opacity-80" />
               </div>
-              <div className="mt-6 text-sm font-medium">
-                <span className="opacity-80">{stats.total > 0 ? ((stats.franchise / stats.total) * 100).toFixed(1) : "0"}% of total</span>
+              <div className="mt-3 sm:mt-6 text-xs sm:text-sm font-medium">
+                <span className="opacity-80 hidden sm:inline">{stats.total > 0 ? ((stats.franchise / stats.total) * 100).toFixed(1) : "0"}% of total</span>
               </div>
             </div>
             
-            <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white p-6 rounded-lg shadow-md">
+            <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white p-3 sm:p-6 rounded-lg shadow-md">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm opacity-80">Total Properties</p>
-                  <h2 className="text-3xl font-bold mt-1">{stats.total}</h2>
+                  <p className="text-xs sm:text-sm opacity-80">Total</p>
+                  <h2 className="text-xl sm:text-3xl font-bold mt-1">{stats.total}</h2>
                 </div>
-                <FaChartBar className="text-3xl opacity-80" />
+                <FaChartBar className="text-xl sm:text-3xl opacity-80" />
               </div>
-              <div className="mt-6 text-sm font-medium">
-                <span className="opacity-80">All property types</span>
+              <div className="mt-3 sm:mt-6 text-xs sm:text-sm font-medium">
+                <span className="opacity-80 hidden sm:inline">All property types</span>
               </div>
             </div>
           </div>
           
           {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-lg font-semibold mb-6">Pre-leased Properties by Category</h2>
-              <div className="h-64 relative">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
+              <h2 className="text-sm sm:text-lg font-semibold mb-4 sm:mb-6">Pre-leased by Category</h2>
+              <div className="h-48 sm:h-64 relative">
                 <canvas id="categoryChart"></canvas>
                 {categoryData.data.every(value => value === 0) && (
                   <div className="absolute inset-0 flex items-center justify-center text-gray-500">
@@ -473,9 +473,9 @@ function AdminDashboardContent() {
               </div>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-lg font-semibold mb-6">Property Distribution</h2>
-              <div className="h-64 relative">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
+              <h2 className="text-sm sm:text-lg font-semibold mb-4 sm:mb-6">Property Distribution</h2>
+              <div className="h-48 sm:h-64 relative">
                 <canvas id="summaryChart"></canvas>
                 {stats.total === 0 && (
                   <div className="absolute inset-0 flex items-center justify-center text-gray-500">
@@ -487,9 +487,9 @@ function AdminDashboardContent() {
           </div>
 
           {/* Franchise Chart */}
-          <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 className="text-lg font-semibold mb-6">Franchise Opportunities by Industry</h2>
-            <div className="h-64 relative">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md mb-6 sm:mb-8">
+            <h2 className="text-sm sm:text-lg font-semibold mb-4 sm:mb-6">Franchise by Industry</h2>
+            <div className="h-48 sm:h-64 relative">
               <canvas id="franchiseChart"></canvas>
               {franchiseData.data.every(value => value === 0) && (
                 <div className="absolute inset-0 flex items-center justify-center text-gray-500">

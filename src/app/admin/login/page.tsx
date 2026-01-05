@@ -6,6 +6,11 @@ import Link from 'next/link';
 import { FaKey, FaEnvelope, FaExclamationTriangle } from 'react-icons/fa';
 import Cookies from 'js-cookie';
 import ClientOnly from '@/components/ClientOnly';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { app } from '@/lib/firebase'; // Import the initialized Firebase app
+
+// Initialize Firebase Auth
+const auth = getAuth(app);
 
 // Add global type declaration for our window extension
 declare global {
@@ -83,19 +88,24 @@ function AdminLoginContent() {
     setIsLoading(true);
 
     try {
-      console.log('Submitting login with:', { 
+      console.log('Attempting Firebase login with:', { 
         email: formData.email,
         passwordLength: formData.password.length 
       });
 
-      const response = await fetch('/api/auth', {
+      // Sign in with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const idToken = await userCredential.user.getIdToken();
+      
+      // Send the Firebase ID token to our backend for verification
+      const response = await fetch('/api/auth/verify-firebase-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // Important: include cookies in the request
         body: JSON.stringify({
-          ...formData,
+          idToken,
           adminLogin: true // Flag to indicate this is an admin login
         }),
       });
@@ -127,7 +137,18 @@ function AdminLoginContent() {
       }, 500);
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.message || 'Authentication failed');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Authentication failed';
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        errorMessage = 'Invalid email or password';
+      } else if (err.code === 'auth/user-disabled') {
+        errorMessage = 'This account has been disabled';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

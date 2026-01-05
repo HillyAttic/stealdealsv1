@@ -111,15 +111,16 @@ function PlotsAdminContent() {
 
   return (
     <>
-      <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Plot Inventory List</h1>
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Plot Inventory</h1>
         <div className="flex gap-2">
           <Link
             href="/admin/plots/new"
-            className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center"
+            className="px-3 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center text-sm"
           >
-            <FaPlus className="mr-2" />
-            Add New Plot
+            <FaPlus className="mr-1" />
+            <span className="hidden sm:inline">Add New Plot</span>
+            <span className="sm:hidden">Add</span>
           </Link>
         </div>
       </div>
@@ -177,28 +178,28 @@ function PlotsAdminContent() {
             ) : (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 table-sm">
-              <thead className="table-light">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PID</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PROJECT</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DEVELOPER</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LOCATION</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STATUS</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PLOT SIZE</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">INVESTMENT</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">PID</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[120px]">PROJECT</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">DEVELOPER</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">LOCATION</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">STATUS</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">PLOT SIZE</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[120px]">INVESTMENT</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredPlots.map((plot, index) => (
                   <tr key={plot.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
                       <span className="font-mono text-xs text-gray-500">
                         P{String(index + 1).padStart(3, '0')}
                       </span>
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap">
+                    <td className="px-3 py-3 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{plot.project}</div>
                       {plot.images && plot.images[0] && (
                         <img 
@@ -211,9 +212,9 @@ function PlotsAdminContent() {
                         />
                       )}
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{plot.developerName}</td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{plot.location}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">
+                    <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">{plot.developerName}</td>
+                    <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">{plot.location}</td>
+                    <td className="px-3 py-3 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         plot.status === 'Ready to Move In' 
                           ? 'bg-green-100 text-green-800' 
@@ -222,14 +223,14 @@ function PlotsAdminContent() {
                         {plot.status}
                       </span>
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">
                       {plot.plotSize?.min}-{plot.plotSize?.max} {plot.plotSize?.unit}
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                      {formatCurrency(plot.investmentStartsFrom?.amount || 0)} per {plot.investmentStartsFrom?.unit}
+                    <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
+                      {formatCurrency(plot.investmentStartsFrom?.amount || 0)} / {plot.investmentStartsFrom?.unit}
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-1">
+                    <td className="px-3 py-3 text-sm font-medium whitespace-nowrap">
+                      <div className="flex space-x-2">
                         <Link
                           href={`/plots/${plot.id}`}
                           className="text-indigo-600 hover:text-indigo-900 p-1"
@@ -254,8 +255,8 @@ function PlotsAdminContent() {
                         </button>
                       </div>
                     </td>
-                      </tr>
-                    ))}
+                  </tr>
+                ))}
                   </tbody>
                 </table>
               </div>

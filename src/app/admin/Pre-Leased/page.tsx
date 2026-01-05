@@ -212,15 +212,16 @@ function PreLeasedPropertiesContent() {
 
   return (
     <>
-      <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-800">Pre-Leased Properties List</h1>
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Pre-Leased Properties</h1>
         <div className="flex gap-2">
           <Link
             href="/admin/Pre-Leased/new"
-            className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center"
+            className="px-3 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center text-sm"
           >
-            <FaPlus className="mr-2" />
-            Add New Property
+            <FaPlus className="mr-1" />
+            <span className="hidden sm:inline">Add New Property</span>
+            <span className="sm:hidden">Add</span>
           </Link>
         </div>
       </div>
@@ -277,110 +278,104 @@ function PreLeasedPropertiesContent() {
             </div>
           ) : (
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="overflow-hidden">
-                <table className="w-full divide-y divide-gray-200 table-fixed">
-                  <thead className="table-light">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
                     <tr>
-                      <th className="w-12 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PID</th>
-                      <th className="w-1/5 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TENANT</th>
-                      <th className="w-1/6 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LOCATION</th>
-                      <th className="w-16 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CATEGORY</th>
-                      <th className="w-1/6 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LEASE INFO</th>
-                      <th className="w-1/6 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RENT</th>
-                      <th className="w-1/6 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ASKING PRICE</th>
-                      <th className="w-20 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTIONS</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">PID</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[120px]">TENANT</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">LOCATION</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">CATEGORY</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">LEASE INFO</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">RENT</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">ASKING PRICE</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredProperties.map((property, index) => (
                       <tr key={property.id} className="hover:bg-gray-50">
-                        <td className="w-12 px-2 py-2 text-sm text-gray-900">
+                        <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
                           <span className="font-mono text-xs text-gray-500">
                             P{String(index + 1).padStart(3, '0')}
                           </span>
                         </td>
-                        <td className="w-1/5 px-2 py-2">
-                          <div className="text-sm font-medium text-gray-900 truncate" title={property.tenant || 'Unknown Tenant'}>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
                             {property.tenant || 'Unknown Tenant'}
                           </div>
                           {property.buildingName && (
-                            <div className="text-xs text-gray-500 truncate" title={property.buildingName}>
+                            <div className="text-xs text-gray-500">
                               {property.buildingName}
                             </div>
                           )}
                         </td>
-                        <td className="w-1/6 px-2 py-2">
-                          <div className="text-sm text-gray-900 truncate" title={property.location || '-'}>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
                             {property.location || '-'}
                           </div>
                           {property.floor && (
-                            <div className="text-xs text-gray-500 truncate" title={`Floor: ${property.floor}`}>
+                            <div className="text-xs text-gray-500">
                               Floor: {property.floor}
                             </div>
                           )}
                         </td>
-                        <td className="w-16 px-2 py-2">
-                          <span className={`inline-flex px-1 py-0.5 text-xs font-semibold rounded-full ${
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             property.propertyStatus === 'Available' 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-blue-100 text-blue-800'
                           }`}>
-                            {(property.category || 'General').substring(0, 6)}
+                            {property.category || 'General'}
                           </span>
                         </td>
-                        <td className="w-1/6 px-2 py-2 text-sm text-gray-500">
-                          <div className="truncate" title={property.leaseTerm ? `Term: ${property.leaseTerm}` : '-'}>
-                            {property.leaseTerm ? `Term: ${property.leaseTerm}` : '-'}
-                          </div>
+                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">
+                          <div>{property.leaseTerm ? `Term: ${property.leaseTerm}` : '-'}</div>
                           {property.remainingLease && (
-                            <div className="text-xs text-gray-400 truncate" title={`Remaining: ${property.remainingLease}`}>
+                            <div className="text-xs text-gray-400">
                               Remaining: {property.remainingLease}
                             </div>
                           )}
                         </td>
-                        <td className="w-1/6 px-2 py-2 text-sm text-gray-900">
-                          <div className="truncate" title={formatCurrency(property.rent || 0)}>
-                            {formatCurrency(property.rent || 0)}
-                          </div>
+                        <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
+                          <div>{formatCurrency(property.rent || 0)}</div>
                           {property.rentalType && (
-                            <div className="text-xs text-gray-400 truncate" title={property.rentalType}>
+                            <div className="text-xs text-gray-400">
                               {property.rentalType}
                             </div>
                           )}
                         </td>
-                        <td className="w-1/6 px-2 py-2 text-sm text-gray-900">
-                          <div className="truncate" title={formatCurrency(property.askingPrice || 0)}>
-                            {formatCurrency(property.askingPrice || 0)}
-                          </div>
+                        <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
+                          <div>{formatCurrency(property.askingPrice || 0)}</div>
                           {property.roi && (
-                            <div className="text-xs text-gray-400 truncate" title={`ROI: ${property.roi}`}>
+                            <div className="text-xs text-gray-400">
                               ROI: {property.roi}
                             </div>
                           )}
                         </td>
-                        <td className="w-20 px-2 py-2 text-sm font-medium">
-                          <div className="flex space-x-0.5">
+                        <td className="px-3 py-3 text-sm font-medium whitespace-nowrap">
+                          <div className="flex space-x-2">
                             <Link
                               href={`/Pre-Leased/${property.id}`}
-                              className="text-indigo-600 hover:text-indigo-900 p-0.5"
+                              className="text-indigo-600 hover:text-indigo-900 p-1"
                               target="_blank"
                               title="View Property"
                             >
-                              <FaEye className="text-xs" />
+                              <FaEye />
                             </Link>
                             <Link
                               href={`/admin/Pre-Leased/edit/${property.id}`}
-                              className="text-yellow-600 hover:text-yellow-900 p-0.5"
+                              className="text-yellow-600 hover:text-yellow-900 p-1"
                               title="Edit Property"
                             >
-                              <FaPencilAlt className="text-xs" />
+                              <FaPencilAlt />
                             </Link>
                             <button
                               onClick={() => setDeleteConfirm(property.id || null)}
-                              className="text-red-600 hover:text-red-900 p-0.5"
+                              className="text-red-600 hover:text-red-900 p-1"
                               title="Delete Property"
                             >
-                              <FaTrash className="text-xs" />
+                              <FaTrash />
                             </button>
                           </div>
                         </td>

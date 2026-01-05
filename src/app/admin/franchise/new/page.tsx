@@ -160,17 +160,17 @@ function FranchiseForm() {
   
   return (
     <div className="card border-top border-0 border-4 border-blue-900 rounded-lg shadow-md">
-      <div className="border p-4 rounded bg-white">
-        <div className="card-title flex items-center">
-          <div>
+      <div className="border p-3 sm:p-4 rounded bg-white">
+        <div className="card-title flex flex-col sm:flex-row sm:items-center gap-2">
+          <div className="flex items-center">
             <i className="bx bxs-user me-1 text-2xl text-blue-500"></i>
+            <h5 className="mb-0 text-lg sm:text-xl font-bold ml-2" style={{ color: 'rgb(28, 110, 164)' }}>Franchise Inventory</h5>
           </div>
-          <h5 className="mb-0 text-xl font-bold ml-2" style={{ color: 'rgb(28, 110, 164)' }}>Franchise Inventory</h5>
-          <div className="ml-auto">
+          <div className="sm:ml-auto">
             <button 
               id="btnList" 
               type="button" 
-              className="btn border border-red-500 text-red-500 px-3 py-2 rounded flex items-center hover:bg-red-50"
+              className="btn border border-red-500 text-red-500 px-3 py-2 rounded flex items-center hover:bg-red-50 text-sm"
               onClick={() => router.push('/admin/franchise')}
             >
               <BsListUl className="mr-1" /> List
@@ -193,13 +193,13 @@ function FranchiseForm() {
         )}
         
         <form id="myForm" className="needs-validation" noValidate onSubmit={handleSubmit}>
-          <div className="row mb-3 flex">
-            <label htmlFor="inputIndustry" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Industry</label>
-            <div className="col-sm-4 position-relative w-1/3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label htmlFor="inputIndustry" className="block text-gray-700 font-medium text-sm mb-1">Industry *</label>
               <select 
                 id="inputIndustry" 
                 required 
-                className="form-select w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white"
+                className="form-select w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm"
                 name="industry"
                 value={franchise.industry}
                 onChange={handleChange}
@@ -210,15 +210,14 @@ function FranchiseForm() {
                 <option value="Education">Education</option>
                 <option value="Sports, Fitness & Entertainments">Sports, Fitness & Entertainments</option>
               </select>
-              <div className="invalid-tooltip">Select Industry</div>
             </div>
             
-            <label htmlFor="inputSegment" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Segment</label>
-            <div className="col-sm-4 position-relative w-1/3">
+            <div>
+              <label htmlFor="inputSegment" className="block text-gray-700 font-medium text-sm mb-1">Segment</label>
               <select 
                 id="inputSegment" 
                 required 
-                className="form-select w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white"
+                className="form-select w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm"
                 name="segment"
                 value={franchise.segment}
                 onChange={handleChange}
@@ -228,253 +227,238 @@ function FranchiseForm() {
                 <option value="Coffee Shop">Coffee Shop</option>
                 <option value="Restaurant">Restaurant</option>
               </select>
-              <div className="invalid-tooltip">Select Segment</div>
             </div>
           </div>
           
-          <div className="row mb-3 flex">
-            <label htmlFor="inputProduct" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Brand</label>
-            <div className="col-sm-4 position-relative w-1/3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label htmlFor="inputProduct" className="block text-gray-700 font-medium text-sm mb-1">Brand *</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputProduct"
                 name="brand"
                 value={franchise.brand}
                 onChange={handleChange}  
-                placeholder="Product"
+                placeholder="Brand Name"
               />
               <input id="hfId" type="hidden" />
-              <div className="invalid-tooltip">Product</div>
             </div>
             
-            <label htmlFor="inputModel" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Model</label>
-            <div className="col-sm-4 position-relative w-1/3">
+            <div>
+              <label htmlFor="inputModel" className="block text-gray-700 font-medium text-sm mb-1">Model</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputModel"
                 name="model"
                 value={franchise.model}
                 onChange={handleChange} 
                 placeholder="Model"
               />
-              <div className="invalid-tooltip">Model</div>
             </div>
           </div>
           
-          <div className="row mb-3 flex">
-            <label htmlFor="inputMinArea" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Minimum Area</label>
-            <div className="col-sm-4 position-relative w-1/3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label htmlFor="inputMinArea" className="block text-gray-700 font-medium text-sm mb-1">Minimum Area (sq.ft.)</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputMinArea"
                 name="minArea"
                 value={franchise.minArea}
                 onChange={handleChange} 
-                placeholder="Minimum Area Req. (sq.ft.)"
+                placeholder="Min Area"
               />
-              <div className="invalid-tooltip">Minimum Area Req. (sq.ft.)</div>
             </div>
             
-            <label htmlFor="inputMaxArea" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Maximum Area</label>
-            <div className="col-sm-4 position-relative w-1/3">
+            <div>
+              <label htmlFor="inputMaxArea" className="block text-gray-700 font-medium text-sm mb-1">Maximum Area (sq.ft.)</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputMaxArea"
                 name="maxArea"
                 value={franchise.maxArea}
                 onChange={handleChange} 
-                placeholder="Max Area Req. (sq.ft.)"
+                placeholder="Max Area"
               />
-              <div className="invalid-tooltip">Max Area Req. (sq.ft.)</div>
             </div>
           </div>
           
-          <div className="row mb-3 flex">
-            <label htmlFor="inputMinInvst" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Investment (Min)</label>
-            <div className="col-sm-4 position-relative w-1/3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label htmlFor="inputMinInvst" className="block text-gray-700 font-medium text-sm mb-1">Investment (Min)</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputMinInvst"
                 name="minInvestment"
                 value={franchise.minInvestment}
                 onChange={handleChange} 
-                placeholder="Investment (Minimum)"
+                placeholder="Minimum Investment"
               />
-              <div className="invalid-tooltip">Investment(Minimum)</div>
             </div>
             
-            <label htmlFor="inputMaxInvst" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Investment (Max)</label>
-            <div className="col-sm-4 position-relative w-1/3">
+            <div>
+              <label htmlFor="inputMaxInvst" className="block text-gray-700 font-medium text-sm mb-1">Investment (Max)</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputMaxInvst"
                 name="maxInvestment"
                 value={franchise.maxInvestment}
                 onChange={handleChange} 
-                placeholder="Investment (Maximum)"
+                placeholder="Maximum Investment"
               />
-              <div className="invalid-tooltip">Investment (Max)</div>
             </div>
           </div>
           
-          <div className="row mb-3 flex">
-            <label htmlFor="inputRoyalty" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Royalty</label>
-            <div className="col-sm-4 position-relative w-1/3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label htmlFor="inputRoyalty" className="block text-gray-700 font-medium text-sm mb-1">Royalty</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputRoyalty"
                 name="royalty"
                 value={franchise.royalty}
                 onChange={handleChange} 
                 placeholder="Royalty"
               />
-              <div className="invalid-tooltip">Royalty</div>
             </div>
             
-            <label htmlFor="inputEstYr" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Establishment Year</label>
-            <div className="col-sm-4 position-relative w-1/3">
+            <div>
+              <label htmlFor="inputEstYr" className="block text-gray-700 font-medium text-sm mb-1">Establishment Year</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputEstYr"
                 name="establishmentYear"
                 value={franchise.establishmentYear}
                 onChange={handleChange} 
-                placeholder="Establishment Year"
+                placeholder="Est. Year"
               />
-              <div className="invalid-tooltip">Establishment Year</div>
             </div>
           </div>
           
-          <div className="row mb-3 flex">
-            <label htmlFor="inputFsy" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Franchise Started Year</label>
-            <div className="col-sm-4 position-relative w-1/3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label htmlFor="inputFsy" className="block text-gray-700 font-medium text-sm mb-1">Franchise Started Year</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputFsy"
                 name="franchiseStartedYear"
                 value={franchise.franchiseStartedYear}
                 onChange={handleChange} 
-                placeholder="Franchise Started Year"
+                placeholder="Started Year"
               />
-              <div className="invalid-tooltip">Franchise Started Year</div>
             </div>
             
-            <label htmlFor="inputNoo" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Number of Outlets</label>
-            <div className="col-sm-4 position-relative w-1/3">
+            <div>
+              <label htmlFor="inputNoo" className="block text-gray-700 font-medium text-sm mb-1">Number of Outlets</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputNoo"
                 name="numberOutlets"
                 value={franchise.numberOutlets}
                 onChange={handleChange} 
-                placeholder="Number of Outlets"
+                placeholder="No. of Outlets"
               />
-              <div className="invalid-tooltip">Number of Outlets</div>
             </div>
           </div>
           
-          <div className="row mb-3 flex">
-            <label htmlFor="inputMinpp" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Min Payback Period</label>
-            <div className="col-sm-4 position-relative w-1/3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label htmlFor="inputMinpp" className="block text-gray-700 font-medium text-sm mb-1">Min Payback Period</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputMinpp"
                 name="minPaybackPeriod"
                 value={franchise.minPaybackPeriod}
                 onChange={handleChange} 
-                placeholder="Minimum Payback Period"
+                placeholder="Min Payback"
               />
-              <div className="invalid-tooltip">Minimum Payback Period</div>
             </div>
             
-            <label htmlFor="inputMaxpp" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Max Payback Period</label>
-            <div className="col-sm-4 position-relative w-1/3">
+            <div>
+              <label htmlFor="inputMaxpp" className="block text-gray-700 font-medium text-sm mb-1">Max Payback Period</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputMaxpp"
                 name="maxPaybackPeriod"
                 value={franchise.maxPaybackPeriod}
                 onChange={handleChange} 
-                placeholder="Maximum Payback Period"
+                placeholder="Max Payback"
               />
-              <div className="invalid-tooltip">Maximum Payback Period</div>
             </div>
           </div>
           
-          <div className="row mb-3 flex">
-            <label htmlFor="inputHeadquarter" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Headquarter</label>
-            <div className="col-sm-4 position-relative w-1/3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label htmlFor="inputHeadquarter" className="block text-gray-700 font-medium text-sm mb-1">Headquarter</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputHeadquarter"
                 name="headquarter"
                 value={franchise.headquarter}
                 onChange={handleChange} 
-                placeholder="Headquarter"
+                placeholder="HQ Location"
               />
-              <div className="invalid-tooltip">Headquarter</div>
             </div>
             
-            <label htmlFor="inputRemarks" className="col-sm-2 col-form-label w-1/6 pl-4 text-gray-700 font-medium">Remarks</label>
-            <div className="col-sm-4 position-relative w-1/3">
+            <div>
+              <label htmlFor="inputRemarks" className="block text-gray-700 font-medium text-sm mb-1">Remarks</label>
               <input 
                 type="text" 
                 required 
-                className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
+                className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                 id="inputRemarks"
                 name="remarks"
                 value={franchise.remarks}
                 onChange={handleChange} 
                 placeholder="Remarks"
               />
-              <div className="invalid-tooltip">Remarks</div>
             </div>
           </div>
 
-          <div className="row mb-3 flex items-start">
-            <div className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium pt-2">
+          <div className="mb-4">
+            <div className="text-gray-700 font-medium text-sm mb-2">
               <label>Image URLs</label>
-              <div className="text-xs text-gray-500 mt-1">(Max 5 images)</div>
+              <span className="text-xs text-gray-500 ml-2">(Max 5 images)</span>
             </div>
-            <div className="col-sm-10 position-relative w-5/6">
+            <div className="space-y-3">
               {franchise.images.map((image, index) => (
-                <div key={index} className="mb-3 flex items-start">
-                  <div className="w-4/6">
+                <div key={index} className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex-1">
                     <input 
                       type="text" 
-                      className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white h-10" 
+                      className="form-control w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
                       value={image}
                       onChange={(e) => handleImageChange(index, e.target.value)} 
                       placeholder={`Image ${index + 1} URL`}
                     />
                   </div>
-                  <div className="w-2/6 flex items-start justify-center pl-2">
+                  <div className="flex items-center gap-2">
                     <ImageUploader 
                       onImageUrlGenerated={(url) => handleImageUrlGenerated(index, url)}
                       disabled={isSubmitting}
@@ -484,7 +468,7 @@ function FranchiseForm() {
                       <img 
                         src={image} 
                         alt={`Preview ${index + 1}`} 
-                        className="h-10 w-10 object-cover border border-gray-300 rounded ml-2"
+                        className="h-10 w-10 object-cover border border-gray-300 rounded"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=Error';
                         }}
@@ -499,44 +483,40 @@ function FranchiseForm() {
 
           
           {/* Google Drive URL for Investor Discovery Kit */}
-          <div className="row mb-3 flex">
-            <label htmlFor="inputInvestorKit" className="col-sm-2 col-form-label w-1/6 text-gray-700 font-medium">Investor Discovery Kit</label>
-            <div className="col-sm-10 position-relative w-5/6">
-              <div className="flex">
-                <input 
-                  type="url" 
-                  className="form-control w-full px-2 py-1 border border-gray-400 rounded text-gray-800 bg-white" 
-                  id="inputInvestorKit"
-                  name="investorDiscoveryKitUrl"
-                  value={franchise.investorDiscoveryKitUrl}
-                  onChange={handleChange} 
-                  placeholder="https://drive.google.com/file/d/your-file-id/view"
-                />
-                {franchise.investorDiscoveryKitUrl && (
-                  <div className="ml-2">
-                    <a 
-                      href={franchise.investorDiscoveryKitUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center h-10 w-12 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                      title="Preview Google Drive Link"
-                    >
-                      <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M216 0h80c13.3 0 24 10.7 24 24v168h87.7c17.8 0 26.7 21.5 14.1 34.1L269.7 378.3c-7.5 7.5-19.8 7.5-27.3 0L90.1 226.1c-12.6-12.6-3.7-34.1 14.1-34.1H192V24c0-13.3 10.7-24 24-24zm296 376v112c0 13.3-10.7 24-24 24H24c-13.3 0-24-10.7-24-24V376c0-13.3 10.7-24 24-24h146.7l49 49c20.1 20.1 52.5 20.1 72.6 0l49-49H488c13.3 0 24 10.7 24 24zm-124 88c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20zm64 0c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20z"></path>
-                      </svg>
-                    </a>
-                  </div>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">Enter the Google Drive URL for the Investor Discovery Kit (will be used for download button on franchise cards)</div>
+          <div className="mb-4">
+            <label htmlFor="inputInvestorKit" className="block text-gray-700 font-medium text-sm mb-1">Investor Discovery Kit</label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input 
+                type="url" 
+                className="form-control flex-1 px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm" 
+                id="inputInvestorKit"
+                name="investorDiscoveryKitUrl"
+                value={franchise.investorDiscoveryKitUrl}
+                onChange={handleChange} 
+                placeholder="https://drive.google.com/file/d/your-file-id/view"
+              />
+              {franchise.investorDiscoveryKitUrl && (
+                <a 
+                  href={franchise.investorDiscoveryKitUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center h-10 w-12 bg-green-500 text-white rounded hover:bg-green-600 transition-colors shrink-0"
+                  title="Preview Google Drive Link"
+                >
+                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="h-4 w-4" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M216 0h80c13.3 0 24 10.7 24 24v168h87.7c17.8 0 26.7 21.5 14.1 34.1L269.7 378.3c-7.5 7.5-19.8 7.5-27.3 0L90.1 226.1c-12.6-12.6-3.7-34.1 14.1-34.1H192V24c0-13.3 10.7-24 24-24zm296 376v112c0 13.3-10.7 24-24 24H24c-13.3 0-24-10.7-24-24V376c0-13.3 10.7-24 24-24h146.7l49 49c20.1 20.1 52.5 20.1 72.6 0l49-49H488c13.3 0 24 10.7 24 24zm-124 88c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20zm64 0c0-11-9-20-20-20s-20 9-20 20 9 20 20 20 20-9 20-20z"></path>
+                  </svg>
+                </a>
+              )}
             </div>
+            <div className="text-xs text-gray-500 mt-1">Google Drive URL for the Investor Discovery Kit</div>
           </div>
           
-          <div className="mt-8 flex justify-end">
+          <div className="mt-6">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-3 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center disabled:opacity-50"
+              className="w-full sm:w-auto px-6 py-3 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center justify-center disabled:opacity-50"
             >
               <FaSave className="mr-2" />
               {isSubmitting ? 'Saving...' : 'Save Franchise'}

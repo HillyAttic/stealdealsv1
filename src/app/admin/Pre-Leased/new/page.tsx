@@ -284,16 +284,16 @@ function NewPreLeasedPropertyContent() {
   
   return (
     <div className="card border-top border-0 border-4 border-blue-900 rounded-lg shadow-md">
-      <div className="border p-4 rounded">
-        <div className="card-title d-flex align-items-center flex justify-between mb-4">
+      <div className="border p-3 sm:p-4 rounded">
+        <div className="card-title flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
           <div className="flex items-center">
-            <h5 className="mb-0 text-xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>Pre-Leased Inventory</h5>
+            <h5 className="mb-0 text-lg sm:text-xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>Pre-Leased Inventory</h5>
           </div>
-          <div>
+          <div className="sm:ml-auto">
             <button 
               type="button" 
               onClick={() => router.push('/admin/Pre-Leased')}
-              className="btn btn-outline-danger px-3 py-2 border border-red-500 text-red-500 rounded hover:bg-red-50"
+              className="btn btn-outline-danger px-3 py-2 border border-red-500 text-red-500 rounded hover:bg-red-50 text-sm"
             >
               <BsMenuUp className="inline mr-1" /> List
             </button>
@@ -308,36 +308,36 @@ function NewPreLeasedPropertyContent() {
         )}
         
         <form id="myForm" className="needs-validation" onSubmit={handleSubmit}>
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="tenant" className="col-span-2 text-gray-700">Tenant</label>
-            <div className="col-span-8 position-relative">
-              <input 
-                type="text"
-                id="tenant"
-                name="tenant"
-                value={formData.tenant}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                placeholder="Tenant Name"
-                autoComplete="off"
-              />
-              {errors.tenant && (
-                <div className="text-red-500 text-sm mt-1">{errors.tenant}</div>
-              )}
-            </div>
+          {/* Tenant */}
+          <div className="mb-3">
+            <label htmlFor="tenant" className="block text-gray-700 text-sm font-medium mb-1">Tenant *</label>
+            <input 
+              type="text"
+              id="tenant"
+              name="tenant"
+              value={formData.tenant}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+              placeholder="Tenant Name"
+              autoComplete="off"
+            />
+            {errors.tenant && (
+              <div className="text-red-500 text-sm mt-1">{errors.tenant}</div>
+            )}
           </div>
           
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="category" className="col-span-2 text-gray-700">Category</label>
-            <div className="col-span-4 position-relative">
+          {/* Category & Property Status */}
+          <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="category" className="block text-gray-700 text-sm font-medium mb-1">Category *</label>
               <select 
                 id="category"
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
               >
                 <option value="" disabled>Choose...</option>
                 {CATEGORIES.map(category => (
@@ -349,15 +349,15 @@ function NewPreLeasedPropertyContent() {
               )}
             </div>
             
-            <label htmlFor="propertyStatus" className="col-span-2 text-gray-700 ml-2">Property Status</label>
-            <div className="col-span-4 position-relative">
+            <div>
+              <label htmlFor="propertyStatus" className="block text-gray-700 text-sm font-medium mb-1">Property Status *</label>
               <select 
                 id="propertyStatus"
                 name="propertyStatus"
                 value={formData.propertyStatus}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
               >
                 <option value="" disabled>Choose...</option>
                 {PROPERTY_STATUS.map(status => (
@@ -370,9 +370,10 @@ function NewPreLeasedPropertyContent() {
             </div>
           </div>
           
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="buildingName" className="col-span-2 text-gray-700">Building Name</label>
-            <div className="col-span-4 position-relative">
+          {/* Building Name & Location */}
+          <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="buildingName" className="block text-gray-700 text-sm font-medium mb-1">Building Name *</label>
               <input 
                 type="text"
                 id="buildingName"
@@ -380,7 +381,7 @@ function NewPreLeasedPropertyContent() {
                 value={formData.buildingName}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 autoComplete="off"
               />
               {errors.buildingName && (
@@ -388,8 +389,8 @@ function NewPreLeasedPropertyContent() {
               )}
             </div>
             
-            <label htmlFor="location" className="col-span-2 text-gray-700 ml-2">Location</label>
-            <div className="col-span-4 position-relative">
+            <div>
+              <label htmlFor="location" className="block text-gray-700 text-sm font-medium mb-1">Location *</label>
               <input 
                 type="text"
                 id="location"
@@ -397,7 +398,7 @@ function NewPreLeasedPropertyContent() {
                 value={formData.location}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 autoComplete="off"
               />
               {errors.location && (
@@ -406,9 +407,10 @@ function NewPreLeasedPropertyContent() {
             </div>
           </div>
           
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="district" className="col-span-2 text-gray-700">District Name</label>
-            <div className="col-span-4 position-relative">
+          {/* District & Sub-District */}
+          <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="district" className="block text-gray-700 text-sm font-medium mb-1">District Name *</label>
               <input 
                 type="text"
                 id="district"
@@ -416,7 +418,7 @@ function NewPreLeasedPropertyContent() {
                 value={formData.district}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 autoComplete="off"
               />
               {errors.district && (
@@ -424,8 +426,8 @@ function NewPreLeasedPropertyContent() {
               )}
             </div>
             
-            <label htmlFor="subDistrict" className="col-span-2 text-gray-700 ml-2">Sub-District</label>
-            <div className="col-span-4 position-relative">
+            <div>
+              <label htmlFor="subDistrict" className="block text-gray-700 text-sm font-medium mb-1">Sub-District *</label>
               <input 
                 type="text"
                 id="subDistrict"
@@ -433,7 +435,7 @@ function NewPreLeasedPropertyContent() {
                 value={formData.subDistrict}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 autoComplete="off"
               />
               {errors.subDistrict && (
@@ -442,120 +444,124 @@ function NewPreLeasedPropertyContent() {
             </div>
           </div>
           
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="floor" className="col-span-2 text-gray-700">Floor</label>
-            <div className="col-span-4 position-relative">
+          {/* Floor & Total Area */}
+          <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="floor" className="block text-gray-700 text-sm font-medium mb-1">Floor</label>
               <input 
                 type="text"
                 id="floor"
                 name="floor"
                 value={formData.floor}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 placeholder="Floor"
                 autoComplete="off"
               />
             </div>
             
-            <label htmlFor="totalArea" className="col-span-2 text-gray-700 ml-2">Total Area</label>
-            <div className="col-span-4 position-relative">
+            <div>
+              <label htmlFor="totalArea" className="block text-gray-700 text-sm font-medium mb-1">Total Area</label>
               <input 
                 type="text"
                 id="totalArea"
                 name="totalArea"
                 value={formData.totalArea}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 placeholder="Total Area"
                 autoComplete="off"
               />
             </div>
           </div>
           
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="areaOnSale" className="col-span-2 text-gray-700">Area on Sale</label>
-            <div className="col-span-4 position-relative">
+          {/* Area on Sale & Lease Term */}
+          <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="areaOnSale" className="block text-gray-700 text-sm font-medium mb-1">Area on Sale</label>
               <input 
                 type="text"
                 id="areaOnSale"
                 name="areaOnSale"
                 value={formData.areaOnSale}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 placeholder="Area on Sale"
                 autoComplete="off"
               />
             </div>
             
-            <label htmlFor="leaseTerm" className="col-span-2 text-gray-700 ml-2">Lease Term</label>
-            <div className="col-span-4 position-relative">
+            <div>
+              <label htmlFor="leaseTerm" className="block text-gray-700 text-sm font-medium mb-1">Lease Term</label>
               <input 
                 type="text"
                 id="leaseTerm"
                 name="leaseTerm"
                 value={formData.leaseTerm}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 placeholder="Lease Term"
                 autoComplete="off"
               />
             </div>
           </div>
           
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="remainingLease" className="col-span-2 text-gray-700">Remaining Lease</label>
-            <div className="col-span-4 position-relative">
+          {/* Remaining Lease & Lock-in */}
+          <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="remainingLease" className="block text-gray-700 text-sm font-medium mb-1">Remaining Lease</label>
               <input 
                 type="text"
                 id="remainingLease"
                 name="remainingLease"
                 value={formData.remainingLease}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 placeholder="Remaining Lease"
                 autoComplete="off"
               />
             </div>
             
-            <label htmlFor="lockIn" className="col-span-2 text-gray-700 ml-2">Lock-in</label>
-            <div className="col-span-4 position-relative">
+            <div>
+              <label htmlFor="lockIn" className="block text-gray-700 text-sm font-medium mb-1">Lock-in</label>
               <input 
                 type="text"
                 id="lockIn"
                 name="lockIn"
                 value={formData.lockIn}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 placeholder="Lock-in"
                 autoComplete="off"
               />
             </div>
           </div>
           
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="escalation" className="col-span-2 text-gray-700">Escalation</label>
-            <div className="col-span-4 position-relative">
+          {/* Escalation & Rental Type */}
+          <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="escalation" className="block text-gray-700 text-sm font-medium mb-1">Escalation</label>
               <input 
                 type="text"
                 id="escalation"
                 name="escalation"
                 value={formData.escalation}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 placeholder="Escalation"
                 autoComplete="off"
               />
             </div>
             
-            <label htmlFor="rentalType" className="col-span-2 text-gray-700 ml-2">Rental Type</label>
-            <div className="col-span-4 position-relative">
+            <div>
+              <label htmlFor="rentalType" className="block text-gray-700 text-sm font-medium mb-1">Rental Type</label>
               <select 
                 id="rentalType"
                 name="rentalType"
                 value={formData.rentalType}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
               >
                 <option value="">Choose...</option>
                 {RENTAL_TYPES.map(type => (
@@ -565,106 +571,110 @@ function NewPreLeasedPropertyContent() {
             </div>
           </div>
           
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="rent" className="col-span-2 text-gray-700">Rent</label>
-            <div className="col-span-4 position-relative">
+          {/* Rent & Asking Price */}
+          <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="rent" className="block text-gray-700 text-sm font-medium mb-1">Rent</label>
               <input 
                 type="number"
                 id="rent"
                 name="rent"
                 value={formData.rent}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 autoComplete="off"
               />
             </div>
             
-            <label htmlFor="askingPrice" className="col-span-2 text-gray-700 ml-2">Asking Price</label>
-            <div className="col-span-4 position-relative">
+            <div>
+              <label htmlFor="askingPrice" className="block text-gray-700 text-sm font-medium mb-1">Asking Price</label>
               <input 
                 type="number"
                 id="askingPrice"
                 name="askingPrice"
                 value={formData.askingPrice}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 autoComplete="off"
               />
             </div>
           </div>
           
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="securityDeposit" className="col-span-2 text-gray-700">Security Deposit</label>
-            <div className="col-span-4 position-relative">
+          {/* Security Deposit & ROI */}
+          <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="securityDeposit" className="block text-gray-700 text-sm font-medium mb-1">Security Deposit</label>
               <input 
                 type="text"
                 id="securityDeposit"
                 name="securityDeposit"
                 value={formData.securityDeposit}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 placeholder="Security Deposit"
                 autoComplete="off"
               />
             </div>
             
-            <label htmlFor="roi" className="col-span-2 text-gray-700 ml-2">ROI</label>
-            <div className="col-span-4 position-relative">
-              <div className="input-group flex">
+            <div>
+              <label htmlFor="roi" className="block text-gray-700 text-sm font-medium mb-1">ROI</label>
+              <div className="flex">
                 <input 
                   type="text"
                   id="roi"
                   name="roi"
                   value={formData.roi}
                   onChange={handleChange}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-l focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                   placeholder="ROI"
                   autoComplete="off"
                 />
-                <span className="bg-gray-100 px-3 py-2 border border-gray-300 rounded-r text-gray-800">%</span>
+                <span className="bg-gray-100 px-3 py-2 border border-gray-300 rounded-r text-gray-800 text-sm">%</span>
               </div>
             </div>
           </div>
           
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="advance" className="col-span-2 text-gray-700">Advance</label>
-            <div className="col-span-4 position-relative">
+          {/* Advance & Reference */}
+          <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="advance" className="block text-gray-700 text-sm font-medium mb-1">Advance</label>
               <input 
                 type="number"
                 id="advance"
                 name="advance"
                 value={formData.advance}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 autoComplete="off"
               />
             </div>
             
-            <label htmlFor="reference" className="col-span-2 text-gray-700 ml-2">Reference</label>
-            <div className="col-span-4 position-relative">
+            <div>
+              <label htmlFor="reference" className="block text-gray-700 text-sm font-medium mb-1">Reference</label>
               <input 
                 type="text"
                 id="reference"
                 name="reference"
                 value={formData.reference}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
                 placeholder="Reference"
                 autoComplete="off"
               />
             </div>
           </div>
           
-          <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-            <label htmlFor="channel" className="col-span-2 text-gray-700">Channel</label>
-            <div className="col-span-4 position-relative">
+          {/* Channel & Property Type */}
+          <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="channel" className="block text-gray-700 text-sm font-medium mb-1">Channel</label>
               <select 
                 id="channel"
                 name="channel"
                 value={formData.channel}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
               >
                 <option value="">Choose...</option>
                 {CHANNELS.map(channel => (
@@ -673,15 +683,15 @@ function NewPreLeasedPropertyContent() {
               </select>
             </div>
             
-            <label htmlFor="propertyType" className="col-span-2 text-gray-700 ml-2">Property Type</label>
-            <div className="col-span-4 position-relative">
+            <div>
+              <label htmlFor="propertyType" className="block text-gray-700 text-sm font-medium mb-1">Property Type</label>
               <select 
                 id="propertyType"
                 name="propertyType"
                 value={formData.propertyType}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
               >
                 <option value="">Choose...</option>
                 {PROPERTY_TYPES.map(type => (
@@ -691,39 +701,35 @@ function NewPreLeasedPropertyContent() {
             </div>
           </div>
           
-          {/* File Upload Section - Replaced with Image URL Input */}
+          {/* Image URL Section */}
           <div className="mt-6 mb-6">
-            <div className="list-group list-group-item border border-gray-200 rounded p-4">
-              <div className="mb-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-start">
-                <label htmlFor="image" className="col-span-2 text-gray-700 pt-2">Image URL</label>
-                <div className="col-span-8 position-relative">
-                  <input 
-                    type="text"
-                    id="image"
-                    name="image"
-                    value={formData.image}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black h-10"
-                    placeholder="Enter image URL"
-                    autoComplete="off"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Enter a direct URL to an image (e.g., https://example.com/image.jpg)</p>
-                </div>
-                <div className="col-span-2 flex items-start pt-0">
-                  <ImageUploader 
-                    onImageUrlGenerated={handleImageUrlGenerated}
-                    disabled={isLoading}
-                    hideUrlDisplay={true}
-                  />
-                </div>
+            <div className="border border-gray-200 rounded p-3 sm:p-4">
+              <label htmlFor="image" className="block text-gray-700 text-sm font-medium mb-2">Image URL</label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input 
+                  type="text"
+                  id="image"
+                  name="image"
+                  value={formData.image}
+                  onChange={handleChange}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+                  placeholder="Enter image URL"
+                  autoComplete="off"
+                />
+                <ImageUploader 
+                  onImageUrlGenerated={handleImageUrlGenerated}
+                  disabled={isLoading}
+                  hideUrlDisplay={true}
+                />
               </div>
+              <p className="text-xs text-gray-500 mt-1">Enter a direct URL or upload an image</p>
               
               {formData.image && (
                 <div id="imagePreview" className="mt-4">
                   <img 
                     src={formData.image} 
                     alt="Property Preview" 
-                    className="w-64 h-48 object-cover rounded" 
+                    className="w-32 sm:w-64 h-24 sm:h-48 object-cover rounded" 
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = getDefaultImageForCategory(formData.category);
                     }}
@@ -735,18 +741,14 @@ function NewPreLeasedPropertyContent() {
           
           {/* Form Actions */}
           <div className="mt-6">
-            <div className="my-4">
-              <div className="d-grid gap-2">
-                <button 
-                  type="submit" 
-                  disabled={isLoading}
-                  className="btn btn-primary px-8 py-3 bg-blue-900 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center w-full"
-                >
-                  <FaSave className="mr-2" />
-                  {isLoading ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            </div>
+            <button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full px-6 py-3 bg-blue-900 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center text-sm"
+            >
+              <FaSave className="mr-2" />
+              {isLoading ? 'Saving...' : 'Save Property'}
+            </button>
           </div>
         </form>
       </div>
