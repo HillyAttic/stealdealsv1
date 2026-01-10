@@ -134,60 +134,121 @@ function AdminDashboardContent() {
         total: totalCount
       });
       
-      // Process category data for preleased properties
-      if (preleasedSnapshot.exists()) {
+      // Process category data for vacant properties (UPDATED - using specific categories)
+      if (vacantSnapshot.exists()) {
         const categories: Record<string, number> = {
-          'Commercial': 0,
-          'Office Space': 0,
-          'Retail': 0,
           'Industrial': 0,
-          'Hospitality': 0
+          'High-Street': 0,
+          'Mall': 0,
+          'Corporate': 0,
+          'Other': 0
         };
         
-        preleasedSnapshot.forEach((childSnapshot) => {
+        vacantSnapshot.forEach((childSnapshot) => {
           const property = childSnapshot.val();
-          const category = property.category;
+          // Access category from vacantDetails or fallback to property.category
+          const category = property.vacantDetails?.category || property.category || 'Other';
           
-          if (category && category in categories) {
-            categories[category]++;
+          console.log(`[Dashboard] Processing vacant property: ${childSnapshot.key}, category: ${category}`);
+          
+          // Map categories to the specific ones you want
+          if (category.toLowerCase().includes('industrial')) {
+            categories['Industrial']++;
+          } else if (category.toLowerCase().includes('high-street') || category.toLowerCase().includes('high street') || category.toLowerCase().includes('street')) {
+            categories['High-Street']++;
+          } else if (category.toLowerCase().includes('mall') || category.toLowerCase().includes('shopping')) {
+            categories['Mall']++;
+          } else if (category.toLowerCase().includes('corporate') || category.toLowerCase().includes('office') || category.toLowerCase().includes('business')) {
+            categories['Corporate']++;
+          } else {
+            categories['Other']++;
           }
         });
         
-        // Update category data
+        // Filter out categories with 0 count for cleaner chart
+        const filteredCategories = Object.entries(categories)
+          .filter(([_, count]) => count > 0)
+          .reduce((acc, [key, value]) => {
+            acc[key] = value;
+            return acc;
+          }, {} as Record<string, number>);
+        
+        console.log('[Dashboard] Vacant categories processed:', filteredCategories);
+        
+        // Update category data with filtered results
         setCategoryData({
-          labels: Object.keys(categories),
-          data: Object.values(categories)
+          labels: Object.keys(filteredCategories),
+          data: Object.values(filteredCategories)
+        });
+      } else {
+        console.log('[Dashboard] No vacant properties found');
+        // Set empty data if no vacant properties
+        setCategoryData({
+          labels: [],
+          data: []
         });
       }
 
-      // Process franchise data by industry
+      // Process franchise data by industry (FIXED - access franchiseDetails.industry)
       if (franchiseSnapshot.exists()) {
         const franchiseCategories: Record<string, number> = {
-          'Food': 0,
-          'Retail': 0,
           'Education': 0,
-          'Healthcare': 0,
-          'Services': 0,
-          'Other': 0
+          'F&B': 0,
+          'Fashion': 0,
+          'Pharmaceutical': 0,
+          'Retail': 0,
+          'Sports, Fitness & Entertainments': 0
         };
         
         franchiseSnapshot.forEach((childSnapshot) => {
           const franchise = childSnapshot.val();
-          const industry = franchise.industry;
+          // Access industry from franchiseDetails or fallback to franchise.industry
+          const industry = franchise.franchiseDetails?.industry || franchise.industry || '';
           
-          if (industry) {
-            if (industry in franchiseCategories) {
-              franchiseCategories[industry]++;
-            } else {
-              franchiseCategories['Other']++;
-            }
+          console.log(`[Dashboard] Processing franchise: ${childSnapshot.key}, industry: "${industry}"`);
+          
+          // Use exact matching for accurate categorization
+          switch (industry) {
+            case 'Education':
+              franchiseCategories['Education']++;
+              break;
+            case 'F&B':
+              franchiseCategories['F&B']++;
+              break;
+            case 'Fashion':
+              franchiseCategories['Fashion']++;
+              break;
+            case 'Pharmaceutical':
+              franchiseCategories['Pharmaceutical']++;
+              break;
+            case 'Retail':
+              franchiseCategories['Retail']++;
+              break;
+            case 'Sports, Fitness & Entertainments':
+              franchiseCategories['Sports, Fitness & Entertainments']++;
+              break;
+            default:
+              // Log unknown industries but don't count them
+              if (industry) {
+                console.log(`[Dashboard] Unknown industry "${industry}" - not categorized`);
+              }
+              break;
           }
         });
         
-        // Update franchise data
+        console.log('[Dashboard] Franchise categories processed (showing all categories):', franchiseCategories);
+        
+        // Show ALL categories, even those with 0 count
         setFranchiseData({
           labels: Object.keys(franchiseCategories),
           data: Object.values(franchiseCategories)
+        });
+      } else {
+        console.log('[Dashboard] No franchise data found');
+        // Set empty data with all categories
+        setFranchiseData({
+          labels: ['Education', 'F&B', 'Fashion', 'Pharmaceutical', 'Retail', 'Sports, Fitness & Entertainments'],
+          data: [0, 0, 0, 0, 0, 0]
         });
       }
     } catch (error) {
@@ -237,29 +298,71 @@ function AdminDashboardContent() {
             }
             
             chartRefs.current.categoryChart = new Chart(categoryChartElement as HTMLCanvasElement, {
-              type: 'bar',
+              type: 'doughnut', // Changed from 'bar' to 'doughnut' for better visualization
               data: {
                 labels: categoryData.labels,
                 datasets: [{
-                  label: 'Pre-leased Properties by Category',
+                  label: 'Vacant Properties by Category',
                   data: categoryData.data,
                   backgroundColor: [
-                    'rgba(54, 162, 235, 0.7)',
-                    'rgba(75, 192, 192, 0.7)',
-                    'rgba(153, 102, 255, 0.7)',
-                    'rgba(255, 159, 64, 0.7)',
-                    'rgba(255, 99, 132, 0.7)'
+                    'rgba(120, 53, 15, 0.8)',    // Brown - Industrial
+                    'rgba(59, 130, 246, 0.8)',   // Blue - High-Street
+                    'rgba(16, 185, 129, 0.8)',   // Green - Mall
+                    'rgba(139, 92, 246, 0.8)',   // Purple - Corporate
+                    'rgba(107, 114, 128, 0.8)'   // Gray - Other
                   ],
-                  borderWidth: 1
+                  borderColor: [
+                    'rgba(120, 53, 15, 1)',      // Brown - Industrial
+                    'rgba(59, 130, 246, 1)',     // Blue - High-Street
+                    'rgba(16, 185, 129, 1)',     // Green - Mall
+                    'rgba(139, 92, 246, 1)',     // Purple - Corporate
+                    'rgba(107, 114, 128, 1)'     // Gray - Other
+                  ],
+                  borderWidth: 2,
+                  hoverOffset: 10
                 }]
               },
               options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  y: {
-                    beginAtZero: true
+                maintainAspectRatio: true,
+                aspectRatio: 1.5,
+                layout: {
+                  padding: {
+                    top: 10,
+                    bottom: 10,
+                    left: 10,
+                    right: 10
                   }
+                },
+                plugins: {
+                  legend: {
+                    position: 'bottom',
+                    align: 'center',
+                    labels: {
+                      padding: 15,
+                      usePointStyle: true,
+                      font: {
+                        size: 11
+                      },
+                      boxWidth: 12,
+                      boxHeight: 12
+                    }
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${label}: ${value} properties (${percentage}%)`;
+                      }
+                    }
+                  }
+                },
+                animation: {
+                  animateRotate: true,
+                  animateScale: true
                 }
               }
             });
@@ -278,20 +381,67 @@ function AdminDashboardContent() {
             chartRefs.current.summaryChart = new Chart(summaryChartElement as HTMLCanvasElement, {
               type: 'doughnut',
               data: {
-                labels: ['Pre-leased', 'Vacant', 'Franchise'],
+                labels: ['Pre-leased', 'Vacant', 'Franchise', 'Plots'],
                 datasets: [{
-                  data: [stats.preleased, stats.vacant, stats.franchise],
+                  data: [stats.preleased, stats.vacant, stats.franchise, stats.plots],
                   backgroundColor: [
-                    'rgba(54, 162, 235, 0.7)',
-                    'rgba(75, 192, 192, 0.7)', 
-                    'rgba(255, 99, 132, 0.7)'
+                    'rgba(54, 162, 235, 0.8)',   // Blue - Pre-leased
+                    'rgba(75, 192, 192, 0.8)',   // Teal - Vacant
+                    'rgba(255, 99, 132, 0.8)',   // Red - Franchise
+                    'rgba(153, 102, 255, 0.8)'   // Purple - Plots
                   ],
-                  borderWidth: 1
+                  borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(153, 102, 255, 1)'
+                  ],
+                  borderWidth: 2,
+                  hoverOffset: 10
                 }]
               },
               options: {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: true,
+                aspectRatio: 1.5,
+                layout: {
+                  padding: {
+                    top: 10,
+                    bottom: 10,
+                    left: 10,
+                    right: 10
+                  }
+                },
+                plugins: {
+                  legend: {
+                    position: 'bottom',
+                    align: 'center',
+                    labels: {
+                      padding: 15,
+                      usePointStyle: true,
+                      font: {
+                        size: 11
+                      },
+                      boxWidth: 12,
+                      boxHeight: 12
+                    }
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                        return `${label}: ${value} properties (${percentage}%)`;
+                      }
+                    }
+                  }
+                },
+                animation: {
+                  animateRotate: true,
+                  animateScale: true
+                }
               }
             });
             console.log('Summary chart initialized');
@@ -307,26 +457,81 @@ function AdminDashboardContent() {
             }
             
             chartRefs.current.franchiseChart = new Chart(franchiseChartElement as HTMLCanvasElement, {
-              type: 'pie',
+              type: 'bar', // Using bar chart for better comparison of franchise categories
               data: {
                 labels: franchiseData.labels,
                 datasets: [{
                   label: 'Franchises by Industry',
                   data: franchiseData.data,
                   backgroundColor: [
-                    'rgba(255, 99, 132, 0.7)',
-                    'rgba(54, 162, 235, 0.7)',
-                    'rgba(255, 206, 86, 0.7)',
-                    'rgba(75, 192, 192, 0.7)',
-                    'rgba(153, 102, 255, 0.7)',
-                    'rgba(255, 159, 64, 0.7)'
+                    'rgba(59, 130, 246, 0.8)',   // Blue - Education
+                    'rgba(239, 68, 68, 0.8)',    // Red - F&B
+                    'rgba(236, 72, 153, 0.8)',   // Pink - Fashion
+                    'rgba(16, 185, 129, 0.8)',   // Green - Pharmaceutical
+                    'rgba(245, 158, 11, 0.8)',   // Amber - Retail
+                    'rgba(139, 92, 246, 0.8)',   // Purple - Sports, Fitness & Entertainments
+                    'rgba(107, 114, 128, 0.8)'   // Gray - Other
                   ],
-                  borderWidth: 1
+                  borderColor: [
+                    'rgba(59, 130, 246, 1)',     // Blue - Education
+                    'rgba(239, 68, 68, 1)',      // Red - F&B
+                    'rgba(236, 72, 153, 1)',     // Pink - Fashion
+                    'rgba(16, 185, 129, 1)',     // Green - Pharmaceutical
+                    'rgba(245, 158, 11, 1)',     // Amber - Retail
+                    'rgba(139, 92, 246, 1)',     // Purple - Sports, Fitness & Entertainments
+                    'rgba(107, 114, 128, 1)'     // Gray - Other
+                  ],
+                  borderWidth: 2,
+                  borderRadius: 6,
+                  borderSkipped: false,
                 }]
               },
               options: {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: false // Hide legend for cleaner look
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed.y;
+                        const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return `${label}: ${value} franchises (${percentage}%)`;
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      stepSize: 1,
+                      callback: function(value) {
+                        return Number.isInteger(value) ? value : '';
+                      }
+                    },
+                    grid: {
+                      color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                  },
+                  x: {
+                    ticks: {
+                      maxRotation: 45,
+                      minRotation: 0
+                    },
+                    grid: {
+                      display: false
+                    }
+                  }
+                },
+                animation: {
+                  duration: 1000,
+                  easing: 'easeOutQuart'
+                }
               }
             });
             console.log('Franchise chart initialized');
@@ -462,27 +667,129 @@ function AdminDashboardContent() {
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
-              <h2 className="text-sm sm:text-lg font-semibold mb-4 sm:mb-6">Pre-leased by Category</h2>
-              <div className="h-48 sm:h-64 relative">
-                <canvas id="categoryChart"></canvas>
-                {categoryData.data.every(value => value === 0) && (
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                    No category data available
+              <h2 className="text-sm sm:text-lg font-semibold mb-4 sm:mb-6">Vacant by Category</h2>
+              <div className="h-48 sm:h-64 relative flex items-center justify-center">
+                <div className="w-full h-full max-w-md mx-auto">
+                  <canvas id="categoryChart"></canvas>
+                </div>
+                {categoryData.data.length === 0 ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                    <div className="text-4xl mb-2">📊</div>
+                    <div className="text-sm font-medium">No vacant properties found</div>
+                    <div className="text-xs text-gray-400 mt-1">Add vacant properties to see category breakdown</div>
+                  </div>
+                ) : categoryData.data.every(value => value === 0) && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                    <div className="text-4xl mb-2">📈</div>
+                    <div className="text-sm font-medium">No category data available</div>
+                    <div className="text-xs text-gray-400 mt-1">Properties need category information</div>
                   </div>
                 )}
               </div>
+              
+              {/* Category Summary */}
+              {categoryData.data.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                    {categoryData.labels.map((label, index) => (
+                      <div key={label} className="flex items-center space-x-2">
+                        <div 
+                          className="w-3 h-3 rounded-full"
+                          style={{
+                            backgroundColor: [
+                              'rgba(120, 53, 15, 0.8)',    // Brown - Industrial
+                              'rgba(59, 130, 246, 0.8)',   // Blue - High-Street
+                              'rgba(16, 185, 129, 0.8)',   // Green - Mall
+                              'rgba(139, 92, 246, 0.8)',   // Purple - Corporate
+                              'rgba(107, 114, 128, 0.8)'   // Gray - Other
+                            ][index % 5]
+                          }}
+                        ></div>
+                        <span className="text-gray-700 font-medium">{label}</span>
+                        <span className="text-gray-500">({categoryData.data[index]})</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 text-xs text-gray-500 text-center">
+                    Total: {categoryData.data.reduce((a, b) => a + b, 0)} vacant properties
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
               <h2 className="text-sm sm:text-lg font-semibold mb-4 sm:mb-6">Property Distribution</h2>
-              <div className="h-48 sm:h-64 relative">
-                <canvas id="summaryChart"></canvas>
+              <div className="h-48 sm:h-64 relative flex items-center justify-center">
+                <div className="w-full h-full max-w-md mx-auto">
+                  <canvas id="summaryChart"></canvas>
+                </div>
                 {stats.total === 0 && (
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                    No property data available
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                    <div className="text-4xl mb-2">📊</div>
+                    <div className="text-sm font-medium">No property data available</div>
+                    <div className="text-xs text-gray-400 mt-1">Add properties to see distribution</div>
                   </div>
                 )}
               </div>
+              
+              {/* Property Distribution Summary */}
+              {stats.total > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgba(54, 162, 235, 0.8)' }}></div>
+                      <span className="text-gray-700 font-medium">Pre-leased</span>
+                      <span className="text-gray-500">({stats.preleased})</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgba(75, 192, 192, 0.8)' }}></div>
+                      <span className="text-gray-700 font-medium">Vacant</span>
+                      <span className="text-gray-500">({stats.vacant})</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgba(255, 99, 132, 0.8)' }}></div>
+                      <span className="text-gray-700 font-medium">Franchise</span>
+                      <span className="text-gray-500">({stats.franchise})</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgba(153, 102, 255, 0.8)' }}></div>
+                      <span className="text-gray-700 font-medium">Plots</span>
+                      <span className="text-gray-500">({stats.plots})</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 text-xs text-gray-500 text-center">
+                    Total: {stats.total} properties across all categories
+                  </div>
+                  
+                  {/* Percentage Breakdown */}
+                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div className="text-center p-2 bg-blue-50 rounded">
+                      <div className="text-lg font-bold text-blue-600">
+                        {stats.total > 0 ? ((stats.preleased / stats.total) * 100).toFixed(1) : '0'}%
+                      </div>
+                      <div className="text-xs text-gray-600">Pre-leased</div>
+                    </div>
+                    <div className="text-center p-2 bg-teal-50 rounded">
+                      <div className="text-lg font-bold text-teal-600">
+                        {stats.total > 0 ? ((stats.vacant / stats.total) * 100).toFixed(1) : '0'}%
+                      </div>
+                      <div className="text-xs text-gray-600">Vacant</div>
+                    </div>
+                    <div className="text-center p-2 bg-red-50 rounded">
+                      <div className="text-lg font-bold text-red-600">
+                        {stats.total > 0 ? ((stats.franchise / stats.total) * 100).toFixed(1) : '0'}%
+                      </div>
+                      <div className="text-xs text-gray-600">Franchise</div>
+                    </div>
+                    <div className="text-center p-2 bg-purple-50 rounded">
+                      <div className="text-lg font-bold text-purple-600">
+                        {stats.total > 0 ? ((stats.plots / stats.total) * 100).toFixed(1) : '0'}%
+                      </div>
+                      <div className="text-xs text-gray-600">Plots</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -491,12 +798,66 @@ function AdminDashboardContent() {
             <h2 className="text-sm sm:text-lg font-semibold mb-4 sm:mb-6">Franchise by Industry</h2>
             <div className="h-48 sm:h-64 relative">
               <canvas id="franchiseChart"></canvas>
-              {franchiseData.data.every(value => value === 0) && (
-                <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                  No franchise data available
+              {franchiseData.data.length === 0 ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                  <div className="text-4xl mb-2">🏪</div>
+                  <div className="text-sm font-medium">No franchise opportunities found</div>
+                  <div className="text-xs text-gray-400 mt-1">Add franchises to see industry breakdown</div>
+                </div>
+              ) : franchiseData.data.every(value => value === 0) && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                  <div className="text-4xl mb-2">📊</div>
+                  <div className="text-sm font-medium">No industry data available</div>
+                  <div className="text-xs text-gray-400 mt-1">Franchises need industry information</div>
                 </div>
               )}
             </div>
+            
+            {/* Industry Summary */}
+            {franchiseData.labels.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                  {franchiseData.labels.map((label, index) => {
+                    const count = franchiseData.data[index];
+                    const total = franchiseData.data.reduce((a, b) => a + b, 0);
+                    const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
+                    
+                    return (
+                      <div key={label} className={`flex items-center justify-between p-3 rounded-lg ${count > 0 ? 'bg-gray-50' : 'bg-gray-100 opacity-60'}`}>
+                        <div className="flex items-center space-x-3">
+                          <div 
+                            className="w-4 h-4 rounded"
+                            style={{
+                              backgroundColor: [
+                                'rgba(59, 130, 246, 0.8)',   // Blue - Education
+                                'rgba(239, 68, 68, 0.8)',    // Red - F&B
+                                'rgba(236, 72, 153, 0.8)',   // Pink - Fashion
+                                'rgba(16, 185, 129, 0.8)',   // Green - Pharmaceutical
+                                'rgba(245, 158, 11, 0.8)',   // Amber - Retail
+                                'rgba(139, 92, 246, 0.8)',   // Purple - Sports, Fitness & Entertainments
+                              ][index % 6]
+                            }}
+                          ></div>
+                          <span className={`font-medium ${count > 0 ? 'text-gray-700' : 'text-gray-500'}`}>{label}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`font-bold ${count > 0 ? 'text-gray-900' : 'text-gray-400'}`}>{count}</span>
+                          <span className="text-xs text-gray-500">
+                            ({percentage}%)
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 text-center">
+                  <div className="inline-flex items-center space-x-2 text-sm text-gray-600 bg-blue-50 px-4 py-2 rounded-full">
+                    <span>🏢</span>
+                    <span>Total: {franchiseData.data.reduce((a, b) => a + b, 0)} franchise opportunities</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           
           

@@ -1,31 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { clerkClient } from '@clerk/nextjs/server';
+import { AdminUserService } from '@/lib/admin/adminUserService';
+import { AdminUser } from '@/lib/firebase-server-admin';
+
+// Simple cache for user data (5 minutes TTL)
+const userCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+function getCacheKey(page: number, limit: number, search: string): string {
+  return `users_${page}_${limit}_${search}`;
+}
+
+function getCachedData(key: string) {
+  const cached = userCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  return null;
+}
+
+function setCachedData(key: string, data: any) {
+  userCache.set(key, { data, timestamp: Date.now() });
+
+  // Clean up old cache entries (keep only last 10)
+  if (userCache.size > 10) {
+    const oldestKey = userCache.keys().next().value;
+    if (oldestKey) {
+      userCache.delete(oldestKey);
+    }
+  }
+}
 
 // GET /api/admin/users - Get all Clerk users for admin dashboard
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {
     try {
-      // Debug logging for environment and configuration
-      console.log('[Admin Users API] 🚀 Starting request processing');
-      console.log('[Admin Users API] Environment:', process.env.NODE_ENV);
-      console.log('[Admin Users API] Admin user:', authenticatedRequest.user.email);
-      
+      // Debug logging for environment and configuration (reduced for performance)
+      console.log('[Admin Users API] 🚀 Processing request');
+
       // Validate Clerk configuration first
       const clerkSecretKey = process.env.CLERK_SECRET_KEY;
       const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-      
-      // Enhanced debug logging for Clerk configuration
-      console.log('[Admin Users API] 🔑 Clerk config check:');
-      console.log(`[Admin Users API] - Secret key exists: ${!!clerkSecretKey}`);
-      console.log(`[Admin Users API] - Secret key format: ${clerkSecretKey ? clerkSecretKey.substring(0, 15) + '...' : 'MISSING'}`);
-      console.log(`[Admin Users API] - Publishable key exists: ${!!clerkPublishableKey}`);
-      console.log(`[Admin Users API] - Publishable key format: ${clerkPublishableKey ? clerkPublishableKey.substring(0, 15) + '...' : 'MISSING'}`);
-      
       if (!clerkSecretKey || clerkSecretKey.includes('YOUR_CLERK_SECRET_KEY_HERE')) {
         console.error('[Admin Users API] Missing or invalid CLERK_SECRET_KEY in production environment');
         return NextResponse.json(
-          { 
+          {
             success: false,
             error: 'Clerk configuration error',
             details: 'CLERK_SECRET_KEY is missing or not configured properly. Please set the correct production Clerk secret key in your environment variables.',
@@ -37,11 +57,11 @@ export async function GET(request: NextRequest) {
           { status: 500 }
         );
       }
-      
+
       if (!clerkPublishableKey || clerkPublishableKey.includes('YOUR_CLERK_PUBLISHABLE_KEY_HERE')) {
         console.error('[Admin Users API] Missing or invalid NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY');
         return NextResponse.json(
-          { 
+          {
             success: false,
             error: 'Clerk configuration error',
             details: 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is missing or not configured properly.'
@@ -49,62 +69,69 @@ export async function GET(request: NextRequest) {
           { status: 500 }
         );
       }
-      
+
       const { searchParams } = new URL(request.url);
       const page = parseInt(searchParams.get('page') || '1');
       const limit = parseInt(searchParams.get('limit') || '20');
       const search = searchParams.get('search') || '';
-      
+
+      // Check cache first
+      const cacheKey = getCacheKey(page, limit, search);
+      const cachedResult = getCachedData(cacheKey);
+      if (cachedResult) {
+        console.log('[Admin Users API] ⚡ Returning cached data');
+        return NextResponse.json(cachedResult);
+      }
+
       // Calculate offset for pagination
       const offset = (page - 1) * limit;
-      
-      console.log(`[Admin Users API] 📋 Fetching users from Clerk: page=${page}, limit=${limit}, search='${search}'`);
-      console.log('[Admin Users API] 🔄 Calling clerkClient.users.getUserList...');
-      
-      // Enhanced debug logging for production troubleshooting
-      console.log('[Admin Users API] 🚨 PRODUCTION DEBUG:');
-      console.log(`[Admin Users API] - Current domain: ${process.env.NEXT_PUBLIC_APP_URL}`);
-      
-      // Initialize Clerk client using the async pattern for SDK 6.31.4+
-      console.log('[Admin Users API] 🔥 Initializing Clerk client with async pattern...');
+
+      // Initialize Clerk client
       const client = await clerkClient();
-      console.log(`[Admin Users API] - Clerk client initialized successfully`);
-      console.log(`[Admin Users API] - Client type: ${typeof client}`);
-      console.log(`[Admin Users API] - Client users method exists: ${typeof client.users?.getUserList}`);
-      
+
       // Fetch users from Clerk with search and pagination
-      console.log('[Admin Users API] 🔥 About to call Clerk API...');
       const usersResponse = await client.users.getUserList({
         limit,
         offset,
         ...(search && { query: search })
       });
-      
-      console.log(`[Admin Users API] ✅ Clerk API response received successfully`);
-      console.log(`[Admin Users API] - Response type: ${typeof usersResponse}`);
-      console.log(`[Admin Users API] - Users count: ${usersResponse.data?.length || 0}`);
-      console.log(`[Admin Users API] - Response structure:`, Object.keys(usersResponse || {}));
-      
-      // Get wishlist counts for all users
+
+      // Get wishlist counts for displayed users only (OPTIMIZED)
       console.log(`[Admin Users API] Fetching wishlist counts for ${usersResponse.data.length} users`);
       let wishlistCounts: Record<string, number> = {};
-      
+
       try {
         const { database } = await import('@/lib/firebase');
         const { ref, get } = await import('firebase/database');
-        const wishlistsRef = ref(database, 'wishlists');
-        const wishlistsSnapshot = await get(wishlistsRef);
-        
-        if (wishlistsSnapshot.exists()) {
-          const wishlistData = wishlistsSnapshot.val();
-          // Count wishlist items for each user
-          Object.keys(wishlistData).forEach(userId => {
-            const userWishlist = wishlistData[userId];
-            if (userWishlist && typeof userWishlist === 'object') {
-              wishlistCounts[userId] = Object.keys(userWishlist).length;
+
+        // Fetch wishlist counts only for the users being displayed (much faster)
+        const wishlistPromises = usersResponse.data.map(async (user) => {
+          try {
+            const userWishlistRef = ref(database, `wishlists/${user.id}`);
+            const userWishlistSnapshot = await get(userWishlistRef);
+
+            if (userWishlistSnapshot.exists()) {
+              const userWishlist = userWishlistSnapshot.val();
+              return {
+                userId: user.id,
+                count: userWishlist && typeof userWishlist === 'object'
+                  ? Object.keys(userWishlist).length
+                  : 0
+              };
             }
-          });
-        }
+            return { userId: user.id, count: 0 };
+          } catch (error) {
+            console.warn(`[Admin Users API] Failed to get wishlist for user ${user.id}:`, error);
+            return { userId: user.id, count: 0 };
+          }
+        });
+
+        const wishlistResults = await Promise.all(wishlistPromises);
+        wishlistResults.forEach(result => {
+          wishlistCounts[result.userId] = result.count;
+        });
+
+        console.log(`[Admin Users API] ✅ Wishlist counts fetched for ${Object.keys(wishlistCounts).length} users`);
       } catch (wishlistError) {
         console.warn('[Admin Users API] Failed to fetch wishlist counts:', wishlistError);
         // Continue without wishlist counts
@@ -113,7 +140,7 @@ export async function GET(request: NextRequest) {
       // Transform Clerk user data for admin dashboard
       const transformedUsers = usersResponse.data.map(user => ({
         id: user.id,
-        name: user.firstName && user.lastName 
+        name: user.firstName && user.lastName
           ? `${user.firstName} ${user.lastName}`
           : user.username || user.primaryEmailAddress?.emailAddress || 'Unknown User',
         email: user.primaryEmailAddress?.emailAddress || 'No email',
@@ -142,10 +169,10 @@ export async function GET(request: NextRequest) {
         wishlistCount: wishlistCounts[user.id] || 0,
         lastWishlistActivity: null // Could be enhanced to track last wishlist action
       }));
-      
+
       // Get total count for pagination
       const totalUsersResponse = await client.users.getCount();
-      
+
       // Calculate statistics
       const totalUsers = totalUsersResponse;
       const activeUsers = transformedUsers.filter(user => user.isActive).length;
@@ -156,14 +183,14 @@ export async function GET(request: NextRequest) {
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         return createdDate >= firstDayOfMonth;
       }).length;
-      
+
       // Provider statistics
       const providerStats = transformedUsers.reduce((acc, user) => {
         acc[user.provider] = (acc[user.provider] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
-      
-      return NextResponse.json({
+
+      const result = {
         success: true,
         users: transformedUsers,
         pagination: {
@@ -185,15 +212,20 @@ export async function GET(request: NextRequest) {
           lockedUsers: transformedUsers.filter(user => user.locked).length,
           users2FAEnabled: transformedUsers.filter(user => user.twoFactorEnabled).length
         }
-      });
-      
+      };
+
+      // Cache the result
+      setCachedData(cacheKey, result);
+
+      return NextResponse.json(result);
+
     } catch (error) {
       console.error('[Admin Users API] Get Clerk users error:', error);
-      
+
       // Provide specific error messages for common issues
       let errorMessage = 'Failed to fetch users from Clerk';
       let errorDetails = error instanceof Error ? error.message : 'Unknown error';
-      
+
       if (error instanceof Error) {
         if (error.message.includes('Invalid API key') || error.message.includes('authentication')) {
           errorMessage = 'Clerk authentication failed';
@@ -206,9 +238,9 @@ export async function GET(request: NextRequest) {
           errorDetails = 'Too many requests to Clerk API. Please try again later.';
         }
       }
-      
+
       return NextResponse.json(
-        { 
+        {
           success: false,
           error: errorMessage,
           details: errorDetails,
@@ -219,3 +251,4 @@ export async function GET(request: NextRequest) {
     }
   });
 }
+

@@ -1,16 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
+import { database as adminDb } from '@/lib/firebase-server-admin';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_jwt_secret_for_development';
 const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-
-// List of allowed admin emails
-const ADMIN_EMAILS = [
-  'mehul@stealdeals.co.in',
-  'stealdeals.co.in@gmail.com',
-  'ishank@stealdeals.co.in'
-];
 
 interface FirebaseUserInfo {
   localId: string;
@@ -18,6 +12,32 @@ interface FirebaseUserInfo {
   emailVerified: boolean;
   displayName?: string;
   photoUrl?: string;
+}
+
+interface AdminUserPermissions {
+  pages: {
+    vacant: boolean;
+    plots: boolean;
+    franchise: boolean;
+    preleased: boolean;
+    // NEW PERMISSIONS
+    dashboard: boolean;
+    users: boolean;
+    wishlist: boolean;
+    analytics: boolean;
+    migration: boolean;
+  };
+  viewOthers: boolean;
+  editOthers: boolean;
+}
+
+interface AdminUserData {
+  email: string;
+  name: string;
+  role: 'superuser' | 'subuser' | 'admin';
+  permissions: AdminUserPermissions;
+  createdAt: string;
+  createdBy: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -46,7 +66,6 @@ export async function POST(request: NextRequest) {
 
     try {
       // Use Firebase Auth REST API to get user info from the ID token
-      // https://firebase.google.com/docs/reference/rest/auth#section-get-account-info
       const response = await fetch(
         `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
         {
@@ -70,7 +89,7 @@ export async function POST(request: NextRequest) {
       }
 
       const data = await response.json();
-      
+
       if (!data.users || data.users.length === 0) {
         return NextResponse.json(
           { error: 'User not found' },
@@ -82,24 +101,62 @@ export async function POST(request: NextRequest) {
       const userEmail = userInfo.email;
       const userId = userInfo.localId;
 
-      // Check if user has admin role (by checking if email is in admin list)
-      const isAdmin = ADMIN_EMAILS.includes(userEmail?.toLowerCase() || '');
-      
-      if (adminLogin && !isAdmin) {
-        console.log('User is not an admin:', userEmail);
-        return NextResponse.json(
-          { error: 'Unauthorized: Admin access required' },
-          { status: 403 }
-        );
+      // Fetch user permissions from Realtime Database
+      let userRole: 'superuser' | 'subuser' | 'admin' = 'admin';
+      let userPermissions: AdminUserPermissions | null = null;
+
+      try {
+        // Try adminUsers first (new path)
+        let userRef = adminDb.ref(`adminUsers/${userId}`);
+        let userSnapshot = await userRef.once('value');
+
+        if (!userSnapshot.exists()) {
+          // Fallback to old path
+          console.log(`User ${userId} not found in adminUsers, checking admin_users...`);
+          userRef = adminDb.ref(`admin_users/${userId}`);
+          userSnapshot = await userRef.once('value');
+        }
+
+        if (userSnapshot.exists()) {
+          const userData = userSnapshot.val();
+          
+          // Check if user is a known superuser by email
+          if (userEmail === 'stealdeals.co.in@gmail.com') {
+            userRole = 'superuser';
+          } else {
+            userRole = userData.role || 'admin';
+          }
+          
+          userPermissions = userData.permissions;
+          console.log(`User ${userEmail} found in database with key ${userSnapshot.key}, role: ${userRole}`);
+        } else {
+          // For users not in database, check if it's the known superuser email
+          if (userEmail === 'stealdeals.co.in@gmail.com') {
+            userRole = 'superuser';
+            console.log(`Known superuser ${userEmail} not in database, assigning superuser role`);
+          } else {
+            console.log(`User ${userEmail} not found in database (checked adminUsers and admin_users), using default admin role`);
+          }
+        }
+      } catch (dbError) {
+        console.error('Error fetching user permissions from database:', dbError);
+        // For known superuser emails, assign superuser role even if DB fails
+        if (userEmail === 'stealdeals.co.in@gmail.com') {
+          userRole = 'superuser';
+          console.log(`Known superuser ${userEmail}, assigning superuser role despite DB error`);
+        } else {
+          // Continue with default admin role if database fetch fails
+        }
       }
 
       // Generate our own JWT token for internal use
       const token = jwt.sign(
-        { 
+        {
           userId: userId,
           email: userEmail,
-          role: isAdmin ? 'admin' : 'user'
-        }, 
+          role: userRole,
+          permissions: userPermissions
+        },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
@@ -108,10 +165,11 @@ export async function POST(request: NextRequest) {
       const jsonResponse = NextResponse.json({
         success: true,
         token,
-        user: { 
-          id: userId, 
+        user: {
+          id: userId,
           email: userEmail,
-          role: isAdmin ? 'admin' : 'user'
+          role: userRole,
+          permissions: userPermissions
         }
       });
 
@@ -129,10 +187,11 @@ export async function POST(request: NextRequest) {
       // Also set a readable cookie for client with user info
       jsonResponse.cookies.set({
         name: 'adminUser',
-        value: JSON.stringify({ 
-          id: userId, 
+        value: JSON.stringify({
+          id: userId,
           email: userEmail,
-          role: isAdmin ? 'admin' : 'user'
+          role: userRole,
+          permissions: userPermissions
         }),
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',

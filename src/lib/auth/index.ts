@@ -22,6 +22,19 @@ export {
   type AuthenticatedRequest 
 } from './middleware';
 
+// Export enhanced admin middleware utilities
+export {
+  requireEnhancedAdminAuth,
+  requirePagePermission,
+  requireUserManagementPermission,
+  requirePropertyEditPermission,
+  clearUserPermissionCache,
+  clearAllPermissionCache,
+  getPermissionCacheStats,
+  type EnhancedAdminUser,
+  type EnhancedAuthenticatedAdminRequest
+} from './enhanced-admin-middleware';
+
 // Re-export validation schemas
 export * from '../validations/auth';
 

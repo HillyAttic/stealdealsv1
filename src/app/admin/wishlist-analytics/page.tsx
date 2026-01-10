@@ -105,7 +105,7 @@ export default function WishlistAnalyticsPage() {
       setRefreshing(showRefresh);
       setError(null);
 
-      const response = await fetch('/api/admin/wishlist-stats?includeActivity=true&includeUserDetails=true&topLimit=10&activityLimit=15', {
+      const response = await fetch('/api/admin/wishlist-stats?includeActivity=true&includeUserDetails=false&topLimit=8&activityLimit=10', {
         method: 'GET',
         credentials: 'include',
         headers: {
