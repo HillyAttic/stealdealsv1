@@ -42,9 +42,10 @@ if (!admin.apps.length) {
     // Priority 1: Environment Variable
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
       try {
+        console.log('Firebase credentials found in FIREBASE_SERVICE_ACCOUNT_KEY environment variable');
         serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
       } catch (e) {
-        console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY', e);
+        console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY environment variable:', e);
       }
     }
 
@@ -61,7 +62,7 @@ if (!admin.apps.length) {
         if (fs.existsSync(keyPath)) {
           const fileContent = fs.readFileSync(keyPath, 'utf8');
           serviceAccount = JSON.parse(fileContent);
-          console.log('Loaded Firebase credentials from service-account.json');
+          console.log('Firebase credentials loaded from service-account.json file');
         }
       } catch (e) {
         console.warn('Failed to load service-account.json:', e);
@@ -77,11 +78,33 @@ if (!admin.apps.length) {
     }
 
     if (serviceAccount) {
+      // Ensure private key handles newlines correctly
+      if (serviceAccount.private_key && typeof serviceAccount.private_key === 'string') {
+        const originalKey = serviceAccount.private_key;
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+
+        // Diagnostic logs
+        if (!serviceAccount.private_key.includes('-----BEGIN PRIVATE KEY-----')) {
+          console.error('CRITICAL: Firebase private key is missing BEGIN header');
+        }
+        if (!serviceAccount.private_key.includes('-----END PRIVATE KEY-----')) {
+          console.error('CRITICAL: Firebase private key is missing END header');
+        }
+
+        const lineCount = serviceAccount.private_key.split('\n').length;
+        console.log(`Firebase private key diagnostic: ${lineCount} lines detected (after processing)`);
+
+        if (lineCount < 20) {
+          console.warn('WARNING: Firebase private key seems unusually short. It might be truncated.');
+        }
+      }
+
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         databaseURL: databaseURL,
       });
-      console.log('Firebase Admin initialized with service account successfully');
+      console.log('Firebase Admin initialized for project:', serviceAccount.project_id);
+      console.log('Using Key ID:', serviceAccount.private_key_id?.substring(0, 8) + '...');
     } else {
       // For Vercel deployment with Firebase Extensions or default credentials
       console.log('Attempting default credential initialization');
