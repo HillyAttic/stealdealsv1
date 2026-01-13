@@ -162,15 +162,15 @@ export default function ManageAdminsPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Manage Admin Users</h1>
-                        <p className="text-gray-600">Create and manage admin accounts with role-based permissions</p>
+                        <h1 className="text-2xl font-bold text-gray-900">Firebase Admin User Management</h1>
+                        <p className="text-gray-600">Manage admin users with role-based permissions</p>
                     </div>
                     <button
                         onClick={() => setShowCreateForm(true)}
-                        className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
-                        <FaPlus />
-                        <span>Create New User</span>
+                        <FaPlus className="mr-2" />
+                        {showCreateForm ? 'Cancel' : 'Create New Admin'}
                     </button>
                 </div>
 
@@ -190,33 +190,43 @@ export default function ManageAdminsPage() {
                     />
                 )}
 
-                {/* Create User Modal */}
+                {/* Create User Form - Inline */}
                 {showCreateForm && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-6">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-gray-900">Create New Admin User</h2>
-                                    <button
-                                        onClick={() => {
-                                            setShowCreateForm(false);
-                                            setError(null);
-                                        }}
-                                        className="text-gray-400 hover:text-gray-600"
-                                    >
-                                        <FaTimes size={20} />
-                                    </button>
-                                </div>
-                                <AdminUserForm
-                                    onSubmit={handleCreateUser}
-                                    onCancel={() => {
-                                        setShowCreateForm(false);
-                                        setError(null);
-                                    }}
-                                    isLoading={isCreating}
-                                />
-                            </div>
+                    <div className="bg-white p-6 rounded-lg shadow-sm border">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-xl font-bold text-gray-900">Create New Admin User</h2>
+                            <button
+                                onClick={() => {
+                                    setShowCreateForm(false);
+                                    setError(null);
+                                }}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <FaTimes size={20} />
+                            </button>
                         </div>
+                        
+                        {error && (
+                            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                                {error}
+                            </div>
+                        )}
+
+                        {successMessage && (
+                            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-center">
+                                <FaCheck className="mr-2" />
+                                {successMessage}
+                            </div>
+                        )}
+                        
+                        <AdminUserForm
+                            onSubmit={handleCreateUser}
+                            onCancel={() => {
+                                setShowCreateForm(false);
+                                setError(null);
+                            }}
+                            isLoading={isCreating}
+                        />
                     </div>
                 )}
 
@@ -224,11 +234,11 @@ export default function ManageAdminsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-white p-6 rounded-lg shadow-sm border">
                         <div className="flex items-center">
-                            <div className="p-3 bg-blue-100 rounded-lg">
-                                <FaUser className="text-blue-600 text-xl" />
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                                <FaUserShield className="text-blue-600 text-xl" />
                             </div>
                             <div className="ml-4">
-                                <p className="text-sm text-gray-600">Total Admin Users</p>
+                                <p className="text-sm text-gray-600">Total Admins</p>
                                 <p className="text-2xl font-bold text-gray-900">{users.length}</p>
                             </div>
                         </div>
@@ -236,7 +246,7 @@ export default function ManageAdminsPage() {
 
                     <div className="bg-white p-6 rounded-lg shadow-sm border">
                         <div className="flex items-center">
-                            <div className="p-3 bg-purple-100 rounded-lg">
+                            <div className="p-2 bg-purple-100 rounded-lg">
                                 <FaUserShield className="text-purple-600 text-xl" />
                             </div>
                             <div className="ml-4">
@@ -250,8 +260,8 @@ export default function ManageAdminsPage() {
 
                     <div className="bg-white p-6 rounded-lg shadow-sm border">
                         <div className="flex items-center">
-                            <div className="p-3 bg-green-100 rounded-lg">
-                                <FaUser className="text-green-600 text-xl" />
+                            <div className="p-2 bg-green-100 rounded-lg">
+                                <FaUserShield className="text-green-600 text-xl" />
                             </div>
                             <div className="ml-4">
                                 <p className="text-sm text-gray-600">Subusers</p>
@@ -270,16 +280,13 @@ export default function ManageAdminsPage() {
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        User
+                                        Admin User
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Role
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Page Access
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Privacy
+                                        Permissions
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Created
@@ -291,8 +298,8 @@ export default function ManageAdminsPage() {
                                     <tr key={user.uid} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
-                                                <div className="h-10 w-10 flex-shrink-0 bg-gray-200 rounded-full flex items-center justify-center">
-                                                    <FaUser className="text-gray-600" />
+                                                <div className="h-10 w-10 flex-shrink-0 bg-blue-100 rounded-full flex items-center justify-center">
+                                                    <FaUserShield className="text-blue-600" />
                                                 </div>
                                                 <div className="ml-4">
                                                     <div className="text-sm font-medium text-gray-900">{user.name}</div>
@@ -305,40 +312,25 @@ export default function ManageAdminsPage() {
                                                 ? 'bg-purple-100 text-purple-800'
                                                 : 'bg-green-100 text-green-800'
                                                 }`}>
-                                                {user.role === 'superuser' ? <FaUserShield className="mr-1" /> : <FaUser className="mr-1" />}
                                                 {user.role === 'superuser' ? 'Superuser' : 'Subuser'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm text-gray-900">
                                                 {user.role === 'superuser' ? (
-                                                    <span className="text-purple-600 font-medium">All Pages</span>
+                                                    <span className="text-purple-600 font-medium">Full Access</span>
                                                 ) : (
-                                                    <span>{getPagePermissionsSummary(user.permissions.pages)}</span>
+                                                    <>
+                                                        <span>{getPagePermissionsSummary(user.permissions.pages)}</span>
+                                                        <div className="text-xs text-gray-500 mt-1">
+                                                            Pages: {Object.entries(user.permissions.pages)
+                                                                .filter(([_, allowed]) => allowed)
+                                                                .map(([page]) => page)
+                                                                .join(', ') || 'None'}
+                                                        </div>
+                                                    </>
                                                 )}
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {user.role === 'superuser' ? (
-                                                <span className="text-sm text-purple-600 font-medium">Full Access</span>
-                                            ) : (
-                                                <div className="flex flex-col space-y-1">
-                                                    <div className="flex items-center text-xs">
-                                                        {user.permissions.viewOthers ? (
-                                                            <><FaEye className="text-green-500 mr-1" /> <span className="text-green-700">View Others</span></>
-                                                        ) : (
-                                                            <><FaEye className="text-gray-400 mr-1" /> <span className="text-gray-500">Own Only</span></>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex items-center text-xs">
-                                                        {user.permissions.editOthers ? (
-                                                            <><FaEdit className="text-green-500 mr-1" /> <span className="text-green-700">Edit Others</span></>
-                                                        ) : (
-                                                            <><FaEdit className="text-gray-400 mr-1" /> <span className="text-gray-500">Own Only</span></>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {formatDate(user.createdAt)}
@@ -351,20 +343,11 @@ export default function ManageAdminsPage() {
 
                     {users.length === 0 && !isLoading && (
                         <div className="text-center py-12">
-                            <FaUser className="mx-auto h-12 w-12 text-gray-400" />
+                            <FaUserShield className="mx-auto h-12 w-12 text-gray-400" />
                             <h3 className="mt-2 text-sm font-medium text-gray-900">No admin users</h3>
                             <p className="mt-1 text-sm text-gray-500">
                                 Get started by creating a new admin user.
                             </p>
-                            <div className="mt-6">
-                                <button
-                                    onClick={() => setShowCreateForm(true)}
-                                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                                >
-                                    <FaPlus className="mr-2" />
-                                    Create New User
-                                </button>
-                            </div>
                         </div>
                     )}
                 </div>
