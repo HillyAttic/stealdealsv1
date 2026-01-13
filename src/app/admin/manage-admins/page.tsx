@@ -18,6 +18,11 @@ interface AdminUser {
             plots: boolean;
             franchise: boolean;
             preleased: boolean;
+            dashboard: boolean;
+            users: boolean;
+            wishlist: boolean;
+            analytics: boolean;
+            migration: boolean;
         };
         viewOthers: boolean;
         editOthers: boolean;
@@ -36,6 +41,11 @@ interface CreateUserRequest {
             plots: boolean;
             franchise: boolean;
             preleased: boolean;
+            dashboard: boolean;
+            users: boolean;
+            wishlist: boolean;
+            analytics: boolean;
+            migration: boolean;
         };
         viewOthers: boolean;
         editOthers: boolean;
@@ -134,7 +144,7 @@ export default function ManageAdminsPage() {
             .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1));
 
         if (enabled.length === 0) return 'No pages';
-        if (enabled.length === 4) return 'All pages';
+        if (enabled.length === 9) return 'All pages';
         return enabled.join(', ');
     };
 
