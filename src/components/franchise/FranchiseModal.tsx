@@ -236,8 +236,8 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
       background: 'rgba(0, 0, 0, 0.3)'
     }}>
       <div className="bg-white/95 backdrop-blur-md md:rounded-lg max-w-5xl w-full h-full md:h-auto md:max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-primary text-white">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-10 flex justify-between items-center p-6 border-b border-gray-200 bg-primary text-white">
           <div>
             <h2 className="text-2xl font-bold">{getField('name')}</h2>
             <p className="text-sm" style={{ 

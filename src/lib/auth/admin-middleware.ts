@@ -7,6 +7,12 @@ interface AdminUser {
   userId: string;
   email: string;
   role: string;
+  permissions?: {
+    editOthers?: boolean;
+    viewOthers?: boolean;
+    deleteOthers?: boolean;
+    [key: string]: any;
+  };
 }
 
 interface AuthenticatedAdminRequest extends NextRequest {

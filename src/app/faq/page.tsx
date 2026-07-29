@@ -139,7 +139,7 @@ const faqData: FAQItem[] = [
     id: 19,
     category: "Support",
     question: "I'm having trouble with the website. What should I do?",
-    answer: "Try refreshing the page or clearing your browser cache first. If the issue persists, contact our support team at hello@stealdeals.com or call +91 96 3040 3080. We're available Monday to Friday, 9:00 AM to 7:00 PM."
+    answer: "Try refreshing the page or clearing your browser cache first. If the issue persists, contact our support team at hello@stealdeals.co.in or call +91 96 3040 3080. We're available Monday to Friday, 9:00 AM to 7:00 PM."
   },
   {
     id: 20,

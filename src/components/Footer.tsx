@@ -102,8 +102,8 @@ const Footer = () => {
               </li>
               <li className="flex items-center">
                 <FaEnvelope className="mr-3 text-[rgb(28,110,164)]" />
-                <a href="mailto:hello@stealdeals.com" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
-                  hello@stealdeals.com
+                <a href="mailto:hello@stealdeals.co.in" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
+                  hello@stealdeals.co.in
                 </a>
               </li>
               <li className="flex items-center">

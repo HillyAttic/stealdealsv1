@@ -151,7 +151,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
 
         // Build set of authorized pages
         const authorized = new Set<string>();
-        
+
         // For superusers, grant access to all pages
         if (user.role === 'superuser') {
           authorized.add('/admin/dashboard');
@@ -161,7 +161,6 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
           authorized.add('/admin/Pre-Leased');
           authorized.add('/admin/users');
           authorized.add('/admin/manage-admins');
-          authorized.add('/admin/subusers');
           authorized.add('/admin/wishlist-analytics');
           authorized.add('/admin/migrate');
         } else {
@@ -169,7 +168,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
           if (user.effectivePermissions.pages.dashboard) {
             authorized.add('/admin/dashboard');
           }
-          
+
           if (user.effectivePermissions.pages.vacant) {
             authorized.add('/admin/vacant');
           }
@@ -182,15 +181,14 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
           if (user.effectivePermissions.pages.preleased) {
             authorized.add('/admin/Pre-Leased');
           }
-          
+
           // User management permissions
           if (user.effectivePermissions.manageUsers || user.effectivePermissions.pages.users) {
             authorized.add('/admin/users');
             authorized.add('/admin/manage-admins');
-            authorized.add('/admin/subusers');
           }
         }
-        
+
         // New permissions for specific sections
         if (user.effectivePermissions.pages.analytics || user.role === 'superuser') {
           authorized.add('/admin/wishlist-analytics');
@@ -274,12 +272,12 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
     {
       name: 'Users',
       href: '/admin/users',
-      icon: <FaUser />,      permission: 'users'
+      icon: <FaUser />, permission: 'users'
     },
     {
       name: 'Wishlist Analytics',
       href: '/admin/wishlist-analytics',
-      icon: <FaChartBar />,      permission: 'analytics'
+      icon: <FaChartBar />, permission: 'analytics'
     },
     {
       name: 'Pre-leased',
@@ -308,7 +306,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
     {
       name: 'Migration',
       href: '/admin/migrate',
-      icon: <FaDatabase />,      permission: 'migration'
+      icon: <FaDatabase />, permission: 'migration'
     },
   ];
 
@@ -319,17 +317,17 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
     // For superusers, show all navigation items plus Manage Admins
     if (currentUser.role === 'superuser') {
       let superuserNavItems = [...allNavItems];
-      
+
       // Add "Manage Admins" link for superusers
       const userIndex = superuserNavItems.findIndex(item => item.name === 'Users');
       if (userIndex !== -1) {
         superuserNavItems.splice(userIndex + 1, 0, {
           name: 'Manage Admins',
-          href: '/admin/subusers',
+          href: '/admin/manage-admins',
           icon: <FaUserShield />
         });
       }
-      
+
       return superuserNavItems;
     }
 
@@ -353,7 +351,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         // Insert "Manage Admins" after "Users"
         visibleItems.splice(userIndex + 1, 0, {
           name: 'Manage Admins',
-          href: '/admin/subusers',
+          href: '/admin/manage-admins',
           icon: <FaUserShield />
         });
       }
