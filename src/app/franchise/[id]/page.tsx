@@ -665,23 +665,23 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
                         <FaPhone className="text-blue-600" />
                         <div>
                           <p className="font-semibold text-gray-800">Phone</p>
-                          <p className="text-gray-600">+91 98765 43210</p>
+                          <p className="text-gray-600">+91 96 3040 3080</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-3">
                         <FaEnvelope className="text-green-600" />
                         <div>
                           <p className="font-semibold text-gray-800">Email</p>
-                          <p className="text-gray-600">info@franchise.com</p>
+                          <p className="text-gray-600">hello@stealdeals.co.in</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-3">
-                        <FaGlobe className="text-purple-600" />
+                        <FaMapMarkerAlt className="text-purple-600" />
                         <div>
-                          <p className="font-semibold text-gray-800">Website</p>
-                          <p className="text-gray-600">www.franchise.com</p>
+                          <p className="font-semibold text-gray-800">Address</p>
+                          <p className="text-gray-600 text-sm">2nd Floor, Block A, Ofis Square,<br/>The Iconic Corenthum, Sector 62,<br/>Noida, Uttar Pradesh 201301</p>
                         </div>
                       </div>
                     </div>

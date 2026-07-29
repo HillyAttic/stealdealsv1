@@ -20,6 +20,11 @@ interface CreateUserRequest {
             plots: boolean;
             franchise: boolean;
             preleased: boolean;
+            dashboard: boolean;
+            users: boolean;
+            wishlist: boolean;
+            analytics: boolean;
+            migration: boolean;
         };
         viewOthers: boolean;
         editOthers: boolean;
@@ -38,6 +43,11 @@ export function AdminUserForm({ onSubmit, onCancel, isLoading }: AdminUserFormPr
                 plots: false,
                 franchise: false,
                 preleased: false,
+                dashboard: false,
+                users: false,
+                wishlist: false,
+                analytics: false,
+                migration: false,
             },
             viewOthers: false,
             editOthers: false,
@@ -94,7 +104,17 @@ export function AdminUserForm({ onSubmit, onCancel, isLoading }: AdminUserFormPr
             // Superusers get all permissions automatically
             permissions: role === 'superuser'
                 ? {
-                    pages: { vacant: true, plots: true, franchise: true, preleased: true },
+                    pages: {
+                        vacant: true,
+                        plots: true,
+                        franchise: true,
+                        preleased: true,
+                        dashboard: true,
+                        users: true,
+                        wishlist: true,
+                        analytics: true,
+                        migration: true
+                    },
                     viewOthers: true,
                     editOthers: true,
                 }
@@ -204,8 +224,8 @@ export function AdminUserForm({ onSubmit, onCancel, isLoading }: AdminUserFormPr
                         onClick={() => handleRoleChange('superuser')}
                         disabled={isLoading}
                         className={`p-4 border-2 rounded-lg transition-all ${formData.role === 'superuser'
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-300 hover:border-gray-400'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 hover:border-gray-400'
                             }`}
                     >
                         <FaUserShield className={`mx-auto mb-2 text-2xl ${formData.role === 'superuser' ? 'text-blue-600' : 'text-gray-400'
@@ -219,8 +239,8 @@ export function AdminUserForm({ onSubmit, onCancel, isLoading }: AdminUserFormPr
                         onClick={() => handleRoleChange('subuser')}
                         disabled={isLoading}
                         className={`p-4 border-2 rounded-lg transition-all ${formData.role === 'subuser'
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-300 hover:border-gray-400'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 hover:border-gray-400'
                             }`}
                     >
                         <FaUser className={`mx-auto mb-2 text-2xl ${formData.role === 'subuser' ? 'text-blue-600' : 'text-gray-400'
@@ -247,6 +267,11 @@ export function AdminUserForm({ onSubmit, onCancel, isLoading }: AdminUserFormPr
                                 { key: 'plots', label: 'Plots' },
                                 { key: 'franchise', label: 'Franchise Opportunities' },
                                 { key: 'preleased', label: 'Pre-Leased Properties' },
+                                { key: 'dashboard', label: 'Dashboard' },
+                                { key: 'users', label: 'User Management' },
+                                { key: 'wishlist', label: 'Wishlist Views' },
+                                { key: 'analytics', label: 'Analytics' },
+                                { key: 'migration', label: 'Migration Tools' },
                             ].map(({ key, label }) => (
                                 <label key={key} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                                     <input

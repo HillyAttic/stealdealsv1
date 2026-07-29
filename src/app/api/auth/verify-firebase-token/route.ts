@@ -40,16 +40,28 @@ interface AdminUserData {
   createdBy: string;
 }
 
+// Helper function to add timeout to promises
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+    )
+  ]);
+}
+
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+
   try {
     const body = await request.json();
     const { idToken, adminLogin } = body;
 
-    console.log('Verifying Firebase ID token');
+    console.log('[Auth] Starting Firebase token verification');
 
     // Validate input
     if (!idToken) {
-      console.log('Missing ID token');
+      console.log('[Auth] Missing ID token');
       return NextResponse.json(
         { error: 'ID token required' },
         { status: 400 }
@@ -65,18 +77,22 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Use Firebase Auth REST API to get user info from the ID token
-      const response = await fetch(
-        `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            idToken: idToken
-          })
-        }
+      // Use Firebase Auth REST API to get user info from the ID token with timeout
+      const response = await withTimeout(
+        fetch(
+          `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              idToken: idToken
+            })
+          }
+        ),
+        10000, // 10 second timeout
+        'Firebase token verification timed out'
       );
 
       if (!response.ok) {
@@ -89,6 +105,7 @@ export async function POST(request: NextRequest) {
       }
 
       const data = await response.json();
+      console.log(`[Auth] Firebase token verified in ${Date.now() - startTime}ms`);
 
       if (!data.users || data.users.length === 0) {
         return NextResponse.json(
@@ -106,36 +123,46 @@ export async function POST(request: NextRequest) {
       let userPermissions: AdminUserPermissions | null = null;
 
       try {
-        // Try adminUsers first (new path)
-        let userRef = adminDb.ref(`adminUsers/${userId}`);
-        let userSnapshot = await userRef.once('value');
+        // Check both paths simultaneously for better performance with timeout
+        const [adminUsersSnapshot, oldAdminUsersSnapshot] = await withTimeout(
+          Promise.all([
+            adminDb.ref(`adminUsers/${userId}`).once('value').catch(() => null),
+            adminDb.ref(`admin_users/${userId}`).once('value').catch(() => null)
+          ]),
+          5000, // 5 second timeout for database operations
+          'Database lookup timed out'
+        );
 
-        if (!userSnapshot.exists()) {
-          // Fallback to old path
-          console.log(`User ${userId} not found in adminUsers, checking admin_users...`);
-          userRef = adminDb.ref(`admin_users/${userId}`);
-          userSnapshot = await userRef.once('value');
+        let userSnapshot = null;
+
+        // Prioritize new path (adminUsers) over old path
+        if (adminUsersSnapshot && adminUsersSnapshot.exists()) {
+          userSnapshot = adminUsersSnapshot;
+          console.log(`User ${userId} found in adminUsers`);
+        } else if (oldAdminUsersSnapshot && oldAdminUsersSnapshot.exists()) {
+          userSnapshot = oldAdminUsersSnapshot;
+          console.log(`User ${userId} found in admin_users (legacy path)`);
         }
 
-        if (userSnapshot.exists()) {
+        if (userSnapshot && userSnapshot.exists()) {
           const userData = userSnapshot.val();
-          
+
           // Check if user is a known superuser by email
           if (userEmail === 'stealdeals.co.in@gmail.com') {
             userRole = 'superuser';
           } else {
             userRole = userData.role || 'admin';
           }
-          
+
           userPermissions = userData.permissions;
-          console.log(`User ${userEmail} found in database with key ${userSnapshot.key}, role: ${userRole}`);
+          console.log(`User ${userEmail} authenticated with role: ${userRole}`);
         } else {
           // For users not in database, check if it's the known superuser email
           if (userEmail === 'stealdeals.co.in@gmail.com') {
             userRole = 'superuser';
             console.log(`Known superuser ${userEmail} not in database, assigning superuser role`);
           } else {
-            console.log(`User ${userEmail} not found in database (checked adminUsers and admin_users), using default admin role`);
+            console.log(`User ${userEmail} not found in database, using default admin role`);
           }
         }
       } catch (dbError) {
@@ -148,6 +175,8 @@ export async function POST(request: NextRequest) {
           // Continue with default admin role if database fetch fails
         }
       }
+
+      console.log(`[Auth] Database lookup completed in ${Date.now() - startTime}ms`);
 
       // Generate our own JWT token for internal use
       const token = jwt.sign(
@@ -200,7 +229,7 @@ export async function POST(request: NextRequest) {
         path: '/'
       });
 
-      console.log('Authentication successful for:', userEmail);
+      console.log(`[Auth] Authentication successful for ${userEmail} in ${Date.now() - startTime}ms`);
       return jsonResponse;
 
     } catch (verifyError) {

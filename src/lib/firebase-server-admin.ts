@@ -42,26 +42,37 @@ if (!admin.apps.length) {
     // Priority 1: Environment Variable
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
       try {
+        console.log('Firebase credentials found in FIREBASE_SERVICE_ACCOUNT_KEY environment variable');
         serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+        console.log('Firebase credentials found in FIREBASE_SERVICE_ACCOUNT_KEY environment variable');
       } catch (e) {
-        console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY', e);
+        console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY environment variable:', e);
       }
     }
 
     // Priority 2: local service-account.json file
     if (!serviceAccount) {
       try {
-        // dynamic require to avoid build issues on client side (though this file is server-only)
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const path = require('path');
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const fs = require('fs');
 
-        const keyPath = path.resolve(process.cwd(), 'service-account.json');
-        if (fs.existsSync(keyPath)) {
-          const fileContent = fs.readFileSync(keyPath, 'utf8');
-          serviceAccount = JSON.parse(fileContent);
-          console.log('Loaded Firebase credentials from service-account.json');
+        // Log current working directory for debugging
+        const cwd = process.cwd();
+        console.log(`[Firebase Admin] Current working directory: ${cwd}`);
+
+        const possiblePaths = [
+          path.resolve(cwd, 'service-account.json'),
+          path.resolve(cwd, '..', 'service-account.json'),
+          path.join(process.cwd(), 'service-account.json')
+        ];
+
+        for (const keyPath of possiblePaths) {
+          if (fs.existsSync(keyPath)) {
+            const fileContent = fs.readFileSync(keyPath, 'utf8');
+            serviceAccount = JSON.parse(fileContent);
+            console.log(`Firebase credentials loaded from: ${keyPath}`);
+            break;
+          }
         }
       } catch (e) {
         console.warn('Failed to load service-account.json:', e);
@@ -77,36 +88,89 @@ if (!admin.apps.length) {
     }
 
     if (serviceAccount) {
+      // Ensure private key handles newlines correctly
+      if (serviceAccount.private_key && typeof serviceAccount.private_key === 'string') {
+        const originalKey = serviceAccount.private_key;
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+
+        // Diagnostic logs
+        if (!serviceAccount.private_key.includes('-----BEGIN PRIVATE KEY-----')) {
+          console.error('CRITICAL: Firebase private key is missing BEGIN header');
+        }
+        if (!serviceAccount.private_key.includes('-----END PRIVATE KEY-----')) {
+          console.error('CRITICAL: Firebase private key is missing END header');
+        }
+
+        const lineCount = serviceAccount.private_key.split('\n').length;
+        console.log(`Firebase private key diagnostic: ${lineCount} lines detected (after processing)`);
+
+        if (lineCount < 20) {
+          console.warn('WARNING: Firebase private key seems unusually short. It might be truncated.');
+        }
+      }
+
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         databaseURL: databaseURL,
       });
-      console.log('Firebase Admin initialized with service account successfully');
+      console.log('Firebase Admin initialized for project:', serviceAccount.project_id);
+      console.log('Using Key ID:', serviceAccount.private_key_id?.substring(0, 8) + '...');
     } else {
-      // For Vercel deployment with Firebase Extensions or default credentials
-      console.log('Attempting default credential initialization');
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        databaseURL: databaseURL,
-      });
+      // Check if we are in an environment that might have default credentials (GCP/Vercel)
+      const isCloudEnv = process.env.VERCEL || process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.GAE_SERVICE;
+
+      if (isCloudEnv) {
+        console.log('Attempting default credential initialization in cloud environment');
+        admin.initializeApp({
+          credential: admin.credential.applicationDefault(),
+          databaseURL: databaseURL,
+        });
+      } else {
+        console.warn('⚠️ [Firebase Admin] Credentials not found (no service-account.json or FIREBASE_SERVICE_ACCOUNT_KEY)');
+        console.warn('⚠️ [Firebase Admin] Skipping initialization to avoid "invalid-credential" warnings.');
+        console.warn('💡 [Firebase Admin] To fix: Add your service account key to .env.local or service-account.json');
+      }
     }
   } catch (error) {
     console.error('Firebase Admin initialization error:', error);
-
-    // Fallback initialization - this may not work in all environments
-    try {
-      admin.initializeApp({
-        databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL || 'https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app',
-      });
-    } catch (fallbackError) {
-      console.error('Fallback initialization also failed:', fallbackError);
-      throw new Error('Unable to initialize Firebase Admin SDK');
-    }
   }
 }
 
-// Export Firebase Admin services
-export const auth = admin.auth();
-export const database = admin.database();
-export const db = admin.firestore ? admin.firestore() : undefined;
+// Helper to get initialized service or throw clear error
+function getService<T>(name: 'auth' | 'database' | 'firestore'): T {
+  if (!admin.apps.length) {
+    throw new Error(`[Firebase Admin] ${name} service is unavailable because the Admin SDK could not be initialized. Please add FIREBASE_SERVICE_ACCOUNT_KEY to your environment variables or provide a service-account.json file.`);
+  }
+  return (admin as any)[name]() as T;
+}
+
+// Export Firebase Admin services as Proxies to prevent crash on import
+export const auth = new Proxy({} as admin.auth.Auth, {
+  get(_, prop) {
+    const service = getService<admin.auth.Auth>('auth');
+    const val = (service as any)[prop];
+    return typeof val === 'function' ? val.bind(service) : val;
+  }
+});
+
+export const database = new Proxy({} as admin.database.Database, {
+  get(_, prop) {
+    const service = getService<admin.database.Database>('database');
+    const val = (service as any)[prop];
+    return typeof val === 'function' ? val.bind(service) : val;
+  }
+});
+
+export const db = new Proxy({} as any, {
+  get(_, prop) {
+    try {
+      const service = getService<any>('firestore');
+      const val = (service as any)[prop];
+      return typeof val === 'function' ? val.bind(service) : val;
+    } catch (e) {
+      return undefined;
+    }
+  }
+});
+
 export default admin;

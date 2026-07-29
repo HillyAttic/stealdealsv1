@@ -924,10 +924,16 @@ export async function addProperty(property: Property): Promise<Property> {
 // Function to update a property (uses type-organized structure)
 export async function updateProperty(id: string, property: Property): Promise<Property> {
   try {
-    console.log(`Updating property ${id} with propertyType: ${property.propertyType}`);
+    // Sanitize property object to remove undefined values
+    const sanitizedProperty = { ...property };
+    Object.keys(sanitizedProperty).forEach(key => {
+      if ((sanitizedProperty as any)[key] === undefined) {
+        delete (sanitizedProperty as any)[key];
+      }
+    });
 
     // Get the appropriate reference based on property type (migrated structure)
-    const appropriate_ref = getPropertyRefByType(property.propertyType || '');
+    const appropriate_ref = getPropertyRefByType(sanitizedProperty.propertyType || '');
     console.log(`Appropriate reference determined: ${appropriate_ref.key}`);
 
     // Boolean to track if we found the property in any collection
@@ -950,7 +956,7 @@ export async function updateProperty(id: string, property: Property): Promise<Pr
           console.log(`Moving property ${id} from ${collectionRef.key} to ${appropriate_ref.key}`);
           await remove(child(collectionRef, id));
           await set(child(appropriate_ref, id), {
-            ...property,
+            ...sanitizedProperty,
             updatedAt: Date.now()
           });
           console.log(`Property ${id} moved successfully to ${appropriate_ref.key}`);
@@ -958,7 +964,7 @@ export async function updateProperty(id: string, property: Property): Promise<Pr
           // It's already in the right collection, just update it
           console.log(`Updating property ${id} in place at ${collectionRef.key}`);
           await update(child(appropriate_ref, id), {
-            ...property,
+            ...sanitizedProperty,
             updatedAt: Date.now()
           });
           console.log(`Property ${id} updated successfully in ${appropriate_ref.key}`);
@@ -981,7 +987,7 @@ export async function updateProperty(id: string, property: Property): Promise<Pr
           console.log(`Moving property ${id} from legacy ${collectionRef.key} to migrated ${appropriate_ref.key}`);
           await remove(child(collectionRef, id));
           await set(child(appropriate_ref, id), {
-            ...property,
+            ...sanitizedProperty,
             updatedAt: Date.now()
           });
           console.log(`Property ${id} moved from legacy to migrated structure`);
@@ -994,14 +1000,14 @@ export async function updateProperty(id: string, property: Property): Promise<Pr
     if (!foundProperty) {
       console.log(`Creating new property ${id} in ${appropriate_ref.key}`);
       await set(child(appropriate_ref, id), {
-        ...property,
+        ...sanitizedProperty,
         createdAt: Date.now(),
         updatedAt: Date.now()
       });
       console.log(`New property ${id} created successfully in ${appropriate_ref.key}`);
     }
 
-    return { ...property, id };
+    return { ...sanitizedProperty, id } as Property;
   } catch (error) {
     console.error('Error updating property in Firebase:', error);
     throw error;

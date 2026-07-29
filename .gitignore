@@ -24,3 +24,6 @@ src/components/wishlist/ImprovedWishlistButton.tsx
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Google Cloud Service Account (sensitive credentials)
+service-account.json

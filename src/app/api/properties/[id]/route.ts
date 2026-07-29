@@ -93,14 +93,21 @@ export async function PUT(
       const body = await request.json();
 
       // Prepare updated property object, merging with existing data
-      const updatedProperty: Property = {
+      const updatedProperty: any = {
         ...existingProperty,
         ...body,
         id: id, // Ensure ID is preserved
-        createdBy: propertyOwner, // Preserve original creator
+        createdBy: propertyOwner || (existingProperty as any).createdBy || null, // Preserve original creator or fallback to null
         lastModifiedBy: currentUser.userId, // Track who modified it
         updatedAt: Date.now() // Add timestamp
       };
+
+      // Clean up undefined values which cause Firebase to throw errors
+      Object.keys(updatedProperty).forEach(key => {
+        if (updatedProperty[key] === undefined) {
+          delete updatedProperty[key];
+        }
+      });
 
       // Validate required fields based on property type
       if (!updatedProperty.location) {
