@@ -56,14 +56,27 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
   // Format the investment amount to show as lakhs or crores
   const formatInvestment = (amount: number | undefined) => {
     if (!amount) return 'Not specified';
-    
+
     if (amount >= 10000000) {
       return `₹${(amount / 10000000).toFixed(1)} Cr`;
     } else if (amount >= 100000) {
-      return `₹${(amount / 100000).toFixed(1)} Lakhs`;
+      return `${(amount / 100000).toFixed(1)} Lakhs`;
     } else {
       return `₹${amount.toLocaleString()}`;
     }
+  };
+
+  // Helper to normalize ALL CAPS strings to title case
+  const normalizeCase = (text: string): string => {
+    if (!text) return text;
+    const letters = text.replace(/[^a-zA-Z]/g, '');
+    if (letters.length > 2 && letters === letters.toUpperCase() && letters !== letters.toLowerCase()) {
+      return text.replace(/\b\w+\b/g, (word) => {
+        if (word.length <= 2 && /^[A-Z]+$/.test(word)) return word;
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      });
+    }
+    return text;
   };
 
   // Check for success message from FormSubmit
@@ -296,35 +309,35 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
                     <div className="space-y-6">
                       <div className="bg-white/10 rounded-lg p-4">
                         <div className="text-blue-200 text-sm mb-1">Total Investment</div>
-                        <div className="text-2xl font-bold text-white">
-                          {franchise.minInvestment && franchise.maxInvestment 
-                            ? `${formatInvestment(franchise.minInvestment)} - ${formatInvestment(franchise.maxInvestment)}`
-                            : formatInvestment(franchise.investment)}
+                        <div className="text-xl font-bold text-white leading-snug break-words">
+                          {franchise.minInvestment && franchise.maxInvestment
+                            ? `${normalizeCase(formatInvestment(franchise.minInvestment))} - ${normalizeCase(formatInvestment(franchise.maxInvestment))}`
+                            : normalizeCase(formatInvestment(franchise.investment))}
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-4">
                         <div className="bg-white/10 rounded-lg p-4">
                           <div className="text-blue-200 text-sm mb-1">Royalty</div>
-                          <div className="text-lg font-bold text-white">
-                            {franchise.royalty || 'Contact for details'}
+                          <div className="text-sm font-bold text-white leading-snug break-words">
+                            {normalizeCase(franchise.royalty || 'Contact for details')}
                           </div>
                         </div>
                         <div className="bg-white/10 rounded-lg p-4">
                           <div className="text-blue-200 text-sm mb-1">Payback</div>
-                          <div className="text-lg font-bold text-white">
+                          <div className="text-sm font-bold text-white leading-snug break-words">
                             {franchise.minPaybackPeriod && franchise.maxPaybackPeriod
-                              ? `${franchise.minPaybackPeriod}-${franchise.maxPaybackPeriod}`
-                              : franchise.minPaybackPeriod || franchise.maxPaybackPeriod || 'N/A'}
+                              ? normalizeCase(`${franchise.minPaybackPeriod} - ${franchise.maxPaybackPeriod}`)
+                              : normalizeCase(franchise.minPaybackPeriod || franchise.maxPaybackPeriod || 'N/A')}
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="bg-white/10 rounded-lg p-4">
                         <div className="text-blue-200 text-sm mb-1">Space Required</div>
-                        <div className="text-lg font-bold text-white">
-                          {franchise.minArea && franchise.maxArea 
-                            ? `${franchise.minArea} - ${franchise.maxArea}` 
+                        <div className="text-lg font-bold text-white leading-snug">
+                          {franchise.minArea && franchise.maxArea
+                            ? `${franchise.minArea} - ${franchise.maxArea}`
                             : franchise.minArea || franchise.maxArea || 'Flexible'}
                         </div>
                       </div>
@@ -423,46 +436,48 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
                         {/* Investment Breakdown */}
                         <div className="space-y-4">
                           <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
-                            <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                            <h4 className="font-semibold text-gray-800 mb-2 flex items-center text-sm">
                               <FaDollarSign className="mr-2 text-green-600" />
                               Total Investment
                             </h4>
-                            <p className="text-2xl font-bold text-green-700">
-                              {franchise.minInvestment && franchise.maxInvestment 
-                                ? `${formatInvestment(franchise.minInvestment)} - ${formatInvestment(franchise.maxInvestment)}`
-                                : formatInvestment(franchise.investment)}
+                            <p className="text-lg font-bold text-green-700 leading-snug break-words">
+                              {franchise.minInvestment && franchise.maxInvestment
+                                ? `${normalizeCase(formatInvestment(franchise.minInvestment))} - ${normalizeCase(formatInvestment(franchise.maxInvestment))}`
+                                : normalizeCase(formatInvestment(franchise.investment))}
                             </p>
                           </div>
-                          
+
                           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                            <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                            <h4 className="font-semibold text-gray-800 mb-2 flex items-center text-sm">
                               <FaChartLine className="mr-2 text-blue-600" />
                               ROI Expected
                             </h4>
-                            <p className="text-xl font-bold text-blue-700">{franchise.roi || 'Contact for details'}</p>
+                            <p className="text-base font-bold text-blue-700 leading-snug">{'Contact for details'}</p>
                           </div>
                         </div>
 
                         {/* Additional Financial Info */}
                         <div className="space-y-4">
                           <div className="bg-gradient-to-br from-orange-50 to-yellow-50 p-4 rounded-lg border border-orange-200">
-                            <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                            <h4 className="font-semibold text-gray-800 mb-2 flex items-center text-sm">
                               <FaClock className="mr-2 text-orange-600" />
                               Payback Period
                             </h4>
-                            <p className="text-lg font-semibold text-orange-700">
+                            <p className="text-base font-semibold text-orange-700 leading-snug break-words">
                               {franchise.minPaybackPeriod && franchise.maxPaybackPeriod
-                                ? `${franchise.minPaybackPeriod} - ${franchise.maxPaybackPeriod}`
-                                : franchise.minPaybackPeriod || franchise.maxPaybackPeriod || 'Contact for details'}
+                                ? normalizeCase(`${franchise.minPaybackPeriod} - ${franchise.maxPaybackPeriod}`)
+                                : normalizeCase(franchise.minPaybackPeriod || franchise.maxPaybackPeriod || 'Contact for details')}
                             </p>
                           </div>
-                          
+
                           <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
-                            <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                            <h4 className="font-semibold text-gray-800 mb-2 flex items-center text-sm">
                               <FaHandshake className="mr-2 text-purple-600" />
                               Royalty Fee
                             </h4>
-                            <p className="text-lg font-semibold text-purple-700">{franchise.royalty || 'Contact for details'}</p>
+                            <p className="text-sm font-semibold text-purple-700 leading-snug break-words">
+                              {normalizeCase(franchise.royalty || 'Contact for details')}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -718,32 +733,32 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
                     </h3>
                     
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Industry</span>
-                        <span className="font-semibold text-gray-800">{franchise.industry}</span>
+                      <div className="flex justify-between items-start py-2 border-b border-gray-100">
+                        <span className="text-gray-600 text-sm shrink-0 mr-2">Industry</span>
+                        <span className="font-semibold text-gray-800 text-sm text-right break-words">{normalizeCase(franchise.industry)}</span>
                       </div>
-                      
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Investment</span>
-                        <span className="font-semibold text-gray-800">
-                          {franchise.minInvestment && franchise.maxInvestment 
-                            ? `${formatInvestment(franchise.minInvestment)} - ${formatInvestment(franchise.maxInvestment)}`
-                            : formatInvestment(franchise.investment)}
+
+                      <div className="flex justify-between items-start py-2 border-b border-gray-100">
+                        <span className="text-gray-600 text-sm shrink-0 mr-2">Investment</span>
+                        <span className="font-semibold text-gray-800 text-sm text-right break-words">
+                          {franchise.minInvestment && franchise.maxInvestment
+                            ? `${normalizeCase(formatInvestment(franchise.minInvestment))} - ${normalizeCase(formatInvestment(franchise.maxInvestment))}`
+                            : normalizeCase(formatInvestment(franchise.investment))}
                         </span>
                       </div>
-                      
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-gray-600">ROI</span>
-                        <span className="font-semibold text-gray-800">{franchise.roi || 'N/A'}</span>
+
+                      <div className="flex justify-between items-start py-2 border-b border-gray-100">
+                        <span className="text-gray-600 text-sm shrink-0 mr-2">Royalty</span>
+                        <span className="font-semibold text-gray-800 text-sm text-right break-words">{normalizeCase(franchise.roi || 'N/A')}</span>
                       </div>
-                      
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Outlets</span>
-                        <span className="font-semibold text-gray-800">{franchise.numberOutlets || 'N/A'}</span>
+
+                      <div className="flex justify-between items-start py-2 border-b border-gray-100">
+                        <span className="text-gray-600 text-sm shrink-0 mr-2">Outlets</span>
+                        <span className="font-semibold text-gray-800 text-sm text-right">{franchise.numberOutlets || 'N/A'}</span>
                       </div>
-                      
+
                       <div className="flex justify-between items-center py-2">
-                        <span className="text-gray-600">Status</span>
+                        <span className="text-gray-600 text-sm shrink-0 mr-2">Status</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                           franchise.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                         }`}>

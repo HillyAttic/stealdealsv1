@@ -52,6 +52,21 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
     }
   };
 
+  // Helper to normalize ALL CAPS strings to title case
+  const normalizeCase = (text: string): string => {
+    if (!text) return text;
+    // If the text is predominantly uppercase letters (more than 60% uppercase), normalize it
+    const letters = text.replace(/[^a-zA-Z]/g, '');
+    if (letters.length > 2 && letters === letters.toUpperCase() && letters !== letters.toLowerCase()) {
+      return text.replace(/\b\w+\b/g, (word) => {
+        // Preserve short abbreviations (2 chars or less) and numbers
+        if (word.length <= 2 && /^[A-Z]+$/.test(word)) return word;
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      });
+    }
+    return text;
+  };
+
   // Secure gated content functionality - Generate consistent ID like FranchiseCard
   const franchiseId = franchise?.id || `franchise-${getField('name')?.replace(/\s+/g, '-').toLowerCase()}-${getField('industry')?.replace(/\s+/g, '-').toLowerCase()}`;
   const { isContentUnlocked, unlockContent } = useSecureGatedContent('franchise');
@@ -244,11 +259,12 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
           {/* Image Gallery */}
           <div className="mb-6">
             <div className="relative">
-              <div className="h-96 relative overflow-hidden rounded-lg">
+              <div className="h-auto max-h-96 relative overflow-hidden rounded-lg">
                 <PropertyImage
                   src={images[currentImageIndex]}
                   alt={`${franchise.name} - Image ${currentImageIndex + 1}`}
                   className="rounded-lg"
+                  objectFit="contain"
                 />
                 
                 {/* Navigation arrows */}
@@ -297,8 +313,8 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                   <FaShoppingBag className="mr-2" />
                   Product/Brand
                 </h3>
-                <p className="text-2xl font-bold text-gray-900">
-                  {getField('product') || getField('name') || 'Product Information Available'}
+                <p className="text-xl font-bold text-gray-900 leading-snug break-words">
+                  {normalizeCase(getField('product') || getField('name') || 'Product Information Available')}
                 </p>
                 {getField('segment') && (
                   <p className="text-sm text-secondary mt-1">
@@ -356,41 +372,43 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4 flex flex-col">
                       <div className="bg-accent/10 p-4 rounded-lg border border-accent/20 flex-1 flex flex-col justify-between">
-                        <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                        <h4 className="font-semibold text-gray-800 mb-2 flex items-center text-sm">
                           <FaDollarSign className="mr-2 text-accent" />
                           Total Investment
                         </h4>
-                        <p className="text-2xl font-bold text-primary">
-                          {getInvestmentDisplay()}
+                        <p className="text-lg font-bold text-primary leading-snug break-words">
+                          {normalizeCase(getInvestmentDisplay())}
                         </p>
                       </div>
                       
                       <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 flex-1 flex flex-col justify-between">
-                        <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                        <h4 className="font-semibold text-gray-800 mb-2 flex items-center text-sm">
                           <FaChartLine className="mr-2 text-primary" />
                           ROI Expected
                         </h4>
-                        <p className="text-xl font-bold text-secondary">{'Contact for details'}</p>
+                        <p className="text-base font-bold text-secondary leading-snug">{'Contact for details'}</p>
                       </div>
                     </div>
 
                     <div className="space-y-4 flex flex-col">
                       <div className="bg-secondary/10 p-4 rounded-lg border border-secondary/20 flex-1 flex flex-col justify-between">
-                        <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                        <h4 className="font-semibold text-gray-800 mb-2 flex items-center text-sm">
                           <FaClock className="mr-2 text-secondary" />
                           Payback Period
                         </h4>
-                        <p className="text-lg font-semibold text-accent">
-                          {getPaybackDisplay()}
+                        <p className="text-base font-semibold text-accent leading-snug">
+                          {normalizeCase(getPaybackDisplay())}
                         </p>
                       </div>
                       
                       <div className="bg-highlight/20 p-4 rounded-lg border border-highlight/40 flex-1 flex flex-col justify-between">
-                        <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
+                        <h4 className="font-semibold text-gray-800 mb-2 flex items-center text-sm">
                           <FaHandshake className="mr-2 text-primary" />
                           Royalty Fee
                         </h4>
-                        <p className="text-lg font-semibold text-primary">{getField('royalty') || 'Contact for details'}</p>
+                        <p className="text-sm font-semibold text-primary leading-snug break-words">
+                          {normalizeCase(getField('royalty')) || 'Contact for details'}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -590,23 +608,23 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                 <div className="border-t pt-6">
                   <h4 className="text-lg font-bold text-gray-800 mb-4">Quick Stats</h4>
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="text-gray-600">Industry</span>
-                      <span className="font-semibold text-primary">{getField('industry')}</span>
+                    <div className="flex justify-between items-start py-2 border-b border-gray-100">
+                      <span className="text-gray-600 text-sm shrink-0 mr-2">Industry</span>
+                      <span className="font-semibold text-primary text-sm text-right break-words">{normalizeCase(getField('industry'))}</span>
                     </div>
-                    
-                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="text-gray-600">Investment</span>
-                      <span className="font-semibold text-secondary text-sm">{getInvestmentDisplay()}</span>
+
+                    <div className="flex justify-between items-start py-2 border-b border-gray-100">
+                      <span className="text-gray-600 text-sm shrink-0 mr-2">Investment</span>
+                      <span className="font-semibold text-secondary text-sm text-right break-words">{normalizeCase(getInvestmentDisplay())}</span>
                     </div>
-                    
-                    <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                      <span className="text-gray-600">ROI</span>
-                      <span className="font-semibold text-accent">{getField('royalty') || 'Contact for details'}</span>
+
+                    <div className="flex justify-between items-start py-2 border-b border-gray-100">
+                      <span className="text-gray-600 text-sm shrink-0 mr-2">Royalty</span>
+                      <span className="font-semibold text-accent text-sm text-right break-words">{normalizeCase(getField('royalty')) || 'Contact for details'}</span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center py-2">
-                      <span className="text-gray-600">Status</span>
+                      <span className="text-gray-600 text-sm shrink-0 mr-2">Status</span>
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                         franchise.status === 'Active' ? 'bg-primary/10 text-primary' : 'bg-highlight/50 text-secondary'
                       }`}>
