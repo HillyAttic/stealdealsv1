@@ -20,19 +20,21 @@ interface PropertyImageProps {
   fill?: boolean;
   width?: number;
   height?: number;
+  objectFit?: 'cover' | 'contain';
 }
 
 /**
  * PropertyImage component for handling various image URLs, including Dropbox links
  * Provides fallback handling and image processing for different sources
  */
-export default function PropertyImage({ 
-  src, 
-  alt, 
-  className = "", 
+export default function PropertyImage({
+  src,
+  alt,
+  className = "",
   fill = true,
-  width, 
-  height 
+  width,
+  height,
+  objectFit = 'cover'
 }: PropertyImageProps) {
   const [imageUrl, setImageUrl] = useState<string>(DEFAULT_IMAGE);
   const [hasError, setHasError] = useState(false);
@@ -113,7 +115,7 @@ export default function PropertyImage({
         alt={alt}
         fill={true}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        style={{ objectFit: 'cover' }}
+        style={{ objectFit }}
         className={className}
         onError={handleImageError}
         unoptimized={unoptimized}

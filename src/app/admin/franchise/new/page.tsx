@@ -195,38 +195,73 @@ function FranchiseForm() {
         <form id="myForm" className="needs-validation" noValidate onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <div>
-              <label htmlFor="inputIndustry" className="block text-gray-700 font-medium text-sm mb-1">Industry *</label>
-              <select 
-                id="inputIndustry" 
-                required 
-                className="form-select w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm"
-                name="industry"
-                value={franchise.industry}
-                onChange={handleChange}
-              >
-                <option disabled value="">Choose...</option>
-                <option value="Food">Food</option>
-                <option value="Retail">Retail</option>
-                <option value="Education">Education</option>
-                <option value="Sports, Fitness & Entertainments">Sports, Fitness & Entertainments</option>
-              </select>
+              <label htmlFor="inputIndustry" className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+              <div className="relative">
+                <select
+                  id="inputIndustry"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
+                  name="industry"
+                  value={franchise.industry}
+                  onChange={handleChange}
+                >
+                  <option disabled value="">Choose...</option>
+                  <option value="Education">Education</option>
+                  <option value="F&B">F&B</option>
+                  <option value="Fashion">Fashion</option>
+                  <option value="Pharmaceutical">Pharmaceutical</option>
+                  <option value="Retail">Retail</option>
+                  <option value="Sports, Fitness & Entertainments">Sports, Fitness & Entertainments</option>
+                </select>
+                <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z"></path>
+                </svg>
+              </div>
             </div>
-            
+
             <div>
-              <label htmlFor="inputSegment" className="block text-gray-700 font-medium text-sm mb-1">Segment</label>
-              <select 
-                id="inputSegment" 
-                required 
-                className="form-select w-full px-3 py-2 border border-gray-400 rounded text-gray-800 bg-white text-sm"
-                name="segment"
-                value={franchise.segment}
-                onChange={handleChange}
-              >
-                <option disabled value="">Choose...</option>
-                <option value="Fast Food">Fast Food</option>
-                <option value="Coffee Shop">Coffee Shop</option>
-                <option value="Restaurant">Restaurant</option>
-              </select>
+              <label htmlFor="inputSegment" className="block text-sm font-medium text-gray-700 mb-2">Segment</label>
+              <div className="relative">
+                <select
+                  id="inputSegment"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
+                  name="segment"
+                  value={franchise.segment}
+                  onChange={handleChange}
+                  disabled={!franchise.industry}
+                >
+                  <option value="">All Segments</option>
+                  <option value="Play Schools">Play Schools</option>
+                  <option value="Pizzeria">Pizzeria</option>
+                  <option value="Tea & Coffee">Tea & Coffee</option>
+                  <option value="Fine Dine Restaurants">Fine Dine Restaurants</option>
+                  <option value="Quick Service Restaurants">Quick Service Restaurants</option>
+                  <option value="Hospitality Services">Hospitality Services</option>
+                  <option value="Mughlai">Mughlai</option>
+                  <option value="Bakery, Sweets & Ice Creams">Bakery, Sweets & Ice Creams</option>
+                  <option value="Express Food Joints / Drive Through">Express Food Joints / Drive Through</option>
+                  <option value="Multi Cuisine Restaurants">Multi Cuisine Restaurants</option>
+                  <option value="Bars, Pubs & Lounge">Bars, Pubs & Lounge</option>
+                  <option value="Clothing">Clothing</option>
+                  <option value="Footwear">Footwear</option>
+                  <option value="Labs">Labs</option>
+                  <option value="Chemist Shops">Chemist Shops</option>
+                  <option value="Opticals">Opticals</option>
+                  <option value="Home Decor">Home Decor</option>
+                  <option value="Grocery">Grocery</option>
+                  <option value="Supermarkets & Marts">Supermarkets & Marts</option>
+                  <option value="Gift & Toys">Gift & Toys</option>
+                  <option value="Laundary Services">Laundary Services</option>
+                  <option value="Gymnasium">Gymnasium</option>
+                </select>
+                <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z"></path>
+                </svg>
+              </div>
+              {!franchise.industry && (
+                <p className="text-xs text-gray-500 mt-1">Select a category first</p>
+              )}
             </div>
           </div>
           
