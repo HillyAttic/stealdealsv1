@@ -91,6 +91,24 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
 
+  // Helper function to add timeout to fetch calls
+  const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs = 15000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     // Clean any Bitdefender attributes if the global cleaner function exists
     if (window.__cleanBitdefenderAttributes) {
@@ -100,40 +118,52 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
     // Check if user is authenticated and get permissions
     const checkAuthAndPermissions = async () => {
       try {
-        // First verify basic authentication
-        const authResponse = await fetch('/api/auth/check', {
+        console.log('[AdminLayout] Starting authentication check...');
+
+        // First verify basic authentication with timeout
+        const authResponse = await fetchWithTimeout('/api/auth/check', {
           method: 'GET',
           credentials: 'include',
-        });
+        }, 15000); // 15 second timeout
+
+        console.log('[AdminLayout] Auth check response status:', authResponse.status);
 
         if (!authResponse.ok) {
-          console.log('Basic authentication failed - redirecting to login');
+          console.log('[AdminLayout] Basic authentication failed - redirecting to login');
           router.push('/admin/login');
           return false;
         }
 
         const authData = await authResponse.json();
+        console.log('[AdminLayout] Auth check data:', authData);
+
         if (!authData.authenticated || !authData.user) {
-          console.log('User not authenticated - redirecting to login');
+          console.log('[AdminLayout] User not authenticated - redirecting to login');
           router.push('/admin/login');
           return false;
         }
 
-        // Now get detailed permissions
-        const permissionsResponse = await fetch('/api/auth/verify-permissions', {
+        console.log('[AdminLayout] Fetching detailed permissions...');
+
+        // Now get detailed permissions with timeout
+        const permissionsResponse = await fetchWithTimeout('/api/auth/verify-permissions', {
           method: 'GET',
           credentials: 'include',
-        });
+        }, 15000); // 15 second timeout
+
+        console.log('[AdminLayout] Permissions response status:', permissionsResponse.status);
 
         if (!permissionsResponse.ok) {
-          console.log('Failed to get permissions - redirecting to login');
+          console.log('[AdminLayout] Failed to get permissions - redirecting to login');
           router.push('/admin/login');
           return false;
         }
 
         const permissionsData = await permissionsResponse.json();
+        console.log('[AdminLayout] Permissions data:', permissionsData);
+
         if (!permissionsData.success || !permissionsData.user) {
-          console.log('Invalid permissions response - redirecting to login');
+          console.log('[AdminLayout] Invalid permissions response - redirecting to login');
           router.push('/admin/login');
           return false;
         }
@@ -218,7 +248,17 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         setIsAuthChecking(false);
         return true;
       } catch (error) {
-        console.error('Error checking authentication and permissions:', error);
+        console.error('[AdminLayout] Error checking authentication and permissions:', error);
+
+        // Provide more specific error messages
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            console.error('[AdminLayout] Request timed out - this usually indicates a server or database connection issue');
+          } else {
+            console.error('[AdminLayout] Error details:', error.message);
+          }
+        }
+
         router.push('/admin/login');
         return false;
       } finally {

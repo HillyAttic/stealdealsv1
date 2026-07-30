@@ -96,7 +96,7 @@ function AdminLoginContent() {
       // Sign in with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
       const idToken = await userCredential.user.getIdToken();
-      
+
       // Send the Firebase ID token to our backend for verification
       const response = await fetch('/api/auth/verify-firebase-token', {
         method: 'POST',
@@ -117,37 +117,77 @@ function AdminLoginContent() {
         throw new Error(data.error || 'Login failed');
       }
 
-      console.log('Login successful');
-      
+      console.log('Firebase login successful');
+
       // Note: The HTTP-only cookies are set by the server
       // We only need to set the non-HTTP-only ones for client access
       if (data.user) {
         Cookies.set('adminUser', JSON.stringify(data.user), {
           expires: 1,
           path: '/',
-          sameSite: 'lax', // Changed from strict to lax for better compatibility
+          sameSite: 'lax',
           secure: process.env.NODE_ENV === 'production'
         });
       }
-      
+
       // Wait a moment to ensure cookies are processed
       setTimeout(() => {
-        // Redirect to admin dashboard
         router.push('/admin/dashboard');
       }, 500);
     } catch (err: any) {
-      console.error('Login error:', err);
-      
-      // Provide more specific error messages
+      console.error('Firebase login error:', err);
+
+      // If Firebase auth fails with user-not-found, try env var fallback
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        console.log('[Login] Firebase auth failed, trying env var fallback...');
+        try {
+          const envResponse = await fetch('/api/auth/verify-firebase-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              email: formData.email,
+              password: formData.password
+            }),
+          });
+
+          const envData = await envResponse.json();
+
+          if (envResponse.ok && envData.success) {
+            console.log('[Login] Env var fallback authentication successful');
+            if (envData.user) {
+              Cookies.set('adminUser', JSON.stringify(envData.user), {
+                expires: 1,
+                path: '/',
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production'
+              });
+            }
+            setTimeout(() => {
+              router.push('/admin/dashboard');
+            }, 500);
+            return; // Don't fall through to error display
+          } else {
+            // Env var auth also failed - use the error from the server
+            setError(envData.error || 'Invalid email or password');
+            return;
+          }
+        } catch (envErr: any) {
+          console.error('[Login] Env var fallback error:', envErr);
+          // Fall through to original Firebase error
+        }
+      }
+
+      // Provide more specific error messages for Firebase errors
       let errorMessage = 'Authentication failed';
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         errorMessage = 'Invalid email or password';
       } else if (err.code === 'auth/user-disabled') {
         errorMessage = 'This account has been disabled';
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
