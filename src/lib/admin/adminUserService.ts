@@ -68,16 +68,32 @@ export class AdminUserService {
    */
   static async getAdminUser(uid: string): Promise<AdminUser | null> {
     try {
-      // Try new path first
-      let snapshot = await database.ref(`adminUsers/${uid}`).once('value');
+      console.log('[AdminUserService] Fetching admin user:', uid);
 
-      // Fallback to legacy path
+      // Helper function to add timeout to RTDB queries
+      const queryWithTimeout = async (ref: any, timeoutMs = 10000): Promise<any> => {
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error(`RTDB query timeout after ${timeoutMs}ms`)), timeoutMs);
+        });
+
+        return Promise.race([ref.once('value'), timeoutPromise]);
+      };
+
+      // Try new path first with timeout
+      let snapshot = await queryWithTimeout(database.ref(`adminUsers/${uid}`), 10000);
+
+      console.log('[AdminUserService] adminUsers path exists:', snapshot.exists());
+
+      // Fallback to legacy path with timeout
       if (!snapshot.exists()) {
-        snapshot = await database.ref(`${this.ADMIN_USERS_PATH}/${uid}`).once('value');
+        snapshot = await queryWithTimeout(database.ref(`${this.ADMIN_USERS_PATH}/${uid}`), 10000);
+        console.log('[AdminUserService] admin_users path exists:', snapshot.exists());
       }
 
       let userData = snapshot.val() as AdminUser | null;
-      
+
+      console.log('[AdminUserService] User data found:', !!userData);
+
       // Ensure new permissions are added to existing users
       if (userData && userData.permissions && userData.permissions.pages) {
         // Add missing permissions with default values
@@ -93,20 +109,30 @@ export class AdminUserService {
           analytics: userData.permissions.pages.analytics ?? false,
           migration: userData.permissions.pages.migration ?? false,
         };
-        
+
         // Update the user data if new permissions were added
         if (JSON.stringify(updatedPages) !== JSON.stringify(userData.permissions.pages)) {
           userData.permissions.pages = updatedPages;
-          
+
           // Update the database with the new permissions structure
-          await database.ref(`${this.ADMIN_USERS_PATH}/${uid}/permissions/pages`).update(updatedPages);
-          await database.ref(`adminUsers/${uid}/permissions/pages`).update(updatedPages);
+          await Promise.all([
+            database.ref(`${this.ADMIN_USERS_PATH}/${uid}/permissions/pages`).update(updatedPages),
+            database.ref(`adminUsers/${uid}/permissions/pages`).update(updatedPages)
+          ]);
         }
       }
-      
+
       return userData;
     } catch (error) {
-      console.error('Error fetching admin user:', error);
+      console.error('[AdminUserService] Error fetching admin user:', error);
+
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          console.error('[AdminUserService] Firebase RTDB query timed out - check database connection');
+        }
+      }
+
       return null;
     }
   }
