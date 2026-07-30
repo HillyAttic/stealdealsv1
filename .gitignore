@@ -27,3 +27,4 @@ src/components/wishlist/ImprovedWishlistButton.tsx
 
 # Google Cloud Service Account (sensitive credentials)
 service-account.json
+.env*
