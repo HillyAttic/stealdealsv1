@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
             })
           }
         ),
-        10000, // 10 second timeout
+        5000, // 5 second timeout
         'Firebase token verification timed out'
       );
 
@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
         console.log('[Auth] Fetching user permissions from database for userId:', userId);
 
         // Helper function to add timeout to RTDB queries
-        const queryWithTimeout = async (ref: any, timeoutMs = 8000): Promise<any> => {
+        const queryWithTimeout = async (ref: any, timeoutMs = 5000): Promise<any> => {
           const timeoutPromise = new Promise<never>((_, reject) => {
             setTimeout(() => reject(new Error(`RTDB query timeout after ${timeoutMs}ms`)), timeoutMs);
           });
@@ -213,16 +213,16 @@ export async function POST(request: NextRequest) {
         // Check both paths simultaneously for better performance with timeout
         const [adminUsersSnapshot, oldAdminUsersSnapshot] = await withTimeout(
           Promise.all([
-            queryWithTimeout(adminDb.ref(`adminUsers/${userId}`), 8000).catch((err) => {
+            queryWithTimeout(adminDb.ref(`adminUsers/${userId}`), 5000).catch((err) => {
               console.error('[Auth] Error querying adminUsers path:', err.message);
               return null;
             }),
-            queryWithTimeout(adminDb.ref(`admin_users/${userId}`), 8000).catch((err) => {
+            queryWithTimeout(adminDb.ref(`admin_users/${userId}`), 5000).catch((err) => {
               console.error('[Auth] Error querying admin_users path:', err.message);
               return null;
             })
           ]),
-          10000, // 10 second timeout for database operations
+          6000, // 6 second timeout for database operations
           'Database lookup timed out'
         );
 

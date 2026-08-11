@@ -14,7 +14,7 @@ try {
     const lines = netstatOutput.split('\n').filter(line => line.trim());
     for (const line of lines) {
       const parts = line.trim().split(/\s+/);
-      const pid = parts[parts.length - 1];
+      const pid = parts[parts.length - 1];j
       if (pid && pid !== '0') {
         try {
           execSync(`taskkill /f /pid ${pid}`, { stdio: 'ignore' });

@@ -1,6 +1,6 @@
 # ImageUploader Component
 
-A reusable React component for uploading images to ImgBB and automatically generating URLs for forms.
+A reusable React component for uploading images to **Firebase Storage** and automatically generating URLs for forms.
 
 ## Features
 
@@ -9,6 +9,7 @@ A reusable React component for uploading images to ImgBB and automatically gener
 - **Visual Feedback**: Loading states, success/error messages, and copy-to-clipboard functionality
 - **Responsive Design**: Works well on all screen sizes
 - **Type Safe**: Written in TypeScript with proper type definitions
+- **Firebase Storage**: Images stored securely in your own Firebase Storage bucket
 
 ## Usage
 
@@ -31,14 +32,14 @@ const handleImageUrlGenerated = (url: string) => {
 
 // In your JSX
 <div className="flex items-center space-x-2">
-  <input 
+  <input
     type="text"
     value={imageUrl}
     onChange={handleInputChange}
     className="w-full px-3 py-2 border border-gray-300 rounded"
     placeholder="Enter image URL"
   />
-  <ImageUploader 
+  <ImageUploader
     onImageUrlGenerated={handleImageUrlGenerated}
     disabled={isLoading}
   />
@@ -60,19 +61,36 @@ The component is designed to work seamlessly with existing form input fields. Wh
 
 ## Setup
 
-### Environment Variables
+### Firebase Configuration
 
-Add your ImgBB API key to `.env.local`:
+Firebase Storage is configured via the existing Firebase config in `src/lib/firebase.ts`. Ensure these environment variables are set:
 
 ```env
-NEXT_PUBLIC_IMGBB_API_KEY=your_api_key_here
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.firebasestorage.app
+```
+
+### Firebase Storage Security Rules
+
+Set these rules in your Firebase Console (Firestore > Storage > Rules):
+
+```
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /uploads/{imageId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
 ```
 
 ### Dependencies
 
 The component uses:
 - React hooks (useState, useRef)
-- ImgBB API for image hosting
+- Firebase Storage SDK (`firebase/storage`)
 - Tailwind CSS for styling
 
 ## Examples
@@ -145,11 +163,8 @@ The component uses Tailwind CSS classes and can be customized by:
 2. Modifying the component's internal styles
 3. Using CSS modules for more specific styling
 
-### API Integration
-To use a different image hosting service:
-1. Modify the `API_KEY` and upload URL in the component
-2. Update the response handling logic
-3. Adjust the `UploadResponse` interface accordingly
+### Storage Provider
+The component uses Firebase Storage. Images are uploaded to the `uploads/` directory in your Firebase Storage bucket with a timestamp-based filename for uniqueness.
 
 ## Error Handling
 
@@ -171,3 +186,5 @@ The component includes:
 - Generated URLs are immediately available for copying
 - Upload progress is shown with a loading spinner
 - Success messages auto-disappear after 3 seconds
+- Images are stored in Firebase Storage at `uploads/{timestamp}-{filename}`
+- Existing ImgBB URLs in the database will continue to work (they're just URLs)

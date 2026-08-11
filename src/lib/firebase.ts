@@ -2,7 +2,9 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, set, get, push, child, update, remove, DataSnapshot } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 import { validateConfigOrThrow, logConfigValidation } from '@/lib/config/validation';
+import { sortByNewest } from '@/lib/sort';
 
 // Validate environment configuration before initializing Firebase
 try {
@@ -58,6 +60,7 @@ if (missingFields.length > 0) {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const database = getDatabase(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 // Properties collection references - migrated to type-organized structure
 const propertiesRef = ref(database, 'properties'); // Legacy reference for backward compatibility
@@ -77,6 +80,7 @@ export {
   app,
   database,
   auth,
+  storage,
   propertiesRef,
   vacantPropertiesRef,
   preleasedPropertiesRef,
@@ -494,7 +498,9 @@ export async function getVacantProperties(): Promise<Property[]> {
     }
 
     console.log(`[Firebase] Found ${properties.length} vacant properties in migrated collection`);
-    return properties;
+
+    // Sort newest-first by creation date so freshly added properties appear at the top
+    return sortByNewest(properties);
   } catch (error) {
     console.error('Error fetching vacant properties from Firebase:', error);
     throw error;
@@ -520,7 +526,9 @@ export async function getPreleasedProperties(): Promise<Property[]> {
     }
 
     console.log(`[Firebase] Found ${properties.length} preleased properties in migrated collection`);
-    return properties;
+
+    // Sort newest-first by creation date so freshly added properties appear at the top
+    return sortByNewest(properties);
   } catch (error) {
     console.error('Error fetching preleased properties from Firebase:', error);
     throw error;
@@ -1075,17 +1083,21 @@ export async function getAllFranchises(): Promise<Franchise[]> {
           const details = data.franchiseDetails || {};
 
           // Convert migrated structure back to expected franchise format
+          // IMPORTANT: Spread ...data FIRST, then explicitly map fields AFTER so
+          // our normalized values (and childSnapshot.key) always win.
+          // This prevents a stored `id` field inside data from overwriting the actual Firebase key.
           const franchiseData = {
+            ...data,
+            // Always use the actual Firebase key as the ID — never let stored data.id override it
             id: childSnapshot.key,
+            // Normalized fields with franchiseDetails priority
             name: data.title || data.name || details.name || details.brand || 'Franchise Name',
-            // Extract all fields from franchiseDetails
             industry: details.industry || data.industry || 'Not specified',
             segment: details.segment || data.segment || '',
             product: details.product || data.product || '',
             model: details.model || data.model || '',
             minArea: details.minArea || data.minArea || '',
             maxArea: details.maxArea || data.maxArea || '',
-            // Preserve original investment strings for proper display
             minInvestment: details.minInvestment || data.minInvestment || '',
             maxInvestment: details.maxInvestment || data.maxInvestment || '',
             royalty: details.royalty || data.royalty || 'Not specified',
@@ -1095,18 +1107,14 @@ export async function getAllFranchises(): Promise<Franchise[]> {
             minPaybackPeriod: details.minPaybackPeriod || data.minPaybackPeriod || '',
             maxPaybackPeriod: details.maxPaybackPeriod || data.maxPaybackPeriod || '',
             headquarter: details.headquarter || data.headquarter || data.location || 'Location not specified',
-            // Legacy fields for compatibility - preserve original investment text
             investment: data.price || details.minInvestment || '',
             location: data.location || details.headquarter || 'Location not specified',
             status: 'Active',
             roi: details.royalty || 'Varies',
             description: data.description || '',
             image: data.images?.[0] || data.image || '',
-            // Additional fields
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
-            // Include all original data for any missing fields
-            ...data
           };
           franchises.push(franchiseData);
           console.log(`  ✅ Added migrated franchise: ${franchiseData.name} (${franchiseData.industry})`);
@@ -1125,9 +1133,10 @@ export async function getAllFranchises(): Promise<Franchise[]> {
         console.log("Processing legacy franchise item with key:", childSnapshot.key);
         const data = childSnapshot.val();
         if (data && typeof data === 'object' && 'name' in data) {
+          // Spread data FIRST then override id so stored data.id never masks the Firebase key
           franchises.push({
+            ...data,
             id: childSnapshot.key,
-            ...data
           });
           console.log(`  ✅ Added legacy franchise: ${data.name}`);
         }
@@ -1137,7 +1146,9 @@ export async function getAllFranchises(): Promise<Franchise[]> {
     }
 
     console.log("Returning", franchises.length, "franchises");
-    return franchises;
+
+    // Sort newest-first by creation date so freshly added franchises appear at the top
+    return sortByNewest(franchises);
   } catch (error) {
     console.error('Error fetching franchises from Firebase:', error);
     throw error;
@@ -1217,7 +1228,9 @@ export async function getAllPlots(): Promise<Plot[]> {
     }
 
     console.log("Returning", plots.length, "plots");
-    return plots;
+
+    // Sort newest-first by creation date so freshly added plots appear at the top
+    return sortByNewest(plots);
   } catch (error) {
     console.error('Error fetching plots from Firebase:', error);
     throw error;

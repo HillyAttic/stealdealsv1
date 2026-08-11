@@ -8,6 +8,7 @@ import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-ico
 import { BsBuilding } from 'react-icons/bs';
 import ClientOnly from '@/components/ClientOnly';
 import { Plot } from '@/lib/firebase';
+import { PlotModal } from '@/components/plots';
 
 export default function PlotsAdmin() {
   return (
@@ -33,6 +34,8 @@ function PlotsAdminContent() {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Check authentication and load plots
   useEffect(() => {
@@ -231,14 +234,16 @@ function PlotsAdminContent() {
                     </td>
                     <td className="px-3 py-3 text-sm font-medium whitespace-nowrap">
                       <div className="flex space-x-2">
-                        <Link
-                          href={`/plots/${plot.id}`}
+                        <button
+                          onClick={() => {
+                            setSelectedPlot(plot);
+                            setIsModalOpen(true);
+                          }}
                           className="text-indigo-600 hover:text-indigo-900 p-1"
-                          target="_blank"
                           title="View Plot"
                         >
                           <FaEye />
-                        </Link>
+                        </button>
                         <Link
                           href={`/admin/plots/edit/${plot.id}`}
                           className="text-yellow-600 hover:text-yellow-900 p-1"
@@ -265,6 +270,16 @@ function PlotsAdminContent() {
           </>
         )}
         
+        {/* Plot Detail Modal */}
+        <PlotModal
+          plot={selectedPlot}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedPlot(null);
+          }}
+        />
+
         {/* Delete Confirmation Modal */}
         {deleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

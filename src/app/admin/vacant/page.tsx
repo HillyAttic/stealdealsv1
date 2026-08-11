@@ -1,14 +1,19 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
-import { database, Property, vacantPropertiesRef, migratedVacantRef, deleteProperty } from '@/lib/firebase';
-import { ref, onValue, remove } from 'firebase/database';
+import { Property, migratedVacantRef } from '@/lib/firebase';
+import { ref, get } from 'firebase/database';
+import { database } from '@/lib/firebase';
 import ClientOnly from '@/components/ClientOnly';
+import { sortByNewest } from '@/lib/sort';
+import { VacantModal } from '@/components/vacant';
+
+const PAGE_SIZE = 50;
 
 export default function VacantPropertiesPage() {
   return (
@@ -34,155 +39,82 @@ function VacantPropertiesContent() {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const loadInProgress = useRef(false);
 
-  // Load properties from Firebase
-  useEffect(() => {
-    // Check authentication via API call
-    const checkAuthAndLoadData = async () => {
-      try {
-        // Verify authentication
-        const authResponse = await fetch('/api/auth/check', {
-          method: 'GET',
-          credentials: 'include' // Include cookies
-        });
+  // Load properties from Firebase - single optimized read
+  const loadProperties = useCallback(async () => {
+    if (loadInProgress.current) return;
+    loadInProgress.current = true;
+    
+    try {
+      setIsLoading(true);
+      setError('');
 
-        if (!authResponse.ok) {
-          throw new Error('Authentication failed');
-        }
-        
-        // Set up real-time listener
-        setIsLoading(true);
-        
-        const allProperties = new Map<string, Property>();
-        
-        // Set up listener for migrated vacant properties (primary source)
-        const migratedListener = onValue(migratedVacantRef, (snapshot) => {
-          console.log('Migrated vacant properties updated');
-          if (snapshot.exists()) {
-            snapshot.forEach((childSnapshot) => {
-              const propertyData = childSnapshot.val();
-              let property = { 
-                ...propertyData,
-                id: childSnapshot.key || propertyData.id || '',
-                source: 'migrated'
-              };
-              
-              // Handle nested structure from migration
-              if (propertyData.vacantDetails) {
-                const details = propertyData.vacantDetails;
-                property = {
-                  ...property,
-                  category: details.category || propertyData.category || 'Vacant',
-                  city: details.city || propertyData.city || '',
-                  state: details.state || propertyData.state || '',
-                  district: details.district || propertyData.district || '',
-                  floor: details.floor || propertyData.floor || '',
-                  facing: details.facing || propertyData.facing || '',
-                  carpetArea: details.carpetArea || propertyData.carpetArea || '',
-                  superArea: details.superArea || propertyData.superArea || '',
-                  rent: details.rent || propertyData.rent || propertyData.price || 0,
-                  contactName: details.contactName || propertyData.contactName || '',
-                  contactNumber: details.contactNumber || propertyData.contactNumber || '',
-                  reference: details.reference || propertyData.reference || '',
-                  propertyType: details.propertyType || propertyData.propertyType || 'Vacant'
-                };
-              }
-              
-              allProperties.set(property.id, property as Property);
-            });
+      // Single read from migrated collection only (no legacy fallback needed)
+      const snapshot = await get(migratedVacantRef);
+      
+      if (snapshot.exists()) {
+        const allProperties: Property[] = [];
+        snapshot.forEach((childSnapshot) => {
+          const propertyData = childSnapshot.val();
+          let property = { 
+            ...propertyData,
+            id: childSnapshot.key || propertyData.id || '',
+            source: 'migrated'
+          };
+          
+          // Handle nested structure from migration
+          if (propertyData.vacantDetails) {
+            const details = propertyData.vacantDetails;
+            property = {
+              ...property,
+              category: details.category || propertyData.category || 'Vacant',
+              city: details.city || propertyData.city || '',
+              state: details.state || propertyData.state || '',
+              district: details.district || propertyData.district || '',
+              floor: details.floor || propertyData.floor || '',
+              facing: details.facing || propertyData.facing || '',
+              carpetArea: details.carpetArea || propertyData.carpetArea || '',
+              superArea: details.superArea || propertyData.superArea || '',
+              rent: details.rent || propertyData.rent || propertyData.price || 0,
+              contactName: details.contactName || propertyData.contactName || '',
+              contactNumber: details.contactNumber || propertyData.contactNumber || '',
+              reference: details.reference || propertyData.reference || '',
+              propertyType: details.propertyType || propertyData.propertyType || 'Vacant'
+            };
           }
-          updatePropertiesList();
-        }, (error) => {
-          console.error("Error fetching migrated properties:", error);
-          setError('Failed to load migrated properties. Please try again later.');
-          setIsLoading(false);
+          
+          allProperties.push(property as Property);
         });
         
-        // Set up listener for legacy vacant properties (fallback source)
-        const legacyVacantListener = onValue(vacantPropertiesRef, (snapshot) => {
-          console.log('Legacy vacant properties updated');
-          if (snapshot.exists()) {
-            snapshot.forEach((childSnapshot) => {
-              const propertyData = childSnapshot.val();
-              const property = { 
-                ...propertyData,
-                id: childSnapshot.key || propertyData.id || '',
-                source: 'legacy'
-              };
-              
-              // Only add if not already present from migrated collection
-              if (!allProperties.has(property.id)) {
-                allProperties.set(property.id, property as Property);
-              }
-            });
-          }
-          updatePropertiesList();
-        }, (error) => {
-          console.error("Error fetching legacy vacant properties:", error);
-        });
-        
-        // Set up listener for general legacy properties
-        const legacyPropertiesRef = ref(database, 'properties');
-        const generalLegacyListener = onValue(legacyPropertiesRef, (snapshot) => {
-          console.log('General legacy properties updated');
-          if (snapshot.exists()) {
-            snapshot.forEach((childSnapshot) => {
-              const propertyData = childSnapshot.val();
-              if (propertyData.propertyType === 'Vacant') {
-                const property = {
-                  ...propertyData,
-                  id: childSnapshot.key || propertyData.id || '',
-                  source: 'legacy-general'
-                };
-                
-                // Only add if not already present
-                if (!allProperties.has(property.id)) {
-                  allProperties.set(property.id, property as Property);
-                }
-              }
-            });
-          }
-          updatePropertiesList();
-        }, (error) => {
-          console.error("Error fetching general legacy properties:", error);
-        });
-        
-        // Function to update the properties list from the combined map
-        function updatePropertiesList() {
-          const propertiesList = Array.from(allProperties.values());
-          console.log(`Updated properties list with ${propertiesList.length} items`);
-          setProperties(propertiesList);
-          setIsLoading(false);
-        }
-        
-        // Return a cleanup function
-        return () => {
-          // Properly unsubscribe from the Firebase listeners
-          migratedListener();
-          legacyVacantListener();
-          generalLegacyListener();
-        };
-      } catch (err) {
-        console.error("Auth check failed:", err);
-        router.push('/admin/login');
-        return () => {}; // Return empty cleanup function for this case
+        const sorted = sortByNewest(allProperties);
+        setTotalCount(sorted.length);
+        // Only show first page of results
+        setProperties(sorted.slice(0, PAGE_SIZE));
+      } else {
+        setProperties([]);
+        setTotalCount(0);
       }
-    };
-    
-    // Setup listeners and store cleanup function
-    let cleanup: (() => void) | undefined;
-    
-    checkAuthAndLoadData().then(cleanupFn => {
-      cleanup = cleanupFn;
-    });
-    
-    // Return a cleanup function for useEffect
-    return () => {
-      if (cleanup) cleanup();
-    };
-  }, [router]);
+    } catch (err) {
+      console.error("Error fetching properties:", err);
+      setError('Failed to load properties. Please try again later.');
+    } finally {
+      setIsLoading(false);
+      loadInProgress.current = false;
+    }
+  }, []);
 
-  // Filter properties based on search term
+  // Load on mount
+  useEffect(() => {
+    loadProperties();
+  }, [loadProperties]);
+
+  // Filter properties based on search term (client-side for current page)
   const filteredProperties = properties.filter(property =>
     property.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     property.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -192,20 +124,20 @@ function VacantPropertiesContent() {
 
   // Handle delete property
   const handleDelete = async (id: string) => {
-    if (!id) {
-      setError('Cannot delete property: Missing property ID');
-      setDeleteConfirm(null);
-      return;
-    }
+    if (!id || isDeleting) return;
+    setIsDeleting(true);
     
     try {
-      // Delete from Firebase using the deleteProperty helper function
+      const { deleteProperty } = await import('@/lib/firebase');
       await deleteProperty(id, 'Vacant');
       setDeleteConfirm(null);
-      setError(''); // Clear any previous errors
+      // Refresh the list after deletion
+      await loadProperties();
     } catch (err: any) {
       console.error('Delete error:', err);
       setError(err.message || 'Failed to delete property');
+    } finally {
+      setIsDeleting(false);
     }
   };
   
@@ -215,6 +147,8 @@ function VacantPropertiesContent() {
     if (!numAmount || isNaN(numAmount)) return 'Contact for Price';
     return `₹${numAmount.toLocaleString('en-IN')}`;
   };
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   return (
     <>
@@ -260,7 +194,7 @@ function VacantPropertiesContent() {
         <>
           <div className="mb-4">
             <p className="text-gray-600">
-              Showing {filteredProperties.length} of {properties.length} properties
+              Showing {filteredProperties.length} of {totalCount} properties
             </p>
           </div>
           
@@ -268,12 +202,12 @@ function VacantPropertiesContent() {
             <div className="text-center py-20">
               <BsBuilding className="text-gray-300 text-6xl mx-auto mb-4" />
               <h3 className="text-xl text-gray-600 mb-2">
-                {properties.length === 0 ? 'No properties found' : 'No matching properties'}
+                {totalCount === 0 ? 'No properties found' : 'No matching properties'}
               </h3>
               <p className="text-gray-500 mb-4">
-                {properties.length === 0 ? 'Add your first vacant property' : 'Try adjusting your search criteria'}
+                {totalCount === 0 ? 'Add your first vacant property' : 'Try adjusting your search criteria'}
               </p>
-              {properties.length === 0 && (
+              {totalCount === 0 && (
                 <Link
                   href="/admin/vacant/new"
                   className="px-4 py-2 bg-blue-900 text-white rounded hover:bg-blue-800"
@@ -343,14 +277,16 @@ function VacantPropertiesContent() {
                         </td>
                         <td className="px-3 py-3 text-sm font-medium whitespace-nowrap">
                           <div className="flex space-x-2">
-                            <Link
-                              href={`/vacant/${property.id}`}
+                            <button
+                              onClick={() => {
+                                setSelectedProperty(property);
+                                setIsModalOpen(true);
+                              }}
                               className="text-indigo-600 hover:text-indigo-900 p-1"
-                              target="_blank"
                               title="View Property"
                             >
                               <FaEye />
-                            </Link>
+                            </button>
                             {property.id ? (
                               <Link
                                 href={`/admin/vacant/edit/${property.id}`}
@@ -371,7 +307,7 @@ function VacantPropertiesContent() {
                               onClick={() => setDeleteConfirm(property.id || null)}
                               className="text-red-600 hover:text-red-900 p-1"
                               title={property.id ? "Delete Property" : "Cannot delete: Missing ID"}
-                              disabled={!property.id}
+                              disabled={!property.id || isDeleting}
                             >
                               <FaTrash className={!property.id ? 'opacity-50' : ''} />
                             </button>
@@ -384,9 +320,54 @@ function VacantPropertiesContent() {
               </div>
             </div>
           )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow-md">
+              <div className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    const newPage = Math.max(1, currentPage - 1);
+                    setCurrentPage(newPage);
+                    const start = (newPage - 1) * PAGE_SIZE;
+                    // Reload from cache or fetch
+                    loadProperties();
+                  }}
+                  disabled={currentPage <= 1}
+                  className="px-3 py-1 border rounded text-sm disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => {
+                    const newPage = Math.min(totalPages, currentPage + 1);
+                    setCurrentPage(newPage);
+                    loadProperties();
+                  }}
+                  disabled={currentPage >= totalPages}
+                  className="px-3 py-1 border rounded text-sm disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
       
+      {/* Vacant Property Detail Modal */}
+      <VacantModal
+        vacant={selectedProperty}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedProperty(null);
+        }}
+      />
+
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-gradient-to-br from-black/40 via-black/50 to-black/60 backdrop-blur-sm flex items-center justify-center z-50">
@@ -398,9 +379,10 @@ function VacantPropertiesContent() {
             <div className="flex space-x-4">
               <button
                 onClick={() => handleDelete(deleteConfirm)}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 backdrop-blur-sm"
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 backdrop-blur-sm disabled:opacity-50"
               >
-                Delete
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
               <button
                 onClick={() => setDeleteConfirm(null)}
@@ -414,4 +396,4 @@ function VacantPropertiesContent() {
       )}
     </>
   );
-} 
+}

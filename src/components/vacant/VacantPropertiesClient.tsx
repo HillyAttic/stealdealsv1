@@ -7,6 +7,7 @@ import { VacantModal } from '@/components/vacant';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { FaSearch, FaFilter, FaBuilding, FaMapMarkerAlt, FaRulerCombined, FaChevronDown, FaChevronUp, FaSort, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
 import { Property } from '@/lib/firebase';
+import { sortByNewest, getCreatedTimestamp } from '@/lib/sort';
 import { useActivity } from '@/hooks/useActivity';
 
 interface VacantPropertiesClientProps {
@@ -75,7 +76,7 @@ export default function VacantPropertiesClient({ properties }: VacantPropertiesC
       return matchesSearch && matchesCategory && matchesCity && matchesPropertyType && matchesPrice && matchesArea;
     });
 
-    // Sort filtered properties
+    // Sort filtered properties (default is newest-first by creation date)
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case 'price-low':
@@ -89,7 +90,7 @@ export default function VacantPropertiesClient({ properties }: VacantPropertiesC
         case 'name':
           return (a.location || '').localeCompare(b.location || '');
         default:
-          return 0;
+          return getCreatedTimestamp(b) - getCreatedTimestamp(a);
       }
     });
   }, [properties, searchTerm, selectedCategory, selectedCity, selectedPropertyType, minPrice, maxPrice, minArea, maxArea, sortBy]);

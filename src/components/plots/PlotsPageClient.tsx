@@ -6,6 +6,7 @@ import { PlotSuccessMessage } from '@/components/plots/PlotSuccessMessage';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { FaSearch, FaFilter, FaBuilding, FaChevronDown } from 'react-icons/fa';
 import { Plot } from '@/lib/firebase';
+import { sortByNewest } from '@/lib/sort';
 
 interface PlotsPageClientProps {
   plots: Plot[];
@@ -66,9 +67,9 @@ export default function PlotsPageClient({ plots }: PlotsPageClientProps) {
     { label: 'Above ₹10 Crores', min: 100000000, max: Infinity }
   ];
 
-  // Memoized filtered plots
+  // Memoized filtered plots (newest-first by default)
   const filteredPlots = useMemo(() => {
-    return plots.filter(plot => {
+    return sortByNewest(plots).filter(plot => {
       const searchStr = searchTerm.toLowerCase();
       const matchesSearch = 
         (plot.project?.toLowerCase().includes(searchStr) || '') ||

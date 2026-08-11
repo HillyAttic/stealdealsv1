@@ -221,7 +221,7 @@ export default function WishlistAnalyticsPage() {
     if (autoRefreshEnabled) {
       refreshInterval = setInterval(() => {
         fetchWishlistStats(true); // Background refresh
-      }, 30000); // Refresh every 30 seconds
+      }, 300000); // Refresh every 5 minutes (reduced from 30s for performance)
     }
 
     // Cleanup function

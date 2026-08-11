@@ -18,13 +18,18 @@ export async function GET(
     const id = await resolveIdParam(params);
     console.log(`[API] 🎯 Resolved franchise ID: ${id}`);
     
-    // ONLY check the migrated structure (primary location) for performance
-    const migratedFranchisePathRef = child(migratedFranchiseRef, id);
-    console.log(`[API] 🔥 Trying migrated path: migratedProperties/franchise/${id}`);
-    
-    const migratedSnapshot = await get(migratedFranchisePathRef);
+    // Check migrated structure first (new location)
+    let franchiseRef = child(migratedFranchiseRef, id);
+    let migratedSnapshot = await get(franchiseRef);
     console.log(`[API] 📊 Migrated snapshot exists: ${migratedSnapshot.exists()}`);
-    
+
+    // If not found in migrated structure, check legacy structure
+    if (!migratedSnapshot.exists()) {
+      franchiseRef = ref(database, `franchiseProperties/${id}`);
+      migratedSnapshot = await get(franchiseRef);
+      console.log(`[API] 📊 Legacy snapshot exists: ${migratedSnapshot.exists()}`);
+    }
+
     if (migratedSnapshot.exists()) {
       const franchiseData = migratedSnapshot.val();
       console.log(`[API] ✅ Found franchise in migrated location: ${franchiseData?.title || franchiseData?.name || 'Unknown'}`);
@@ -112,9 +117,9 @@ export async function PUT(
     let foundFranchise = false;
     let targetRef;
     let existingData = null;
-    
+
     // Check migrated collection first
-    const migratedSnapshot = await get(child(migratedFranchiseRef, id));
+    let migratedSnapshot = await get(child(migratedFranchiseRef, id));
     if (migratedSnapshot.exists()) {
       console.log('[API] ✅ Found franchise in migrated collection');
       targetRef = child(migratedFranchiseRef, id);
@@ -129,6 +134,22 @@ export async function PUT(
         targetRef = legacyRef;
         existingData = legacySnapshot.val();
         foundFranchise = true;
+      }
+    }
+
+    // Fallback: iterate all migrated franchises to match by stored `id` field
+    if (!foundFranchise) {
+      const allSnapshot = await get(migratedFranchiseRef);
+      if (allSnapshot.exists()) {
+        allSnapshot.forEach((childSnapshot) => {
+          const data = childSnapshot.val();
+          if (data?.id === id || childSnapshot.key === id) {
+            targetRef = child(migratedFranchiseRef, childSnapshot.key);
+            existingData = data;
+            foundFranchise = true;
+            return true;
+          }
+        });
       }
     }
     
@@ -202,13 +223,31 @@ export async function PATCH(
     let franchiseRef = child(migratedFranchiseRef, id);
     let snapshot = await get(franchiseRef);
     let existingData = null;
-    
+
     // If not found in migrated structure, check legacy structure
     if (!snapshot.exists()) {
       franchiseRef = ref(database, `franchiseProperties/${id}`);
       snapshot = await get(franchiseRef);
     }
-    
+
+    // Fallback: iterate all migrated franchises to match by stored `id` field
+    if (!snapshot.exists()) {
+      const allSnapshot = await get(migratedFranchiseRef);
+      if (allSnapshot.exists()) {
+        const entries: { key: string; data: Record<string, unknown> }[] = [];
+        allSnapshot.forEach((childSnapshot) => {
+          entries.push({ key: childSnapshot.key!, data: childSnapshot.val() });
+        });
+        for (const entry of entries) {
+          if (entry.data?.id === id || entry.key === id) {
+            franchiseRef = child(migratedFranchiseRef, entry.key);
+            snapshot = await get(franchiseRef);
+            break;
+          }
+        }
+      }
+    }
+
     // If still not found, return 404
     if (!snapshot.exists()) {
       return NextResponse.json(
@@ -280,17 +319,38 @@ export async function DELETE(
 ) {
   try {
     const id = await resolveIdParam(params);
-    
+
     // Check migrated structure first (new location)
     let franchiseRef = child(migratedFranchiseRef, id);
     let snapshot = await get(franchiseRef);
-    
+
     // If not found in migrated structure, check legacy structure
     if (!snapshot.exists()) {
       franchiseRef = ref(database, `franchiseProperties/${id}`);
       snapshot = await get(franchiseRef);
     }
-    
+
+    // Fallback: if still not found, iterate all migrated franchises to match
+    // by the stored `id` field (in case `getAllFranchises` previously returned
+    // a malformed ID due to the `...data` spread overwrite bug).
+    if (!snapshot.exists()) {
+      const allSnapshot = await get(migratedFranchiseRef);
+      if (allSnapshot.exists()) {
+        let foundId: string | null = null;
+        allSnapshot.forEach((childSnapshot) => {
+          const data = childSnapshot.val();
+          if (data?.id === id || childSnapshot.key === id) {
+            foundId = childSnapshot.key;
+            return true; // break iteration
+          }
+        });
+        if (foundId) {
+          franchiseRef = child(migratedFranchiseRef, foundId);
+          snapshot = await get(franchiseRef);
+        }
+      }
+    }
+
     // If still not found, return 404
     if (!snapshot.exists()) {
       return NextResponse.json(
@@ -298,10 +358,10 @@ export async function DELETE(
         { status: 404 }
       );
     }
-    
+
     // Delete the franchise from wherever it was found
     await remove(franchiseRef);
-    
+
     return NextResponse.json({
       success: true,
       message: 'Franchise deleted successfully'

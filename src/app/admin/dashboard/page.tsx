@@ -95,10 +95,24 @@ function AdminDashboardContent() {
     }
   };
 
+  // Simple in-memory cache for dashboard stats (5 minute TTL)
+  const statsCache = useRef<{
+    data: any;
+    timestamp: number;
+  } | null>(null);
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
   // Fetch data from Firebase migrated structure using optimized parallel reads
   const fetchData = async () => {
     try {
-      console.log('[AdminDashboard] 🚀 Fetching data using optimized parallel reads');
+      // Check cache first
+      if (statsCache.current && Date.now() - statsCache.current.timestamp < CACHE_TTL) {
+        const cached = statsCache.current.data;
+        setStats(cached.stats);
+        setCategoryData(cached.categoryData);
+        setFranchiseData(cached.franchiseData);
+        return;
+      }
       
       // Use parallel reads with connection pooling to reduce connection usage
       const snapshots = await dbPool.parallelReads([
@@ -126,13 +140,14 @@ function AdminDashboardContent() {
       const totalCount = preleasedCount + vacantCount + franchiseCount + plotsCount;
       
       // Update stats
-      setStats({
+      const newStats = {
         preleased: preleasedCount,
         vacant: vacantCount,
         franchise: franchiseCount,
         plots: plotsCount,
         total: totalCount
-      });
+      };
+      setStats(newStats);
       
       // Process category data for vacant properties (UPDATED - using specific categories)
       if (vacantSnapshot.exists()) {
@@ -176,17 +191,18 @@ function AdminDashboardContent() {
         console.log('[Dashboard] Vacant categories processed:', filteredCategories);
         
         // Update category data with filtered results
-        setCategoryData({
+        const newCategoryData = {
           labels: Object.keys(filteredCategories),
           data: Object.values(filteredCategories)
-        });
+        };
+        setCategoryData(newCategoryData);
       } else {
-        console.log('[Dashboard] No vacant properties found');
         // Set empty data if no vacant properties
-        setCategoryData({
+        const emptyCategoryData = {
           labels: [],
           data: []
-        });
+        };
+        setCategoryData(emptyCategoryData);
       }
 
       // Process franchise data by industry (FIXED - access franchiseDetails.industry)
@@ -239,18 +255,29 @@ function AdminDashboardContent() {
         console.log('[Dashboard] Franchise categories processed (showing all categories):', franchiseCategories);
         
         // Show ALL categories, even those with 0 count
-        setFranchiseData({
+        const newFranchiseData = {
           labels: Object.keys(franchiseCategories),
           data: Object.values(franchiseCategories)
-        });
+        };
+        setFranchiseData(newFranchiseData);
       } else {
-        console.log('[Dashboard] No franchise data found');
         // Set empty data with all categories
-        setFranchiseData({
+        const emptyFranchiseData = {
           labels: ['Education', 'F&B', 'Fashion', 'Pharmaceutical', 'Retail', 'Sports, Fitness & Entertainments'],
           data: [0, 0, 0, 0, 0, 0]
-        });
+        };
+        setFranchiseData(emptyFranchiseData);
       }
+
+      // Store in cache
+      statsCache.current = {
+        data: {
+          stats: newStats,
+          categoryData: categoryData,
+          franchiseData: franchiseData
+        },
+        timestamp: Date.now()
+      };
     } catch (error) {
       console.error('Error fetching data:', error);
       setError('Failed to load dashboard data');
@@ -352,9 +379,9 @@ function AdminDashboardContent() {
                     callbacks: {
                       label: function(context) {
                         const label = context.label || '';
-                        const value = context.parsed;
-                        const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-                        const percentage = ((value / total) * 100).toFixed(1);
+                        const value = typeof context.parsed === 'number' ? context.parsed : 0;
+                        const total = (context.dataset.data as number[]).reduce((a: number, b: number) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
                         return `${label}: ${value} properties (${percentage}%)`;
                       }
                     }
@@ -430,8 +457,8 @@ function AdminDashboardContent() {
                     callbacks: {
                       label: function(context) {
                         const label = context.label || '';
-                        const value = context.parsed;
-                        const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                        const value = typeof context.parsed === 'number' ? context.parsed : 0;
+                        const total = (context.dataset.data as number[]).reduce((a: number, b: number) => a + b, 0);
                         const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
                         return `${label}: ${value} properties (${percentage}%)`;
                       }
@@ -497,9 +524,10 @@ function AdminDashboardContent() {
                     callbacks: {
                       label: function(context) {
                         const label = context.label || '';
-                        const value = context.parsed.y;
-                        const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-                        const percentage = ((value / total) * 100).toFixed(1);
+                        const parsed = context.parsed as any;
+                        const value = parsed?.y || 0;
+                        const total = (context.dataset.data as number[]).reduce((a: number, b: number) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
                         return `${label}: ${value} franchises (${percentage}%)`;
                       }
                     }
@@ -541,7 +569,7 @@ function AdminDashboardContent() {
         } catch (error) {
           console.error('Error initializing charts:', error);
         }
-      }, 1000); // Increased timeout to 1000ms to ensure DOM is ready
+      }, 100); // Reduced timeout to 100ms for faster chart rendering
     }).catch(error => {
       console.error('Failed to load Chart.js:', error);
     });

@@ -71,7 +71,7 @@ export class AdminUserService {
       console.log('[AdminUserService] Fetching admin user:', uid);
 
       // Helper function to add timeout to RTDB queries
-      const queryWithTimeout = async (ref: any, timeoutMs = 10000): Promise<any> => {
+      const queryWithTimeout = async (ref: any, timeoutMs = 5000): Promise<any> => {
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error(`RTDB query timeout after ${timeoutMs}ms`)), timeoutMs);
         });
@@ -79,15 +79,20 @@ export class AdminUserService {
         return Promise.race([ref.once('value'), timeoutPromise]);
       };
 
-      // Try new path first with timeout
-      let snapshot = await queryWithTimeout(database.ref(`adminUsers/${uid}`), 10000);
+      // Query BOTH paths in parallel — no sequential fallback
+      const [newPathSnapshot, legacyPathSnapshot] = await Promise.all([
+        queryWithTimeout(database.ref(`adminUsers/${uid}`), 5000).catch(() => null),
+        queryWithTimeout(database.ref(`${this.ADMIN_USERS_PATH}/${uid}`), 5000).catch(() => null),
+      ]);
 
-      console.log('[AdminUserService] adminUsers path exists:', snapshot.exists());
+      // Use whichever path has data (prefer new path)
+      const snapshot = (newPathSnapshot?.exists()) ? newPathSnapshot :
+                       (legacyPathSnapshot?.exists()) ? legacyPathSnapshot : null;
 
-      // Fallback to legacy path with timeout
-      if (!snapshot.exists()) {
-        snapshot = await queryWithTimeout(database.ref(`${this.ADMIN_USERS_PATH}/${uid}`), 10000);
-        console.log('[AdminUserService] admin_users path exists:', snapshot.exists());
+      if (snapshot) {
+        console.log('[AdminUserService] User found in:', newPathSnapshot?.exists() ? 'adminUsers' : 'admin_users');
+      } else {
+        console.log('[AdminUserService] User not found in either path');
       }
 
       let userData = snapshot.val() as AdminUser | null;

@@ -7,6 +7,7 @@ import { FranchiseCard, FranchiseModal, FranchiseContactModal } from '@/componen
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { SuccessMessage } from './SuccessMessage';
 import { Franchise, FranchiseDetails } from '@/types/franchise';
+import { sortByNewest } from '@/lib/sort';
 
 interface FranchisePageClientProps {
   franchises: Franchise[];
@@ -200,9 +201,9 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
     return typeof investment === 'number' ? investment : 0;
   };
 
-  // Memoized filtered franchises
+  // Memoized filtered franchises (newest-first by default)
   const filteredFranchises = useMemo(() => {
-    return franchises.filter(franchise => {
+    return sortByNewest(franchises).filter(franchise => {
       const searchStr = searchTerm.toLowerCase();
       
       // Get fields from franchiseDetails with fallback to root level

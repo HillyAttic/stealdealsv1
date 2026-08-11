@@ -6,13 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { FaBuilding, FaTachometerAlt, FaUser, FaSignOutAlt, FaDatabase, FaChartBar, FaBars, FaTimes, FaUsers, FaUserShield } from 'react-icons/fa';
 import Cookies from 'js-cookie';
 import ClientOnly from '@/components/ClientOnly';
-
-// Add global type declaration for the window extension
-declare global {
-  interface Window {
-    __cleanBitdefenderAttributes?: () => void;
-  }
-}
+import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 
 interface AdminUser {
   uid: string;
@@ -111,64 +105,33 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
 
   useEffect(() => {
     // Clean any Bitdefender attributes if the global cleaner function exists
-    if (window.__cleanBitdefenderAttributes) {
-      window.__cleanBitdefenderAttributes();
+    const win = window as Window & { __cleanBitdefenderAttributes?: () => void };
+    if (win.__cleanBitdefenderAttributes) {
+      win.__cleanBitdefenderAttributes();
     }
 
-    // Check if user is authenticated and get permissions
+    // Single API call — verify-permissions does both JWT check + DB permissions lookup
+    // Only run once on mount, not on every navigation
     const checkAuthAndPermissions = async () => {
       try {
-        console.log('[AdminLayout] Starting authentication check...');
-
-        // First verify basic authentication with timeout
-        const authResponse = await fetchWithTimeout('/api/auth/check', {
+        const response = await fetchWithTimeout('/api/auth/verify-permissions', {
           method: 'GET',
           credentials: 'include',
-        }, 15000); // 15 second timeout
+        }, 8000);
 
-        console.log('[AdminLayout] Auth check response status:', authResponse.status);
-
-        if (!authResponse.ok) {
-          console.log('[AdminLayout] Basic authentication failed - redirecting to login');
+        if (!response.ok) {
           router.push('/admin/login');
-          return false;
+          return;
         }
 
-        const authData = await authResponse.json();
-        console.log('[AdminLayout] Auth check data:', authData);
+        const data = await response.json();
 
-        if (!authData.authenticated || !authData.user) {
-          console.log('[AdminLayout] User not authenticated - redirecting to login');
+        if (!data.success || !data.user) {
           router.push('/admin/login');
-          return false;
+          return;
         }
 
-        console.log('[AdminLayout] Fetching detailed permissions...');
-
-        // Now get detailed permissions with timeout
-        const permissionsResponse = await fetchWithTimeout('/api/auth/verify-permissions', {
-          method: 'GET',
-          credentials: 'include',
-        }, 15000); // 15 second timeout
-
-        console.log('[AdminLayout] Permissions response status:', permissionsResponse.status);
-
-        if (!permissionsResponse.ok) {
-          console.log('[AdminLayout] Failed to get permissions - redirecting to login');
-          router.push('/admin/login');
-          return false;
-        }
-
-        const permissionsData = await permissionsResponse.json();
-        console.log('[AdminLayout] Permissions data:', permissionsData);
-
-        if (!permissionsData.success || !permissionsData.user) {
-          console.log('[AdminLayout] Invalid permissions response - redirecting to login');
-          router.push('/admin/login');
-          return false;
-        }
-
-        const user = permissionsData.user;
+        const user = data.user;
         setCurrentUser(user);
 
         // Set user name
@@ -179,10 +142,9 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
           setUserName(name.charAt(0).toUpperCase() + name.slice(1));
         }
 
-        // Build set of authorized pages
+        // Build authorized pages set
         const authorized = new Set<string>();
 
-        // For superusers, grant access to all pages
         if (user.role === 'superuser') {
           authorized.add('/admin/dashboard');
           authorized.add('/admin/vacant');
@@ -194,44 +156,23 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
           authorized.add('/admin/wishlist-analytics');
           authorized.add('/admin/migrate');
         } else {
-          // Dashboard access controlled by permission
-          if (user.effectivePermissions.pages.dashboard) {
-            authorized.add('/admin/dashboard');
-          }
-
-          if (user.effectivePermissions.pages.vacant) {
-            authorized.add('/admin/vacant');
-          }
-          if (user.effectivePermissions.pages.plots) {
-            authorized.add('/admin/plots');
-          }
-          if (user.effectivePermissions.pages.franchise) {
-            authorized.add('/admin/franchise');
-          }
-          if (user.effectivePermissions.pages.preleased) {
-            authorized.add('/admin/Pre-Leased');
-          }
-
-          // User management permissions
-          if (user.effectivePermissions.manageUsers || user.effectivePermissions.pages.users) {
+          const pages = user.effectivePermissions.pages;
+          if (pages.dashboard) authorized.add('/admin/dashboard');
+          if (pages.vacant) authorized.add('/admin/vacant');
+          if (pages.plots) authorized.add('/admin/plots');
+          if (pages.franchise) authorized.add('/admin/franchise');
+          if (pages.preleased) authorized.add('/admin/Pre-Leased');
+          if (user.effectivePermissions.manageUsers || pages.users) {
             authorized.add('/admin/users');
             authorized.add('/admin/manage-admins');
           }
-        }
-
-        // New permissions for specific sections
-        if (user.effectivePermissions.pages.analytics || user.role === 'superuser') {
-          authorized.add('/admin/wishlist-analytics');
-        }
-        if (user.effectivePermissions.pages.migration || user.role === 'superuser') {
-          authorized.add('/admin/migrate');
+          if (pages.analytics) authorized.add('/admin/wishlist-analytics');
+          if (pages.migration) authorized.add('/admin/migrate');
         }
 
         // Check if current page is authorized
         const currentPath = pathname;
         let isCurrentPageAuthorized = false;
-
-        // Check if current path starts with any authorized path
         for (const authorizedPath of authorized) {
           if (currentPath.startsWith(authorizedPath)) {
             isCurrentPageAuthorized = true;
@@ -240,34 +181,25 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         }
 
         if (!isCurrentPageAuthorized) {
-          console.log(`Current page ${currentPath} not authorized, redirecting to dashboard`);
           router.push('/admin/dashboard');
-          return false;
+          return;
         }
 
         setIsAuthChecking(false);
-        return true;
       } catch (error) {
-        console.error('[AdminLayout] Error checking authentication and permissions:', error);
-
-        // Provide more specific error messages
-        if (error instanceof Error) {
-          if (error.name === 'AbortError') {
-            console.error('[AdminLayout] Request timed out - this usually indicates a server or database connection issue');
-          } else {
-            console.error('[AdminLayout] Error details:', error.message);
-          }
+        console.error('[AdminLayout] Auth/permission check failed:', error);
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.error('[AdminLayout] Request timed out');
         }
-
         router.push('/admin/login');
-        return false;
       } finally {
         setIsAuthChecking(false);
       }
     };
 
     checkAuthAndPermissions();
-  }, [router, pathname]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogout = async () => {
     if (isLoggingOut) return; // Prevent double clicks
@@ -514,6 +446,9 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
           {children}
         </main>
       </div>
+
+      {/* Scroll-to-bottom button with circular progress ring */}
+      <ScrollToBottom showProgress={true} />
     </div>
   );
-} 
+}

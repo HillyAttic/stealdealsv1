@@ -10,6 +10,7 @@ import { AuthPrompt } from '@/components/auth';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import ClientOnly from '../../components/ClientOnly';
 import { getPreleasedProperties } from '@/lib/firebase';
+import { sortByNewest } from '@/lib/sort';
 
 // Property interface reflecting the structure from API
 interface Property {
@@ -320,7 +321,8 @@ export default function InventoryPage() {
           });
         }
         
-        setProperties(filteredProperties);
+        // Sort newest-first by creation date so freshly added properties appear at the top
+        setProperties(sortByNewest(filteredProperties));
       } catch (err) {
         console.error('Error fetching preleased properties:', err);
         setError('Failed to load properties. Please try again later.');

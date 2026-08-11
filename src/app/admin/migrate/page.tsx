@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
-import { FaDatabase, FaPlay, FaEye, FaDownload, FaExclamationTriangle, FaCheckCircle, FaSpinner } from 'react-icons/fa';
+import { FaDatabase, FaPlay, FaEye, FaDownload, FaExclamationTriangle, FaCheckCircle, FaSpinner, FaImage } from 'react-icons/fa';
 
 interface MigrationStats {
   franchises: { existing: number; expected: string };
@@ -840,6 +840,22 @@ export default function MigratePage() {
               🎯 Result: Wishlist item referencing "Bird Estate" will show the correct property!
             </p>
           </div>
+        </div>
+
+        {/* Image Migration Link */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mt-8">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">📸 Image Migration</h3>
+          <p className="text-gray-600 mb-4">
+            Migrate all existing ImgBB images to Firebase Storage. This will download each image from ImgBB,
+            re-upload it to your Firebase Storage bucket, and update the database references.
+          </p>
+          <a
+            href="/admin/migrate-images"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            <FaImage className="w-4 h-4" />
+            Go to Image Migration →
+          </a>
         </div>
       </div>
     </AdminLayout>

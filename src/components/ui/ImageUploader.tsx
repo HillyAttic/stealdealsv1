@@ -1,18 +1,8 @@
 'use client';
 
 import React, { useState, useRef, ChangeEvent } from 'react';
-
-interface UploadResponse {
-  success: boolean;
-  data?: {
-    url: string;
-    display_url: string;
-    delete_url: string;
-  };
-  error?: {
-    message: string;
-  };
-}
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface ImageUploaderProps {
   onImageUrlGenerated?: (url: string) => void;
@@ -21,9 +11,9 @@ interface ImageUploaderProps {
   hideUrlDisplay?: boolean;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ 
-  onImageUrlGenerated, 
-  className = '', 
+const ImageUploader: React.FC<ImageUploaderProps> = ({
+  onImageUrlGenerated,
+  className = '',
   disabled = false,
   hideUrlDisplay = false
 }) => {
@@ -32,8 +22,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const API_KEY = process.env.NEXT_PUBLIC_IMGBB_API_KEY || '378ebef48fd44223416d6d0fa2580231';
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,37 +32,33 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     setUploadedUrl('');
     setIsCopied(false);
 
-    const formData = new FormData();
-    formData.append('image', file);
-    formData.append('key', API_KEY);
-
     try {
-      const response = await fetch('https://api.imgbb.com/1/upload', {
-        method: 'POST',
-        body: formData,
+      // Generate a unique path: uploads/{timestamp}-{originalFilename}
+      const timestamp = Date.now();
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const storagePath = `uploads/${timestamp}-${safeName}`;
+      const storageRef = ref(storage, storagePath);
+
+      // Upload the file to Firebase Storage
+      const snapshot = await uploadBytes(storageRef, file, {
+        contentType: file.type,
       });
 
-      const data: UploadResponse = await response.json();
+      // Get the public download URL
+      const downloadUrl = await getDownloadURL(snapshot.ref);
 
-      if (data.success && data.data) {
-        setUploadedUrl(data.data.url);
-        setStatusMessage('Upload successful!');
-        
-        // Call the callback function to update the parent component
-        if (onImageUrlGenerated) {
-          onImageUrlGenerated(data.data.url);
-        }
-        
-        // Auto-clear success message after 3 seconds
-        setTimeout(() => {
-          setStatusMessage('');
-        }, 3000);
-      } else {
-        setStatusMessage('Error uploading image');
-        setTimeout(() => {
-          setStatusMessage('');
-        }, 3000);
+      setUploadedUrl(downloadUrl);
+      setStatusMessage('Upload successful!');
+
+      // Call the callback function to update the parent component
+      if (onImageUrlGenerated) {
+        onImageUrlGenerated(downloadUrl);
       }
+
+      // Auto-clear success message after 3 seconds
+      setTimeout(() => {
+        setStatusMessage('');
+      }, 3000);
     } catch (error) {
       console.error('Upload failed:', error);
       setStatusMessage('Failed to upload image');
@@ -112,7 +96,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         document.execCommand('copy');
         document.body.removeChild(textArea);
       }
-      
+
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 1500);
     } catch (error) {
@@ -129,7 +113,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         onChange={handleFileChange}
         style={{ display: 'none' }}
       />
-      
+
       <div className="flex items-center space-x-2">
         <button
           type="button"
@@ -145,26 +129,26 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           {isUploading ? (
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
           ) : (
-            <svg 
-              className="w-5 h-5 text-blue-600" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className="w-5 h-5 text-blue-600"
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
               />
             </svg>
           )}
         </button>
-        
+
         {statusMessage && (
           <span className={`text-sm ${
-            statusMessage.includes('successful') || statusMessage.includes('Copied') 
-              ? 'text-green-600' 
+            statusMessage.includes('successful') || statusMessage.includes('Copied')
+              ? 'text-green-600'
               : statusMessage.includes('Error') || statusMessage.includes('Failed')
               ? 'text-red-600'
               : 'text-blue-600'

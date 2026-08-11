@@ -27,24 +27,10 @@ export async function requireAdminAuth(
   handler: (authenticatedRequest: AuthenticatedAdminRequest) => Promise<NextResponse>
 ): Promise<NextResponse> {
   try {
-    console.log('[Admin Auth] 🔐 Checking authentication...');
-    console.log('[Admin Auth] Environment:', process.env.NODE_ENV);
-    console.log('[Admin Auth] Request URL:', request.url);
-    console.log('[Admin Auth] Request method:', request.method);
-
-    // Debug all cookies
-    const allCookies = request.cookies.getAll();
-    console.log('[Admin Auth] 🍪 All cookies:', allCookies.map(c => `${c.name}=${c.value.substring(0, 20)}...`));
-
     // Get token from cookies
     const token = request.cookies.get('adminToken')?.value;
-    console.log('[Admin Auth] 🎫 AdminToken present:', !!token);
-    if (token) {
-      console.log('[Admin Auth] Token preview:', token.substring(0, 30) + '...');
-    }
 
     if (!token) {
-      console.log('[Admin Auth] No admin token found in cookies');
       return NextResponse.json(
         {
           success: false,
@@ -55,13 +41,10 @@ export async function requireAdminAuth(
     }
 
     // Verify JWT token
-    console.log('[Admin Auth] Verifying JWT token...');
     const decoded = jwt.verify(token, JWT_SECRET) as any;
-    console.log('[Admin Auth] Token decoded successfully for user:', decoded.email, 'role:', decoded.role);
 
     // Check if user has admin role
     if (decoded.role !== 'admin' && decoded.role !== 'superuser' && decoded.role !== 'subuser') {
-      console.log('[Admin Auth] User does not have admin role:', decoded.role);
       return NextResponse.json(
         {
           success: false,
@@ -78,8 +61,6 @@ export async function requireAdminAuth(
       email: decoded.email,
       role: decoded.role
     };
-
-    console.log('[Admin Auth] Authentication successful, calling handler for user:', decoded.email);
 
     // Call the handler with authenticated request
     return await handler(authenticatedRequest);

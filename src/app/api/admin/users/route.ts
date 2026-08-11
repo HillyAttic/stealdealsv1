@@ -96,42 +96,37 @@ export async function GET(request: NextRequest) {
         ...(search && { query: search })
       });
 
-      // Get wishlist counts for displayed users only (OPTIMIZED)
-      console.log(`[Admin Users API] Fetching wishlist counts for ${usersResponse.data.length} users`);
+      // Get wishlist counts for displayed users only (OPTIMIZED - single batch read)
       let wishlistCounts: Record<string, number> = {};
 
       try {
         const { database } = await import('@/lib/firebase');
         const { ref, get } = await import('firebase/database');
 
-        // Fetch wishlist counts only for the users being displayed (much faster)
-        const wishlistPromises = usersResponse.data.map(async (user) => {
-          try {
-            const userWishlistRef = ref(database, `wishlists/${user.id}`);
-            const userWishlistSnapshot = await get(userWishlistRef);
+        // Single read of all wishlists, then filter for displayed users
+        // This is much faster than N+1 individual reads
+        const allWishlistsRef = ref(database, 'wishlists');
+        const allWishlistsSnapshot = await get(allWishlistsRef);
 
-            if (userWishlistSnapshot.exists()) {
-              const userWishlist = userWishlistSnapshot.val();
-              return {
-                userId: user.id,
-                count: userWishlist && typeof userWishlist === 'object'
-                  ? Object.keys(userWishlist).length
-                  : 0
-              };
+        if (allWishlistsSnapshot.exists()) {
+          const allWishlists = allWishlistsSnapshot.val();
+          const displayedUserIds = new Set(usersResponse.data.map(user => user.id));
+
+          // Only count wishlists for users being displayed
+          for (const userId of displayedUserIds) {
+            const userWishlist = allWishlists?.[userId];
+            if (userWishlist && typeof userWishlist === 'object') {
+              wishlistCounts[userId] = Object.keys(userWishlist).length;
+            } else {
+              wishlistCounts[userId] = 0;
             }
-            return { userId: user.id, count: 0 };
-          } catch (error) {
-            console.warn(`[Admin Users API] Failed to get wishlist for user ${user.id}:`, error);
-            return { userId: user.id, count: 0 };
           }
-        });
-
-        const wishlistResults = await Promise.all(wishlistPromises);
-        wishlistResults.forEach(result => {
-          wishlistCounts[result.userId] = result.count;
-        });
-
-        console.log(`[Admin Users API] ✅ Wishlist counts fetched for ${Object.keys(wishlistCounts).length} users`);
+        } else {
+          // No wishlists exist, set all to 0
+          usersResponse.data.forEach(user => {
+            wishlistCounts[user.id] = 0;
+          });
+        }
       } catch (wishlistError) {
         console.warn('[Admin Users API] Failed to fetch wishlist counts:', wishlistError);
         // Continue without wishlist counts

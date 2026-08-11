@@ -7,14 +7,16 @@ import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaPencilAlt, FaTrash, FaSearch, FaEye } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
 import ClientOnly from '@/components/ClientOnly';
+import { FranchiseModal } from '@/components/franchise';
 
-import { 
-  AdminFranchise, 
-  getFieldFromFranchise, 
+import {
+  AdminFranchise,
+  getFieldFromFranchise,
   getInvestmentFromFranchise,
   getFranchiseDisplayName,
-  matchesFranchiseSearch 
+  matchesFranchiseSearch
 } from '@/lib/admin/franchiseHelpers';
+import { Franchise } from '@/types/franchise';
 
 // Legacy interface kept for backward compatibility during transition
 interface Franchise {
@@ -79,6 +81,8 @@ function FranchiseContent() {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [selectedFranchise, setSelectedFranchise] = useState<Franchise | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Load franchises from API
   useEffect(() => {
@@ -122,6 +126,43 @@ function FranchiseContent() {
   const filteredFranchises = franchises.filter(franchise =>
     matchesFranchiseSearch(franchise, searchTerm)
   );
+
+  // Handle opening the franchise modal
+  const handleViewFranchise = (adminFranchise: AdminFranchise) => {
+    // Convert AdminFranchise to Franchise type for the modal
+    const franchise: Franchise = {
+      id: adminFranchise.id,
+      name: getFieldFromFranchise(adminFranchise, 'name'),
+      industry: getFieldFromFranchise(adminFranchise, 'industry'),
+      segment: getFieldFromFranchise(adminFranchise, 'segment'),
+      product: getFieldFromFranchise(adminFranchise, 'product'),
+      model: getFieldFromFranchise(adminFranchise, 'model'),
+      minArea: getFieldFromFranchise(adminFranchise, 'minArea'),
+      maxArea: getFieldFromFranchise(adminFranchise, 'maxArea'),
+      minInvestment: parseFloat(getInvestmentFromFranchise(adminFranchise, 'min')) || undefined,
+      maxInvestment: parseFloat(getInvestmentFromFranchise(adminFranchise, 'max')) || undefined,
+      royalty: getFieldFromFranchise(adminFranchise, 'royalty'),
+      establishmentYear: getFieldFromFranchise(adminFranchise, 'establishmentYear'),
+      franchiseStartedYear: getFieldFromFranchise(adminFranchise, 'franchiseStartedYear'),
+      numberOutlets: getFieldFromFranchise(adminFranchise, 'numberOfOutlets') || adminFranchise.numberOutlets,
+      minPaybackPeriod: getFieldFromFranchise(adminFranchise, 'minPaybackPeriod'),
+      maxPaybackPeriod: getFieldFromFranchise(adminFranchise, 'maxPaybackPeriod'),
+      headquarter: getFieldFromFranchise(adminFranchise, 'headquarter'),
+      remarks: getFieldFromFranchise(adminFranchise, 'remarks'),
+      brandDeck: getFieldFromFranchise(adminFranchise, 'brandDeck'),
+      productList: getFieldFromFranchise(adminFranchise, 'productList'),
+      roiSheet: getFieldFromFranchise(adminFranchise, 'roiSheet'),
+      investorDiscoveryKitUrl: getFieldFromFranchise(adminFranchise, 'investorDiscoveryKitUrl'),
+      investment: parseFloat(getInvestmentFromFranchise(adminFranchise, 'min')) || 0,
+      location: getFieldFromFranchise(adminFranchise, 'headquarter') || adminFranchise.location || '',
+      status: adminFranchise.status || 'Active',
+      roi: getFieldFromFranchise(adminFranchise, 'royalty'),
+      image: adminFranchise.images?.[0] || adminFranchise.image,
+      franchiseDetails: adminFranchise.franchiseDetails,
+    };
+    setSelectedFranchise(franchise);
+    setIsModalOpen(true);
+  };
 
   // Handle franchise deletion
   const handleDelete = async (id: string) => {
@@ -314,14 +355,13 @@ function FranchiseContent() {
                         </td>
                         <td className="px-3 py-3 text-sm font-medium whitespace-nowrap">
                           <div className="flex space-x-2">
-                            <Link
-                              href={`/franchise/${franchise.id}`}
+                            <button
+                              onClick={() => handleViewFranchise(franchise)}
                               className="text-indigo-600 hover:text-indigo-900 p-1"
-                              target="_blank"
                               title="View Franchise"
                             >
                               <FaEye />
-                            </Link>
+                            </button>
                             <Link
                               href={`/admin/franchise/edit/${franchise.id}`}
                               className="text-yellow-600 hover:text-yellow-900 p-1"
@@ -347,6 +387,16 @@ function FranchiseContent() {
           )}
         </>
       )}
+
+      {/* Franchise Detail Modal */}
+      <FranchiseModal
+        franchise={selectedFranchise}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedFranchise(null);
+        }}
+      />
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (

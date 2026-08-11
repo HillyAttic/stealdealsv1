@@ -62,7 +62,6 @@ class DatabaseConnectionPool {
       this.recordMetrics('read', duration, true);
       this.updateAverageQueryTime(duration);
       
-      console.log(`[DB Pool] ✅ Read operation completed: ${path} (${duration}ms)`);
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -92,7 +91,6 @@ class DatabaseConnectionPool {
       this.recordMetrics('write', duration, true);
       this.updateAverageQueryTime(duration);
       
-      console.log(`[DB Pool] ✅ Write operation completed: ${path} (${duration}ms)`);
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
@@ -239,7 +237,6 @@ class DatabaseConnectionPool {
       }
 
       const duration = Date.now() - startTime;
-      console.log(`[DB Pool] ✅ Batch operation completed: ${operations.length} operations (${duration}ms)`);
 
     } catch (error) {
       console.error(`[DB Pool] ❌ Batch operation failed:`, error);
@@ -281,7 +278,6 @@ class DatabaseConnectionPool {
       }
 
       const duration = Date.now() - startTime;
-      console.log(`[DB Pool] ✅ Parallel reads completed: ${paths.length} paths (${duration}ms)`);
       
       return results;
     } catch (error) {
