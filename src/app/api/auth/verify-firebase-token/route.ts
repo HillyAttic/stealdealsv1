@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { database as adminDb } from '@/lib/firebase-server-admin';
+import { db as adminFs } from '@/lib/firebase-server-admin';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_jwt_secret_for_development';
 const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
@@ -200,49 +200,18 @@ export async function POST(request: NextRequest) {
       let userPermissions: AdminUserPermissions | null = null;
 
       try {
-        console.log('[Auth] Fetching user permissions from database for userId:', userId);
+        console.log('[Auth] Fetching user permissions from Firestore for userId:', userId);
 
-        // Helper function to add timeout to RTDB queries
-        const queryWithTimeout = async (ref: any, timeoutMs = 5000): Promise<any> => {
-          const timeoutPromise = new Promise<never>((_, reject) => {
-            setTimeout(() => reject(new Error(`RTDB query timeout after ${timeoutMs}ms`)), timeoutMs);
-          });
-          return Promise.race([ref.once('value'), timeoutPromise]);
-        };
-
-        // Check both paths simultaneously for better performance with timeout
-        const [adminUsersSnapshot, oldAdminUsersSnapshot] = await withTimeout(
-          Promise.all([
-            queryWithTimeout(adminDb.ref(`adminUsers/${userId}`), 5000).catch((err) => {
-              console.error('[Auth] Error querying adminUsers path:', err.message);
-              return null;
-            }),
-            queryWithTimeout(adminDb.ref(`admin_users/${userId}`), 5000).catch((err) => {
-              console.error('[Auth] Error querying admin_users path:', err.message);
-              return null;
-            })
-          ]),
-          6000, // 6 second timeout for database operations
-          'Database lookup timed out'
+        // Fetch admin user from Firestore (single consolidated collection)
+        const docSnap = await withTimeout(
+          adminFs.collection('adminUsers').doc(userId).get(),
+          5000,
+          'Firestore query timed out'
         );
 
-        console.log('[Auth] adminUsers snapshot exists:', adminUsersSnapshot?.exists());
-        console.log('[Auth] admin_users snapshot exists:', oldAdminUsersSnapshot?.exists());
-
-        let userSnapshot = null;
-
-        // Prioritize new path (adminUsers) over old path
-        if (adminUsersSnapshot && adminUsersSnapshot.exists()) {
-          userSnapshot = adminUsersSnapshot;
-          console.log(`[Auth] User ${userId} found in adminUsers`);
-        } else if (oldAdminUsersSnapshot && oldAdminUsersSnapshot.exists()) {
-          userSnapshot = oldAdminUsersSnapshot;
-          console.log(`[Auth] User ${userId} found in admin_users (legacy path)`);
-        }
-
-        if (userSnapshot && userSnapshot.exists()) {
-          const userData = userSnapshot.val();
-          console.log('[Auth] User data from database:', {
+        if (docSnap.exists) {
+          const userData = docSnap.data() as AdminUserData;
+          console.log('[Auth] User data from Firestore:', {
             email: userData.email,
             role: userData.role,
             hasPermissions: !!userData.permissions
@@ -259,6 +228,7 @@ export async function POST(request: NextRequest) {
           userPermissions = userData.permissions;
           console.log(`[Auth] User ${userEmail} authenticated with role: ${userRole}`);
         } else {
+          console.log('[Auth] User not found in Firestore adminUsers collection');
           // For users not in database, check if it's the known superuser email
           if (userEmail === 'stealdeals.co.in@gmail.com') {
             userRole = 'superuser';
@@ -268,13 +238,10 @@ export async function POST(request: NextRequest) {
           }
         }
       } catch (dbError) {
-        console.error('[Auth] Error fetching user permissions from database:', dbError);
+        console.error('[Auth] Error fetching user permissions from Firestore:', dbError);
 
-        // Provide more specific error messages
-        if (dbError instanceof Error) {
-          if (dbError.message.includes('timeout')) {
-            console.error('[Auth] Firebase RTDB query timed out - check database connection');
-          }
+        if (dbError instanceof Error && dbError.message.includes('timed out')) {
+          console.error('[Auth] Firestore query timed out - check connection');
         }
 
         // For known superuser emails, assign superuser role even if DB fails

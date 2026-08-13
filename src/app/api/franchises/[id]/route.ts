@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { ref, get, update, remove, child } from 'firebase/database';
-import { database, migratedFranchiseRef } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { firestoreDb } from '@/lib/firestore';
 import { resolveIdParam, RouteParams } from '../../../../lib/params-utils';
 import { revalidateTag } from 'next/cache';
-
-const legacyFranchiseRef = ref(database, 'franchiseProperties');
 
 // Get a single franchise
 export async function GET(
@@ -14,30 +12,22 @@ export async function GET(
 ) {
   try {
     console.log(`[API] 🔄 Fetching franchise details, params:`, params);
-    
+
     const id = await resolveIdParam(params);
     console.log(`[API] 🎯 Resolved franchise ID: ${id}`);
-    
-    // Check migrated structure first (new location)
-    let franchiseRef = child(migratedFranchiseRef, id);
-    let migratedSnapshot = await get(franchiseRef);
-    console.log(`[API] 📊 Migrated snapshot exists: ${migratedSnapshot.exists()}`);
 
-    // If not found in migrated structure, check legacy structure
-    if (!migratedSnapshot.exists()) {
-      franchiseRef = ref(database, `franchiseProperties/${id}`);
-      migratedSnapshot = await get(franchiseRef);
-      console.log(`[API] 📊 Legacy snapshot exists: ${migratedSnapshot.exists()}`);
-    }
+    // In Firestore, all properties are in the `properties` collection
+    const franchiseDocRef = doc(firestoreDb, 'properties', id);
+    const franchiseSnap = await getDoc(franchiseDocRef);
 
-    if (migratedSnapshot.exists()) {
-      const franchiseData = migratedSnapshot.val();
-      console.log(`[API] ✅ Found franchise in migrated location: ${franchiseData?.title || franchiseData?.name || 'Unknown'}`);
-      
-      // Convert migrated structure to expected format - prioritize franchiseDetails as primary source
+    if (franchiseSnap.exists()) {
+      const franchiseData = franchiseSnap.data() as any;
+      console.log(`[API] ✅ Found franchise: ${franchiseData?.title || franchiseData?.name || 'Unknown'}`);
+
+      // Convert Firestore document to expected format
       const details = franchiseData.franchiseDetails || {};
       const franchise = {
-        id: migratedSnapshot.key,
+        id: franchiseSnap.id,
         // Use franchiseDetails as primary source, fallback to root level for backward compatibility
         name: details.name || details.brand || franchiseData.title || franchiseData.name || 'Franchise Name',
         // Core franchise information - prioritize franchiseDetails
@@ -61,7 +51,7 @@ export async function GET(
         productList: details.productList || franchiseData.productList || '',
         roiSheet: details.roiSheet || franchiseData.roiSheet || '',
         investorDiscoveryKitUrl: details.investorDiscoveryKitUrl || franchiseData.investorDiscoveryKitUrl || '',
-        // Legacy compatibility fields - for backward compatibility with frontend
+        // Legacy compatibility fields
         investment: details.minInvestment || franchiseData.price || franchiseData.investment || '',
         location: details.headquarter || franchiseData.location || 'Location not specified',
         status: franchiseData.status || 'Active',
@@ -78,23 +68,23 @@ export async function GET(
         price: franchiseData.price || details.minInvestment || 0,
         images: franchiseData.images || []
       };
-      
+
       return NextResponse.json({ franchise });
     }
-    
-    // Not found in migrated location
-    console.warn(`[API] ❌ Franchise not found in migrated location with ID: ${id}`);
+
+    // Not found
+    console.warn(`[API] ❌ Franchise not found with ID: ${id}`);
     return NextResponse.json(
-      { error: `Franchise not found with ID: ${id}. Only checking migrated collections for performance.` },
+      { error: `Franchise not found with ID: ${id}.` },
       { status: 404 }
     );
-    
+
   } catch (error) {
     console.error('[API] ❌ Error fetching franchise:', error);
     console.error('[API] 📚 Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to fetch franchise',
         details: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
@@ -104,7 +94,7 @@ export async function GET(
   }
 }
 
-// Update a franchise (PUT method for compatibility)
+// Update a franchise (PUT method)
 export async function PUT(
   request: NextRequest,
   { params }: { params: RouteParams<{ id: string }> }
@@ -113,60 +103,26 @@ export async function PUT(
     const id = await resolveIdParam(params);
     console.log(`[API] 🔄 Updating franchise with ID: ${id}`);
     const body = await request.json();
-    
-    let foundFranchise = false;
-    let targetRef;
-    let existingData = null;
 
-    // Check migrated collection first
-    let migratedSnapshot = await get(child(migratedFranchiseRef, id));
-    if (migratedSnapshot.exists()) {
-      console.log('[API] ✅ Found franchise in migrated collection');
-      targetRef = child(migratedFranchiseRef, id);
-      existingData = migratedSnapshot.val();
-      foundFranchise = true;
-    } else {
-      // Check legacy collection
-      const legacyRef = ref(database, `franchiseProperties/${id}`);
-      const legacySnapshot = await get(legacyRef);
-      if (legacySnapshot.exists()) {
-        console.log('[API] ✅ Found franchise in legacy collection');
-        targetRef = legacyRef;
-        existingData = legacySnapshot.val();
-        foundFranchise = true;
-      }
-    }
+    const franchiseDocRef = doc(firestoreDb, 'properties', id);
+    const franchiseSnap = await getDoc(franchiseDocRef);
 
-    // Fallback: iterate all migrated franchises to match by stored `id` field
-    if (!foundFranchise) {
-      const allSnapshot = await get(migratedFranchiseRef);
-      if (allSnapshot.exists()) {
-        allSnapshot.forEach((childSnapshot) => {
-          const data = childSnapshot.val();
-          if (data?.id === id || childSnapshot.key === id) {
-            targetRef = child(migratedFranchiseRef, childSnapshot.key);
-            existingData = data;
-            foundFranchise = true;
-            return true;
-          }
-        });
-      }
-    }
-    
-    if (!foundFranchise || !targetRef) {
+    if (!franchiseSnap.exists()) {
       return NextResponse.json(
         { error: 'Franchise not found' },
         { status: 404 }
       );
     }
-    
+
+    const existingData = franchiseSnap.data() as any;
+
     // Merge existing data with updates
     const updatedFranchise = {
       ...existingData,
       ...body,
       updatedAt: Date.now()
     };
-    
+
     // Ensure backward compatibility fields are updated
     if (body.brand) {
       updatedFranchise.name = body.brand;
@@ -184,13 +140,13 @@ export async function PUT(
     if (body.remarks) {
       updatedFranchise.description = body.remarks;
     }
-    
-    await update(targetRef, updatedFranchise);
+
+    await updateDoc(franchiseDocRef, updatedFranchise);
     console.log(`[API] ✅ Franchise ${id} updated successfully`);
-    
+
     // Invalidate the cache to ensure fresh data on next request
     revalidateTag('franchises');
-    
+
     return NextResponse.json({
       success: true,
       franchise: {
@@ -201,7 +157,7 @@ export async function PUT(
   } catch (error) {
     console.error('[API] ❌ Error updating franchise:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to update franchise',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
@@ -218,53 +174,26 @@ export async function PATCH(
   try {
     const id = await resolveIdParam(params);
     const body = await request.json();
-    
-    // Check migrated structure first (new location)
-    let franchiseRef = child(migratedFranchiseRef, id);
-    let snapshot = await get(franchiseRef);
-    let existingData = null;
 
-    // If not found in migrated structure, check legacy structure
-    if (!snapshot.exists()) {
-      franchiseRef = ref(database, `franchiseProperties/${id}`);
-      snapshot = await get(franchiseRef);
-    }
+    const franchiseDocRef = doc(firestoreDb, 'properties', id);
+    const franchiseSnap = await getDoc(franchiseDocRef);
 
-    // Fallback: iterate all migrated franchises to match by stored `id` field
-    if (!snapshot.exists()) {
-      const allSnapshot = await get(migratedFranchiseRef);
-      if (allSnapshot.exists()) {
-        const entries: { key: string; data: Record<string, unknown> }[] = [];
-        allSnapshot.forEach((childSnapshot) => {
-          entries.push({ key: childSnapshot.key!, data: childSnapshot.val() });
-        });
-        for (const entry of entries) {
-          if (entry.data?.id === id || entry.key === id) {
-            franchiseRef = child(migratedFranchiseRef, entry.key);
-            snapshot = await get(franchiseRef);
-            break;
-          }
-        }
-      }
-    }
-
-    // If still not found, return 404
-    if (!snapshot.exists()) {
+    if (!franchiseSnap.exists()) {
       return NextResponse.json(
         { error: 'Franchise not found' },
         { status: 404 }
       );
     }
-    
-    existingData = snapshot.val();
-    
+
+    const existingData = franchiseSnap.data() as any;
+
     // Prepare updated data
     const updatedFranchise = {
       ...existingData,
-      name: body.brand || body.name || existingData.name || existingData.brand || `Franchise ${id}`, // Ensure name is always set for main title
+      name: body.brand || body.name || existingData.name || existingData.brand || `Franchise ${id}`,
       industry: body.industry || existingData.industry,
       segment: body.segment || existingData.segment || "",
-      product: body.brand || body.product || existingData.product || existingData.name || existingData.brand || `Product ${id}`, // Ensure product is always set
+      product: body.brand || body.product || existingData.product || existingData.name || existingData.brand || `Product ${id}`,
       model: body.model || existingData.model || "",
       minArea: body.minArea !== undefined ? body.minArea : existingData.minArea || "",
       maxArea: body.maxArea !== undefined ? body.maxArea : existingData.maxArea || "",
@@ -290,12 +219,12 @@ export async function PATCH(
       image: body.image || existingData.image,
       updatedAt: Date.now()
     };
-    
-    await update(franchiseRef, updatedFranchise);
-    
+
+    await updateDoc(franchiseDocRef, updatedFranchise);
+
     // Invalidate the cache to ensure fresh data on next request
     revalidateTag('franchises');
-    
+
     return NextResponse.json({
       success: true,
       franchise: {
@@ -320,47 +249,18 @@ export async function DELETE(
   try {
     const id = await resolveIdParam(params);
 
-    // Check migrated structure first (new location)
-    let franchiseRef = child(migratedFranchiseRef, id);
-    let snapshot = await get(franchiseRef);
+    const franchiseDocRef = doc(firestoreDb, 'properties', id);
+    const franchiseSnap = await getDoc(franchiseDocRef);
 
-    // If not found in migrated structure, check legacy structure
-    if (!snapshot.exists()) {
-      franchiseRef = ref(database, `franchiseProperties/${id}`);
-      snapshot = await get(franchiseRef);
-    }
-
-    // Fallback: if still not found, iterate all migrated franchises to match
-    // by the stored `id` field (in case `getAllFranchises` previously returned
-    // a malformed ID due to the `...data` spread overwrite bug).
-    if (!snapshot.exists()) {
-      const allSnapshot = await get(migratedFranchiseRef);
-      if (allSnapshot.exists()) {
-        let foundId: string | null = null;
-        allSnapshot.forEach((childSnapshot) => {
-          const data = childSnapshot.val();
-          if (data?.id === id || childSnapshot.key === id) {
-            foundId = childSnapshot.key;
-            return true; // break iteration
-          }
-        });
-        if (foundId) {
-          franchiseRef = child(migratedFranchiseRef, foundId);
-          snapshot = await get(franchiseRef);
-        }
-      }
-    }
-
-    // If still not found, return 404
-    if (!snapshot.exists()) {
+    if (!franchiseSnap.exists()) {
       return NextResponse.json(
         { error: 'Franchise not found' },
         { status: 404 }
       );
     }
 
-    // Delete the franchise from wherever it was found
-    await remove(franchiseRef);
+    // Delete the franchise document
+    await deleteDoc(franchiseDocRef);
 
     return NextResponse.json({
       success: true,
@@ -373,4 +273,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}

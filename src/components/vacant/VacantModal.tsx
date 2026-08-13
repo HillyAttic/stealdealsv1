@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Property } from '@/lib/firebase';
+import { Property } from '@/types/property';
 import { useActivity } from '@/hooks/useActivity';
 import PropertyImage from '@/components/PropertyImage';
 

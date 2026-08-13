@@ -7,8 +7,6 @@ import ClientOnly from '@/components/ClientOnly';
 import Link from 'next/link';
 import { BsMenuUp, BsSave } from 'react-icons/bs';
 import { toast, Toaster } from 'react-hot-toast';
-import { franchisePropertiesRef, migratedFranchiseRef, database } from '@/lib/firebase';
-import { ref, get, child, update } from 'firebase/database';
 import ImageUploader from '@/components/ui/ImageUploader';
 import { 
   AdminFranchise, 

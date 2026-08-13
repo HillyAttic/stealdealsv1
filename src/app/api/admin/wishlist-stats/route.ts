@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
-import { database } from '@/lib/firebase';
-import { ref, get } from 'firebase/database';
+import { firestoreDb } from '@/lib/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { clerkClient } from '@clerk/nextjs/server';
 import { ActivityLogger } from '@/lib/services/activityLogger';
 
@@ -209,11 +209,12 @@ export async function GET(request: NextRequest) {
       const topPropertiesLimit = Math.min(parseInt(searchParams.get('topLimit') || '10'), 50);
       const recentActivityLimit = Math.min(parseInt(searchParams.get('activityLimit') || '20'), 100);
 
-      // Get all wishlists from Firebase
-      const wishlistsRef = ref(database, 'wishlists');
-      const wishlistsSnapshot = await get(wishlistsRef);
+      // Get all wishlists from Firestore
+      // In Firestore, wishlists are stored as: wishlists/{userId}/items/{itemId}
+      const wishlistsCol = collection(firestoreDb, 'wishlists');
+      const userDocs = await getDocs(wishlistsCol);
 
-      if (!wishlistsSnapshot.exists()) {
+      if (userDocs.empty) {
         logAdminStatsOperation('get_wishlist_stats', adminUserId, {
           result: 'no_wishlists_found'
         });
@@ -243,9 +244,8 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      // Process wishlist data
-      const wishlistData = wishlistsSnapshot.val();
-      const userIds = Object.keys(wishlistData);
+      // Process wishlist data — read each user's items subcollection
+      const userIds = userDocs.docs.map(d => d.id);
       const usersWithWishlists = userIds.length;
 
       let totalWishlistItems = 0;
@@ -259,12 +259,24 @@ export async function GET(request: NextRequest) {
         priority: string;
       }> = [];
 
-      // Analyze each user's wishlist
-      for (const userId of userIds) {
-        const userWishlist = wishlistData[userId];
-        if (!userWishlist || typeof userWishlist !== 'object') continue;
+      // Read all users' wishlist items in parallel
+      const userItemsResults = await Promise.all(
+        userIds.map(async (userId) => {
+          try {
+            const itemsCol = collection(firestoreDb, 'wishlists', userId, 'items');
+            const itemsSnap = await getDocs(itemsCol);
+            const items: any[] = [];
+            itemsSnap.forEach(doc => items.push(doc.data()));
+            return items;
+          } catch {
+            return [];
+          }
+        })
+      );
 
-        const wishlistItems = Object.values(userWishlist) as any[];
+      // Analyze each user's wishlist
+      for (let i = 0; i < userIds.length; i++) {
+        const wishlistItems = userItemsResults[i];
         const userWishlistSize = wishlistItems.length;
         userWishlistSizes.push(userWishlistSize);
         totalWishlistItems += userWishlistSize;
@@ -280,8 +292,6 @@ export async function GET(request: NextRequest) {
             if (priority in priorityCount) {
               priorityCount[priority]++;
             }
-
-            // Note: Real activity collection is now handled separately via ActivityLogger
           }
         }
       }

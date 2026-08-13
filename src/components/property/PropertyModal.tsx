@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FaTimes, FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaRulerCombined, FaBuilding, FaPhone, FaUser } from 'react-icons/fa';
 import PropertyImage from '@/components/PropertyImage';
-import { Property } from '@/lib/firebase';
+import { Property } from '@/types/property';
 import { useActivity } from '@/hooks/useActivity';
 
 interface PropertyModalProps {

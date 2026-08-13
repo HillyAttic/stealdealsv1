@@ -100,32 +100,28 @@ export async function GET(request: NextRequest) {
       let wishlistCounts: Record<string, number> = {};
 
       try {
-        const { database } = await import('@/lib/firebase');
-        const { ref, get } = await import('firebase/database');
+        const { firestoreDb } = await import('@/lib/firestore');
+        const { collection, getDocs } = await import('firebase/firestore');
 
-        // Single read of all wishlists, then filter for displayed users
-        // This is much faster than N+1 individual reads
-        const allWishlistsRef = ref(database, 'wishlists');
-        const allWishlistsSnapshot = await get(allWishlistsRef);
+        // In Firestore, wishlists are stored as subcollections: wishlists/{userId}/items/{itemId}
+        // For each displayed user, get their items subcollection and count docs
+        const displayedUserIds = usersResponse.data.map(user => user.id);
 
-        if (allWishlistsSnapshot.exists()) {
-          const allWishlists = allWishlistsSnapshot.val();
-          const displayedUserIds = new Set(usersResponse.data.map(user => user.id));
-
-          // Only count wishlists for users being displayed
-          for (const userId of displayedUserIds) {
-            const userWishlist = allWishlists?.[userId];
-            if (userWishlist && typeof userWishlist === 'object') {
-              wishlistCounts[userId] = Object.keys(userWishlist).length;
-            } else {
-              wishlistCounts[userId] = 0;
+        // Use Promise.all to fetch all wishlist counts in parallel
+        const counts = await Promise.all(
+          displayedUserIds.map(async (userId) => {
+            try {
+              const itemsCol = collection(firestoreDb, 'wishlists', userId, 'items');
+              const snapshot = await getDocs(itemsCol);
+              return { userId, count: snapshot.size };
+            } catch {
+              return { userId, count: 0 };
             }
-          }
-        } else {
-          // No wishlists exist, set all to 0
-          usersResponse.data.forEach(user => {
-            wishlistCounts[user.id] = 0;
-          });
+          })
+        );
+
+        for (const { userId, count } of counts) {
+          wishlistCounts[userId] = count;
         }
       } catch (wishlistError) {
         console.warn('[Admin Users API] Failed to fetch wishlist counts:', wishlistError);

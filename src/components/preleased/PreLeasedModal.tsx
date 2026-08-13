@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Property } from '@/lib/firebase';
+import { Property } from '@/types/property';
 import PropertyImage from '@/components/PropertyImage';
 
 interface PreLeasedModalProps {

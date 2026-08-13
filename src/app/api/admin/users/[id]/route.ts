@@ -53,17 +53,11 @@ export async function GET(
       // Get wishlist count for this user
       let wishlistCount = 0;
       try {
-        const { database } = await import('@/lib/firebase');
-        const { ref, get } = await import('firebase/database');
-        const userWishlistRef = ref(database, `wishlists/${userId}`);
-        const wishlistSnapshot = await get(userWishlistRef);
-        
-        if (wishlistSnapshot.exists()) {
-          const wishlistData = wishlistSnapshot.val();
-          if (wishlistData && typeof wishlistData === 'object') {
-            wishlistCount = Object.keys(wishlistData).length;
-          }
-        }
+        const { firestoreDb } = await import('@/lib/firestore');
+        const { collection, getDocs } = await import('firebase/firestore');
+        const itemsCol = collection(firestoreDb, 'wishlists', userId, 'items');
+        const itemsSnapshot = await getDocs(itemsCol);
+        wishlistCount = itemsSnapshot.size;
       } catch (wishlistError) {
         console.warn(`[Admin User Details API] Failed to fetch wishlist count for user ${userId}:`, wishlistError);
       }

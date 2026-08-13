@@ -1,4 +1,4 @@
-import { database, PropertyWithOwnership } from '../firebase-server-admin';
+import { db, PropertyWithOwnership } from '../firebase-server-admin';
 
 /**
  * Service for managing property ownership tracking
@@ -88,49 +88,54 @@ export class PropertyOwnershipService {
   /**
    * Migrate existing properties to include ownership information
    * This is a one-time migration function
+   *
+   * In Firestore, all properties are in the `properties` collection with a `type` discriminator.
+   * This method finds properties of a given type that are missing ownership info and adds it.
    */
   static async migrateExistingProperties(
-    collectionPath: string,
+    propertyType: string,
     defaultCreatedBy: string
   ): Promise<{ success: boolean; migratedCount: number; error?: string }> {
     try {
-      const snapshot = await database.ref(collectionPath).once('value');
-      const properties = snapshot.val();
-      
-      if (!properties) {
+      const snapshot = await db.collection('properties').where('type', '==', propertyType).get();
+
+      if (snapshot.empty) {
         return { success: true, migratedCount: 0 };
       }
 
+      const batch = db.batch();
       let migratedCount = 0;
-      const updates: { [key: string]: any } = {};
+      const now = new Date().toISOString();
 
-      // Process each property
-      Object.keys(properties).forEach(propertyId => {
-        const property = properties[propertyId];
-        
+      snapshot.docs.forEach(docSnap => {
+        const property = docSnap.data();
+
         // Only migrate if createdBy doesn't exist
         if (!property.createdBy) {
-          const now = new Date().toISOString();
-          updates[`${propertyId}/createdBy`] = defaultCreatedBy;
-          updates[`${propertyId}/createdAt`] = property.createdAt || now;
-          updates[`${propertyId}/lastModifiedBy`] = defaultCreatedBy;
-          updates[`${propertyId}/lastModifiedAt`] = property.lastModifiedAt || now;
+          const updateData: any = {
+            createdBy: defaultCreatedBy,
+            createdAt: property.createdAt || now,
+            lastModifiedBy: defaultCreatedBy,
+            lastModifiedAt: property.lastModifiedAt || now,
+          };
+
+          batch.update(docSnap.ref, updateData);
           migratedCount++;
         }
       });
 
-      // Apply all updates in a single operation
-      if (Object.keys(updates).length > 0) {
-        await database.ref(collectionPath).update(updates);
+      // Apply all updates in a single batch operation
+      if (migratedCount > 0) {
+        await batch.commit();
       }
 
       return { success: true, migratedCount };
     } catch (error) {
-      console.error(`Error migrating properties in ${collectionPath}:`, error);
-      return { 
-        success: false, 
-        migratedCount: 0, 
-        error: 'Failed to migrate properties' 
+      console.error(`Error migrating properties of type ${propertyType}:`, error);
+      return {
+        success: false,
+        migratedCount: 0,
+        error: 'Failed to migrate properties'
       };
     }
   }

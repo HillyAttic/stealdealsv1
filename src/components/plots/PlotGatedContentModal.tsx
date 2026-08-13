@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { FaTimes, FaLock, FaDownload } from 'react-icons/fa';
-import { Plot } from '@/lib/firebase';
+import { Plot } from '@/types/property';
 
 interface PlotGatedContentModalProps {
   plot: Plot | null;

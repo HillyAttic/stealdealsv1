@@ -11,8 +11,7 @@ import PropertyImage from '@/components/PropertyImage';
 import { FaArrowLeft, FaMapMarkerAlt, FaBuilding, FaRulerCombined, FaRupeeSign, FaRegClock, FaEnvelope, FaPhone } from 'react-icons/fa';
 import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
-import { database, Property, vacantPropertiesRef } from '@/lib/firebase';
-import { ref, get, child } from 'firebase/database';
+import { Property } from '@/types/property';
 import { useActivity } from '@/hooks/useActivity';
 
 // Default fallback image
@@ -63,23 +62,16 @@ export default function VacantPropertyDetails() {
     
     const fetchProperty = async () => {
       try {
-        // Try to get from vacant properties first
-        let propertyRef = child(vacantPropertiesRef, propertyId);
-        let snapshot = await get(propertyRef);
-        
-        // If not found, try legacy properties storage
-        if (!snapshot.exists()) {
-          propertyRef = ref(database, `properties/${propertyId}`);
-          snapshot = await get(propertyRef);
-        }
-        
-        if (snapshot.exists()) {
-          const propertyData = snapshot.val();
-          
+        // Use the API endpoint instead of direct database queries
+        const response = await fetch(`/api/properties/${propertyId}`);
+
+        if (response.ok) {
+          const { property: propertyData } = await response.json();
+
           // Handle property type mismatches with helpful redirects
           if (propertyData.propertyType !== 'Vacant') {
             console.log(`Property ${propertyId} has type: ${propertyData.propertyType}, expected: Vacant`);
-            
+
             // Redirect to correct route based on property type
             switch (propertyData.propertyType) {
               case 'Franchise':
@@ -96,12 +88,8 @@ export default function VacantPropertyDetails() {
             }
           } else {
             // Valid vacant property
-            const propertyWithId = { 
-              id: snapshot.key, 
-              ...propertyData 
-            };
-            setProperty(propertyWithId);
-            
+            setProperty(propertyData);
+
             // Track property view automatically
             logPropertyView(propertyId, {
               source: getTrafficSource(),
@@ -110,8 +98,11 @@ export default function VacantPropertyDetails() {
               location: propertyData.location
             });
           }
-        } else {
+        } else if (response.status === 404) {
           setError('Property not found in database. Please check the property ID and try again.');
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          setError(errorData.error || `Failed to load property (${response.status})`);
         }
       } catch (err: any) {
         console.error('Error loading property:', err);

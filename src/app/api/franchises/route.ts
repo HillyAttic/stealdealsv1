@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { push, get, set, ref, child } from 'firebase/database';
-import { getAllFranchises, migratedFranchiseRef, generateUniquePropertyId, getNextSequenceNumber } from '@/lib/firebase';
+import { collection, doc, setDoc } from 'firebase/firestore';
+import { firestoreDb } from '@/lib/firestore';
+import { getAllFranchises, generateUniquePropertyId, getNextSequenceNumber } from '@/lib/database/firestore-properties';
 import { revalidateTag } from 'next/cache';
 
 // Get all franchises from migrated structure
@@ -72,7 +73,6 @@ export async function POST(request: NextRequest) {
     console.log(`Creating new franchise with ID: ${newId}`);
     
     // Create a new franchise entry with unique ID using franchiseDetails structure
-    const newFranchiseRef = child(migratedFranchiseRef, newId);
     const newFranchise = {
       // Essential root-level fields only
       id: newId,
@@ -113,8 +113,11 @@ export async function POST(request: NextRequest) {
     };
     
     console.log('Saving franchise data:', newFranchise);
-    await set(newFranchiseRef, newFranchise);
-    
+
+    // Save to Firestore properties collection
+    const franchiseDocRef = doc(firestoreDb, 'properties', newId);
+    await setDoc(franchiseDocRef, newFranchise);
+
     // Invalidate the cache to ensure fresh data on next request
     revalidateTag('franchises');
     

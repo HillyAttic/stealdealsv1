@@ -141,6 +141,7 @@ if (!admin.apps.length) {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         databaseURL: databaseURL,
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || `${serviceAccount.project_id}.firebasestorage.app`,
       });
       console.log('[Firebase Admin] ✅ Firebase Admin initialized successfully for project:', serviceAccount.project_id);
       console.log('[Firebase Admin] Using Key ID:', serviceAccount.private_key_id?.substring(0, 8) + '...');
@@ -187,6 +188,9 @@ export const auth = new Proxy({} as admin.auth.Auth, {
   }
 });
 
+// ─── Database service proxies ────────────────────────────────────────────────
+// RTDB proxy — DEPRECATED: kept for dual-write period, will be removed after migration
+/** @deprecated Use `db` (Firestore) instead. Kept for RTDB→Firestore migration dual-write period. */
 export const database = new Proxy({} as admin.database.Database, {
   get(_, prop) {
     const service = getService<admin.database.Database>('database');
@@ -195,15 +199,12 @@ export const database = new Proxy({} as admin.database.Database, {
   }
 });
 
-export const db = new Proxy({} as any, {
+// Firestore proxy — PRIMARY database for the post-migration app
+export const db = new Proxy({} as admin.firestore.Firestore, {
   get(_, prop) {
-    try {
-      const service = getService<any>('firestore');
-      const val = (service as any)[prop];
-      return typeof val === 'function' ? val.bind(service) : val;
-    } catch (e) {
-      return undefined;
-    }
+    const service = getService<admin.firestore.Firestore>('firestore');
+    const val = (service as any)[prop];
+    return typeof val === 'function' ? val.bind(service) : val;
   }
 });
 

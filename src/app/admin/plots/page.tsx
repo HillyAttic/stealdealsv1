@@ -7,7 +7,7 @@ import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
 import ClientOnly from '@/components/ClientOnly';
-import { Plot } from '@/lib/firebase';
+import { Plot } from '@/types/property';
 import { PlotModal } from '@/components/plots';
 
 export default function PlotsAdmin() {

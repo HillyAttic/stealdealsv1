@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
-import { getRawWishlistItems } from '@/lib/database/wishlist';
+import { getRawWishlistItems } from '@/lib/database/firestore-wishlist';
 
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {

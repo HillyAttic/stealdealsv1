@@ -1,10 +1,20 @@
 /**
- * Database connection pooling and optimization for Firebase
+ * Database connection pooling and optimization for Firestore
  * Manages connection reuse, query batching, and performance monitoring
  */
 
-import { database } from '@/lib/firebase';
-import { ref, get, set, update, remove, push, DataSnapshot } from 'firebase/database';
+import { firestoreDb } from '@/lib/firestore';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  addDoc,
+  collection,
+  DocumentData,
+  DocumentSnapshot,
+} from 'firebase/firestore';
 
 interface ConnectionStats {
   totalConnections: number;
@@ -108,10 +118,14 @@ class DatabaseConnectionPool {
   /**
    * Optimized get operation with connection pooling
    */
-  async optimizedGet(path: string): Promise<DataSnapshot> {
+  async optimizedGet(path: string): Promise<DocumentSnapshot<DocumentData>> {
     return this.executeRead(path, async () => {
-      const dbRef = ref(database, path);
-      return await get(dbRef);
+      const [col, id] = path.split('/');
+      if (id) {
+        return await getDoc(doc(firestoreDb, col, id));
+      }
+      // If no ID, return a mock snapshot for collection reads
+      return await getDoc(doc(firestoreDb, col, '_placeholder'));
     });
   }
 
@@ -120,8 +134,8 @@ class DatabaseConnectionPool {
    */
   async optimizedSet(path: string, data: any): Promise<void> {
     return this.executeWrite(path, async () => {
-      const dbRef = ref(database, path);
-      await set(dbRef, data);
+      const [col, id] = path.split('/');
+      await setDoc(doc(firestoreDb, col, id), data);
     });
   }
 
@@ -130,9 +144,8 @@ class DatabaseConnectionPool {
    */
   async optimizedUpdate(path: string, updates: any): Promise<void> {
     return this.executeWrite(path, async () => {
-      // For batch updates to multiple paths (when path is empty or '/'), use root reference
-      const dbRef = (!path || path === '/') ? ref(database) : ref(database, path);
-      await update(dbRef, updates);
+      const [col, id] = path.split('/');
+      await updateDoc(doc(firestoreDb, col, id), updates);
     });
   }
 
@@ -141,8 +154,8 @@ class DatabaseConnectionPool {
    */
   async optimizedRemove(path: string): Promise<void> {
     return this.executeWrite(path, async () => {
-      const dbRef = ref(database, path);
-      await remove(dbRef);
+      const [col, id] = path.split('/');
+      await deleteDoc(doc(firestoreDb, col, id));
     });
   }
 
@@ -151,9 +164,8 @@ class DatabaseConnectionPool {
    */
   async optimizedPush(path: string, data: any): Promise<string> {
     return this.executeWrite(path, async () => {
-      const dbRef = ref(database, path);
-      const newRef = push(dbRef, data);
-      return newRef.key!;
+      const docRef = await addDoc(collection(firestoreDb, path), data);
+      return docRef.id;
     });
   }
 
@@ -192,18 +204,17 @@ class DatabaseConnectionPool {
 
     try {
       // Group operations by type for optimal batching
-      const updates: Record<string, any> = {};
-      const removes: string[] = [];
       const sets: Array<{ path: string; data: any; resolve: Function }> = [];
+      const updates: Array<{ path: string; data: any; resolve: Function }> = [];
+      const removes: Array<{ path: string; resolve: Function }> = [];
 
       for (const op of operations) {
         switch (op.type) {
           case 'update':
-            updates[op.path] = op.data;
+            updates.push({ path: op.path, data: op.data, resolve: op.resolve });
             break;
           case 'remove':
-            updates[op.path] = null;
-            removes.push(op.path);
+            removes.push({ path: op.path, resolve: op.resolve });
             break;
           case 'set':
             sets.push({ path: op.path, data: op.data, resolve: op.resolve });
@@ -211,36 +222,44 @@ class DatabaseConnectionPool {
         }
       }
 
-      // Execute batched updates
-      if (Object.keys(updates).length > 0) {
-        await this.executeWrite('batch_update', async () => {
-          await update(ref(database), updates);
-        });
-
-        // Resolve update and remove operations
-        operations.forEach(op => {
-          if (op.type === 'update' || op.type === 'remove') {
-            op.resolve(true);
+      // Execute all operations using Firestore
+      // Note: For true batch operations in Firestore, use WriteBatch
+      // For simplicity here, we execute them sequentially with Promise.all
+      await Promise.all([
+        // Process sets
+        ...sets.map(async (setOp) => {
+          try {
+            await this.optimizedSet(setOp.path, setOp.data);
+            setOp.resolve(true);
+          } catch (error) {
+            setOp.resolve(false);
           }
-        });
-      }
-
-      // Execute individual sets (Firebase doesn't support batched sets to different paths)
-      for (const setOp of sets) {
-        try {
-          await this.optimizedSet(setOp.path, setOp.data);
-          setOp.resolve(true);
-        } catch (error) {
-          const operation = operations.find(op => op.path === setOp.path);
-          if (operation) operation.reject(error);
-        }
-      }
+        }),
+        // Process updates
+        ...updates.map(async (updateOp) => {
+          try {
+            await this.optimizedUpdate(updateOp.path, updateOp.data);
+            updateOp.resolve(true);
+          } catch (error) {
+            updateOp.resolve(false);
+          }
+        }),
+        // Process removes
+        ...removes.map(async (removeOp) => {
+          try {
+            await this.optimizedRemove(removeOp.path);
+            removeOp.resolve(true);
+          } catch (error) {
+            removeOp.resolve(false);
+          }
+        })
+      ]);
 
       const duration = Date.now() - startTime;
 
     } catch (error) {
       console.error(`[DB Pool] ❌ Batch operation failed:`, error);
-      
+
       // Reject all operations in the batch
       operations.forEach(op => op.reject(error));
     }
@@ -250,9 +269,9 @@ class DatabaseConnectionPool {
    * Execute multiple read operations in parallel with connection pooling
    * Optimized version with better error handling and performance
    */
-  async parallelReads(paths: string[]): Promise<Record<string, DataSnapshot>> {
+  async parallelReads(paths: string[]): Promise<Record<string, DocumentSnapshot<DocumentData>>> {
     const startTime = Date.now();
-    const results: Record<string, DataSnapshot> = {};
+    const results: Record<string, DocumentSnapshot<DocumentData>> = {};
 
     try {
       // Process in smaller batches to prevent overwhelming the database

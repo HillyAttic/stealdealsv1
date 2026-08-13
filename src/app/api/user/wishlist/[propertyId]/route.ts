@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { optionalAuth } from '@/lib/auth/middleware';
-import { updateWishlistItem } from '@/lib/database/wishlist';
+import { updateWishlistItem } from '@/lib/database/firestore-wishlist';
 
 // PUT /api/user/wishlist/[propertyId] - Update wishlist item notes and priority
 export async function PUT(

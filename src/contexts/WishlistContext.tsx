@@ -3,13 +3,13 @@
 // WishlistContext with fixed infinite loop prevention using refs
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth, useUser } from '@clerk/nextjs';
-import { 
-  addToWishlist as addToWishlistDB, 
-  removeFromWishlist as removeFromWishlistDB, 
+import {
+  addToWishlist as addToWishlistDB,
+  removeFromWishlist as removeFromWishlistDB,
   getRawWishlistItems,
-  getUserWishlistRef 
-} from '@/lib/database/wishlist';
-import { onValue, off } from 'firebase/database';
+} from '@/lib/database/firestore-wishlist';
+import { subscribeToWishlist } from '@/lib/database/firestore-wishlist';
+import type { WishlistItem } from '@/types/auth';
 
 interface WishlistContextType {
   wishlistItems: Set<string>;
@@ -112,32 +112,29 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     }
 
     console.log(`[WishlistContext] 🔥 Setting up Firebase real-time listener for user ${userId}`);
-    
-    const wishlistRef = getUserWishlistRef(userId);
-    
-    const unsubscribe = onValue(wishlistRef, (snapshot) => {
+
+    const unsubscribe = subscribeToWishlist(userId, (items: WishlistItem[]) => {
       try {
         console.log(`[WishlistContext] 🔄 Real-time update received`);
-        
-        if (!snapshot.exists()) {
+
+        if (!items || items.length === 0) {
           console.log(`[WishlistContext] 📭 No wishlist data, setting empty`);
           setWishlistItems(new Set());
           return;
         }
-        
+
         const propertyIds = new Set<string>();
-        snapshot.forEach((childSnapshot) => {
-          const data = childSnapshot.val();
-          if (data && data.propertyId) {
-            propertyIds.add(data.propertyId);
+        for (const item of items) {
+          if (item && item.propertyId) {
+            propertyIds.add(item.propertyId);
           }
-        });
-        
+        }
+
         console.log(`[WishlistContext] 🔄 Real-time update: ${propertyIds.size} items [${Array.from(propertyIds).join(', ')}]`);
         setWishlistItems(propertyIds);
         setIsLoading(false);
         setError(null); // Clear any previous errors
-        
+
       } catch (error) {
         console.error('[WishlistContext] ❌ Error processing real-time update:', error);
         setError('Failed to process wishlist update');
@@ -249,41 +246,38 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       if (!isListenerActiveRef.current) {
         console.log(`[WishlistContext] 🔥 Setting up Firebase real-time listener for user ${currentUserId}`);
         setIsLoading(true);
-        
-        const wishlistRef = getUserWishlistRef(currentUserId);
-        
-        const unsubscribe = onValue(wishlistRef, (snapshot) => {
+
+        const unsubscribe = subscribeToWishlist(currentUserId, (items: WishlistItem[]) => {
           try {
             const timestamp = new Date().toISOString();
             console.log(`[WishlistContext] 🔄 Real-time update received at ${timestamp} for user ${currentUserId}`);
             console.log(`[WishlistContext] 📊 Current state: initialized=${isInitializedRef.current}, listenerActive=${isListenerActiveRef.current}`);
-            
-            if (!snapshot.exists()) {
+
+            if (!items || items.length === 0) {
               console.log(`[WishlistContext] 📭 No wishlist data found, setting empty set`);
               setWishlistItems(new Set());
               setIsLoading(false);
               isInitializedRef.current = true;
               return;
             }
-            
+
             const propertyIds = new Set<string>();
             let processedCount = 0;
-            snapshot.forEach((childSnapshot) => {
-              const data = childSnapshot.val();
+            for (const item of items) {
               processedCount++;
-              if (data && data.propertyId) {
-                propertyIds.add(data.propertyId);
+              if (item && item.propertyId) {
+                propertyIds.add(item.propertyId);
               } else {
-                console.warn(`[WishlistContext] ⚠️ Invalid wishlist item data at ${childSnapshot.key}:`, data);
+                console.warn(`[WishlistContext] ⚠️ Invalid wishlist item data:`, item);
               }
-            });
-            
+            }
+
             console.log(`[WishlistContext] 🔄 Real-time update processed: ${processedCount} total items, ${propertyIds.size} valid items [${Array.from(propertyIds).join(', ')}]`);
             setWishlistItems(propertyIds);
             setIsLoading(false);
             isInitializedRef.current = true;
             setError(null); // Clear any previous errors
-            
+
           } catch (error) {
             console.error('[WishlistContext] ❌ Error processing real-time update:', error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -299,17 +293,6 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
           }
         }, (error) => {
           console.error('[WishlistContext] ❌ Firebase listener error for user', currentUserId, ':', error);
-          console.error('[WishlistContext] Firebase error details:', {
-            errorCode: error.code || 'unknown',
-            errorMessage: error.message || 'Unknown error',
-            errorName: error.name || 'Unknown',
-            userId: currentUserId,
-            timestamp: new Date().toISOString(),
-            firebaseConfig: {
-              projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-              databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL
-            }
-          });
           setError(`Connection to wishlist service failed: ${error.message || 'Unknown error'}`);
           setIsLoading(false);
           isInitializedRef.current = true;

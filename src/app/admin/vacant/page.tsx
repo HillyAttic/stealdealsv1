@@ -6,9 +6,8 @@ import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
-import { Property, migratedVacantRef } from '@/lib/firebase';
-import { ref, get } from 'firebase/database';
-import { database } from '@/lib/firebase';
+import { Property } from '@/types/property';
+import { getAllVacantProperties } from '@/lib/database/firestore-properties';
 import ClientOnly from '@/components/ClientOnly';
 import { sortByNewest } from '@/lib/sort';
 import { VacantModal } from '@/components/vacant';
@@ -46,52 +45,19 @@ function VacantPropertiesContent() {
   const [isDeleting, setIsDeleting] = useState(false);
   const loadInProgress = useRef(false);
 
-  // Load properties from Firebase - single optimized read
+  // Load properties from Firestore - single optimized read
   const loadProperties = useCallback(async () => {
     if (loadInProgress.current) return;
     loadInProgress.current = true;
-    
+
     try {
       setIsLoading(true);
       setError('');
 
-      // Single read from migrated collection only (no legacy fallback needed)
-      const snapshot = await get(migratedVacantRef);
-      
-      if (snapshot.exists()) {
-        const allProperties: Property[] = [];
-        snapshot.forEach((childSnapshot) => {
-          const propertyData = childSnapshot.val();
-          let property = { 
-            ...propertyData,
-            id: childSnapshot.key || propertyData.id || '',
-            source: 'migrated'
-          };
-          
-          // Handle nested structure from migration
-          if (propertyData.vacantDetails) {
-            const details = propertyData.vacantDetails;
-            property = {
-              ...property,
-              category: details.category || propertyData.category || 'Vacant',
-              city: details.city || propertyData.city || '',
-              state: details.state || propertyData.state || '',
-              district: details.district || propertyData.district || '',
-              floor: details.floor || propertyData.floor || '',
-              facing: details.facing || propertyData.facing || '',
-              carpetArea: details.carpetArea || propertyData.carpetArea || '',
-              superArea: details.superArea || propertyData.superArea || '',
-              rent: details.rent || propertyData.rent || propertyData.price || 0,
-              contactName: details.contactName || propertyData.contactName || '',
-              contactNumber: details.contactNumber || propertyData.contactNumber || '',
-              reference: details.reference || propertyData.reference || '',
-              propertyType: details.propertyType || propertyData.propertyType || 'Vacant'
-            };
-          }
-          
-          allProperties.push(property as Property);
-        });
-        
+      // Read all vacant properties from Firestore
+      const allProperties = await getAllVacantProperties();
+
+      if (allProperties.length > 0) {
         const sorted = sortByNewest(allProperties);
         setTotalCount(sorted.length);
         // Only show first page of results
@@ -126,10 +92,16 @@ function VacantPropertiesContent() {
   const handleDelete = async (id: string) => {
     if (!id || isDeleting) return;
     setIsDeleting(true);
-    
+
     try {
-      const { deleteProperty } = await import('@/lib/firebase');
-      await deleteProperty(id, 'Vacant');
+      const response = await fetch(`/api/properties/${id}?propertyType=Vacant`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to delete property (${response.status})`);
+      }
       setDeleteConfirm(null);
       // Refresh the list after deletion
       await loadProperties();

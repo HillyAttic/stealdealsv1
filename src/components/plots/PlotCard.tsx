@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { FaMapMarkerAlt, FaRulerCombined, FaDownload, FaLock } from 'react-icons/fa';
 import { WishlistButton } from '@/components/wishlist';
 import PropertyImage from '@/components/PropertyImage';
-import { Plot } from '@/lib/firebase';
+import { Plot } from '@/types/property';
 import { useSecureGatedContent } from '@/hooks/useSecureGatedContent';
 import { PlotGatedContentModal } from './PlotGatedContentModal';
 import { PlotSuccessMessage } from './PlotSuccessMessage';

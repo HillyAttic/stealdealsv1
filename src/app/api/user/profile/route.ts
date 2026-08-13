@@ -1,6 +1,6 @@
  import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/middleware';
-import { getUserProfile, updateUserProfile } from '@/lib/database/users';
+import { getUserProfile, updateUserProfile } from '@/lib/database/firestore-users';
 import { z } from 'zod';
 
 // Validation schema for profile updates

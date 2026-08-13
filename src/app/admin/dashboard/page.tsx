@@ -6,8 +6,8 @@ import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 import { FaChartBar, FaStore, FaBuilding, FaHome } from 'react-icons/fa';
 import ClientOnly from '@/components/ClientOnly';
-import { migratedPreleasedRef, migratedVacantRef, migratedFranchiseRef, migratedPlotsRef } from '@/lib/firebase';
-import { dbPool } from '@/lib/database/connection-pool';
+import { firestoreDb } from '@/lib/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // Add global type declaration for the window extension
 declare global {
@@ -114,27 +114,20 @@ function AdminDashboardContent() {
         return;
       }
       
-      // Use parallel reads with connection pooling to reduce connection usage
-      const snapshots = await dbPool.parallelReads([
-        'migratedProperties/preleased',
-        'migratedProperties/vacant', 
-        'migratedProperties/franchise',
-        'migratedProperties/plots'
+      // Fetch property counts from Firestore
+      const propertiesCol = collection(firestoreDb, 'properties');
+
+      const [preleasedSnapshot, vacantSnapshot, franchiseSnapshot, plotsSnapshot] = await Promise.all([
+        getDocs(query(propertiesCol, where('type', '==', 'preleased'))),
+        getDocs(query(propertiesCol, where('type', '==', 'vacant'))),
+        getDocs(query(propertiesCol, where('type', '==', 'franchise'))),
+        getDocs(query(propertiesCol, where('type', '==', 'plot')))
       ]);
 
-      const preleasedSnapshot = snapshots['migratedProperties/preleased'];
-      const vacantSnapshot = snapshots['migratedProperties/vacant'];
-      const franchiseSnapshot = snapshots['migratedProperties/franchise'];
-      const plotsSnapshot = snapshots['migratedProperties/plots'];
-
-      const preleasedCount = preleasedSnapshot.exists() ? 
-        Object.keys(preleasedSnapshot.val()).length : 0;
-      const vacantCount = vacantSnapshot.exists() ? 
-        Object.keys(vacantSnapshot.val()).length : 0;
-      const franchiseCount = franchiseSnapshot.exists() ? 
-        Object.keys(franchiseSnapshot.val()).length : 0;
-      const plotsCount = plotsSnapshot.exists() ? 
-        Object.keys(plotsSnapshot.val()).length : 0;
+      const preleasedCount = preleasedSnapshot.size;
+      const vacantCount = vacantSnapshot.size;
+      const franchiseCount = franchiseSnapshot.size;
+      const plotsCount = plotsSnapshot.size;
       
       // Calculate total
       const totalCount = preleasedCount + vacantCount + franchiseCount + plotsCount;
@@ -150,7 +143,9 @@ function AdminDashboardContent() {
       setStats(newStats);
       
       // Process category data for vacant properties (UPDATED - using specific categories)
-      if (vacantSnapshot.exists()) {
+      // Hoisted to function scope so the same values can be written to the cache below
+      let newCategoryData: { labels: string[]; data: number[] } = { labels: [], data: [] };
+      if (!vacantSnapshot.empty) {
         const categories: Record<string, number> = {
           'Industrial': 0,
           'High-Street': 0,
@@ -158,14 +153,14 @@ function AdminDashboardContent() {
           'Corporate': 0,
           'Other': 0
         };
-        
-        vacantSnapshot.forEach((childSnapshot) => {
-          const property = childSnapshot.val();
+
+        vacantSnapshot.forEach((docSnap) => {
+          const property = docSnap.data();
           // Access category from vacantDetails or fallback to property.category
           const category = property.vacantDetails?.category || property.category || 'Other';
-          
-          console.log(`[Dashboard] Processing vacant property: ${childSnapshot.key}, category: ${category}`);
-          
+
+          console.log(`[Dashboard] Processing vacant property: ${docSnap.id}, category: ${category}`);
+
           // Map categories to the specific ones you want
           if (category.toLowerCase().includes('industrial')) {
             categories['Industrial']++;
@@ -191,7 +186,7 @@ function AdminDashboardContent() {
         console.log('[Dashboard] Vacant categories processed:', filteredCategories);
         
         // Update category data with filtered results
-        const newCategoryData = {
+        newCategoryData = {
           labels: Object.keys(filteredCategories),
           data: Object.values(filteredCategories)
         };
@@ -206,7 +201,12 @@ function AdminDashboardContent() {
       }
 
       // Process franchise data by industry (FIXED - access franchiseDetails.industry)
-      if (franchiseSnapshot.exists()) {
+      // Hoisted to function scope so the same values can be written to the cache below
+      let newFranchiseData: { labels: string[]; data: number[] } = {
+        labels: ['Education', 'F&B', 'Fashion', 'Pharmaceutical', 'Retail', 'Sports, Fitness & Entertainments'],
+        data: [0, 0, 0, 0, 0, 0]
+      };
+      if (!franchiseSnapshot.empty) {
         const franchiseCategories: Record<string, number> = {
           'Education': 0,
           'F&B': 0,
@@ -215,13 +215,13 @@ function AdminDashboardContent() {
           'Retail': 0,
           'Sports, Fitness & Entertainments': 0
         };
-        
-        franchiseSnapshot.forEach((childSnapshot) => {
-          const franchise = childSnapshot.val();
+
+        franchiseSnapshot.forEach((docSnap) => {
+          const franchise = docSnap.data();
           // Access industry from franchiseDetails or fallback to franchise.industry
           const industry = franchise.franchiseDetails?.industry || franchise.industry || '';
-          
-          console.log(`[Dashboard] Processing franchise: ${childSnapshot.key}, industry: "${industry}"`);
+
+          console.log(`[Dashboard] Processing franchise: ${docSnap.id}, industry: "${industry}"`);
           
           // Use exact matching for accurate categorization
           switch (industry) {
@@ -255,7 +255,7 @@ function AdminDashboardContent() {
         console.log('[Dashboard] Franchise categories processed (showing all categories):', franchiseCategories);
         
         // Show ALL categories, even those with 0 count
-        const newFranchiseData = {
+        newFranchiseData = {
           labels: Object.keys(franchiseCategories),
           data: Object.values(franchiseCategories)
         };
@@ -273,8 +273,8 @@ function AdminDashboardContent() {
       statsCache.current = {
         data: {
           stats: newStats,
-          categoryData: categoryData,
-          franchiseData: franchiseData
+          categoryData: newCategoryData,
+          franchiseData: newFranchiseData
         },
         timestamp: Date.now()
       };

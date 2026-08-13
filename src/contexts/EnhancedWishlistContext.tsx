@@ -3,11 +3,11 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { useToast } from '@/contexts/ToastContext';
-import { 
+import {
   getRawWishlistItems,
-  getUserWishlistRef 
-} from '@/lib/database/wishlist';
-import { onValue } from 'firebase/database';
+  subscribeToWishlist,
+} from '@/lib/database/firestore-wishlist';
+import type { WishlistItem } from '@/types/auth';
 
 interface WishlistContextType {
   wishlistItems: Set<string>;
@@ -535,13 +535,11 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               console.log(`[EnhancedWishlistContext] Setting up Firebase listener (attempt ${attempt + 1}) for user: ${userId}`);
               
               // Setup Firebase real-time listener
-              const wishlistRef = getUserWishlistRef(userId);
-              
-              const unsubscribe = onValue(wishlistRef, (snapshot) => {
+              const unsubscribe = subscribeToWishlist(userId, (items: WishlistItem[]) => {
                 try {
                   console.log(`[EnhancedWishlistContext] 🔄 Real-time update received for user: ${userId}`);
-                  
-                  if (!snapshot.exists()) {
+
+                  if (!items || items.length === 0) {
                     console.log(`[EnhancedWishlistContext] 📭 No wishlist data, setting empty`);
                     setWishlistItems(new Set());
                     setIsLoading(false);
@@ -549,24 +547,23 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
                     setError(null); // Clear any previous errors
                     return;
                   }
-                  
+
                   const propertyIds = new Set<string>();
-                  snapshot.forEach((childSnapshot) => {
-                    const data = childSnapshot.val();
-                    if (data && data.propertyId) {
-                      propertyIds.add(data.propertyId);
+                  for (const item of items) {
+                    if (item && item.propertyId) {
+                      propertyIds.add(item.propertyId);
                     }
-                  });
-                  
+                  }
+
                   console.log(`[EnhancedWishlistContext] 🔄 Real-time update: ${propertyIds.size} items`);
                   setWishlistItems(propertyIds);
                   setIsLoading(false);
                   setIsInitialized(true);
                   setError(null);
-                  
+
                 } catch (error) {
                   console.error('[EnhancedWishlistContext] ❌ Error processing real-time update:', error);
-                  
+
                   // In production, be more resilient to processing errors
                   if (isProduction) {
                     setError(null); // Don't show error to user for processing issues
@@ -579,7 +576,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
                 }
               }, (error) => {
                 console.error(`[EnhancedWishlistContext] ❌ Firebase listener error (attempt ${attempt + 1}):`, error);
-                
+
                 // Enhanced error handling with retry logic
                 if (isProduction && attempt < 2) {
                   console.log(`[EnhancedWishlistContext] Production: Retrying Firebase connection in 3 seconds...`);
@@ -587,12 +584,12 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
                     setupFirebaseListener(attempt + 1);
                   }, 3000 * (attempt + 1));
                 } else {
-                  const errorMsg = isProduction 
+                  const errorMsg = isProduction
                     ? 'Unable to sync wishlist. Using local data.'
                     : 'Connection to wishlist service failed';
                   setError(errorMsg);
                   setIsLoading(false);
-                  
+
                   // In production, fall back to local storage even for authenticated users
                   if (isProduction) {
                     console.log('[EnhancedWishlistContext] Production: Falling back to localStorage due to Firebase issues');

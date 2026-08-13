@@ -11,8 +11,7 @@ import PropertyImage from '@/components/PropertyImage';
 import { FaArrowLeft, FaMapMarkerAlt, FaBuilding, FaRulerCombined, FaRupeeSign, FaRegClock, FaEnvelope, FaPhone } from 'react-icons/fa';
 import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
-import { database, Property } from '@/lib/firebase';
-import { ref, get, child } from 'firebase/database';
+import { Property } from '@/types/property';
 import { useActivity } from '@/hooks/useActivity';
 
 // Default fallback image

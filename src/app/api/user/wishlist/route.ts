@@ -8,7 +8,7 @@ import {
   getWishlistStats,
   isInWishlist,
   updateWishlistItem
-} from '@/lib/database/wishlist';
+} from '@/lib/database/firestore-wishlist';
 import { RealTimeService } from '@/lib/realtime/service';
 import { withWishlistMonitoring } from '@/lib/monitoring/middleware';
 import { PerformanceMonitor } from '@/lib/monitoring/performance';

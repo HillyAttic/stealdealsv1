@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plot } from '@/lib/firebase';
+import { Plot } from '@/types/property';
 import { useSecureGatedContent } from '@/hooks/useSecureGatedContent';
 import { PlotGatedContentModal } from './PlotGatedContentModal';
 import { PlotSuccessMessage } from './PlotSuccessMessage';

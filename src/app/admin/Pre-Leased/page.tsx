@@ -6,8 +6,8 @@ import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
-import { Property, migratedPreleasedRef } from '@/lib/firebase';
-import { get } from 'firebase/database';
+import { Property } from '@/types/property';
+import { getAllPreleasedProperties } from '@/lib/database/firestore-properties';
 import ClientOnly from '@/components/ClientOnly';
 import { sortByNewest } from '@/lib/sort';
 import { PreLeasedModal } from '@/components/preleased';
@@ -45,56 +45,19 @@ function PreLeasedPropertiesContent() {
   const [isDeleting, setIsDeleting] = useState(false);
   const loadInProgress = useRef(false);
 
-  // Load properties from Firebase - single optimized read
+  // Load properties from Firestore - single optimized read
   const loadProperties = useCallback(async () => {
     if (loadInProgress.current) return;
     loadInProgress.current = true;
-    
+
     try {
       setIsLoading(true);
       setError('');
 
-      // Single read from migrated collection only (no legacy fallback needed)
-      const snapshot = await get(migratedPreleasedRef);
-      
-      if (snapshot.exists()) {
-        const allProperties: Property[] = [];
-        snapshot.forEach((childSnapshot) => {
-          const propertyData = childSnapshot.val();
-          let property = { 
-            ...propertyData,
-            id: childSnapshot.key || propertyData.id || '',
-            source: 'migrated'
-          };
-          
-          // Handle nested structure from migration
-          if (propertyData.preleasedDetails) {
-            const details = propertyData.preleasedDetails;
-            property = {
-              ...property,
-              tenant: details.tenant || propertyData.tenant || '',
-              category: details.category || propertyData.category || 'Pre-Leased',
-              buildingName: details.buildingName || propertyData.buildingName || '',
-              floor: details.floor || propertyData.floor || '',
-              totalArea: details.totalArea || propertyData.totalArea || '',
-              areaOnSale: details.areaOnSale || propertyData.areaOnSale || '',
-              rent: parseFloat(typeof details.rent === 'string' ? details.rent.replace(/[^0-9.]/g, '') : details.rent || '0') || propertyData.rent || 0,
-              leaseTerm: details.leaseTerm || propertyData.leaseTerm || '',
-              remainingLease: details.remainingLease || propertyData.remainingLease || '',
-              lockIn: details.lockIn || propertyData.lockIn || '',
-              escalation: details.escalation || propertyData.escalation || '',
-              securityDeposit: details.securityDeposit || propertyData.securityDeposit || '',
-              roi: details.roi || propertyData.roi || '',
-              propertyStatus: details.propertyStatus || propertyData.propertyStatus || '',
-              reference: details.reference || propertyData.reference || '',
-              channel: details.channel || propertyData.channel || '',
-              propertyType: details.propertyType || propertyData.propertyType || 'Pre-Leased'
-            };
-          }
-          
-          allProperties.push(property as Property);
-        });
-        
+      // Read all pre-leased properties from Firestore
+      const allProperties = await getAllPreleasedProperties();
+
+      if (allProperties.length > 0) {
         const sorted = sortByNewest(allProperties);
         setTotalCount(sorted.length);
         // Only show first page of results
@@ -133,10 +96,16 @@ function PreLeasedPropertiesContent() {
   const handleDelete = async (id: string) => {
     if (!id || isDeleting) return;
     setIsDeleting(true);
-    
+
     try {
-      const { deleteProperty } = await import('@/lib/firebase');
-      await deleteProperty(id, 'Pre-Leased');
+      const response = await fetch(`/api/properties/${id}?propertyType=Pre-Leased`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to delete property (${response.status})`);
+      }
       setDeleteConfirm(null);
       // Refresh the list after deletion
       await loadProperties();

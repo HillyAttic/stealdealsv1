@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getPropertyById, updateProperty, Property } from '@/lib/firebase';
 import { FaSpinner, FaSave } from 'react-icons/fa';
 import ImageUploader from '@/components/ui/ImageUploader';
+import { Property } from '@/types/property';
 
 interface PropertyEditFormProps {
   propertyId: string;
@@ -23,7 +23,12 @@ export default function PropertyEditForm({ propertyId }: PropertyEditFormProps) 
     const fetchPropertyData = async () => {
       setLoading(true);
       try {
-        const propertyData = await getPropertyById(propertyId);
+        const response = await fetch(`/api/properties/${propertyId}`);
+        if (!response.ok) {
+          throw new Error('Property not found');
+        }
+        const data = await response.json();
+        const propertyData = data.property;
         if (propertyData) {
           // Ensure propertyType is set to "Pre-Leased"
           setProperty({
@@ -109,7 +114,20 @@ export default function PropertyEditForm({ propertyId }: PropertyEditFormProps) 
         propertyType: "Pre-Leased"
       };
       
-      await updateProperty(property.id, updatedProperty);
+      const response = await fetch(`/api/properties/${property.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(updatedProperty),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to update property (${response.status})`);
+      }
+
       setSuccess('Property updated successfully!');
       
       // Navigate back to properties list after short delay

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPropertyById } from '@/lib/firebase';
+import { getPropertyById } from '@/lib/database/firestore-properties';
 
 /**
  * Debug API endpoint to test property retrieval from Firebase

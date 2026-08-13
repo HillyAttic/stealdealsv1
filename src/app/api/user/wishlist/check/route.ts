@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { optionalAuth } from '@/lib/auth/middleware';
 import { currentUser } from '@clerk/nextjs/server';
-import { isInWishlist } from '@/lib/database/wishlist';
+import { isInWishlist } from '@/lib/database/firestore-wishlist';
 
 // Enhanced logging utility for wishlist check operations
 function logWishlistCheck(

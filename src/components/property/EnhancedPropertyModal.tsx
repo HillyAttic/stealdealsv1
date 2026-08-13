@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FaTimes, FaMapMarkerAlt, FaBuilding, FaPhone, FaEnvelope, FaRulerCombined } from 'react-icons/fa';
-import { Property } from '@/lib/firebase';
+import { Property } from '@/types/property';
 import { useActivity } from '@/hooks/useActivity';
 
 interface EnhancedPropertyModalProps {

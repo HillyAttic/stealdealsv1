@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
-import { database } from '@/lib/firebase';
-import { ref, get, set } from 'firebase/database';
+import { db } from '@/lib/firestore';
+import { collection, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 import admin from '@/lib/firebase-server-admin';
 
 // ImgBB URL patterns to detect
@@ -81,46 +81,49 @@ async function uploadToFirebaseStorage(
 /**
  * Scan a collection and find all ImgBB URLs
  * Returns a map of propertyId -> { field, url }
+ *
+ * In Firestore, all properties are in the `properties` collection with a `type` discriminator.
+ * We scan by property type (vacant, preleased, franchise, plot).
  */
 async function scanCollection(
-  collectionPath: string,
+  propertyType: string,
   collectionName: string
 ): Promise<Array<{ collection: string; propertyId: string; field: string; url: string; path: string }>> {
   const results: Array<{ collection: string; propertyId: string; field: string; url: string; path: string }> = [];
 
   try {
-    const snapshot = await get(ref(database, collectionPath));
-    if (!snapshot.exists()) return results;
+    const querySnapshot = await getDocs(
+      collection(db, 'properties').where('type', '==', propertyType)
+    );
+    if (querySnapshot.empty) return results;
 
-    const data = snapshot.val();
-    if (!data || typeof data !== 'object') return results;
+    querySnapshot.docs.forEach(docSnap => {
+      const propertyId = docSnap.id;
+      const propertyData = docSnap.data() as any;
 
-    for (const [propertyId, propertyData] of Object.entries(data)) {
-      if (!propertyData || typeof propertyData !== 'object') continue;
-
-      const prop = propertyData as any;
+      if (!propertyData || typeof propertyData !== 'object') return;
 
       // Check top-level image field
-      if (prop.image && isImgbbUrl(prop.image)) {
+      if (propertyData.image && isImgbbUrl(propertyData.image)) {
         results.push({
           collection: collectionName,
           propertyId,
           field: 'image',
-          url: prop.image,
-          path: `${collectionPath}/${propertyId}/image`,
+          url: propertyData.image,
+          path: `properties/${propertyId}`,
         });
       }
 
       // Check images array
-      if (Array.isArray(prop.images)) {
-        prop.images.forEach((url: string, index: number) => {
+      if (Array.isArray(propertyData.images)) {
+        propertyData.images.forEach((url: string, index: number) => {
           if (url && isImgbbUrl(url)) {
             results.push({
               collection: collectionName,
               propertyId,
               field: `images[${index}]`,
               url,
-              path: `${collectionPath}/${propertyId}/images/${index}`,
+              path: `properties/${propertyId}`,
             });
           }
         });
@@ -129,8 +132,8 @@ async function scanCollection(
       // Check nested details objects (franchiseDetails, vacantDetails, etc.)
       const nestedKeys = ['franchiseDetails', 'vacantDetails', 'preleasedDetails', 'plotDetails'];
       for (const key of nestedKeys) {
-        if (prop[key] && typeof prop[key] === 'object') {
-          const details = prop[key];
+        if (propertyData[key] && typeof propertyData[key] === 'object') {
+          const details = propertyData[key];
 
           // Check image in details
           if (details.image && isImgbbUrl(details.image)) {
@@ -139,7 +142,7 @@ async function scanCollection(
               propertyId,
               field: `${key}.image`,
               url: details.image,
-              path: `${collectionPath}/${propertyId}/${key}/image`,
+              path: `properties/${propertyId}`,
             });
           }
 
@@ -152,14 +155,14 @@ async function scanCollection(
                   propertyId,
                   field: `${key}.images[${index}]`,
                   url,
-                  path: `${collectionPath}/${propertyId}/${key}/images/${index}`,
+                  path: `properties/${propertyId}`,
                 });
               }
             });
           }
         }
       }
-    }
+    });
   } catch (error) {
     console.error(`[Image Migration] Error scanning ${collectionName}:`, error);
   }
@@ -168,32 +171,29 @@ async function scanCollection(
 }
 
 /**
- * Scan all collections for ImgBB URLs
+ * Scan all property types for ImgBB URLs
+ * In Firestore, all properties are in the `properties` collection with a `type` discriminator.
  */
 async function scanAllCollections(): Promise<{
   totalImages: number;
   images: Array<{ collection: string; propertyId: string; field: string; url: string; path: string }>;
   summary: { [collection: string]: number };
 }> {
-  const collections = [
-    { path: 'migratedProperties/vacant', name: 'migratedProperties/vacant' },
-    { path: 'migratedProperties/preleased', name: 'migratedProperties/preleased' },
-    { path: 'migratedProperties/franchise', name: 'migratedProperties/franchise' },
-    { path: 'migratedProperties/plots', name: 'migratedProperties/plots' },
-    { path: 'vacantProperties', name: 'vacantProperties (legacy)' },
-    { path: 'preleasedProperties', name: 'preleasedProperties (legacy)' },
-    { path: 'franchiseProperties', name: 'franchiseProperties (legacy)' },
-    { path: 'plots', name: 'plots (legacy)' },
+  const propertyTypes = [
+    { type: 'vacant', name: 'vacant' },
+    { type: 'preleased', name: 'preleased' },
+    { type: 'franchise', name: 'franchise' },
+    { type: 'plot', name: 'plot' },
   ];
 
   const allImages: Array<{ collection: string; propertyId: string; field: string; url: string; path: string }> = [];
   const summary: { [collection: string]: number } = {};
 
-  for (const collection of collections) {
-    const images = await scanCollection(collection.path, collection.name);
+  for (const propertyType of propertyTypes) {
+    const images = await scanCollection(propertyType.type, propertyType.name);
     allImages.push(...images);
     if (images.length > 0) {
-      summary[collection.name] = images.length;
+      summary[propertyType.name] = images.length;
     }
   }
 
@@ -205,7 +205,7 @@ async function scanAllCollections(): Promise<{
 }
 
 /**
- * Migrate images: download from ImgBB, upload to Firebase Storage, update DB
+ * Migrate images: download from ImgBB, upload to Firebase Storage, update Firestore
  */
 async function migrateImages(
   images: Array<{ collection: string; propertyId: string; field: string; url: string; path: string }>,
@@ -228,7 +228,28 @@ async function migrateImages(
 
     try {
       // Download the image
-      const { buffer, contentType } = await downloadImage(image.url);
+      let downloadResult: { buffer: Buffer; contentType: string };
+      try {
+        downloadResult = await downloadImage(image.url);
+      } catch (downloadErr) {
+        const dlMsg = downloadErr instanceof Error ? downloadErr.message : 'Unknown download error';
+        // Check if it's a 404 (image no longer on ImgBB)
+        if (dlMsg.includes('404') || dlMsg.includes('Not Found')) {
+          console.warn(`[Image Migration] ⚠️ ${image.path}: Source image no longer available on ImgBB (404)`);
+          results.push({
+            path: image.path,
+            oldUrl: image.url,
+            newUrl: '',
+            status: 'source_unavailable',
+            error: 'Image no longer available on ImgBB (404)',
+          });
+          skippedCount++;
+          continue;
+        }
+        throw downloadErr; // re-throw non-404 errors
+      }
+
+      const { buffer, contentType } = downloadResult;
 
       if (dryRun) {
         results.push({
@@ -244,9 +265,52 @@ async function migrateImages(
       // Upload to Firebase Storage
       const newUrl = await uploadToFirebaseStorage(buffer, contentType, image.url);
 
-      // Update the database record
-      const dbRef = ref(database, image.path);
-      await set(dbRef, newUrl);
+      // Update the Firestore document
+      // Fetch the current document, update the specific field, and write back
+      const docRef = doc(db, 'properties', image.propertyId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const currentData = docSnap.data() as any;
+        const updateData: any = {};
+
+        // Determine which field to update
+        if (image.field === 'image') {
+          updateData.image = newUrl;
+        } else if (image.field.startsWith('images[')) {
+          const indexMatch = image.field.match(/images\[(\d+)\]/);
+          if (indexMatch) {
+            const index = parseInt(indexMatch[1]);
+            if (Array.isArray(currentData.images)) {
+              updateData.images = [...currentData.images];
+              updateData.images[index] = newUrl;
+            }
+          }
+        } else if (image.field.includes('.image') || image.field.includes('.images[')) {
+          // Handle nested fields like franchiseDetails.image
+          const parts = image.field.split('.');
+          if (parts.length === 2) {
+            const [detailKey, fieldKey] = parts;
+            if (currentData[detailKey]) {
+              updateData[detailKey] = { ...currentData[detailKey] };
+              if (fieldKey === 'image') {
+                updateData[detailKey].image = newUrl;
+              } else if (fieldKey.startsWith('images[')) {
+                const indexMatch = fieldKey.match(/images\[(\d+)\]/);
+                if (indexMatch) {
+                  const index = parseInt(indexMatch[1]);
+                  if (Array.isArray(updateData[detailKey].images)) {
+                    updateData[detailKey].images = [...updateData[detailKey].images];
+                    updateData[detailKey].images[index] = newUrl;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        await updateDoc(docRef, updateData);
+      }
 
       results.push({
         path: image.path,
@@ -280,10 +344,6 @@ async function migrateImages(
     results,
   };
 }
-
-/**
- * GET /api/admin/migrate-images - Scan for ImgBB images
- */
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {
     try {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { clerkClient } from '@clerk/nextjs/server';
-import { getUserWishlist } from '@/lib/database/wishlist';
+import { getUserWishlist } from '@/lib/database/firestore-wishlist';
 import { WishlistProperty, UserActivity } from '@/types/auth';
 
 // Interface for admin UI wishlist items (extends WishlistProperty with UI-specific fields)

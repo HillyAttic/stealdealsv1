@@ -5,7 +5,7 @@ import { PlotCard, PlotModal } from '@/components/plots';
 import { PlotSuccessMessage } from '@/components/plots/PlotSuccessMessage';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { FaSearch, FaFilter, FaBuilding, FaChevronDown } from 'react-icons/fa';
-import { Plot } from '@/lib/firebase';
+import { Plot } from '@/types/property';
 import { sortByNewest } from '@/lib/sort';
 
 interface PlotsPageClientProps {

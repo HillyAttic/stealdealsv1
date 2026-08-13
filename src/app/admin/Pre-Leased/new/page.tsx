@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import AdminLayout from '../../components/AdminLayout';
 import { FaSave } from 'react-icons/fa';
 import { BsMenuUp } from 'react-icons/bs';
-import { database, addProperty } from '@/lib/firebase';
 import ClientOnly from '@/components/ClientOnly';
 import ImageUploader from '@/components/ui/ImageUploader';
 

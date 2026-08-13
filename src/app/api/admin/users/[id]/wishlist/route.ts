@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
-import { getUserWishlist, getWishlistStats, getRawWishlistItems } from '@/lib/database/wishlist';
+import { getUserWishlist, getWishlistStats, getRawWishlistItems } from '@/lib/database/firestore-wishlist';
 import { ActivityLogger } from '@/lib/services/activityLogger';
 
 interface AdminWishlistParams {

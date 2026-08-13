@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
-import { getUserWishlist, getRawWishlistItems } from '@/lib/database/wishlist';
-import { database } from '@/lib/firebase';
-import { ref, get } from 'firebase/database';
+import { getUserWishlist, getRawWishlistItems } from '@/lib/database/firestore-wishlist';
+import { firestoreDb } from '@/lib/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -12,9 +12,9 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const testUserId = searchParams.get('userId') || 'user_32ENazsjJ8HDR8mvhRS4pLePfEA';
-    
+
     console.log(`[DEBUG_WISHLIST] Testing wishlist for user: ${testUserId}`);
-    
+
     // Get current user info
     let clerkUser;
     try {
@@ -22,31 +22,30 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       console.error('[DEBUG_WISHLIST] Clerk currentUser() error:', error);
     }
-    
-    // Test Firebase connection
-    const testRef = ref(database, '.info/connected');
-    let firebaseConnected = false;
+
+    // Test Firestore connection
+    let firestoreConnected = false;
     try {
-      const connSnapshot = await get(testRef);
-      firebaseConnected = connSnapshot.val() === true;
+      const testSnap = await getDocs(collection(firestoreDb, 'wishlists', testUserId, 'items').limit(1));
+      firestoreConnected = true;
     } catch (error) {
-      console.error('[DEBUG_WISHLIST] Firebase connection test failed:', error);
+      console.error('[DEBUG_WISHLIST] Firestore connection test failed:', error);
     }
-    
-    // Test direct Firebase read
-    const wishlistRef = ref(database, `wishlists/${testUserId}`);
-    let directFirebaseData = null;
+
+    // Test direct Firestore read
+    let directFirestoreData = null;
     try {
-      const directSnapshot = await get(wishlistRef);
-      if (directSnapshot.exists()) {
-        directFirebaseData = directSnapshot.val();
-      }
-      console.log(`[DEBUG_WISHLIST] Direct Firebase read: ${directSnapshot.exists() ? Object.keys(directFirebaseData || {}).length : 0} items`);
+      const itemsCol = collection(firestoreDb, 'wishlists', testUserId, 'items');
+      const snap = await getDocs(itemsCol);
+      const items: any[] = [];
+      snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+      directFirestoreData = items;
+      console.log(`[DEBUG_WISHLIST] Direct Firestore read: ${items.length} items`);
     } catch (error) {
-      console.error('[DEBUG_WISHLIST] Direct Firebase read failed:', error);
-      directFirebaseData = { error: error.message };
+      console.error('[DEBUG_WISHLIST] Direct Firestore read failed:', error);
+      directFirestoreData = { error: (error as Error).message };
     }
-    
+
     // Test raw wishlist items
     let rawItems = [];
     try {
@@ -55,7 +54,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       console.error('[DEBUG_WISHLIST] Raw items fetch failed:', error);
     }
-    
+
     // Test full wishlist
     let fullWishlist = [];
     try {
@@ -64,7 +63,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       console.error('[DEBUG_WISHLIST] Full wishlist fetch failed:', error);
     }
-    
+
     const debugInfo = {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
@@ -73,10 +72,9 @@ export async function GET(request: NextRequest) {
         id: clerkUser.id,
         primaryEmailAddress: clerkUser.primaryEmailAddress?.emailAddress
       } : null,
-      firebase: {
-        connected: firebaseConnected,
-        databaseUrl: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL ? 'present' : 'missing',
-        directRead: directFirebaseData,
+      firestore: {
+        connected: firestoreConnected,
+        directRead: directFirestoreData,
         rawItemsCount: rawItems.length,
         fullWishlistCount: fullWishlist.length
       },
@@ -88,7 +86,7 @@ export async function GET(request: NextRequest) {
         addedAt: item.addedAt
       }))
     };
-    
+
     return NextResponse.json({
       success: true,
       debug: debugInfo
@@ -98,14 +96,14 @@ export async function GET(request: NextRequest) {
         'Content-Type': 'application/json'
       }
     });
-    
+
   } catch (error) {
     console.error('[DEBUG_WISHLIST] Debug endpoint error:', error);
-    
+
     return NextResponse.json({
       success: false,
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: (error as Error).message,
+      stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
     }, {
       status: 500,
       headers: {

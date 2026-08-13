@@ -5,8 +5,6 @@ import { useRouter, useParams } from 'next/navigation';
 import AdminLayout from '../../../components/AdminLayout';
 import ClientOnly from '@/components/ClientOnly';
 import { BsMenuUp, BsSave } from 'react-icons/bs';
-import { database, vacantPropertiesRef } from '@/lib/firebase';
-import { ref, get, child, update } from 'firebase/database';
 import { toast, Toaster } from 'react-hot-toast';
 import ImageUploader from '@/components/ui/ImageUploader';
 

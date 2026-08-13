@@ -26,6 +26,7 @@ interface MigrationResult {
   total: number;
   success: number;
   failed: number;
+  skipped: number;
   results: Array<{
     path: string;
     oldUrl: string;
@@ -293,7 +294,7 @@ export default function MigrateImagesPage() {
               <FaCheckCircle className="text-green-500" /> Migration Results
             </h2>
 
-            <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div className="bg-blue-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-blue-600">{migrationResult.total}</div>
                 <div className="text-sm text-blue-700">Total</div>
@@ -301,6 +302,10 @@ export default function MigrateImagesPage() {
               <div className="bg-green-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-green-600">{migrationResult.success}</div>
                 <div className="text-sm text-green-700">Success</div>
+              </div>
+              <div className="bg-amber-50 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-amber-600">{migrationResult.skipped || 0}</div>
+                <div className="text-sm text-amber-700">Unavailable (404)</div>
               </div>
               <div className="bg-red-50 rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold text-red-600">{migrationResult.failed}</div>
@@ -325,7 +330,9 @@ export default function MigrateImagesPage() {
                       <tr key={index} className="border-t">
                         <td className="p-2">
                           {result.status === 'success' || result.status === 'dry-run' ? (
-                            <span className="text-green-600">✓</span>
+                            <span className="text-green-600" title={result.status === 'dry-run' ? 'Dry run (not actually migrated)' : 'Successfully migrated'}>✓</span>
+                          ) : result.status === 'source_unavailable' ? (
+                            <span className="text-amber-500" title={result.error || 'Source image no longer available'}></span>
                           ) : (
                             <span className="text-red-600" title={result.error}>✗</span>
                           )}
@@ -335,7 +342,7 @@ export default function MigrateImagesPage() {
                           {result.oldUrl}
                         </td>
                         <td className="p-2 text-xs text-green-600 truncate max-w-[200px]" title={result.newUrl}>
-                          {result.newUrl}
+                          {result.newUrl || (result.status === 'source_unavailable' ? '— (404)' : '')}
                         </td>
                       </tr>
                     ))}

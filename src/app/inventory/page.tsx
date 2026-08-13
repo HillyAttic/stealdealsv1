@@ -9,7 +9,6 @@ import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import ClientOnly from '../../components/ClientOnly';
-import { getPreleasedProperties } from '@/lib/firebase';
 import { sortByNewest } from '@/lib/sort';
 
 // Property interface reflecting the structure from API
@@ -290,8 +289,13 @@ export default function InventoryPage() {
       setError('');
       
       try {
-        // Fetch preleased properties from Firebase
-        const firebaseProperties = await getPreleasedProperties();
+        // Fetch preleased properties from API
+        const response = await fetch('/api/properties?propertyType=Pre-Leased');
+        if (!response.ok) {
+          throw new Error('Failed to fetch properties');
+        }
+        const data = await response.json();
+        const firebaseProperties = data.properties || [];
         
         // Apply filters
         let filteredProperties = firebaseProperties;

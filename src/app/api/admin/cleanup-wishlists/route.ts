@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
-import { database as adminDb } from '@/lib/firebase-server-admin';
+import { db as adminFs } from '@/lib/firebase-server-admin';
 import { clerkClient } from '@clerk/nextjs/server';
 
 export async function POST(request: NextRequest) {
@@ -17,10 +17,13 @@ export async function POST(request: NextRequest) {
         console.log('[Cleanup] Starting wishlist cleanup, dryRun:', dryRun);
 
         try {
-            const wishlistsRef = adminDb.ref('wishlists');
-            const snapshot = await wishlistsRef.once('value');
+            // In Firestore, wishlists is a top-level collection with per-user subcollections:
+            // wishlists/{userId}/items/{itemId}
+            // Use listDocuments to get all user wishlist parent docs.
+            const [userDocs] = await adminFs.collection('wishlists').listDocuments();
+            const userIds = userDocs.map(d => d.id);
 
-            if (!snapshot.exists()) {
+            if (userIds.length === 0) {
                 return NextResponse.json({
                     message: 'No wishlists found',
                     deletedUsers: [],
@@ -28,10 +31,7 @@ export async function POST(request: NextRequest) {
                 });
             }
 
-            const wishlists = snapshot.val();
-            const userIds = Object.keys(wishlists);
             const deletedUsers: string[] = [];
-
             const client = await clerkClient();
 
             for (const userId of userIds) {
@@ -44,8 +44,17 @@ export async function POST(request: NextRequest) {
                         deletedUsers.push(userId);
 
                         if (!dryRun) {
-                            // Actually delete the wishlist
-                            await adminDb.ref(`wishlists/${userId}`).remove();
+                            // Delete all items in the user's wishlist subcollection
+                            const itemsCol = adminFs.collection('wishlists').doc(userId).collection('items');
+                            const items = await itemsCol.listDocuments();
+                            const batch = adminFs.batch();
+                            for (const itemDoc of items) {
+                                batch.delete(itemDoc);
+                            }
+                            await batch.commit();
+
+                            // Delete the parent wishlist document
+                            await adminFs.collection('wishlists').doc(userId).delete();
                             console.log(`[Cleanup] Deleted wishlist for user ${userId}`);
                         }
                     }

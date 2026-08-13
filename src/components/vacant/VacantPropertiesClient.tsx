@@ -6,7 +6,7 @@ import { PropertyCard } from '@/components/property';
 import { VacantModal } from '@/components/vacant';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { FaSearch, FaFilter, FaBuilding, FaMapMarkerAlt, FaRulerCombined, FaChevronDown, FaChevronUp, FaSort, FaSortAmountDown, FaSortAmountUp } from 'react-icons/fa';
-import { Property } from '@/lib/firebase';
+import { Property } from '@/types/property';
 import { sortByNewest, getCreatedTimestamp } from '@/lib/sort';
 import { useActivity } from '@/hooks/useActivity';
 

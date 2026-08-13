@@ -1,15 +1,18 @@
-import { auth, database, AdminUser } from '../firebase-server-admin';
+import { auth, db, AdminUser } from '../firebase-server-admin';
 import { UserRecord } from 'firebase-admin/auth';
 
 /**
- * Service for managing admin users in Firebase
+ * Service for managing admin users in Firestore
  * Handles user creation, permission management, and database operations
+ *
+ * Migrated from RTDB (admin_users path) to Firestore (adminUsers collection).
+ * Uses the Firestore admin SDK proxy (`db`) from firebase-server-admin.ts.
  */
 export class AdminUserService {
-  private static readonly ADMIN_USERS_PATH = 'admin_users';
+  private static readonly COLLECTION = 'adminUsers';
 
   /**
-   * Create a new admin user with Firebase Authentication and store permissions in Realtime Database
+   * Create a new admin user with Firebase Authentication and store permissions in Firestore
    */
   static async createAdminUser(userData: {
     name: string;
@@ -28,7 +31,7 @@ export class AdminUserService {
         emailVerified: true, // Admin users are pre-verified
       });
 
-      // Prepare admin user data for database
+      // Prepare admin user data for Firestore
       const adminUser: AdminUser = {
         uid: userRecord.uid,
         email: userData.email,
@@ -39,14 +42,13 @@ export class AdminUserService {
         createdBy: userData.createdBy,
       };
 
-      // Store admin user data in Realtime Database
-      await database.ref(`${this.ADMIN_USERS_PATH}/${userRecord.uid}`).set(adminUser);
+      // Store admin user data in Firestore
+      await db.collection(this.COLLECTION).doc(userRecord.uid).set(adminUser);
 
       return { success: true, user: adminUser };
     } catch (error) {
       console.error('Error creating admin user:', error);
 
-      // Provide specific error messages
       if (error instanceof Error) {
         if (error.message.includes('email-already-exists')) {
           return { success: false, error: 'Email already exists' };
@@ -64,50 +66,30 @@ export class AdminUserService {
   }
 
   /**
-   * Get admin user data from Realtime Database
+   * Get admin user data from Firestore
    */
   static async getAdminUser(uid: string): Promise<AdminUser | null> {
     try {
-      console.log('[AdminUserService] Fetching admin user:', uid);
+      console.log('[AdminUserService] Fetching admin user from Firestore:', uid);
 
-      // Helper function to add timeout to RTDB queries
-      const queryWithTimeout = async (ref: any, timeoutMs = 5000): Promise<any> => {
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error(`RTDB query timeout after ${timeoutMs}ms`)), timeoutMs);
-        });
+      const docRef = db.collection(this.COLLECTION).doc(uid);
+      const docSnap = await docRef.get();
 
-        return Promise.race([ref.once('value'), timeoutPromise]);
-      };
-
-      // Query BOTH paths in parallel — no sequential fallback
-      const [newPathSnapshot, legacyPathSnapshot] = await Promise.all([
-        queryWithTimeout(database.ref(`adminUsers/${uid}`), 5000).catch(() => null),
-        queryWithTimeout(database.ref(`${this.ADMIN_USERS_PATH}/${uid}`), 5000).catch(() => null),
-      ]);
-
-      // Use whichever path has data (prefer new path)
-      const snapshot = (newPathSnapshot?.exists()) ? newPathSnapshot :
-                       (legacyPathSnapshot?.exists()) ? legacyPathSnapshot : null;
-
-      if (snapshot) {
-        console.log('[AdminUserService] User found in:', newPathSnapshot?.exists() ? 'adminUsers' : 'admin_users');
-      } else {
-        console.log('[AdminUserService] User not found in either path');
+      if (!docSnap.exists) {
+        console.log('[AdminUserService] User not found in Firestore');
+        return null;
       }
 
-      let userData = snapshot.val() as AdminUser | null;
-
-      console.log('[AdminUserService] User data found:', !!userData);
+      let userData = docSnap.data() as AdminUser;
+      console.log('[AdminUserService] User found in Firestore');
 
       // Ensure new permissions are added to existing users
       if (userData && userData.permissions && userData.permissions.pages) {
-        // Add missing permissions with default values
         const updatedPages = {
           vacant: userData.permissions.pages.vacant ?? false,
           plots: userData.permissions.pages.plots ?? false,
           franchise: userData.permissions.pages.franchise ?? false,
           preleased: userData.permissions.pages.preleased ?? false,
-          // Add new permissions with default values
           dashboard: userData.permissions.pages.dashboard ?? false,
           users: userData.permissions.pages.users ?? false,
           wishlist: userData.permissions.pages.wishlist ?? false,
@@ -115,44 +97,29 @@ export class AdminUserService {
           migration: userData.permissions.pages.migration ?? false,
         };
 
-        // Update the user data if new permissions were added
         if (JSON.stringify(updatedPages) !== JSON.stringify(userData.permissions.pages)) {
           userData.permissions.pages = updatedPages;
-
-          // Update the database with the new permissions structure
-          await Promise.all([
-            database.ref(`${this.ADMIN_USERS_PATH}/${uid}/permissions/pages`).update(updatedPages),
-            database.ref(`adminUsers/${uid}/permissions/pages`).update(updatedPages)
-          ]);
+          // Update the document with the new permissions structure
+          await docRef.update({ 'permissions.pages': updatedPages });
+          console.log('[AdminUserService] Updated permissions schema for user:', uid);
         }
       }
 
       return userData;
     } catch (error) {
       console.error('[AdminUserService] Error fetching admin user:', error);
-
-      // Provide more specific error messages
-      if (error instanceof Error) {
-        if (error.message.includes('timeout')) {
-          console.error('[AdminUserService] Firebase RTDB query timed out - check database connection');
-        }
-      }
-
       return null;
     }
   }
 
   /**
-   * Get all admin users from Realtime Database
+   * Get all admin users from Firestore
    */
   static async getAllAdminUsers(): Promise<AdminUser[]> {
     try {
-      const snapshot = await database.ref(this.ADMIN_USERS_PATH).once('value');
-      const users = snapshot.val();
-
-      if (!users) return [];
-
-      return Object.values(users) as AdminUser[];
+      const snapshot = await db.collection(this.COLLECTION).get();
+      if (snapshot.empty) return [];
+      return snapshot.docs.map(doc => doc.data() as AdminUser);
     } catch (error) {
       console.error('Error fetching all admin users:', error);
       return [];
@@ -167,11 +134,7 @@ export class AdminUserService {
     permissions: AdminUser['permissions']
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      // Update in both potential locations to be safe
-      await Promise.all([
-        database.ref(`${this.ADMIN_USERS_PATH}/${uid}/permissions`).set(permissions),
-        database.ref(`adminUsers/${uid}/permissions`).set(permissions)
-      ]);
+      await db.collection(this.COLLECTION).doc(uid).update({ permissions });
       return { success: true };
     } catch (error) {
       console.error('Error updating admin user permissions:', error);
@@ -180,15 +143,15 @@ export class AdminUserService {
   }
 
   /**
-   * Delete admin user (both from Authentication and Database)
+   * Delete admin user (both from Authentication and Firestore)
    */
   static async deleteAdminUser(uid: string): Promise<{ success: boolean; error?: string }> {
     try {
       // Delete from Firebase Authentication
       await auth.deleteUser(uid);
 
-      // Delete from Realtime Database
-      await database.ref(`${this.ADMIN_USERS_PATH}/${uid}`).remove();
+      // Delete from Firestore
+      await db.collection(this.COLLECTION).doc(uid).delete();
 
       return { success: true };
     } catch (error) {
@@ -220,22 +183,15 @@ export class AdminUserService {
   }
 
   /**
-   * Initialize database schema - create admin_users collection structure
+   * Initialize Firestore collection — no-op since Firestore creates collections on first write.
+   * Kept for API compatibility.
    */
   static async initializeSchema(): Promise<{ success: boolean; error?: string }> {
     try {
-      // Check if admin_users path exists
-      const snapshot = await database.ref(this.ADMIN_USERS_PATH).once('value');
-
-      if (!snapshot.exists()) {
-        // Initialize with empty object to create the path
-        await database.ref(this.ADMIN_USERS_PATH).set({});
-        console.log('Admin users collection initialized');
-      }
-
+      console.log('[AdminUserService] Firestore collections are auto-created on first write — no schema init needed.');
       return { success: true };
     } catch (error) {
-      console.error('Error initializing admin users schema:', error);
+      console.error('Error in schema initialization check:', error);
       return { success: false, error: 'Failed to initialize schema' };
     }
   }
