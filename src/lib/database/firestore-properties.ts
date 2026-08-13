@@ -10,6 +10,9 @@
 import { Property, Franchise, Plot } from '../firebase';
 import { sortByNewest } from '@/lib/sort';
 
+// Re-export types so consumers can migrate imports in one go
+export type { Property, Franchise, Plot };
+
 // RTDB imports (used when phase = rtdb)
 import {
   database,

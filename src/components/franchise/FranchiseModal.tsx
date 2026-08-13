@@ -67,6 +67,11 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
     return text;
   };
 
+  // Helper function to determine the royalty label based on franchise model
+  const getRoyaltyLabel = (): string => {
+    return getField('model') === 'FICO' ? 'Revenue Share' : 'Royalty';
+  };
+
   // Secure gated content functionality - Generate consistent ID like FranchiseCard
   const franchiseId = franchise?.id || `franchise-${getField('name')?.replace(/\s+/g, '-').toLowerCase()}-${getField('industry')?.replace(/\s+/g, '-').toLowerCase()}`;
   const { isContentUnlocked, unlockContent } = useSecureGatedContent('franchise');
@@ -404,7 +409,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                       <div className="bg-highlight/20 p-4 rounded-lg border border-highlight/40 flex-1 flex flex-col justify-between">
                         <h4 className="font-semibold text-gray-800 mb-2 flex items-center text-sm">
                           <FaHandshake className="mr-2 text-primary" />
-                          Royalty Fee
+                          {getRoyaltyLabel()} Fee
                         </h4>
                         <p className="text-sm font-semibold text-primary leading-snug break-words">
                           {normalizeCase(getField('royalty')) || 'Contact for details'}
@@ -619,7 +624,7 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                     </div>
 
                     <div className="flex justify-between items-start py-2 border-b border-gray-100">
-                      <span className="text-gray-600 text-sm shrink-0 mr-2">Royalty</span>
+                      <span className="text-gray-600 text-sm shrink-0 mr-2">{getRoyaltyLabel()}</span>
                       <span className="font-semibold text-accent text-sm text-right break-words">{normalizeCase(getField('royalty')) || 'Contact for details'}</span>
                     </div>
 

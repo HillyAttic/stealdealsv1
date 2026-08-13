@@ -1,35 +1,29 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getPlotById, updatePlot, deletePlot, Plot } from '../../../../lib/firebase';
+import { db } from '@/lib/firebase-server-admin';
 import { revalidateTag } from 'next/cache';
 
-// Get a specific plot by ID
+// Get a specific plot by ID using Firebase Admin SDK
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    
+
     if (!id) {
-      return NextResponse.json(
-        { error: 'Plot ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Plot ID is required' }, { status: 400 });
     }
 
-    const plot = await getPlotById(id);
-    
-    if (!plot) {
-      return NextResponse.json(
-        { error: 'Plot not found' },
-        { status: 404 }
-      );
+    const docSnap = await db.collection('properties').doc(id).get();
+
+    if (!docSnap.exists) {
+      return NextResponse.json({ error: 'Plot not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ plot });
+    return NextResponse.json({ plot: { ...docSnap.data(), id: docSnap.id } });
   } catch (error: any) {
-    console.error('Error fetching plot:', error);
+    console.error('[Plots API] Error fetching plot:', error);
     return NextResponse.json(
       { error: 'Failed to fetch plot: ' + (error.message || 'Unknown error') },
       { status: 500 }
@@ -45,15 +39,11 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    
+
     if (!id) {
-      return NextResponse.json(
-        { error: 'Plot ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Plot ID is required' }, { status: 400 });
     }
 
-    // Validate required fields
     if (!body.project || !body.developerName || !body.location) {
       return NextResponse.json(
         { error: 'Project, developer name, and location are required' },
@@ -61,9 +51,9 @@ export async function PUT(
       );
     }
 
-    // Prepare plot data
-    const plotData: Plot = {
+    const plotData = {
       id: id,
+      type: 'plot',
       developerName: body.developerName,
       project: body.project,
       description: body.description || '',
@@ -83,20 +73,17 @@ export async function PUT(
         url: body.investorDiscoveryKit?.url || '',
         description: body.investorDiscoveryKit?.description || 'Contains brochure, payment plan, and promotional video'
       },
-      images: body.images || []
+      images: body.images || [],
+      updatedAt: Date.now()
     };
 
-    const updatedPlot = await updatePlot(id, plotData);
-    
-    // Invalidate the cache to ensure fresh data on next request
+    await db.collection('properties').doc(id).set(plotData, { merge: true });
+
     revalidateTag('plots');
 
-    return NextResponse.json({
-      success: true,
-      plot: updatedPlot
-    });
+    return NextResponse.json({ success: true, plot: plotData });
   } catch (error: any) {
-    console.error('Error updating plot:', error);
+    console.error('[Plots API] Error updating plot:', error);
     return NextResponse.json(
       { error: 'Failed to update plot: ' + (error.message || 'Unknown error') },
       { status: 500 }
@@ -111,26 +98,24 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    
+
     if (!id) {
-      return NextResponse.json(
-        { error: 'Plot ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Plot ID is required' }, { status: 400 });
     }
 
-    const success = await deletePlot(id);
-    
-    if (success) {
-      // Invalidate the cache to ensure fresh data on next request
-      revalidateTag('plots');
-      
-      return NextResponse.json({ success: true });
-    } else {
-      throw new Error('Failed to delete plot');
+    const docSnap = await db.collection('properties').doc(id).get();
+
+    if (!docSnap.exists) {
+      return NextResponse.json({ error: 'Plot not found' }, { status: 404 });
     }
+
+    await db.collection('properties').doc(id).delete();
+
+    revalidateTag('plots');
+
+    return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Error deleting plot:', error);
+    console.error('[Plots API] Error deleting plot:', error);
     return NextResponse.json(
       { error: 'Failed to delete plot: ' + (error.message || 'Unknown error') },
       { status: 500 }

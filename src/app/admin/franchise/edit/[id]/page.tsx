@@ -338,14 +338,28 @@ function EditFranchiseContent() {
                     )}
                   </div>
                   <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
-                    <input
-                      type="text"
-                      name="model"
-                      value={franchise.model || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                    <div className="relative">
+                      <select
+                        name="model"
+                        value={franchise.model || ''}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
+                      >
+                        <option value="">Select Model</option>
+                        <option value="FOFO">FOFO</option>
+                        <option value="FOFO, COCO">FOFO, COCO</option>
+                        <option value="FOFO, FOCO">FOFO, FOCO</option>
+                        <option value="FOCO">FOCO</option>
+                        <option value="FICO">FICO</option>
+                        <option value="FOFO , FOCO">FOFO , FOCO</option>
+                        <option value="COFO">COFO</option>
+                        <option value="Master Franchise">Master Franchise</option>
+                      </select>
+                      <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z"></path>
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -396,7 +410,9 @@ function EditFranchiseContent() {
                     />
                   </div>
                   <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Royalty</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {franchise.model === 'FICO' ? 'Revenue Share' : 'Royalty'}
+                    </label>
                     <input
                       type="text"
                       name="royalty"

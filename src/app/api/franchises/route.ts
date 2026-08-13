@@ -1,97 +1,158 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { collection, doc, setDoc } from 'firebase/firestore';
-import { firestoreDb } from '@/lib/firestore';
-import { getAllFranchises, generateUniquePropertyId, getNextSequenceNumber } from '@/lib/database/firestore-properties';
+import { db } from '@/lib/firebase-server-admin';
 import { revalidateTag } from 'next/cache';
 
-// Get all franchises from migrated structure
+interface Franchise {
+  id: string;
+  name: string;
+  industry: string;
+  segment?: string;
+  product?: string;
+  model?: string;
+  minArea?: string;
+  maxArea?: string;
+  minInvestment?: string | number;
+  maxInvestment?: string | number;
+  royalty?: string;
+  establishmentYear?: string;
+  franchiseStartedYear?: string;
+  numberOutlets?: string;
+  minPaybackPeriod?: string;
+  maxPaybackPeriod?: string;
+  headquarter?: string;
+  remarks?: string;
+  brandDeck?: string;
+  productList?: string;
+  roiSheet?: string;
+  investorDiscoveryKitUrl?: string;
+  investment: number;
+  location: string;
+  status: string;
+  roi: string;
+  image?: string;
+  images?: string[];
+  description?: string;
+  requirements?: string;
+  createdAt?: number;
+  updatedAt?: number;
+  title?: string;
+  franchiseDetails?: Record<string, any>;
+  [key: string]: any;
+}
+
+// Get all franchises using Firebase Admin SDK (bypasses security rules)
 export async function GET() {
   try {
-    console.log("Fetching franchises from migrated structure...");
-    const franchises = await getAllFranchises();
-    
-    console.log(`Franchises fetched from migratedProperties: ${franchises.length}`);
-    
+    console.log('[Franchises API] Fetching franchises from Firestore via Admin SDK...');
+
+    const propertiesCol = db.collection('properties');
+    const snapshot = await propertiesCol.where('type', '==', 'franchise').get();
+
+    console.log(`[Franchises API] Found ${snapshot.size} franchise documents`);
+
+    const franchises: Franchise[] = [];
+    snapshot.forEach((docSnap: any) => {
+      const data = docSnap.data();
+      const fd = data.franchiseDetails || {};
+
+      franchises.push({
+        ...data,
+        id: docSnap.id,
+        name: data.title || data.name || fd.name || 'Franchise Name',
+        industry: fd.industry || data.industry || 'Not specified',
+        segment: fd.segment || data.segment || '',
+        product: fd.product || data.product || '',
+        model: fd.model || data.model || '',
+        minArea: fd.minArea || data.minArea || '',
+        maxArea: fd.maxArea || data.maxArea || '',
+        minInvestment: fd.minInvestment || data.minInvestment || '',
+        maxInvestment: fd.maxInvestment || data.maxInvestment || '',
+        royalty: fd.royalty || data.royalty || 'Varies',
+        establishmentYear: fd.establishmentYear || data.establishmentYear || '',
+        franchiseStartedYear: fd.franchiseStartedYear || data.franchiseStartedYear || '',
+        numberOutlets: fd.numberOfOutlets || fd.numberOutlets || data.numberOutlets || '',
+        minPaybackPeriod: fd.minPaybackPeriod || data.minPaybackPeriod || '',
+        maxPaybackPeriod: fd.maxPaybackPeriod || data.maxPaybackPeriod || '',
+        headquarter: fd.headquarter || data.headquarter || data.location || 'Not specified',
+        remarks: fd.remarks || data.remarks || '',
+        brandDeck: fd.brandDeck || data.brandDeck || '',
+        productList: fd.productList || data.productList || '',
+        roiSheet: fd.roiSheet || data.roiSheet || '',
+        investorDiscoveryKitUrl: fd.investorDiscoveryKitUrl || data.investorDiscoveryKitUrl || '',
+        investment: data.price || parseFloat(fd.minInvestment) || 0,
+        location: data.location || fd.headquarter || 'Not specified',
+        status: data.status || 'Active',
+        roi: fd.royalty || data.roi || 'Varies',
+        image: data.images?.[0] || data.image || '',
+        images: data.images || [],
+        description: data.description || fd.remarks || '',
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+      });
+    });
+
     const response = NextResponse.json({
       franchises,
       total: franchises.length
     });
 
-    // Add cache headers for optimal performance (longer cache for franchises as they change less frequently)
     response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
-    response.headers.set('CDN-Cache-Control', 'max-age=600');
-    response.headers.set('Vary', 'Accept-Encoding');
-    
-    // Add performance headers
-    response.headers.set('X-API-Cache', 'HIT');
-    response.headers.set('X-Data-Source', 'firebase-migrated');
-    
+    response.headers.set('X-Data-Source', 'firebase-admin-sdk');
+
     return response;
-  } catch (error) {
-    console.error('Error fetching franchises:', error);
+  } catch (error: any) {
+    console.error('[Franchises API] Error fetching franchises:', error);
     const errorResponse = NextResponse.json(
-      { 
-        franchises: [], 
-        total: 0, 
-        error: 'Failed to fetch franchises' 
-      },
-      { status: 200 } // Return 200 to prevent frontend crash
+      { franchises: [], total: 0, error: error.message || 'Failed to fetch franchises' },
+      { status: 200 }
     );
-    
-    // Add cache headers for error responses (shorter cache)
-    errorResponse.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
     errorResponse.headers.set('X-API-Cache', 'MISS');
     errorResponse.headers.set('X-Error', 'true');
-    
     return errorResponse;
   }
 }
 
-// Add a new franchise with sequential ID
+// Add a new franchise
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('Received franchise data:', body);
-    
-    // Validate required fields - check both root level and franchiseDetails
+    console.log('[Franchises API] Received franchise data:', body);
+
+    // Validate required fields
     const brand = body.brand || body.franchiseDetails?.brand;
     const industry = body.industry || body.franchiseDetails?.industry;
-    
+
     if (!brand || !industry) {
       return NextResponse.json(
         { error: 'Missing required fields: brand and industry are required' },
         { status: 400 }
       );
     }
-    
-    // Get the next sequence number for franchise properties
-    const sequenceNumber = await getNextSequenceNumber('Franchise');
-    
-    // Generate the new unique ID
-    const newId = generateUniquePropertyId('Franchise', sequenceNumber);
-    console.log(`Creating new franchise with ID: ${newId}`);
-    
-    // Create a new franchise entry with unique ID using franchiseDetails structure
+
+    // Generate a simple unique ID
+    const newId = `FR-${Date.now()}`;
+    console.log(`[Franchises API] Creating new franchise with ID: ${newId}`);
+
     const newFranchise = {
-      // Essential root-level fields only
       id: newId,
       type: 'franchise',
       title: brand || body.name || `Franchise ${newId}`,
       description: body.remarks || body.description || body.franchiseDetails?.remarks || '',
       location: body.headquarter || body.franchiseDetails?.headquarter || 'Multiple Locations',
       price: parseFloat(body.minInvestment || body.franchiseDetails?.minInvestment) || 0,
-      images: body.image ? [body.image] : body.franchiseDetails?.image ? [body.franchiseDetails.image] : ['https://images.pexels.com/photos/4386431/pexels-photo-4386431.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'],
+      images: body.image ? [body.image] : body.franchiseDetails?.image ? [body.franchiseDetails.image] : [],
+      status: 'Active',
       createdAt: body.createdAt || Date.now(),
       updatedAt: Date.now(),
-      
+
       // All franchise-specific data in franchiseDetails object
       franchiseDetails: {
         brand: brand,
         name: brand,
         industry: industry,
         segment: body.segment || body.franchiseDetails?.segment || '',
-        product: brand || body.product || body.name || body.franchiseDetails?.product || `Product ${newId}`,
+        product: brand || body.product || body.name || body.franchiseDetails?.product || '',
         model: body.model || body.franchiseDetails?.model || '',
         minArea: body.minArea || body.franchiseDetails?.minArea || '',
         maxArea: body.maxArea || body.franchiseDetails?.maxArea || '',
@@ -111,29 +172,23 @@ export async function POST(request: NextRequest) {
         investorDiscoveryKitUrl: body.investorDiscoveryKitUrl || body.franchiseDetails?.investorDiscoveryKitUrl || ''
       }
     };
-    
-    console.log('Saving franchise data:', newFranchise);
 
-    // Save to Firestore properties collection
-    const franchiseDocRef = doc(firestoreDb, 'properties', newId);
-    await setDoc(franchiseDocRef, newFranchise);
+    // Save to Firestore using Admin SDK
+    await db.collection('properties').doc(newId).set(newFranchise);
 
-    // Invalidate the cache to ensure fresh data on next request
+    console.log('[Franchises API] Franchise saved:', newId);
+
     revalidateTag('franchises');
-    
+
     return NextResponse.json({
       success: true,
-      franchise: {
-        ...newFranchise
-      }
+      franchise: newFranchise
     });
   } catch (error: any) {
-    console.error('Error adding franchise:', error);
+    console.error('[Franchises API] Error adding franchise:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to add franchise' },
       { status: 500 }
     );
   }
 }
-
-// PATCH endpoints for individual franchises will be added in the [id]/route.ts file

@@ -1,172 +1,142 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { firestoreDb } from '@/lib/firestore';
+import { db } from '@/lib/firebase-server-admin';
 import { resolveIdParam, RouteParams } from '../../../../lib/params-utils';
 import { revalidateTag } from 'next/cache';
 
-// Get a single franchise
+// Get a single franchise using Firebase Admin SDK
 export async function GET(
   request: NextRequest,
   { params }: { params: RouteParams<{ id: string }> }
 ) {
   try {
-    console.log(`[API] 🔄 Fetching franchise details, params:`, params);
-
     const id = await resolveIdParam(params);
-    console.log(`[API] 🎯 Resolved franchise ID: ${id}`);
+    console.log(`[Franchises API] Fetching franchise: ${id}`);
 
-    // In Firestore, all properties are in the `properties` collection
-    const franchiseDocRef = doc(firestoreDb, 'properties', id);
-    const franchiseSnap = await getDoc(franchiseDocRef);
+    const docSnap = await db.collection('properties').doc(id).get();
 
-    if (franchiseSnap.exists()) {
-      const franchiseData = franchiseSnap.data() as any;
-      console.log(`[API] ✅ Found franchise: ${franchiseData?.title || franchiseData?.name || 'Unknown'}`);
+    if (docSnap.exists) {
+      const data = docSnap.data() as any;
+      console.log(`[Franchises API] Found franchise: ${data?.title || data?.name || 'Unknown'}`);
 
-      // Convert Firestore document to expected format
-      const details = franchiseData.franchiseDetails || {};
+      const details = data.franchiseDetails || {};
       const franchise = {
-        id: franchiseSnap.id,
-        // Use franchiseDetails as primary source, fallback to root level for backward compatibility
-        name: details.name || details.brand || franchiseData.title || franchiseData.name || 'Franchise Name',
-        // Core franchise information - prioritize franchiseDetails
-        industry: details.industry || franchiseData.industry || 'Not specified',
-        segment: details.segment || franchiseData.segment || '',
-        product: details.product || details.name || details.brand || franchiseData.product || franchiseData.title || '',
-        model: details.model || franchiseData.model || '',
-        minArea: details.minArea || franchiseData.minArea || '',
-        maxArea: details.maxArea || franchiseData.maxArea || '',
-        minInvestment: details.minInvestment || franchiseData.minInvestment || '',
-        maxInvestment: details.maxInvestment || franchiseData.maxInvestment || '',
-        royalty: details.royalty || franchiseData.royalty || 'Not specified',
-        establishmentYear: details.establishmentYear || franchiseData.establishmentYear || '',
-        franchiseStartedYear: details.franchiseStartedYear || franchiseData.franchiseStartedYear || '',
-        numberOutlets: details.numberOfOutlets || details.numberOutlets || franchiseData.numberOutlets || '',
-        minPaybackPeriod: details.minPaybackPeriod || franchiseData.minPaybackPeriod || '',
-        maxPaybackPeriod: details.maxPaybackPeriod || franchiseData.maxPaybackPeriod || '',
-        headquarter: details.headquarter || franchiseData.headquarter || franchiseData.location || '',
-        remarks: details.remarks || franchiseData.remarks || franchiseData.description || '',
-        brandDeck: details.brandDeck || franchiseData.brandDeck || '',
-        productList: details.productList || franchiseData.productList || '',
-        roiSheet: details.roiSheet || franchiseData.roiSheet || '',
-        investorDiscoveryKitUrl: details.investorDiscoveryKitUrl || franchiseData.investorDiscoveryKitUrl || '',
-        // Legacy compatibility fields
-        investment: details.minInvestment || franchiseData.price || franchiseData.investment || '',
-        location: details.headquarter || franchiseData.location || 'Location not specified',
-        status: franchiseData.status || 'Active',
-        roi: details.royalty || franchiseData.royalty || 'Contact for details',
-        description: details.remarks || franchiseData.description || franchiseData.remarks || '',
-        image: franchiseData.images?.[0] || franchiseData.image || '',
-        createdAt: franchiseData.createdAt,
-        updatedAt: franchiseData.updatedAt,
-        // Include franchiseDetails for direct access
+        id: docSnap.id,
+        name: details.name || details.brand || data.title || data.name || 'Franchise Name',
+        industry: details.industry || data.industry || 'Not specified',
+        segment: details.segment || data.segment || '',
+        product: details.product || details.name || details.brand || data.product || data.title || '',
+        model: details.model || data.model || '',
+        minArea: details.minArea || data.minArea || '',
+        maxArea: details.maxArea || data.maxArea || '',
+        minInvestment: details.minInvestment || data.minInvestment || '',
+        maxInvestment: details.maxInvestment || data.maxInvestment || '',
+        royalty: details.royalty || data.royalty || 'Not specified',
+        establishmentYear: details.establishmentYear || data.establishmentYear || '',
+        franchiseStartedYear: details.franchiseStartedYear || data.franchiseStartedYear || '',
+        numberOutlets: details.numberOfOutlets || details.numberOutlets || data.numberOutlets || '',
+        minPaybackPeriod: details.minPaybackPeriod || data.minPaybackPeriod || '',
+        maxPaybackPeriod: details.maxPaybackPeriod || data.maxPaybackPeriod || '',
+        headquarter: details.headquarter || data.headquarter || data.location || '',
+        remarks: details.remarks || data.remarks || data.description || '',
+        brandDeck: details.brandDeck || data.brandDeck || '',
+        productList: details.productList || data.productList || '',
+        roiSheet: details.roiSheet || data.roiSheet || '',
+        investorDiscoveryKitUrl: details.investorDiscoveryKitUrl || data.investorDiscoveryKitUrl || '',
+        investment: details.minInvestment || data.price || data.investment || '',
+        location: details.headquarter || data.location || 'Location not specified',
+        status: data.status || 'Active',
+        roi: details.royalty || data.roi || 'Contact for details',
+        description: details.remarks || data.description || data.remarks || '',
+        image: data.images?.[0] || data.image || '',
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
         franchiseDetails: details,
-        // Include essential root-level fields
-        title: franchiseData.title || details.name || details.brand || 'Franchise Property',
-        type: franchiseData.type || 'franchise',
-        price: franchiseData.price || details.minInvestment || 0,
-        images: franchiseData.images || []
+        title: data.title || details.name || details.brand || 'Franchise Property',
+        type: data.type || 'franchise',
+        price: data.price || details.minInvestment || 0,
+        images: data.images || []
       };
 
       return NextResponse.json({ franchise });
     }
 
-    // Not found
-    console.warn(`[API] ❌ Franchise not found with ID: ${id}`);
+    console.warn(`[Franchises API] Franchise not found: ${id}`);
     return NextResponse.json(
-      { error: `Franchise not found with ID: ${id}.` },
+      { error: `Franchise not found with ID: ${id}` },
       { status: 404 }
     );
-
   } catch (error) {
-    console.error('[API] ❌ Error fetching franchise:', error);
-    console.error('[API] 📚 Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-
+    console.error('[Franchises API] Error fetching franchise:', error);
     return NextResponse.json(
-      {
-        error: 'Failed to fetch franchise',
-        details: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      },
+      { error: 'Failed to fetch franchise' },
       { status: 500 }
     );
   }
 }
 
-// Update a franchise (PUT method)
+// Update a franchise (PUT)
 export async function PUT(
   request: NextRequest,
   { params }: { params: RouteParams<{ id: string }> }
 ) {
   try {
     const id = await resolveIdParam(params);
-    console.log(`[API] 🔄 Updating franchise with ID: ${id}`);
+    console.log(`[Franchises API] Updating franchise: ${id}`);
     const body = await request.json();
 
-    const franchiseDocRef = doc(firestoreDb, 'properties', id);
-    const franchiseSnap = await getDoc(franchiseDocRef);
+    const docSnap = await db.collection('properties').doc(id).get();
 
-    if (!franchiseSnap.exists()) {
-      return NextResponse.json(
-        { error: 'Franchise not found' },
-        { status: 404 }
-      );
+    if (!docSnap.exists) {
+      return NextResponse.json({ error: 'Franchise not found' }, { status: 404 });
     }
 
-    const existingData = franchiseSnap.data() as any;
+    const existingData = docSnap.data() as any;
 
     // Merge existing data with updates
-    const updatedFranchise = {
+    const updatedData = {
       ...existingData,
       ...body,
       updatedAt: Date.now()
     };
 
-    // Ensure backward compatibility fields are updated
+    // Ensure backward compatibility fields
     if (body.brand) {
-      updatedFranchise.name = body.brand;
-      updatedFranchise.product = body.brand;
+      updatedData.name = body.brand;
+      updatedData.product = body.brand;
     }
     if (body.minInvestment) {
-      updatedFranchise.investment = body.minInvestment;
+      updatedData.investment = body.minInvestment;
     }
     if (body.headquarter) {
-      updatedFranchise.location = body.headquarter;
+      updatedData.location = body.headquarter;
     }
     if (body.royalty) {
-      updatedFranchise.roi = body.royalty;
+      updatedData.roi = body.royalty;
     }
     if (body.remarks) {
-      updatedFranchise.description = body.remarks;
+      updatedData.description = body.remarks;
     }
 
-    await updateDoc(franchiseDocRef, updatedFranchise);
-    console.log(`[API] ✅ Franchise ${id} updated successfully`);
+    await db.collection('properties').doc(id).set(updatedData, { merge: true });
+    console.log(`[Franchises API] Franchise ${id} updated successfully`);
 
-    // Invalidate the cache to ensure fresh data on next request
     revalidateTag('franchises');
 
     return NextResponse.json({
       success: true,
-      franchise: {
-        id,
-        ...updatedFranchise
-      }
+      franchise: { id, ...updatedData }
     });
   } catch (error) {
-    console.error('[API] ❌ Error updating franchise:', error);
+    console.error('[Franchises API] Error updating franchise:', error);
     return NextResponse.json(
-      {
-        error: 'Failed to update franchise',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: 'Failed to update franchise' },
       { status: 500 }
     );
   }
 }
 
-// Update a franchise (PATCH method for legacy compatibility)
+// Update a franchise (PATCH - legacy compatibility)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: RouteParams<{ id: string }> }
@@ -175,65 +145,63 @@ export async function PATCH(
     const id = await resolveIdParam(params);
     const body = await request.json();
 
-    const franchiseDocRef = doc(firestoreDb, 'properties', id);
-    const franchiseSnap = await getDoc(franchiseDocRef);
+    const docSnap = await db.collection('properties').doc(id).get();
 
-    if (!franchiseSnap.exists()) {
-      return NextResponse.json(
-        { error: 'Franchise not found' },
-        { status: 404 }
-      );
+    if (!docSnap.exists) {
+      return NextResponse.json({ error: 'Franchise not found' }, { status: 404 });
     }
 
-    const existingData = franchiseSnap.data() as any;
+    const existingData = docSnap.data() as any;
 
-    // Prepare updated data
-    const updatedFranchise = {
-      ...existingData,
-      name: body.brand || body.name || existingData.name || existingData.brand || `Franchise ${id}`,
-      industry: body.industry || existingData.industry,
-      segment: body.segment || existingData.segment || "",
-      product: body.brand || body.product || existingData.product || existingData.name || existingData.brand || `Product ${id}`,
-      model: body.model || existingData.model || "",
-      minArea: body.minArea !== undefined ? body.minArea : existingData.minArea || "",
-      maxArea: body.maxArea !== undefined ? body.maxArea : existingData.maxArea || "",
-      minInvestment: body.minInvestment !== undefined ? body.minInvestment : existingData.minInvestment || existingData.investment || "",
-      maxInvestment: body.maxInvestment !== undefined ? body.maxInvestment : existingData.maxInvestment || "",
-      royalty: body.royalty || existingData.royalty || existingData.roi || "",
-      establishmentYear: body.establishmentYear || existingData.establishmentYear || "",
-      franchiseStartedYear: body.franchiseStartedYear || existingData.franchiseStartedYear || "",
-      numberOutlets: body.numberOutlets || existingData.numberOutlets || "",
-      minPaybackPeriod: body.minPaybackPeriod || existingData.minPaybackPeriod || "",
-      maxPaybackPeriod: body.maxPaybackPeriod || existingData.maxPaybackPeriod || "",
-      headquarter: body.headquarter || existingData.headquarter || existingData.location || "",
-      remarks: body.remarks || existingData.remarks || existingData.description || "",
-      brandDeck: body.brandDeck || existingData.brandDeck || "",
-      productList: body.productList || existingData.productList || "",
-      roiSheet: body.roiSheet || existingData.roiSheet || "",
-      // Keep backward compatibility fields
-      investment: body.minInvestment !== undefined ? body.minInvestment : existingData.investment,
-      location: body.headquarter || existingData.location,
-      roi: body.royalty || existingData.roi,
-      description: body.remarks || existingData.description,
-      status: body.status || existingData.status,
-      image: body.image || existingData.image,
+    // Update franchiseDetails sub-object if body contains franchise-level fields
+    const franchiseDetailsUpdate: Record<string, any> = {};
+    if (body.brand !== undefined) franchiseDetailsUpdate.brand = body.brand;
+    if (body.industry !== undefined) franchiseDetailsUpdate.industry = body.industry;
+    if (body.segment !== undefined) franchiseDetailsUpdate.segment = body.segment;
+    if (body.model !== undefined) franchiseDetailsUpdate.model = body.model;
+    if (body.minArea !== undefined) franchiseDetailsUpdate.minArea = body.minArea;
+    if (body.maxArea !== undefined) franchiseDetailsUpdate.maxArea = body.maxArea;
+    if (body.minInvestment !== undefined) franchiseDetailsUpdate.minInvestment = body.minInvestment;
+    if (body.maxInvestment !== undefined) franchiseDetailsUpdate.maxInvestment = body.maxInvestment;
+    if (body.royalty !== undefined) franchiseDetailsUpdate.royalty = body.royalty;
+    if (body.establishmentYear !== undefined) franchiseDetailsUpdate.establishmentYear = body.establishmentYear;
+    if (body.franchiseStartedYear !== undefined) franchiseDetailsUpdate.franchiseStartedYear = body.franchiseStartedYear;
+    if (body.numberOutlets !== undefined) franchiseDetailsUpdate.numberOfOutlets = body.numberOutlets;
+    if (body.minPaybackPeriod !== undefined) franchiseDetailsUpdate.minPaybackPeriod = body.minPaybackPeriod;
+    if (body.maxPaybackPeriod !== undefined) franchiseDetailsUpdate.maxPaybackPeriod = body.maxPaybackPeriod;
+    if (body.headquarter !== undefined) franchiseDetailsUpdate.headquarter = body.headquarter;
+    if (body.remarks !== undefined) franchiseDetailsUpdate.remarks = body.remarks;
+    if (body.brandDeck !== undefined) franchiseDetailsUpdate.brandDeck = body.brandDeck;
+    if (body.productList !== undefined) franchiseDetailsUpdate.productList = body.productList;
+    if (body.roiSheet !== undefined) franchiseDetailsUpdate.roiSheet = body.roiSheet;
+
+    const updateData: Record<string, any> = {
       updatedAt: Date.now()
     };
 
-    await updateDoc(franchiseDocRef, updatedFranchise);
+    // Update franchiseDetails if any franchise-level fields were provided
+    if (Object.keys(franchiseDetailsUpdate).length > 0) {
+      updateData.franchiseDetails = {
+        ...(existingData.franchiseDetails || {}),
+        ...franchiseDetailsUpdate
+      };
+    }
 
-    // Invalidate the cache to ensure fresh data on next request
+    // Update root-level fields
+    if (body.status) updateData.status = body.status;
+    if (body.image) updateData.image = body.image;
+    if (body.location) updateData.location = body.location;
+
+    await db.collection('properties').doc(id).set(updateData, { merge: true });
+
     revalidateTag('franchises');
 
     return NextResponse.json({
       success: true,
-      franchise: {
-        id,
-        ...updatedFranchise
-      }
+      franchise: { id, ...existingData, ...updateData }
     });
   } catch (error) {
-    console.error('Error updating franchise:', error);
+    console.error('[Franchises API] Error updating franchise:', error);
     return NextResponse.json(
       { error: 'Failed to update franchise' },
       { status: 500 }
@@ -249,25 +217,22 @@ export async function DELETE(
   try {
     const id = await resolveIdParam(params);
 
-    const franchiseDocRef = doc(firestoreDb, 'properties', id);
-    const franchiseSnap = await getDoc(franchiseDocRef);
+    const docSnap = await db.collection('properties').doc(id).get();
 
-    if (!franchiseSnap.exists()) {
-      return NextResponse.json(
-        { error: 'Franchise not found' },
-        { status: 404 }
-      );
+    if (!docSnap.exists) {
+      return NextResponse.json({ error: 'Franchise not found' }, { status: 404 });
     }
 
-    // Delete the franchise document
-    await deleteDoc(franchiseDocRef);
+    await db.collection('properties').doc(id).delete();
+
+    revalidateTag('franchises');
 
     return NextResponse.json({
       success: true,
       message: 'Franchise deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting franchise:', error);
+    console.error('[Franchises API] Error deleting franchise:', error);
     return NextResponse.json(
       { error: 'Failed to delete franchise' },
       { status: 500 }

@@ -79,6 +79,11 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
     return text;
   };
 
+  // Helper function to determine the royalty label based on franchise model
+  const getRoyaltyLabel = (): string => {
+    return franchise?.model === 'FICO' ? 'Revenue Share' : 'Royalty';
+  };
+
   // Check for success message from FormSubmit
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -318,7 +323,7 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="bg-white/10 rounded-lg p-4">
-                          <div className="text-blue-200 text-sm mb-1">Royalty</div>
+                          <div className="text-blue-200 text-sm mb-1">{getRoyaltyLabel()}</div>
                           <div className="text-sm font-bold text-white leading-snug break-words">
                             {normalizeCase(franchise.royalty || 'Contact for details')}
                           </div>
@@ -473,7 +478,7 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
                           <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
                             <h4 className="font-semibold text-gray-800 mb-2 flex items-center text-sm">
                               <FaHandshake className="mr-2 text-purple-600" />
-                              Royalty Fee
+                              {getRoyaltyLabel()} Fee
                             </h4>
                             <p className="text-sm font-semibold text-purple-700 leading-snug break-words">
                               {normalizeCase(franchise.royalty || 'Contact for details')}
@@ -748,7 +753,7 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
                       </div>
 
                       <div className="flex justify-between items-start py-2 border-b border-gray-100">
-                        <span className="text-gray-600 text-sm shrink-0 mr-2">Royalty</span>
+                        <span className="text-gray-600 text-sm shrink-0 mr-2">{getRoyaltyLabel()}</span>
                         <span className="font-semibold text-gray-800 text-sm text-right break-words">{normalizeCase(franchise.roi || 'N/A')}</span>
                       </div>
 

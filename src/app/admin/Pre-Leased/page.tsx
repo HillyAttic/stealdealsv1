@@ -7,7 +7,6 @@ import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
 import { Property } from '@/types/property';
-import { getAllPreleasedProperties } from '@/lib/database/firestore-properties';
 import ClientOnly from '@/components/ClientOnly';
 import { sortByNewest } from '@/lib/sort';
 import { PreLeasedModal } from '@/components/preleased';
@@ -54,8 +53,17 @@ function PreLeasedPropertiesContent() {
       setIsLoading(true);
       setError('');
 
-      // Read all pre-leased properties from Firestore
-      const allProperties = await getAllPreleasedProperties();
+      // Fetch from API route (server-side, uses Admin SDK — no security rule issues)
+      const response = await fetch('/api/properties?propertyType=Pre-Leased', {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch properties: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const allProperties: Property[] = data.properties || [];
 
       if (allProperties.length > 0) {
         const sorted = sortByNewest(allProperties);

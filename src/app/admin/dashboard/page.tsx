@@ -6,8 +6,6 @@ import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 import { FaChartBar, FaStore, FaBuilding, FaHome } from 'react-icons/fa';
 import ClientOnly from '@/components/ClientOnly';
-import { firestoreDb } from '@/lib/firestore';
-import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // Add global type declaration for the window extension
 declare global {
@@ -102,7 +100,7 @@ function AdminDashboardContent() {
   } | null>(null);
   const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-  // Fetch data from Firebase migrated structure using optimized parallel reads
+  // Fetch data from the dashboard-stats API route (uses Admin SDK, bypasses Firestore security rules)
   const fetchData = async () => {
     try {
       // Check cache first
@@ -113,168 +111,30 @@ function AdminDashboardContent() {
         setFranchiseData(cached.franchiseData);
         return;
       }
-      
-      // Fetch property counts from Firestore
-      const propertiesCol = collection(firestoreDb, 'properties');
 
-      const [preleasedSnapshot, vacantSnapshot, franchiseSnapshot, plotsSnapshot] = await Promise.all([
-        getDocs(query(propertiesCol, where('type', '==', 'preleased'))),
-        getDocs(query(propertiesCol, where('type', '==', 'vacant'))),
-        getDocs(query(propertiesCol, where('type', '==', 'franchise'))),
-        getDocs(query(propertiesCol, where('type', '==', 'plot')))
-      ]);
+      // Fetch from API route (server-side, uses Admin SDK — no security rule issues)
+      const response = await fetchWithAuth('/api/admin/dashboard-stats');
+      const data = await response.json();
 
-      const preleasedCount = preleasedSnapshot.size;
-      const vacantCount = vacantSnapshot.size;
-      const franchiseCount = franchiseSnapshot.size;
-      const plotsCount = plotsSnapshot.size;
-      
-      // Calculate total
-      const totalCount = preleasedCount + vacantCount + franchiseCount + plotsCount;
-      
+      if (data.error) {
+        console.error('[Dashboard] API returned error:', data.error);
+        setError('Failed to load dashboard data');
+        return;
+      }
+
       // Update stats
-      const newStats = {
-        preleased: preleasedCount,
-        vacant: vacantCount,
-        franchise: franchiseCount,
-        plots: plotsCount,
-        total: totalCount
-      };
-      setStats(newStats);
-      
-      // Process category data for vacant properties (UPDATED - using specific categories)
-      // Hoisted to function scope so the same values can be written to the cache below
-      let newCategoryData: { labels: string[]; data: number[] } = { labels: [], data: [] };
-      if (!vacantSnapshot.empty) {
-        const categories: Record<string, number> = {
-          'Industrial': 0,
-          'High-Street': 0,
-          'Mall': 0,
-          'Corporate': 0,
-          'Other': 0
-        };
+      setStats(data.stats);
+      setCategoryData(data.categoryData);
+      setFranchiseData(data.franchiseData);
 
-        vacantSnapshot.forEach((docSnap) => {
-          const property = docSnap.data();
-          // Access category from vacantDetails or fallback to property.category
-          const category = property.vacantDetails?.category || property.category || 'Other';
-
-          console.log(`[Dashboard] Processing vacant property: ${docSnap.id}, category: ${category}`);
-
-          // Map categories to the specific ones you want
-          if (category.toLowerCase().includes('industrial')) {
-            categories['Industrial']++;
-          } else if (category.toLowerCase().includes('high-street') || category.toLowerCase().includes('high street') || category.toLowerCase().includes('street')) {
-            categories['High-Street']++;
-          } else if (category.toLowerCase().includes('mall') || category.toLowerCase().includes('shopping')) {
-            categories['Mall']++;
-          } else if (category.toLowerCase().includes('corporate') || category.toLowerCase().includes('office') || category.toLowerCase().includes('business')) {
-            categories['Corporate']++;
-          } else {
-            categories['Other']++;
-          }
-        });
-        
-        // Filter out categories with 0 count for cleaner chart
-        const filteredCategories = Object.entries(categories)
-          .filter(([_, count]) => count > 0)
-          .reduce((acc, [key, value]) => {
-            acc[key] = value;
-            return acc;
-          }, {} as Record<string, number>);
-        
-        console.log('[Dashboard] Vacant categories processed:', filteredCategories);
-        
-        // Update category data with filtered results
-        newCategoryData = {
-          labels: Object.keys(filteredCategories),
-          data: Object.values(filteredCategories)
-        };
-        setCategoryData(newCategoryData);
-      } else {
-        // Set empty data if no vacant properties
-        const emptyCategoryData = {
-          labels: [],
-          data: []
-        };
-        setCategoryData(emptyCategoryData);
-      }
-
-      // Process franchise data by industry (FIXED - access franchiseDetails.industry)
-      // Hoisted to function scope so the same values can be written to the cache below
-      let newFranchiseData: { labels: string[]; data: number[] } = {
-        labels: ['Education', 'F&B', 'Fashion', 'Pharmaceutical', 'Retail', 'Sports, Fitness & Entertainments'],
-        data: [0, 0, 0, 0, 0, 0]
-      };
-      if (!franchiseSnapshot.empty) {
-        const franchiseCategories: Record<string, number> = {
-          'Education': 0,
-          'F&B': 0,
-          'Fashion': 0,
-          'Pharmaceutical': 0,
-          'Retail': 0,
-          'Sports, Fitness & Entertainments': 0
-        };
-
-        franchiseSnapshot.forEach((docSnap) => {
-          const franchise = docSnap.data();
-          // Access industry from franchiseDetails or fallback to franchise.industry
-          const industry = franchise.franchiseDetails?.industry || franchise.industry || '';
-
-          console.log(`[Dashboard] Processing franchise: ${docSnap.id}, industry: "${industry}"`);
-          
-          // Use exact matching for accurate categorization
-          switch (industry) {
-            case 'Education':
-              franchiseCategories['Education']++;
-              break;
-            case 'F&B':
-              franchiseCategories['F&B']++;
-              break;
-            case 'Fashion':
-              franchiseCategories['Fashion']++;
-              break;
-            case 'Pharmaceutical':
-              franchiseCategories['Pharmaceutical']++;
-              break;
-            case 'Retail':
-              franchiseCategories['Retail']++;
-              break;
-            case 'Sports, Fitness & Entertainments':
-              franchiseCategories['Sports, Fitness & Entertainments']++;
-              break;
-            default:
-              // Log unknown industries but don't count them
-              if (industry) {
-                console.log(`[Dashboard] Unknown industry "${industry}" - not categorized`);
-              }
-              break;
-          }
-        });
-        
-        console.log('[Dashboard] Franchise categories processed (showing all categories):', franchiseCategories);
-        
-        // Show ALL categories, even those with 0 count
-        newFranchiseData = {
-          labels: Object.keys(franchiseCategories),
-          data: Object.values(franchiseCategories)
-        };
-        setFranchiseData(newFranchiseData);
-      } else {
-        // Set empty data with all categories
-        const emptyFranchiseData = {
-          labels: ['Education', 'F&B', 'Fashion', 'Pharmaceutical', 'Retail', 'Sports, Fitness & Entertainments'],
-          data: [0, 0, 0, 0, 0, 0]
-        };
-        setFranchiseData(emptyFranchiseData);
-      }
+      console.log('[Dashboard] Data loaded via API:', data.stats);
 
       // Store in cache
       statsCache.current = {
         data: {
-          stats: newStats,
-          categoryData: newCategoryData,
-          franchiseData: newFranchiseData
+          stats: data.stats,
+          categoryData: data.categoryData,
+          franchiseData: data.franchiseData
         },
         timestamp: Date.now()
       };

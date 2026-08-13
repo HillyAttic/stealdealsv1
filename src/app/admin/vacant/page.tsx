@@ -7,7 +7,6 @@ import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
 import { Property } from '@/types/property';
-import { getAllVacantProperties } from '@/lib/database/firestore-properties';
 import ClientOnly from '@/components/ClientOnly';
 import { sortByNewest } from '@/lib/sort';
 import { VacantModal } from '@/components/vacant';
@@ -45,7 +44,7 @@ function VacantPropertiesContent() {
   const [isDeleting, setIsDeleting] = useState(false);
   const loadInProgress = useRef(false);
 
-  // Load properties from Firestore - single optimized read
+  // Load properties from API route (server-side, uses Admin SDK — no security rule issues)
   const loadProperties = useCallback(async () => {
     if (loadInProgress.current) return;
     loadInProgress.current = true;
@@ -54,8 +53,17 @@ function VacantPropertiesContent() {
       setIsLoading(true);
       setError('');
 
-      // Read all vacant properties from Firestore
-      const allProperties = await getAllVacantProperties();
+      // Fetch from API route
+      const response = await fetch('/api/properties?propertyType=Vacant', {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch properties: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const allProperties: Property[] = data.properties || [];
 
       if (allProperties.length > 0) {
         const sorted = sortByNewest(allProperties);

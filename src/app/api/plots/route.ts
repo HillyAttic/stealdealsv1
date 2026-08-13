@@ -1,80 +1,73 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getAllPlots, addPlot, Plot } from '../../../lib/firebase';
+import { db } from '@/lib/firebase-server-admin';
 import { revalidateTag } from 'next/cache';
 
-// Get all plots with optional filtering - no authentication required for public access
+// Get all plots using Firebase Admin SDK (bypasses security rules)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
-    
-    console.log('GET /api/plots - Fetching plots from Firebase');
-    
-    // Fetch all plots from Firebase
-    let plots = await getAllPlots();
-    console.log('GET /api/plots - Plots fetched from Firebase:', plots.length);
-    
-    // Apply limit
+    const limit = parseInt(searchParams.get('limit') || '1000');
+
+    console.log('[Plots API] Fetching plots from Firestore via Admin SDK');
+
+    const propertiesCol = db.collection('properties');
+    const snapshot = await propertiesCol.where('type', '==', 'plot').get();
+
+    const plots: any[] = [];
+    snapshot.forEach((docSnap: any) => {
+      plots.push({
+        ...docSnap.data(),
+        id: docSnap.id
+      });
+    });
+
+    console.log(`[Plots API] Fetched ${plots.length} plots from Firestore`);
+
     const paginatedPlots = plots.slice(0, limit);
-    
-    console.log('Returning plots:', paginatedPlots.length);
-    
-    // Make sure we always return a valid plots array
+
     const response = NextResponse.json({
       plots: paginatedPlots || [],
       total: plots.length
     });
 
-    // Add cache headers for optimal performance (longer cache for plots as they change less frequently)
     response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
-    response.headers.set('CDN-Cache-Control', 'max-age=600');
-    response.headers.set('Vary', 'Accept-Encoding');
-    
-    // Add performance headers
-    response.headers.set('X-API-Cache', 'HIT');
-    response.headers.set('X-Data-Source', 'firebase-migrated');
-    
+    response.headers.set('X-Data-Source', 'firebase-admin-sdk');
+
     return response;
-    
   } catch (error) {
-    console.error('Error fetching plots:', error);
-    // Return empty array instead of error to prevent frontend crash
+    console.error('[Plots API] Error fetching plots:', error);
     const errorResponse = NextResponse.json({
       plots: [],
       total: 0,
       error: 'Failed to fetch plots'
-    }, { status: 200 }); // Use 200 instead of 500 to prevent frontend error
-    
-    // Add cache headers for error responses (shorter cache)
+    }, { status: 200 });
+
     errorResponse.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
     errorResponse.headers.set('X-API-Cache', 'MISS');
     errorResponse.headers.set('X-Error', 'true');
-    
+
     return errorResponse;
   }
 }
 
-// Add a new plot - requires authentication
+// Add a new plot
 export async function POST(request: NextRequest) {
   try {
-    // Authentication check removed to prevent errors
     const body = await request.json();
-    
-    // Log the incoming request body for debugging
-    console.log('Received plot data:', body);
-    
-    // Validate required fields
+    console.log('[Plots API] Received plot data:', body);
+
     if (!body.project || !body.developerName || !body.location) {
       return NextResponse.json(
         { error: 'Project, developer name, and location are required' },
         { status: 400 }
       );
     }
-    
-    // Prepare plot data
-    const plotData: Plot = {
-      id: '', // Will be set by Firebase
+
+    const newId = `PL-${Date.now()}`;
+    const plotData = {
+      id: newId,
+      type: 'plot',
       developerName: body.developerName,
       project: body.project,
       description: body.description || '',
@@ -94,32 +87,23 @@ export async function POST(request: NextRequest) {
         url: body.investorDiscoveryKit?.url || '',
         description: body.investorDiscoveryKit?.description || 'Contains brochure, payment plan, and promotional video'
       },
-      images: body.images || []
+      images: body.images || [],
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     };
-    
-    try {
-      // Save to Firebase
-      const newPlot = await addPlot(plotData);
-      
-      console.log('New plot added to Firebase:', newPlot);
-      
-      // Invalidate the cache to ensure fresh data on next request
-      revalidateTag('plots');
-      
-      return NextResponse.json({
-        success: true,
-        plot: newPlot
-      });
-    } catch (firebaseError: any) {
-      console.error('Firebase error:', firebaseError);
-      return NextResponse.json(
-        { error: 'Firebase database error: ' + firebaseError.message },
-        { status: 500 }
-      );
-    }
-    
+
+    await db.collection('properties').doc(newId).set(plotData);
+
+    console.log('[Plots API] Plot saved:', newId);
+
+    revalidateTag('plots');
+
+    return NextResponse.json({
+      success: true,
+      plot: plotData
+    });
   } catch (error: any) {
-    console.error('Error adding plot:', error);
+    console.error('[Plots API] Error adding plot:', error);
     return NextResponse.json(
       { error: 'Failed to add plot: ' + (error.message || 'Unknown error') },
       { status: 500 }
