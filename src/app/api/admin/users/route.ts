@@ -96,23 +96,18 @@ export async function GET(request: NextRequest) {
         ...(search && { query: search })
       });
 
-      // Get wishlist counts for displayed users only (OPTIMIZED - single batch read)
+      // Get wishlist counts for displayed users only (OPTIMIZED - single batch read) — uses Admin SDK
       let wishlistCounts: Record<string, number> = {};
 
       try {
-        const { firestoreDb } = await import('@/lib/firestore');
-        const { collection, getDocs } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase-server-admin');
 
-        // In Firestore, wishlists are stored as subcollections: wishlists/{userId}/items/{itemId}
-        // For each displayed user, get their items subcollection and count docs
         const displayedUserIds = usersResponse.data.map(user => user.id);
 
-        // Use Promise.all to fetch all wishlist counts in parallel
         const counts = await Promise.all(
           displayedUserIds.map(async (userId) => {
             try {
-              const itemsCol = collection(firestoreDb, 'wishlists', userId, 'items');
-              const snapshot = await getDocs(itemsCol);
+              const snapshot = await db.collection('wishlists').doc(userId).collection('items').get();
               return { userId, count: snapshot.size };
             } catch {
               return { userId, count: 0 };
@@ -125,7 +120,6 @@ export async function GET(request: NextRequest) {
         }
       } catch (wishlistError) {
         console.warn('[Admin Users API] Failed to fetch wishlist counts:', wishlistError);
-        // Continue without wishlist counts
       }
 
       // Transform Clerk user data for admin dashboard

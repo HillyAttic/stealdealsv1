@@ -110,9 +110,29 @@ function flattenProperty(id: string, data: Record<string, any>): Property {
 
   // Flatten pre-leased details
   if (type === 'preleased') {
+    const pd = data.preleasedDetails || {};
     return {
       ...base,
-      title: data.title || data.tenant || 'Pre-Leased Property',
+      title: data.title || pd.tenant || data.tenant || 'Pre-Leased Property',
+      tenant: pd.tenant || data.tenant || '',
+      category: pd.category || data.category || 'Pre-Leased',
+      buildingName: pd.buildingName || data.buildingName || '',
+      location: pd.location || data.location || '',
+      floor: pd.floor || data.floor || '',
+      totalArea: pd.totalArea || data.totalArea || '',
+      areaOnSale: pd.areaOnSale || data.areaOnSale || '',
+      rent: parseFloat(typeof pd.rent === 'string' ? pd.rent.replace(/[^0-9.]/g, '') : pd.rent || '0') || data.rent || 0,
+      askingPrice: parseFloat(typeof pd.askingPrice === 'string' ? pd.askingPrice.replace(/[^0-9.]/g, '') : pd.askingPrice || '0') || data.askingPrice || 0,
+      leaseTerm: pd.leaseTerm || data.leaseTerm || '',
+      remainingLease: pd.remainingLease || data.remainingLease || '',
+      lockIn: pd.lockIn || data.lockIn || '',
+      escalation: pd.escalation || data.escalation || '',
+      securityDeposit: pd.securityDeposit || data.securityDeposit || '',
+      roi: pd.roi || data.roi || '',
+      rentalType: pd.rentalType || data.rentalType || '',
+      propertyStatus: pd.propertyStatus || data.propertyStatus || '',
+      reference: pd.reference || data.reference || '',
+      channel: pd.channel || data.channel || '',
       propertyType: 'Pre-Leased',
       image: data.images?.[0] || data.image || '',
     };
@@ -182,11 +202,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter by propertyType if specified
+    // Map display names to Firestore type values (e.g. "Pre-Leased" → "preleased")
+    const typeAliasMap: Record<string, string> = {
+      'pre-leased': 'preleased',
+      'preleased': 'preleased',
+      'preleased property': 'preleased',
+      'vacant': 'vacant',
+      'franchise': 'franchise',
+      'plot': 'plot',
+      'plots': 'plot',
+      'regular': 'regular',
+    };
+
     const propertyType = searchParams.get('propertyType');
     if (propertyType) {
+      const normalizedType = typeAliasMap[propertyType.toLowerCase()] || propertyType.toLowerCase();
       properties = properties.filter(p => {
-        const itemType = p.type || p.propertyType || '';
-        return itemType.toLowerCase() === propertyType.toLowerCase();
+        const itemType = (p.type || p.propertyType || '').toLowerCase();
+        return itemType === normalizedType;
       });
     }
 

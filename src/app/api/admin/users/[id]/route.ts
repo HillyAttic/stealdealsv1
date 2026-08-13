@@ -50,14 +50,12 @@ export async function GET(
         );
       }
 
-      // Get wishlist count for this user
+      // Get wishlist count for this user — uses Admin SDK
       let wishlistCount = 0;
       try {
-        const { firestoreDb } = await import('@/lib/firestore');
-        const { collection, getDocs } = await import('firebase/firestore');
-        const itemsCol = collection(firestoreDb, 'wishlists', userId, 'items');
-        const itemsSnapshot = await getDocs(itemsCol);
-        wishlistCount = itemsSnapshot.size;
+        const { db } = await import('@/lib/firebase-server-admin');
+        const snapshot = await db.collection('wishlists').doc(userId).collection('items').get();
+        wishlistCount = snapshot.size;
       } catch (wishlistError) {
         console.warn(`[Admin User Details API] Failed to fetch wishlist count for user ${userId}:`, wishlistError);
       }

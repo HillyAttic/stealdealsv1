@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
-import { firestoreDb } from '@/lib/firestore';
-import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase-server-admin';
 import { clerkClient } from '@clerk/nextjs/server';
 import { ActivityLogger } from '@/lib/services/activityLogger';
 
@@ -82,10 +81,8 @@ interface WishlistStatsResponse {
   };
 }
 
-// Import the WishlistActivity type
 import { WishlistActivity } from '@/lib/services/activityLogger';
 
-// Enhanced logging utility for admin stats operations
 function logAdminStatsOperation(
   operation: string,
   adminUserId: string,
@@ -112,51 +109,48 @@ function logAdminStatsOperation(
   }
 }
 
-// Property details cache to avoid redundant fetches
 const propertyCache = new Map<string, any>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000;
 const cacheTimestamps = new Map<string, number>();
 
-// Helper function to get property details with caching
+// Helper function to get property details with caching — uses Admin SDK
 async function getPropertyDetails(propertyId: string): Promise<any> {
   const now = Date.now();
 
-  // Check if cache entry exists and is still valid
   if (propertyCache.has(propertyId)) {
     const timestamp = cacheTimestamps.get(propertyId) || 0;
     if (now - timestamp < CACHE_TTL) {
       return propertyCache.get(propertyId);
     } else {
-      // Cache expired, remove it
       propertyCache.delete(propertyId);
       cacheTimestamps.delete(propertyId);
     }
   }
 
   try {
-    const { getPropertyById } = await import('@/lib/firebase');
-    const property = await getPropertyById(propertyId);
-
-    // Cache the result with timestamp
+    const docSnap = await db.collection('properties').doc(propertyId).get();
+    if (!docSnap.exists) {
+      propertyCache.set(propertyId, null);
+      cacheTimestamps.set(propertyId, now);
+      return null;
+    }
+    const property = { ...docSnap.data(), id: docSnap.id } as any;
     propertyCache.set(propertyId, property);
     cacheTimestamps.set(propertyId, now);
     return property;
   } catch (error) {
     console.warn(`[Admin Stats] Failed to get property ${propertyId}:`, error);
-    // Cache null result to avoid repeated attempts
     propertyCache.set(propertyId, null);
     cacheTimestamps.set(propertyId, now);
     return null;
   }
 }
 
-// Helper function to get user details from Clerk
 async function getUserDetails(userId: string): Promise<{ id: string; name: string; email: string }> {
   try {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
 
-    // Build user name with fallbacks
     let userName = 'Unknown User';
     if (user.firstName || user.lastName) {
       userName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
@@ -172,9 +166,7 @@ async function getUserDetails(userId: string): Promise<{ id: string; name: strin
       email: user.emailAddresses?.[0]?.emailAddress || 'No email'
     };
   } catch (error: any) {
-    // Handle 404 - user was deleted from Clerk
     if (error?.status === 404 || error?.clerkError) {
-      // Don't log as error - this is expected for deleted users
       console.log(`[Admin Stats] User ${userId} not found in Clerk (likely deleted)`);
       return {
         id: userId,
@@ -183,17 +175,16 @@ async function getUserDetails(userId: string): Promise<{ id: string; name: strin
       };
     }
 
-    // Log other unexpected errors
     console.error(`[Admin Stats] Unexpected error getting user ${userId}:`, error?.message || error);
     return {
       id: userId,
       name: 'Unknown User',
-      email: 'Unable to fetch' // kept consistent with user request but added id for type safety
+      email: 'Unable to fetch'
     };
   }
 }
 
-// GET /api/admin/wishlist-stats - Get comprehensive wishlist statistics
+// GET /api/admin/wishlist-stats — uses Firebase Admin SDK (bypasses security rules)
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {
     const startTime = Date.now();
@@ -202,17 +193,15 @@ export async function GET(request: NextRequest) {
     try {
       logAdminStatsOperation('get_wishlist_stats', adminUserId, { startRequest: true });
 
-      // Parse query parameters
       const { searchParams } = new URL(request.url);
       const includeRecentActivity = searchParams.get('includeActivity') !== 'false';
       const includeUserDetails = searchParams.get('includeUserDetails') !== 'false';
       const topPropertiesLimit = Math.min(parseInt(searchParams.get('topLimit') || '10'), 50);
       const recentActivityLimit = Math.min(parseInt(searchParams.get('activityLimit') || '20'), 100);
 
-      // Get all wishlists from Firestore
-      // In Firestore, wishlists are stored as: wishlists/{userId}/items/{itemId}
-      const wishlistsCol = collection(firestoreDb, 'wishlists');
-      const userDocs = await getDocs(wishlistsCol);
+      // Get all wishlists from Firestore using Admin SDK
+      const wishlistsCol = db.collection('wishlists');
+      const userDocs = await wishlistsCol.get();
 
       if (userDocs.empty) {
         logAdminStatsOperation('get_wishlist_stats', adminUserId, {
@@ -244,7 +233,6 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      // Process wishlist data — read each user's items subcollection
       const userIds = userDocs.docs.map(d => d.id);
       const usersWithWishlists = userIds.length;
 
@@ -252,19 +240,13 @@ export async function GET(request: NextRequest) {
       const propertyFrequency = new Map<string, number>();
       const priorityCount = { low: 0, medium: 0, high: 0 };
       const userWishlistSizes: number[] = [];
-      const recentActivities: Array<{
-        userId: string;
-        propertyId: string;
-        addedAt: string;
-        priority: string;
-      }> = [];
 
-      // Read all users' wishlist items in parallel
+      // Read all users' wishlist items in parallel using Admin SDK
       const userItemsResults = await Promise.all(
         userIds.map(async (userId) => {
           try {
-            const itemsCol = collection(firestoreDb, 'wishlists', userId, 'items');
-            const itemsSnap = await getDocs(itemsCol);
+            const itemsCol = db.collection('wishlists').doc(userId).collection('items');
+            const itemsSnap = await itemsCol.get();
             const items: any[] = [];
             itemsSnap.forEach(doc => items.push(doc.data()));
             return items;
@@ -274,7 +256,6 @@ export async function GET(request: NextRequest) {
         })
       );
 
-      // Analyze each user's wishlist
       for (let i = 0; i < userIds.length; i++) {
         const wishlistItems = userItemsResults[i];
         const userWishlistSize = wishlistItems.length;
@@ -283,11 +264,9 @@ export async function GET(request: NextRequest) {
 
         for (const item of wishlistItems) {
           if (item && item.propertyId) {
-            // Count property frequency
             const currentCount = propertyFrequency.get(item.propertyId) || 0;
             propertyFrequency.set(item.propertyId, currentCount + 1);
 
-            // Count priority distribution
             const priority = (item.priority || 'medium') as 'low' | 'medium' | 'high';
             if (priority in priorityCount) {
               priorityCount[priority]++;
@@ -296,15 +275,13 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Calculate averages
       const averageWishlistSize = usersWithWishlists > 0 ? totalWishlistItems / usersWithWishlists : 0;
 
-      // Get top wishlisted properties (OPTIMIZED - Parallel fetching)
+      // Get top wishlisted properties
       const sortedProperties = Array.from(propertyFrequency.entries())
         .sort((a, b) => b[1] - a[1])
         .slice(0, topPropertiesLimit);
 
-      // Fetch all property details in parallel
       const propertyDetailsPromises = sortedProperties.map(([propertyId]) =>
         getPropertyDetails(propertyId).catch(() => null)
       );
@@ -325,7 +302,6 @@ export async function GET(request: NextRequest) {
         };
       });
 
-      // Calculate engagement distribution
       const engagementDistribution = { '1-5': 0, '6-10': 0, '11-20': 0, '20+': 0 };
       for (const size of userWishlistSizes) {
         if (size <= 5) engagementDistribution['1-5']++;
@@ -334,13 +310,11 @@ export async function GET(request: NextRequest) {
         else engagementDistribution['20+']++;
       }
 
-      // Get most active users (OPTIMIZED - Parallel fetching)
       const userActivity = userIds.map(userId => ({
         userId,
         wishlistCount: userWishlistSizes[userIds.indexOf(userId)] || 0
       })).sort((a, b) => b.wishlistCount - a.wishlistCount).slice(0, 10);
 
-      // Fetch all user details in parallel
       const userDetailsPromises = userActivity.map(userStats =>
         getUserDetails(userStats.userId).catch(() => ({
           id: userStats.userId,
@@ -360,24 +334,22 @@ export async function GET(request: NextRequest) {
         };
       });
 
-      // Process real recent activity (OPTIMIZED - Parallel user fetching)
+      // Process recent activity
       const processedRecentActivity = [];
       let allActivities: WishlistActivity[] = [];
 
       if (includeRecentActivity) {
         try {
           const activityLogger = ActivityLogger.getInstance();
-          const globalActivities = await activityLogger.getGlobalActivities(100); // Reduced from 200 for better performance
+          const globalActivities = await activityLogger.getGlobalActivities(100);
           allActivities = globalActivities;
 
-          // Get unique user IDs from recent activities
           const recentActivityData = globalActivities
             .filter(activity => activity.action === 'add' || activity.action === 'remove')
             .slice(0, recentActivityLimit);
 
           const uniqueUserIds = [...new Set(recentActivityData.map(activity => activity.userId))];
 
-          // Fetch all user details in parallel
           const userDetailsPromises = uniqueUserIds.map(userId =>
             getUserDetails(userId).catch(() => ({
               id: userId,
@@ -391,11 +363,9 @@ export async function GET(request: NextRequest) {
             userDetailsMap.set(userId, userDetailsResults[index]);
           });
 
-          // Process activities with cached user details
           for (const activity of recentActivityData) {
             const userDetails = userDetailsMap.get(activity.userId);
 
-            // Convert Firebase timestamp to ISO string if needed
             let timestamp = activity.timestamp;
             if (typeof timestamp === 'number') {
               timestamp = new Date(timestamp).toISOString();
@@ -417,12 +387,11 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Calculate activity trends and real-time metrics
+      // Activity trends
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
-      // Initialize trend data
       let totalActivitiesToday = 0;
       let addActionsToday = 0;
       let removeActionsToday = 0;
@@ -433,32 +402,27 @@ export async function GET(request: NextRequest) {
       const dailyActivityMap = new Map();
       const hourlyActivityMap = new Map();
 
-      // Initialize hourly pattern (0-23 hours)
       for (let i = 0; i < 24; i++) {
         hourlyActivityMap.set(i, 0);
       }
 
-      // Process all activities for trends
       for (const activity of allActivities) {
         if (!activity.timestamp) continue;
 
         const activityDate = new Date(typeof activity.timestamp === 'number' ? activity.timestamp : activity.timestamp);
 
-        // Today's activity
         if (activityDate >= today) {
           totalActivitiesToday++;
           if (activity.action === 'add') addActionsToday++;
           if (activity.action === 'remove') removeActionsToday++;
         }
 
-        // Last hour activity
         if (activityDate >= oneHourAgo) {
           activeUsersLastHour.add(activity.userId);
           if (activity.action === 'add') propertiesAddedLastHour++;
           if (activity.action === 'remove') propertiesRemovedLastHour++;
         }
 
-        // Daily activity trend (last 7 days)
         const dayKey = activityDate.toISOString().split('T')[0];
         const dayCount = dailyActivityMap.get(dayKey) || { totalActivities: 0, adds: 0, removes: 0 };
         dayCount.totalActivities++;
@@ -466,12 +430,10 @@ export async function GET(request: NextRequest) {
         if (activity.action === 'remove') dayCount.removes++;
         dailyActivityMap.set(dayKey, dayCount);
 
-        // Hourly pattern
         const hour = activityDate.getHours();
         hourlyActivityMap.set(hour, (hourlyActivityMap.get(hour) || 0) + 1);
       }
 
-      // Create daily trend array (last 7 days)
       const dailyActivityTrend = [];
       for (let i = 6; i >= 0; i--) {
         const date = new Date(today);
@@ -487,17 +449,14 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      // Create hourly pattern array
       const hourlyPattern = Array.from(hourlyActivityMap.entries()).map(([hour, activities]) => ({
         hour,
         activities
       }));
 
-      // Calculate property type and location trends (OPTIMIZED - Reuse cached data)
       const propertyTypeMap = new Map();
       const locationMap = new Map();
 
-      // Reuse property details from topWishlistedProperties to avoid redundant fetches
       const propertyDetailsCache = new Map();
       topWishlistedProperties.forEach(item => {
         if (item.property) {
@@ -505,7 +464,6 @@ export async function GET(request: NextRequest) {
         }
       });
 
-      // Get remaining property details in parallel (only for properties not already cached)
       const remainingPropertyIds = Array.from(propertyFrequency.keys())
         .filter(propertyId => !propertyDetailsCache.has(propertyId));
 
@@ -527,7 +485,6 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      // Calculate trends using cached data
       for (const [propertyId, count] of propertyFrequency.entries()) {
         const property = propertyDetailsCache.get(propertyId);
         if (property) {
@@ -539,7 +496,6 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Convert to arrays with percentages
       const totalPropertyWishlists = Array.from(propertyTypeMap.values()).reduce((a, b) => a + b, 0);
       const totalLocationWishlists = Array.from(locationMap.values()).reduce((a, b) => a + b, 0);
 
@@ -568,7 +524,7 @@ export async function GET(request: NextRequest) {
         totalUsers = await client.users.getCount();
       } catch (clerkError) {
         console.warn('[Admin Stats] Failed to get total users count from Clerk:', clerkError);
-        totalUsers = usersWithWishlists; // Fallback to users with wishlists
+        totalUsers = usersWithWishlists;
       }
 
       const duration = Date.now() - startTime;
