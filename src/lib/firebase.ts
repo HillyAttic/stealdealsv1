@@ -6,6 +6,15 @@ import { getStorage } from 'firebase/storage';
 import { validateConfigOrThrow, logConfigValidation } from '@/lib/config/validation';
 import { sortByNewest } from '@/lib/sort';
 
+// Detect if we're in a build environment (Vercel build phase)
+// During build, we skip Firebase initialization to avoid URL validation errors
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' ||
+                    (process.env.VERCEL && !process.env.VERCEL_ENV);
+
+if (isBuildTime) {
+  console.log('[Firebase] Build time detected - skipping Firebase client SDK initialization');
+}
+
 // Validate environment configuration before initializing Firebase
 try {
   // Only enforce strict validation in actual production deployment, not local builds
@@ -56,8 +65,24 @@ if (missingFields.length > 0) {
   console.log('[Firebase] ✅ Configuration validation passed');
 }
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+// Initialize Firebase lazily to avoid build-time errors
+let _app: ReturnType<typeof initializeApp> | null = null;
+
+function ensureApp() {
+  if (!_app) {
+    _app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+  }
+  return _app;
+}
+
+// Lazy proxy for app - defer initialization until accessed
+const app = new Proxy({} as ReturnType<typeof initializeApp>, {
+  get(_, prop, receiver) {
+    const a = ensureApp();
+    const val = Reflect.get(a as any, prop, receiver);
+    return typeof val === 'function' ? val.bind(a) : val;
+  },
+});
 
 // Guard RTDB / auth / storage init so the module doesn't crash during Vercel
 // build when environment variables or the default URL may be invalid/absent
@@ -68,21 +93,21 @@ let _storage: ReturnType<typeof getStorage> | null = null;
 
 function ensureDatabase() {
   if (!_database) {
-    _database = getDatabase(app);
+    _database = getDatabase(ensureApp());
   }
   return _database;
 }
 
 function ensureAuth() {
   if (!_auth) {
-    _auth = getAuth(app);
+    _auth = getAuth(ensureApp());
   }
   return _auth;
 }
 
 function ensureStorage() {
   if (!_storage) {
-    _storage = getStorage(app);
+    _storage = getStorage(ensureApp());
   }
   return _storage;
 }
@@ -117,10 +142,30 @@ const migratedPreleasedRef = lazyRtdbRef('migratedProperties/preleased');
 const migratedFranchiseRef = lazyRtdbRef('migratedProperties/franchise');
 const migratedPlotsRef = lazyRtdbRef('migratedProperties/plots');
 
-// Eagerly create auth / storage / database — these are cheap and rarely fail.
-const database = ensureDatabase();
-const auth = ensureAuth();
-const storage = ensureStorage();
+// Lazy proxies for database, auth, and storage — defer initialization until accessed
+const database = new Proxy({} as ReturnType<typeof getDatabase>, {
+  get(_, prop, receiver) {
+    const db = ensureDatabase();
+    const val = Reflect.get(db as any, prop, receiver);
+    return typeof val === 'function' ? val.bind(db) : val;
+  },
+});
+
+const auth = new Proxy({} as ReturnType<typeof getAuth>, {
+  get(_, prop, receiver) {
+    const a = ensureAuth();
+    const val = Reflect.get(a as any, prop, receiver);
+    return typeof val === 'function' ? val.bind(a) : val;
+  },
+});
+
+const storage = new Proxy({} as ReturnType<typeof getStorage>, {
+  get(_, prop, receiver) {
+    const s = ensureStorage();
+    const val = Reflect.get(s as any, prop, receiver);
+    return typeof val === 'function' ? val.bind(s) : val;
+  },
+});
 
 // Export references
 export {
