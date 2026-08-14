@@ -9,7 +9,7 @@ import { getCachedFranchises, trackCachePerformance } from '@/lib/cache/server-c
 
 // ISR Configuration for optimal performance
 export const revalidate = 600; // Revalidate every 10 minutes (franchises change less frequently)
-export const dynamic = 'force-static'; // Force static generation
+export const dynamic = 'force-dynamic'; // Force dynamic rendering - Firebase RTDB requires runtime credentials
 
 // Metadata for SEO
 export async function generateMetadata(): Promise<Metadata> {

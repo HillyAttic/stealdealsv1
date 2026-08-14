@@ -8,7 +8,7 @@ import { getCachedVacantProperties, trackCachePerformance } from '@/lib/cache/se
 
 // ISR Configuration for optimal performance
 export const revalidate = 300; // Revalidate every 5 minutes
-export const dynamic = 'force-static'; // Force static generation
+export const dynamic = 'force-dynamic'; // Force dynamic rendering - Firebase RTDB requires runtime credentials
 
 // Metadata for SEO
 export async function generateMetadata(): Promise<Metadata> {

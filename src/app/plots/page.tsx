@@ -8,7 +8,7 @@ import { getCachedPlots, trackCachePerformance } from '@/lib/cache/server-cache'
 
 // ISR Configuration for optimal performance
 export const revalidate = 600; // Revalidate every 10 minutes (plots change less frequently)
-export const dynamic = 'force-static'; // Force static generation
+export const dynamic = 'force-dynamic'; // Force dynamic rendering - Firebase RTDB requires runtime credentials
 
 // Metadata for SEO
 export async function generateMetadata(): Promise<Metadata> {
