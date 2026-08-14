@@ -3,6 +3,11 @@ import { auth } from '@/lib/auth/server-auth';
 import { FirebaseAdminUserService } from '@/lib/admin/firebase-admin-user-service';
 import { getUserById } from '@/lib/database/firestore-users';
 
+// Force this route to be dynamic - don't prerender at build time
+// This ensures Firebase is only accessed at runtime when credentials are available
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const { userId: currentUserId } = await auth();
