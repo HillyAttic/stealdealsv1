@@ -201,11 +201,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter by propertyType if specified
-    // Map display names to property type values (e.g. "Pre-Leased" → "vacant", etc.)
+    // Map display names to property type values that exist in RTDB data
     const typeAliasMap: Record<string, string> = {
-      'pre-leased': 'pre-leased',
-      'preleased': 'pre-leased',
-      'preleased property': 'pre-leased',
+      'pre-leased': 'preleased',
+      'preleased': 'preleased',
+      'preleased property': 'preleased',
       'vacant': 'vacant',
       'franchise': 'franchise',
       'plot': 'plot',
@@ -218,7 +218,8 @@ export async function GET(request: NextRequest) {
       const normalizedType = typeAliasMap[propertyType.toLowerCase()] || propertyType.toLowerCase();
       filteredProperties = filteredProperties.filter(p => {
         const itemType = (p.propertyType || p.type || '').toLowerCase();
-        return itemType === normalizedType;
+        // Match against both propertyType and type fields (RTDB data uses "Preleased", "Vacant", etc.)
+        return itemType === normalizedType || itemType === normalizedType.replace('-', '');
       });
     }
 
