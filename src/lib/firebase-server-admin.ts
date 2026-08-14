@@ -146,20 +146,26 @@ if (!admin.apps.length) {
       console.log('[Firebase Admin] ✅ Firebase Admin initialized successfully for project:', serviceAccount.project_id);
       console.log('[Firebase Admin] Using Key ID:', serviceAccount.private_key_id?.substring(0, 8) + '...');
     } else {
-      // Check if we are in an environment that might have default credentials (GCP/Vercel)
-      const isCloudEnv = process.env.VERCEL || process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.GAE_SERVICE;
+      // No explicit credentials found.
+      // Vercel doesn't provide Google Cloud credentials by default, so
+      // applicationDefault() will fail. Only attempt it if we have explicit
+      // GOOGLE_APPLICATION_CREDENTIALS set.
+      const hasGoogleCreds = !!process.env.GOOGLE_APPLICATION_CREDENTIALS || !!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
 
-      if (isCloudEnv) {
-        console.log('[Firebase Admin] Attempting default credential initialization in cloud environment');
-        admin.initializeApp({
-          credential: admin.credential.applicationDefault(),
-          databaseURL: databaseURL,
-        });
-        console.log('[Firebase Admin] ✅ Firebase Admin initialized with default credentials');
+      if (hasGoogleCreds) {
+        console.log('[Firebase Admin] Attempting default credential initialization (GOOGLE_APPLICATION_CREDENTIALS found)');
+        try {
+          admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
+            databaseURL: databaseURL,
+          });
+          console.log('[Firebase Admin] ✅ Firebase Admin initialized with default credentials');
+        } catch (initError) {
+          console.error('[Firebase Admin] ❌ Failed to initialize with default credentials:', initError);
+        }
       } else {
-        console.warn('[Firebase Admin] ⚠️ Credentials not found (no service-account.json or FIREBASE_SERVICE_ACCOUNT_KEY)');
-        console.warn('[Firebase Admin] ⚠️ Skipping initialization to avoid "invalid-credential" warnings.');
-        console.warn('[Firebase Admin] 💡 To fix: Add FIREBASE_SERVICE_ACCOUNT_KEY to your environment variables');
+        console.warn('[Firebase Admin] ⚠️ No credentials found - skipping initialization');
+        console.warn('[Firebase Admin] 💡 To fix: Set FIREBASE_SERVICE_ACCOUNT_KEY env var or provide service-account.json');
       }
     }
   } catch (error) {

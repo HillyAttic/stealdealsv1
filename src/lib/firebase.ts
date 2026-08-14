@@ -58,22 +58,69 @@ if (missingFields.length > 0) {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
-const database = getDatabase(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
 
-// Properties collection references - migrated to type-organized structure
-const propertiesRef = ref(database, 'properties'); // Legacy reference for backward compatibility
-const vacantPropertiesRef = ref(database, 'vacantProperties'); // Legacy
-const preleasedPropertiesRef = ref(database, 'preleasedProperties'); // Legacy
-const franchisePropertiesRef = ref(database, 'franchiseProperties'); // Legacy
-const plotsRef = ref(database, 'plots'); // Legacy
+// Guard RTDB / auth / storage init so the module doesn't crash during Vercel
+// build when environment variables or the default URL may be invalid/absent
+// at build time.  They are lazily created on first access via the proxy.
+let _database: ReturnType<typeof getDatabase> | null = null;
+let _auth: ReturnType<typeof getAuth> | null = null;
+let _storage: ReturnType<typeof getStorage> | null = null;
+
+function ensureDatabase() {
+  if (!_database) {
+    _database = getDatabase(app);
+  }
+  return _database;
+}
+
+function ensureAuth() {
+  if (!_auth) {
+    _auth = getAuth(app);
+  }
+  return _auth;
+}
+
+function ensureStorage() {
+  if (!_storage) {
+    _storage = getStorage(app);
+  }
+  return _storage;
+}
+
+// --- Lazy RTDB refs via Proxy -------------------------------------------
+// ref() calls getDatabase() under the hood.  During Vercel build the RTDB
+// URL may not be available yet, so we wrap each ref in a Proxy that defers
+// the actual `ref()` call until the object is first accessed.
+function lazyRtdbRef(path: string) {
+  let _ref: ReturnType<typeof ref> | null = null;
+  return new Proxy({} as ReturnType<typeof ref>, {
+    get(_, prop, receiver) {
+      if (!_ref) {
+        _ref = ref(ensureDatabase(), path);
+      }
+      const val = Reflect.get(_ref as any, prop, receiver);
+      return typeof val === 'function' ? val.bind(_ref) : val;
+    },
+  });
+}
+
+// Legacy references
+const propertiesRef = lazyRtdbRef('properties');
+const vacantPropertiesRef = lazyRtdbRef('vacantProperties');
+const preleasedPropertiesRef = lazyRtdbRef('preleasedProperties');
+const franchisePropertiesRef = lazyRtdbRef('franchiseProperties');
+const plotsRef = lazyRtdbRef('plots');
 
 // New type-organized structure from migration
-const migratedVacantRef = ref(database, 'migratedProperties/vacant');
-const migratedPreleasedRef = ref(database, 'migratedProperties/preleased');
-const migratedFranchiseRef = ref(database, 'migratedProperties/franchise');
-const migratedPlotsRef = ref(database, 'migratedProperties/plots');
+const migratedVacantRef = lazyRtdbRef('migratedProperties/vacant');
+const migratedPreleasedRef = lazyRtdbRef('migratedProperties/preleased');
+const migratedFranchiseRef = lazyRtdbRef('migratedProperties/franchise');
+const migratedPlotsRef = lazyRtdbRef('migratedProperties/plots');
+
+// Eagerly create auth / storage / database — these are cheap and rarely fail.
+const database = ensureDatabase();
+const auth = ensureAuth();
+const storage = ensureStorage();
 
 // Export references
 export {
