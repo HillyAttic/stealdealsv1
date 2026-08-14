@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
 import { FaChartBar, FaStore, FaBuilding, FaHome } from 'react-icons/fa';
 import ClientOnly from '@/components/ClientOnly';
+import { useAdminData } from '@/hooks/useAdminData';
+import { AdminStat, AdminCard, SkeletonLoader } from '@/components/admin/ui';
 
-// Add global type declaration for the window extension
 declare global {
   interface Window {
     __cleanBitdefenderAttributes?: () => void;
@@ -18,12 +18,7 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       <ClientOnly
-        fallback={
-          <div className="text-center py-12">
-            <div className="animate-spin h-8 w-8 border-4 border-blue-900 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading dashboard charts...</p>
-          </div>
-        }
+        fallback={<SkeletonLoader type="stats" className="mb-6" />}
       >
         <AdminDashboardContent />
       </ClientOnly>
@@ -33,730 +28,368 @@ export default function AdminDashboard() {
 
 function AdminDashboardContent() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  // Refs to store chart instances
   const chartRefs = useRef<{[key: string]: any}>({});
-  const [stats, setStats] = useState({
-    preleased: 0,
-    vacant: 0,
-    franchise: 0,
-    plots: 0,
-    total: 0
-  });
-  const [categoryData, setCategoryData] = useState({
-    labels: ['Commercial', 'Office Space', 'Retail', 'Industrial', 'Hospitality'],
-    data: [0, 0, 0, 0, 0]
-  });
-  
-  const [franchiseData, setFranchiseData] = useState({
-    labels: ['Food', 'Retail', 'Education', 'Healthcare', 'Services', 'Other'],
-    data: [0, 0, 0, 0, 0, 0]
+
+  // Fetch dashboard stats — no redundant auth check (AdminLayout handles it)
+  const { data, isLoading, error } = useAdminData('/api/admin/dashboard-stats', {
+    onError: (err) => {
+      if (err.message === 'Session expired') {
+        router.push('/admin/login');
+      }
+    },
   });
 
-  // Cleanup function to destroy charts
-  const cleanupCharts = () => {
-    Object.values(chartRefs.current).forEach((chart: any) => {
-      if (chart) {
-        chart.destroy();
-      }
-    });
-    // Reset chart references
-    chartRefs.current = {};
-  };
+  const stats = data?.stats || { preleased: 0, vacant: 0, franchise: 0, plots: 0, total: 0 };
+  const categoryData = data?.categoryData || { labels: [], data: [] };
+  const franchiseData = data?.franchiseData || { labels: [], data: [] };
 
-  // Function to make authenticated API calls
-  const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-    try {
-      const response = await fetch(url, {
-        ...options,
-        credentials: 'include', // Important to include cookies
-        headers: {
-          ...(options.headers || {}),
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        // If unauthorized, redirect to login
-        if (response.status === 401 || response.status === 403) {
-          router.push('/admin/login');
-          throw new Error('Session expired');
-        }
-        throw new Error(`API error: ${response.status}`);
-      }
-      
-      return response;
-    } catch (error) {
-      console.error(`Error fetching ${url}:`, error);
-      throw error;
-    }
-  };
-
-  // Simple in-memory cache for dashboard stats (5 minute TTL)
-  const statsCache = useRef<{
-    data: any;
-    timestamp: number;
-  } | null>(null);
-  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-  // Fetch data from the dashboard-stats API route (uses Admin SDK, bypasses Firestore security rules)
-  const fetchData = async () => {
-    try {
-      // Check cache first
-      if (statsCache.current && Date.now() - statsCache.current.timestamp < CACHE_TTL) {
-        const cached = statsCache.current.data;
-        setStats(cached.stats);
-        setCategoryData(cached.categoryData);
-        setFranchiseData(cached.franchiseData);
-        return;
-      }
-
-      // Fetch from API route (server-side, uses Admin SDK — no security rule issues)
-      const response = await fetchWithAuth('/api/admin/dashboard-stats');
-      const data = await response.json();
-
-      if (data.error) {
-        console.error('[Dashboard] API returned error:', data.error);
-        setError('Failed to load dashboard data');
-        return;
-      }
-
-      // Update stats
-      setStats(data.stats);
-      setCategoryData(data.categoryData);
-      setFranchiseData(data.franchiseData);
-
-      console.log('[Dashboard] Data loaded via API:', data.stats);
-
-      // Store in cache
-      statsCache.current = {
-        data: {
-          stats: data.stats,
-          categoryData: data.categoryData,
-          franchiseData: data.franchiseData
-        },
-        timestamp: Date.now()
-      };
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setError('Failed to load dashboard data');
-    }
-  };
-
-  // Initialize charts once the component is mounted
-  const initCharts = () => {
-    // Clean up existing charts first
-    cleanupCharts();
-    
-    console.log('Initializing charts...');
-    
-    // Import Chart.js dynamically on the client side
-    import('chart.js').then(({ Chart, registerables }) => {
-      // Register all chart types, scales, etc.
-      Chart.register(...registerables);
-      
-      // Get chart elements
-      const categoryChartElement = document.getElementById('categoryChart') as HTMLCanvasElement;
-      const summaryChartElement = document.getElementById('summaryChart') as HTMLCanvasElement;
-      const franchiseChartElement = document.getElementById('franchiseChart') as HTMLCanvasElement;
-      
-      console.log('Chart elements found:', {
-        categoryChart: !!categoryChartElement,
-        summaryChart: !!summaryChartElement,
-        franchiseChart: !!franchiseChartElement
-      });
-        
-      // Use setTimeout to ensure DOM is fully ready
-      setTimeout(() => {
-        // Ensure we have data to display
-        console.log('Chart data:', {
-          categoryData,
-          stats,
-          franchiseData
-        });
-        
-        try {
-          // Category chart
-          if (categoryChartElement) {
-            // Ensure any previous chart instance is destroyed
-            if (chartRefs.current.categoryChart) {
-              chartRefs.current.categoryChart.destroy();
-            }
-            
-            chartRefs.current.categoryChart = new Chart(categoryChartElement as HTMLCanvasElement, {
-              type: 'doughnut', // Changed from 'bar' to 'doughnut' for better visualization
-              data: {
-                labels: categoryData.labels,
-                datasets: [{
-                  label: 'Vacant Properties by Category',
-                  data: categoryData.data,
-                  backgroundColor: [
-                    'rgba(120, 53, 15, 0.8)',    // Brown - Industrial
-                    'rgba(59, 130, 246, 0.8)',   // Blue - High-Street
-                    'rgba(16, 185, 129, 0.8)',   // Green - Mall
-                    'rgba(139, 92, 246, 0.8)',   // Purple - Corporate
-                    'rgba(107, 114, 128, 0.8)'   // Gray - Other
-                  ],
-                  borderColor: [
-                    'rgba(120, 53, 15, 1)',      // Brown - Industrial
-                    'rgba(59, 130, 246, 1)',     // Blue - High-Street
-                    'rgba(16, 185, 129, 1)',     // Green - Mall
-                    'rgba(139, 92, 246, 1)',     // Purple - Corporate
-                    'rgba(107, 114, 128, 1)'     // Gray - Other
-                  ],
-                  borderWidth: 2,
-                  hoverOffset: 10
-                }]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 1.5,
-                layout: {
-                  padding: {
-                    top: 10,
-                    bottom: 10,
-                    left: 10,
-                    right: 10
-                  }
-                },
-                plugins: {
-                  legend: {
-                    position: 'bottom',
-                    align: 'center',
-                    labels: {
-                      padding: 15,
-                      usePointStyle: true,
-                      font: {
-                        size: 11
-                      },
-                      boxWidth: 12,
-                      boxHeight: 12
-                    }
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: function(context) {
-                        const label = context.label || '';
-                        const value = typeof context.parsed === 'number' ? context.parsed : 0;
-                        const total = (context.dataset.data as number[]).reduce((a: number, b: number) => a + b, 0);
-                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
-                        return `${label}: ${value} properties (${percentage}%)`;
-                      }
-                    }
-                  }
-                },
-                animation: {
-                  animateRotate: true,
-                  animateScale: true
-                }
-              }
-            });
-            console.log('Category chart initialized');
-          } else {
-            console.error('Category chart element not found in DOM');
-          }
-
-          // Summary chart
-          if (summaryChartElement) {
-            // Ensure any previous chart instance is destroyed
-            if (chartRefs.current.summaryChart) {
-              chartRefs.current.summaryChart.destroy();
-            }
-            
-            chartRefs.current.summaryChart = new Chart(summaryChartElement as HTMLCanvasElement, {
-              type: 'doughnut',
-              data: {
-                labels: ['Pre-leased', 'Vacant', 'Franchise', 'Plots'],
-                datasets: [{
-                  data: [stats.preleased, stats.vacant, stats.franchise, stats.plots],
-                  backgroundColor: [
-                    'rgba(54, 162, 235, 0.8)',   // Blue - Pre-leased
-                    'rgba(75, 192, 192, 0.8)',   // Teal - Vacant
-                    'rgba(255, 99, 132, 0.8)',   // Red - Franchise
-                    'rgba(153, 102, 255, 0.8)'   // Purple - Plots
-                  ],
-                  borderColor: [
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(153, 102, 255, 1)'
-                  ],
-                  borderWidth: 2,
-                  hoverOffset: 10
-                }]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 1.5,
-                layout: {
-                  padding: {
-                    top: 10,
-                    bottom: 10,
-                    left: 10,
-                    right: 10
-                  }
-                },
-                plugins: {
-                  legend: {
-                    position: 'bottom',
-                    align: 'center',
-                    labels: {
-                      padding: 15,
-                      usePointStyle: true,
-                      font: {
-                        size: 11
-                      },
-                      boxWidth: 12,
-                      boxHeight: 12
-                    }
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: function(context) {
-                        const label = context.label || '';
-                        const value = typeof context.parsed === 'number' ? context.parsed : 0;
-                        const total = (context.dataset.data as number[]).reduce((a: number, b: number) => a + b, 0);
-                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
-                        return `${label}: ${value} properties (${percentage}%)`;
-                      }
-                    }
-                  }
-                },
-                animation: {
-                  animateRotate: true,
-                  animateScale: true
-                }
-              }
-            });
-            console.log('Summary chart initialized');
-          } else {
-            console.error('Summary chart element not found in DOM');
-          }
-
-          // Franchise Industry Chart
-          if (franchiseChartElement) {
-            // Ensure any previous chart instance is destroyed
-            if (chartRefs.current.franchiseChart) {
-              chartRefs.current.franchiseChart.destroy();
-            }
-            
-            chartRefs.current.franchiseChart = new Chart(franchiseChartElement as HTMLCanvasElement, {
-              type: 'bar', // Using bar chart for better comparison of franchise categories
-              data: {
-                labels: franchiseData.labels,
-                datasets: [{
-                  label: 'Franchises by Industry',
-                  data: franchiseData.data,
-                  backgroundColor: [
-                    'rgba(59, 130, 246, 0.8)',   // Blue - Education
-                    'rgba(239, 68, 68, 0.8)',    // Red - F&B
-                    'rgba(236, 72, 153, 0.8)',   // Pink - Fashion
-                    'rgba(16, 185, 129, 0.8)',   // Green - Pharmaceutical
-                    'rgba(245, 158, 11, 0.8)',   // Amber - Retail
-                    'rgba(139, 92, 246, 0.8)',   // Purple - Sports, Fitness & Entertainments
-                    'rgba(107, 114, 128, 0.8)'   // Gray - Other
-                  ],
-                  borderColor: [
-                    'rgba(59, 130, 246, 1)',     // Blue - Education
-                    'rgba(239, 68, 68, 1)',      // Red - F&B
-                    'rgba(236, 72, 153, 1)',     // Pink - Fashion
-                    'rgba(16, 185, 129, 1)',     // Green - Pharmaceutical
-                    'rgba(245, 158, 11, 1)',     // Amber - Retail
-                    'rgba(139, 92, 246, 1)',     // Purple - Sports, Fitness & Entertainments
-                    'rgba(107, 114, 128, 1)'     // Gray - Other
-                  ],
-                  borderWidth: 2,
-                  borderRadius: 6,
-                  borderSkipped: false,
-                }]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    display: false // Hide legend for cleaner look
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: function(context) {
-                        const label = context.label || '';
-                        const parsed = context.parsed as any;
-                        const value = parsed?.y || 0;
-                        const total = (context.dataset.data as number[]).reduce((a: number, b: number) => a + b, 0);
-                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
-                        return `${label}: ${value} franchises (${percentage}%)`;
-                      }
-                    }
-                  }
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    ticks: {
-                      stepSize: 1,
-                      callback: function(value) {
-                        return Number.isInteger(value) ? value : '';
-                      }
-                    },
-                    grid: {
-                      color: 'rgba(0, 0, 0, 0.1)'
-                    }
-                  },
-                  x: {
-                    ticks: {
-                      maxRotation: 45,
-                      minRotation: 0
-                    },
-                    grid: {
-                      display: false
-                    }
-                  }
-                },
-                animation: {
-                  duration: 1000,
-                  easing: 'easeOutQuart'
-                }
-              }
-            });
-            console.log('Franchise chart initialized');
-          } else {
-            console.error('Franchise chart element not found in DOM');
-          }
-        } catch (error) {
-          console.error('Error initializing charts:', error);
-        }
-      }, 100); // Reduced timeout to 100ms for faster chart rendering
-    }).catch(error => {
-      console.error('Failed to load Chart.js:', error);
-    });
-  };
-
-  // Clean Bitdefender attributes and initialize charts on mount
+  // Chart initialization
   useEffect(() => {
-    // Clean any Bitdefender attributes if the global cleaner function exists
+    if (isLoading || !data) return;
+
+    let destroyed = false;
+
+    const initCharts = async () => {
+      const { Chart, registerables } = await import('chart.js');
+      Chart.register(...registerables);
+
+      if (destroyed) return;
+
+      // Cleanup existing
+      Object.values(chartRefs.current).forEach((chart: any) => chart?.destroy());
+      chartRefs.current = {};
+
+      setTimeout(() => {
+        if (destroyed) return;
+
+        const categoryEl = document.getElementById('categoryChart') as HTMLCanvasElement;
+        const summaryEl = document.getElementById('summaryChart') as HTMLCanvasElement;
+        const franchiseEl = document.getElementById('franchiseChart') as HTMLCanvasElement;
+
+        const brandColors = {
+          primary: '#154D71',
+          secondary: '#1C6EA4',
+          accent: '#33A1E0',
+          highlight: '#FFF9AF',
+        };
+
+        if (categoryEl && categoryData.data.some(v => v > 0)) {
+          chartRefs.current.categoryChart = new Chart(categoryEl, {
+            type: 'doughnut',
+            data: {
+              labels: categoryData.labels,
+              datasets: [{
+                data: categoryData.data,
+                backgroundColor: [
+                  'rgba(21, 77, 113, 0.85)',
+                  'rgba(28, 110, 164, 0.85)',
+                  'rgba(51, 161, 224, 0.85)',
+                  'rgba(139, 92, 246, 0.85)',
+                  'rgba(107, 114, 128, 0.85)',
+                ],
+                borderWidth: 2,
+                borderColor: '#fff',
+                hoverOffset: 8,
+              }],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              aspectRatio: 1.5,
+              cutout: '60%',
+              plugins: {
+                legend: { position: 'bottom', labels: { padding: 15, usePointStyle: true, font: { size: 11, family: 'Jost' } } },
+                tooltip: {
+                  backgroundColor: 'rgba(21, 77, 113, 0.95)',
+                  titleFont: { family: 'Jost' },
+                  bodyFont: { family: 'Jost' },
+                  padding: 10,
+                  cornerRadius: 8,
+                  callbacks: {
+                    label: function(ctx) {
+                      const total = (ctx.dataset.data as number[]).reduce((a: number, b: number) => a + b, 0);
+                      const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : '0';
+                      return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                    },
+                  },
+                },
+              },
+              animation: { animateRotate: true, animateScale: true, duration: 800 },
+            },
+          });
+        }
+
+        if (summaryEl && stats.total > 0) {
+          chartRefs.current.summaryChart = new Chart(summaryEl, {
+            type: 'doughnut',
+            data: {
+              labels: ['Pre-leased', 'Vacant', 'Franchise', 'Plots'],
+              datasets: [{
+                data: [stats.preleased, stats.vacant, stats.franchise, stats.plots],
+                backgroundColor: [
+                  'rgba(21, 77, 113, 0.85)',
+                  'rgba(51, 161, 224, 0.85)',
+                  'rgba(255, 249, 175, 0.85)',
+                  'rgba(28, 110, 164, 0.85)',
+                ],
+                borderWidth: 2,
+                borderColor: '#fff',
+                hoverOffset: 8,
+              }],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              aspectRatio: 1.5,
+              cutout: '60%',
+              plugins: {
+                legend: { position: 'bottom', labels: { padding: 15, usePointStyle: true, font: { size: 11, family: 'Jost' } } },
+                tooltip: {
+                  backgroundColor: 'rgba(21, 77, 113, 0.95)',
+                  titleFont: { family: 'Jost' },
+                  bodyFont: { family: 'Jost' },
+                  padding: 10,
+                  cornerRadius: 8,
+                  callbacks: {
+                    label: function(ctx) {
+                      const pct = stats.total > 0 ? ((ctx.parsed / stats.total) * 100).toFixed(1) : '0';
+                      return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                    },
+                  },
+                },
+              },
+              animation: { animateRotate: true, animateScale: true, duration: 800 },
+            },
+          });
+        }
+
+        if (franchiseEl && franchiseData.data.some(v => v > 0)) {
+          chartRefs.current.franchiseChart = new Chart(franchiseEl, {
+            type: 'bar',
+            data: {
+              labels: franchiseData.labels,
+              datasets: [{
+                label: 'Franchises by Industry',
+                data: franchiseData.data,
+                backgroundColor: [
+                  'rgba(21, 77, 113, 0.85)',
+                  'rgba(239, 68, 68, 0.8)',
+                  'rgba(236, 72, 153, 0.8)',
+                  'rgba(51, 161, 224, 0.85)',
+                  'rgba(245, 158, 11, 0.8)',
+                  'rgba(139, 92, 246, 0.8)',
+                  'rgba(107, 114, 128, 0.8)',
+                ],
+                borderWidth: 0,
+                borderRadius: 8,
+                borderSkipped: false,
+              }],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  backgroundColor: 'rgba(21, 77, 113, 0.95)',
+                  titleFont: { family: 'Jost' },
+                  bodyFont: { family: 'Jost' },
+                  padding: 10,
+                  cornerRadius: 8,
+                },
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: { stepSize: 1, font: { family: 'Jost', size: 11 } },
+                  grid: { color: 'rgba(0,0,0,0.05)' },
+                },
+                x: {
+                  ticks: { maxRotation: 45, font: { family: 'Jost', size: 11 } },
+                  grid: { display: false },
+                },
+              },
+              animation: { duration: 800, easing: 'easeOutQuart' },
+            },
+          });
+        }
+      }, 50);
+    };
+
+    initCharts();
+
+    return () => {
+      destroyed = true;
+      Object.values(chartRefs.current).forEach((chart: any) => chart?.destroy());
+      chartRefs.current = {};
+    };
+  }, [isLoading, data]);
+
+  // Bitdefender cleanup
+  useEffect(() => {
     if (window.__cleanBitdefenderAttributes) {
       window.__cleanBitdefenderAttributes();
     }
-    
-    // Check authentication status
-    const checkAuth = async () => {
-      try {
-        await fetchWithAuth('/api/auth/check');
-        // If we get here, we're authenticated
-        console.log('Dashboard: Authentication verified');
-        
-        // Fetch data from Firebase
-        await fetchData();
-        console.log('Dashboard data fetched');
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Dashboard authentication error:', error);
-        // Error will be handled by fetchWithAuth (redirect to login)
-      }
-    };
-    
-    checkAuth();
-    
-    // Cleanup charts on component unmount
-    return () => {
-      cleanupCharts();
-    };
-  }, [router]);
+  }, []);
 
-  // Initialize charts after data is loaded and component is rendered
-  useEffect(() => {
-    if (!isLoading) {
-      console.log('Data loaded, initializing charts');
-      // Use a longer timeout to ensure DOM elements are fully rendered
-      const timer = setTimeout(() => {
-        initCharts();
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
+  if (isLoading) {
+    return (
+      <div className="animate-fadeIn">
+        <div className="mb-6">
+          <div className="admin-skeleton h-7 w-48 mb-2" />
+          <div className="admin-skeleton h-4 w-64" />
+        </div>
+        <SkeletonLoader type="stats" className="mb-6" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <SkeletonLoader type="chart" />
+          <SkeletonLoader type="chart" />
+        </div>
+        <SkeletonLoader type="chart" />
+      </div>
+    );
+  }
+
+  const hasCategoryData = categoryData.data?.some((v: number) => v > 0);
+  const hasFranchiseData = franchiseData.data?.some((v: number) => v > 0);
 
   return (
-    <div className="px-2 sm:px-4">
-      {/* Admin Dashboard Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 sm:mb-6">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Admin Dashboard</h1>
-          <p className="text-gray-600 text-sm sm:text-base">Overview of property listings</p>
-        </div>
+    <div className="animate-fadeIn">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-sm text-gray-500 mt-1">Overview of property listings and analytics</p>
       </div>
-      
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin h-12 w-12 border-b-2 border-blue-900 rounded-full"></div>
-          <span className="ml-3 text-gray-600">Loading dashboard data...</span>
-        </div>
-      ) : (
-        <>
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-700 text-white p-3 sm:p-6 rounded-lg shadow-md">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs sm:text-sm opacity-80">Pre-leased</p>
-                  <h2 className="text-xl sm:text-3xl font-bold mt-1">{stats.preleased}</h2>
-                </div>
-                <FaBuilding className="text-xl sm:text-3xl opacity-80" />
-              </div>
-              <div className="mt-3 sm:mt-6 text-xs sm:text-sm font-medium">
-                <span className="opacity-80 hidden sm:inline">{stats.total > 0 ? ((stats.preleased / stats.total) * 100).toFixed(1) : "0"}% of total</span>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-green-500 to-green-700 text-white p-3 sm:p-6 rounded-lg shadow-md">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs sm:text-sm opacity-80">Vacant</p>
-                  <h2 className="text-xl sm:text-3xl font-bold mt-1">{stats.vacant}</h2>
-                </div>
-                <FaHome className="text-xl sm:text-3xl opacity-80" />
-              </div>
-              <div className="mt-3 sm:mt-6 text-xs sm:text-sm font-medium">
-                <span className="opacity-80 hidden sm:inline">{stats.total > 0 ? ((stats.vacant / stats.total) * 100).toFixed(1) : "0"}% of total</span>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-red-400 to-red-600 text-white p-3 sm:p-6 rounded-lg shadow-md">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs sm:text-sm opacity-80">Franchise</p>
-                  <h2 className="text-xl sm:text-3xl font-bold mt-1">{stats.franchise}</h2>
-                </div>
-                <FaStore className="text-xl sm:text-3xl opacity-80" />
-              </div>
-              <div className="mt-3 sm:mt-6 text-xs sm:text-sm font-medium">
-                <span className="opacity-80 hidden sm:inline">{stats.total > 0 ? ((stats.franchise / stats.total) * 100).toFixed(1) : "0"}% of total</span>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-gray-700 to-gray-900 text-white p-3 sm:p-6 rounded-lg shadow-md">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-xs sm:text-sm opacity-80">Total</p>
-                  <h2 className="text-xl sm:text-3xl font-bold mt-1">{stats.total}</h2>
-                </div>
-                <FaChartBar className="text-xl sm:text-3xl opacity-80" />
-              </div>
-              <div className="mt-3 sm:mt-6 text-xs sm:text-sm font-medium">
-                <span className="opacity-80 hidden sm:inline">All property types</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
-              <h2 className="text-sm sm:text-lg font-semibold mb-4 sm:mb-6">Vacant by Category</h2>
-              <div className="h-48 sm:h-64 relative flex items-center justify-center">
-                <div className="w-full h-full max-w-md mx-auto">
-                  <canvas id="categoryChart"></canvas>
-                </div>
-                {categoryData.data.length === 0 ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-                    <div className="text-4xl mb-2">📊</div>
-                    <div className="text-sm font-medium">No vacant properties found</div>
-                    <div className="text-xs text-gray-400 mt-1">Add vacant properties to see category breakdown</div>
-                  </div>
-                ) : categoryData.data.every(value => value === 0) && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-                    <div className="text-4xl mb-2">📈</div>
-                    <div className="text-sm font-medium">No category data available</div>
-                    <div className="text-xs text-gray-400 mt-1">Properties need category information</div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Category Summary */}
-              {categoryData.data.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                    {categoryData.labels.map((label, index) => (
-                      <div key={label} className="flex items-center space-x-2">
-                        <div 
-                          className="w-3 h-3 rounded-full"
-                          style={{
-                            backgroundColor: [
-                              'rgba(120, 53, 15, 0.8)',    // Brown - Industrial
-                              'rgba(59, 130, 246, 0.8)',   // Blue - High-Street
-                              'rgba(16, 185, 129, 0.8)',   // Green - Mall
-                              'rgba(139, 92, 246, 0.8)',   // Purple - Corporate
-                              'rgba(107, 114, 128, 0.8)'   // Gray - Other
-                            ][index % 5]
-                          }}
-                        ></div>
-                        <span className="text-gray-700 font-medium">{label}</span>
-                        <span className="text-gray-500">({categoryData.data[index]})</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 text-xs text-gray-500 text-center">
-                    Total: {categoryData.data.reduce((a, b) => a + b, 0)} vacant properties
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
-              <h2 className="text-sm sm:text-lg font-semibold mb-4 sm:mb-6">Property Distribution</h2>
-              <div className="h-48 sm:h-64 relative flex items-center justify-center">
-                <div className="w-full h-full max-w-md mx-auto">
-                  <canvas id="summaryChart"></canvas>
-                </div>
-                {stats.total === 0 && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-                    <div className="text-4xl mb-2">📊</div>
-                    <div className="text-sm font-medium">No property data available</div>
-                    <div className="text-xs text-gray-400 mt-1">Add properties to see distribution</div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Property Distribution Summary */}
-              {stats.total > 0 && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgba(54, 162, 235, 0.8)' }}></div>
-                      <span className="text-gray-700 font-medium">Pre-leased</span>
-                      <span className="text-gray-500">({stats.preleased})</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgba(75, 192, 192, 0.8)' }}></div>
-                      <span className="text-gray-700 font-medium">Vacant</span>
-                      <span className="text-gray-500">({stats.vacant})</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgba(255, 99, 132, 0.8)' }}></div>
-                      <span className="text-gray-700 font-medium">Franchise</span>
-                      <span className="text-gray-500">({stats.franchise})</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'rgba(153, 102, 255, 0.8)' }}></div>
-                      <span className="text-gray-700 font-medium">Plots</span>
-                      <span className="text-gray-500">({stats.plots})</span>
-                    </div>
-                  </div>
-                  <div className="mt-3 text-xs text-gray-500 text-center">
-                    Total: {stats.total} properties across all categories
-                  </div>
-                  
-                  {/* Percentage Breakdown */}
-                  <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    <div className="text-center p-2 bg-blue-50 rounded">
-                      <div className="text-lg font-bold text-blue-600">
-                        {stats.total > 0 ? ((stats.preleased / stats.total) * 100).toFixed(1) : '0'}%
-                      </div>
-                      <div className="text-xs text-gray-600">Pre-leased</div>
-                    </div>
-                    <div className="text-center p-2 bg-teal-50 rounded">
-                      <div className="text-lg font-bold text-teal-600">
-                        {stats.total > 0 ? ((stats.vacant / stats.total) * 100).toFixed(1) : '0'}%
-                      </div>
-                      <div className="text-xs text-gray-600">Vacant</div>
-                    </div>
-                    <div className="text-center p-2 bg-red-50 rounded">
-                      <div className="text-lg font-bold text-red-600">
-                        {stats.total > 0 ? ((stats.franchise / stats.total) * 100).toFixed(1) : '0'}%
-                      </div>
-                      <div className="text-xs text-gray-600">Franchise</div>
-                    </div>
-                    <div className="text-center p-2 bg-purple-50 rounded">
-                      <div className="text-lg font-bold text-purple-600">
-                        {stats.total > 0 ? ((stats.plots / stats.total) * 100).toFixed(1) : '0'}%
-                      </div>
-                      <div className="text-xs text-gray-600">Plots</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* Franchise Chart */}
-          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md mb-6 sm:mb-8">
-            <h2 className="text-sm sm:text-lg font-semibold mb-4 sm:mb-6">Franchise by Industry</h2>
-            <div className="h-48 sm:h-64 relative">
-              <canvas id="franchiseChart"></canvas>
-              {franchiseData.data.length === 0 ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-                  <div className="text-4xl mb-2">🏪</div>
-                  <div className="text-sm font-medium">No franchise opportunities found</div>
-                  <div className="text-xs text-gray-400 mt-1">Add franchises to see industry breakdown</div>
-                </div>
-              ) : franchiseData.data.every(value => value === 0) && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-                  <div className="text-4xl mb-2">📊</div>
-                  <div className="text-sm font-medium">No industry data available</div>
-                  <div className="text-xs text-gray-400 mt-1">Franchises need industry information</div>
-                </div>
-              )}
-            </div>
-            
-            {/* Industry Summary */}
-            {franchiseData.labels.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-                  {franchiseData.labels.map((label, index) => {
-                    const count = franchiseData.data[index];
-                    const total = franchiseData.data.reduce((a, b) => a + b, 0);
-                    const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
-                    
-                    return (
-                      <div key={label} className={`flex items-center justify-between p-3 rounded-lg ${count > 0 ? 'bg-gray-50' : 'bg-gray-100 opacity-60'}`}>
-                        <div className="flex items-center space-x-3">
-                          <div 
-                            className="w-4 h-4 rounded"
-                            style={{
-                              backgroundColor: [
-                                'rgba(59, 130, 246, 0.8)',   // Blue - Education
-                                'rgba(239, 68, 68, 0.8)',    // Red - F&B
-                                'rgba(236, 72, 153, 0.8)',   // Pink - Fashion
-                                'rgba(16, 185, 129, 0.8)',   // Green - Pharmaceutical
-                                'rgba(245, 158, 11, 0.8)',   // Amber - Retail
-                                'rgba(139, 92, 246, 0.8)',   // Purple - Sports, Fitness & Entertainments
-                              ][index % 6]
-                            }}
-                          ></div>
-                          <span className={`font-medium ${count > 0 ? 'text-gray-700' : 'text-gray-500'}`}>{label}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`font-bold ${count > 0 ? 'text-gray-900' : 'text-gray-400'}`}>{count}</span>
-                          <span className="text-xs text-gray-500">
-                            ({percentage}%)
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="mt-4 text-center">
-                  <div className="inline-flex items-center space-x-2 text-sm text-gray-600 bg-blue-50 px-4 py-2 rounded-full">
-                    <span>🏢</span>
-                    <span>Total: {franchiseData.data.reduce((a, b) => a + b, 0)} franchise opportunities</span>
-                  </div>
-                </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <AdminStat
+          label="Pre-Leased"
+          value={stats.preleased}
+          icon={<FaBuilding className="text-lg" />}
+          color="primary"
+          subtitle={stats.total > 0 ? `${((stats.preleased / stats.total) * 100).toFixed(1)}% of total` : 'No data'}
+        />
+        <AdminStat
+          label="Vacant"
+          value={stats.vacant}
+          icon={<FaHome className="text-lg" />}
+          color="accent"
+          subtitle={stats.total > 0 ? `${((stats.vacant / stats.total) * 100).toFixed(1)}% of total` : 'No data'}
+        />
+        <AdminStat
+          label="Franchise"
+          value={stats.franchise}
+          icon={<FaStore className="text-lg" />}
+          color="warning"
+          subtitle={stats.total > 0 ? `${((stats.franchise / stats.total) * 100).toFixed(1)}% of total` : 'No data'}
+        />
+        <AdminStat
+          label="Total Properties"
+          value={stats.total}
+          icon={<FaChartBar className="text-lg" />}
+          color="secondary"
+          subtitle="All property types"
+        />
+      </div>
+
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Category chart */}
+        <AdminCard>
+          <h2 className="text-base font-semibold text-gray-800 mb-4">Vacant by Category</h2>
+          <div className="h-52 flex items-center justify-center">
+            {hasCategoryData ? (
+              <canvas id="categoryChart" />
+            ) : (
+              <div className="text-center text-gray-400">
+                <div className="text-4xl mb-2">📊</div>
+                <p className="text-sm font-medium">No category data available</p>
+                <p className="text-xs mt-1">Add vacant properties with category info</p>
               </div>
             )}
           </div>
-          
-          
-          {/* Error message if any */}
-          {error && (
-            <div className="bg-red-100 border border-red-300 text-red-700 p-4 rounded-md mb-8">
-              {error}
+          {hasCategoryData && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="flex flex-wrap gap-3 text-xs">
+                {categoryData.labels.map((label: string, i: number) => (
+                  <div key={label} className="flex items-center gap-1.5">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{
+                        backgroundColor: [
+                          'rgba(21, 77, 113, 0.85)',
+                          'rgba(28, 110, 164, 0.85)',
+                          'rgba(51, 161, 224, 0.85)',
+                          'rgba(139, 92, 246, 0.85)',
+                          'rgba(107, 114, 128, 0.85)',
+                        ][i % 5],
+                      }}
+                    />
+                    <span className="text-gray-600">{label}</span>
+                    <span className="text-gray-400">({categoryData.data[i]})</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-        </>
+        </AdminCard>
+
+        {/* Summary chart */}
+        <AdminCard>
+          <h2 className="text-base font-semibold text-gray-800 mb-4">Property Distribution</h2>
+          <div className="h-52 flex items-center justify-center">
+            {stats.total > 0 ? (
+              <canvas id="summaryChart" />
+            ) : (
+              <div className="text-center text-gray-400">
+                <div className="text-4xl mb-2">📊</div>
+                <p className="text-sm font-medium">No property data</p>
+                <p className="text-xs mt-1">Add properties to see distribution</p>
+              </div>
+            )}
+          </div>
+          {stats.total > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { label: 'Pre-leased', value: stats.preleased, color: 'bg-primary-50 text-primary-600' },
+                  { label: 'Vacant', value: stats.vacant, color: 'bg-accent-50 text-accent-600' },
+                  { label: 'Franchise', value: stats.franchise, color: 'bg-amber-50 text-amber-600' },
+                  { label: 'Plots', value: stats.plots, color: 'bg-secondary-50 text-secondary-600' },
+                ].map(item => (
+                  <div key={item.label} className={`text-center py-2 px-3 rounded-lg ${item.color}`}>
+                    <div className="text-lg font-bold">{((item.value / stats.total) * 100).toFixed(1)}%</div>
+                    <div className="text-xs opacity-70">{item.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </AdminCard>
+      </div>
+
+      {/* Franchise chart */}
+      <AdminCard className="mb-6">
+        <h2 className="text-base font-semibold text-gray-800 mb-4">Franchise by Industry</h2>
+        <div className="h-64 relative">
+          {hasFranchiseData ? (
+            <canvas id="franchiseChart" />
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+              <div className="text-4xl mb-2">🏪</div>
+              <p className="text-sm font-medium">No franchise data</p>
+              <p className="text-xs mt-1">Add franchises to see industry breakdown</p>
+            </div>
+          )}
+        </div>
+      </AdminCard>
+
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm">
+          {error.message || 'Failed to load dashboard data'}
+        </div>
       )}
     </div>
   );
-} 
+}

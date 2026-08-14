@@ -3,16 +3,17 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { FaKey, FaEnvelope, FaExclamationTriangle } from 'react-icons/fa';
+import {
+  FaKey, FaEnvelope, FaExclamationTriangle, FaEye, FaEyeSlash,
+  FaBuilding, FaShieldAlt,
+} from 'react-icons/fa';
 import Cookies from 'js-cookie';
 import ClientOnly from '@/components/ClientOnly';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { app } from '@/lib/firebase'; // Import the initialized Firebase app
+import { app } from '@/lib/firebase';
 
-// Initialize Firebase Auth
 const auth = getAuth(app);
 
-// Add global type declaration for our window extension
 declare global {
   interface Window {
     __cleanBitdefenderAttributes?: () => void;
@@ -23,10 +24,10 @@ export default function AdminLogin() {
   return (
     <ClientOnly
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-700 to-primary-900">
           <div className="text-center p-8">
-            <div className="inline-block animate-spin h-8 w-8 border-4 border-blue-900 border-t-transparent rounded-full mb-4"></div>
-            <p>Loading admin login...</p>
+            <div className="inline-block animate-spin h-8 w-8 border-4 border-white/30 border-t-white rounded-full mb-4"></div>
+            <p className="text-white/60 text-sm">Loading...</p>
           </div>
         </div>
       }
@@ -40,45 +41,41 @@ function AdminLoginContent() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    rememberMe: false,
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Check if already logged in - using both cookie methods
+  // Check if already logged in
   useEffect(() => {
-    // Clean any Bitdefender attributes if the global cleaner function exists
     if (typeof window !== 'undefined' && window.__cleanBitdefenderAttributes) {
       window.__cleanBitdefenderAttributes();
     }
-    
-    // Check if we're already logged in
+
     const checkLoginStatus = async () => {
       try {
-        // Try to access a protected endpoint to check if we're logged in
         const response = await fetch('/api/auth/check', {
           method: 'GET',
-          credentials: 'include', // Important: include cookies
+          credentials: 'include',
         });
-        
         if (response.ok) {
-          // Already logged in, redirect to dashboard
           router.push('/admin/dashboard');
         }
       } catch (err) {
         // Not logged in, stay on login page
-        console.log('Not logged in yet');
       }
     };
-    
+
     checkLoginStatus();
   }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }));
   };
 
@@ -87,59 +84,46 @@ function AdminLoginContent() {
     setError('');
     setIsLoading(true);
 
-    try {
-      console.log('Attempting Firebase login with:', { 
-        email: formData.email,
-        passwordLength: formData.password.length 
-      });
+    const cookieExpiry = formData.rememberMe ? 30 : 1; // 30 days or 1 day
 
+    try {
       // Sign in with Firebase
       const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
       const idToken = await userCredential.user.getIdToken();
 
-      // Send the Firebase ID token to our backend for verification
       const response = await fetch('/api/auth/verify-firebase-token', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Important: include cookies in the request
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           idToken,
-          adminLogin: true // Flag to indicate this is an admin login
+          adminLogin: true,
+          rememberMe: formData.rememberMe,
         }),
       });
 
       const data = await response.json();
-      console.log('Login response status:', response.status);
 
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
       }
 
-      console.log('Firebase login successful');
-
-      // Note: The HTTP-only cookies are set by the server
-      // We only need to set the non-HTTP-only ones for client access
+      // Set client-readable cookies
       if (data.user) {
         Cookies.set('adminUser', JSON.stringify(data.user), {
-          expires: 1,
+          expires: cookieExpiry,
           path: '/',
           sameSite: 'lax',
-          secure: process.env.NODE_ENV === 'production'
+          secure: process.env.NODE_ENV === 'production',
         });
       }
 
-      // Wait a moment to ensure cookies are processed
       setTimeout(() => {
         router.push('/admin/dashboard');
-      }, 500);
+      }, 400);
     } catch (err: any) {
-      console.error('Firebase login error:', err);
-
-      // If Firebase auth fails with user-not-found, try env var fallback
+      // If Firebase auth fails, try env var fallback
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        console.log('[Login] Firebase auth failed, trying env var fallback...');
         try {
           const envResponse = await fetch('/api/auth/verify-firebase-token', {
             method: 'POST',
@@ -147,38 +131,33 @@ function AdminLoginContent() {
             credentials: 'include',
             body: JSON.stringify({
               email: formData.email,
-              password: formData.password
+              password: formData.password,
+              rememberMe: formData.rememberMe,
             }),
           });
 
           const envData = await envResponse.json();
 
           if (envResponse.ok && envData.success) {
-            console.log('[Login] Env var fallback authentication successful');
             if (envData.user) {
               Cookies.set('adminUser', JSON.stringify(envData.user), {
-                expires: 1,
+                expires: cookieExpiry,
                 path: '/',
                 sameSite: 'lax',
-                secure: process.env.NODE_ENV === 'production'
+                secure: process.env.NODE_ENV === 'production',
               });
             }
-            setTimeout(() => {
-              router.push('/admin/dashboard');
-            }, 500);
-            return; // Don't fall through to error display
+            setTimeout(() => { router.push('/admin/dashboard'); }, 400);
+            return;
           } else {
-            // Env var auth also failed - use the error from the server
             setError(envData.error || 'Invalid email or password');
             return;
           }
         } catch (envErr: any) {
-          console.error('[Login] Env var fallback error:', envErr);
-          // Fall through to original Firebase error
+          // Fall through
         }
       }
 
-      // Provide more specific error messages for Firebase errors
       let errorMessage = 'Authentication failed';
       if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         errorMessage = 'Invalid email or password';
@@ -187,7 +166,6 @@ function AdminLoginContent() {
       } else if (err.message) {
         errorMessage = err.message;
       }
-
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -195,75 +173,172 @@ function AdminLoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Admin Login</h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your credentials to access the admin panel
-          </p>
-        </div>
-        
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 flex items-start">
-            <FaExclamationTriangle className="text-red-500 mr-3 mt-0.5" />
-            <p>{error}</p>
-          </div>
-        )}
-        
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-                <FaEnvelope />
-              </span>
-              <input
-                id="email"
-                name="email"
-                type="text"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="appearance-none rounded-t-md relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
-                placeholder="Email address"
-              />
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-700 via-primary-600 to-secondary-700" />
+
+      {/* Decorative shapes */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute -top-32 -left-32 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-48 -right-48 w-[500px] h-[500px] bg-secondary-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-highlight-500/5 rounded-full blur-2xl" />
+        {/* Subtle grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+          }}
+        />
+      </div>
+
+      {/* Login card */}
+      <div className="relative z-10 w-full max-w-md px-4 animate-fadeInUp">
+        {/* Card */}
+        <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-500 shadow-lg shadow-primary-500/25 mb-4">
+              <FaShieldAlt className="text-white text-xl" />
             </div>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500">
-                <FaKey />
-              </span>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className="appearance-none rounded-b-md relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10"
-                placeholder="Password"
-              />
-            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
+            <p className="text-sm text-gray-500 mt-1.5">
+              Sign in to your admin account
+            </p>
           </div>
 
-          <div>
+          {/* Error */}
+          {error && (
+            <div className="mb-6 flex items-start gap-3 bg-red-50 border border-red-100 text-red-700 rounded-xl p-3.5 animate-fadeIn">
+              <FaExclamationTriangle className="text-red-400 mt-0.5 flex-shrink-0 text-sm" />
+              <p className="text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                  <FaEnvelope className="text-sm" />
+                </span>
+                <input
+                  id="email"
+                  name="email"
+                  type="text"
+                  autoComplete="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="block w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/15 hover:border-gray-300"
+                  placeholder="admin@example.com"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div className="space-y-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                  <FaKey className="text-sm" />
+                </span>
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="block w-full pl-10 pr-12 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 transition-all duration-200 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/15 hover:border-gray-300"
+                  placeholder="Enter your password"
+                />
+                {/* Password visibility toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-primary-500 transition-colors"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <FaEyeSlash className="text-sm" />
+                  ) : (
+                    <FaEye className="text-sm" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember me */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2.5 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    name="rememberMe"
+                    checked={formData.rememberMe}
+                    onChange={handleChange}
+                    className="peer sr-only"
+                  />
+                  <div className="w-4.5 h-4.5 w-[18px] h-[18px] rounded border-2 border-gray-300 bg-white peer-checked:bg-primary-500 peer-checked:border-primary-500 transition-all duration-200 flex items-center justify-center group-hover:border-primary-400">
+                    {formData.rememberMe && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors select-none">
+                  Remember me for 30 days
+                </span>
+              </label>
+            </div>
+
+            {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-900 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98]"
             >
-              {isLoading ? 'Logging in...' : 'Sign in'}
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Signing in...
+                </>
+              ) : (
+                'Sign in'
+              )}
             </button>
-          </div>
-          
-          <div className="text-center text-sm">
-            <Link href="/" className="hover:text-blue-800" style={{ color: 'rgb(28, 110, 164)' }}>
+          </form>
+
+          {/* Footer */}
+          <div className="mt-6 text-center">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-500 transition-colors"
+            >
+              <FaBuilding className="text-xs" />
               Back to Website
             </Link>
           </div>
-        </form>
+        </div>
+
+        {/* Bottom tagline */}
+        <p className="text-center text-xs text-white/30 mt-6">
+          Secured with Firebase Authentication
+        </p>
       </div>
     </div>
   );
-} 
+}

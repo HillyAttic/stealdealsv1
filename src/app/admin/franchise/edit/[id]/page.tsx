@@ -36,71 +36,37 @@ function EditFranchiseContent() {
   const router = useRouter();
   const params = useParams();
   const franchiseId = params?.id as string;
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [franchise, setFranchise] = useState<any>({});
   const [error, setError] = useState('');
-  const [authChecked, setAuthChecked] = useState(false);
   
-  // Check auth first, separate from data loading
+  // Load franchise data - auth is handled by AdminLayout
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/check', {
-          method: 'GET',
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          // If auth check fails, store intended destination and redirect to login
-          if (typeof window !== 'undefined') {
-            sessionStorage.setItem('returnTo', `/admin/franchise/edit/${franchiseId}`);
-          }
-          router.push('/admin/login');
-          return false;
-        }
-        
-        return true;
-      } catch (error) {
-        console.error('Auth check error:', error);
-        router.push('/admin/login');
-        return false;
-      }
-    };
-    
-    checkAuth().then(isAuthenticated => {
-      setAuthChecked(isAuthenticated);
-    });
-  }, [franchiseId, router]);
-  
-  // Load franchise data only after authentication is confirmed
-  useEffect(() => {
-    if (!authChecked) return;
-    
     if (!franchiseId) {
       setError('Franchise ID is missing');
       setIsLoading(false);
       return;
     }
-    
+
     const fetchFranchise = async () => {
       try {
         console.log(`Fetching franchise via API: ${franchiseId}`);
-        
+
         // Use the API endpoint instead of direct Firebase queries
         const response = await fetch(`/api/franchises/${franchiseId}`, {
           method: 'GET',
           credentials: 'include'
         });
-        
+
         if (response.ok) {
           const { franchise: franchiseData } = await response.json();
           console.log('Franchise loaded via API:', franchiseData);
-          
+
           // Convert from franchiseDetails structure to legacy form format using helper function
           const formData = convertToLegacyFormData(franchiseData as AdminFranchise);
-          
+
           setFranchise({
             id: franchiseId,
             ...formData
@@ -119,9 +85,9 @@ function EditFranchiseContent() {
         setIsLoading(false);
       }
     };
-    
+
     fetchFranchise();
-  }, [franchiseId, authChecked]);
+  }, [franchiseId]);
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

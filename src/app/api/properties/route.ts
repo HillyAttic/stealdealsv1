@@ -148,6 +148,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const featured = searchParams.get('featured');
     const limit = parseInt(searchParams.get('limit') || '10000');
+    const offset = parseInt(searchParams.get('offset') || '0');
 
     // Check if user is authenticated (optional for public access)
     let currentUser: any = null;
@@ -226,12 +227,16 @@ export async function GET(request: NextRequest) {
     // Sort by newest
     const sorted = sortByNewest(properties);
 
-    // Apply limit
-    const paginatedProperties = sorted.slice(0, limit);
+    // Apply server-side pagination with offset and limit
+    const total = sorted.length;
+    const paginatedProperties = sorted.slice(offset, offset + limit);
 
     const response = NextResponse.json({
       properties: paginatedProperties || [],
-      total: sorted.length
+      total,
+      offset,
+      limit,
+      hasMore: offset + limit < total
     });
 
     response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');

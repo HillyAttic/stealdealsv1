@@ -35,59 +35,25 @@ function EditVacantPropertyContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [property, setProperty] = useState<any>({});
   const [error, setError] = useState('');
-  const [authChecked, setAuthChecked] = useState(false);
   
-  // Check auth first, separate from data loading
+  // Load property data - auth is handled by AdminLayout
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/check', {
-          method: 'GET',
-          credentials: 'include'
-        });
-        
-        if (!response.ok) {
-          // If auth check fails, store intended destination and redirect to login
-          if (typeof window !== 'undefined') {
-            sessionStorage.setItem('returnTo', `/admin/vacant/edit/${propertyId}`);
-          }
-          router.push('/admin/login');
-          return false;
-        }
-        
-        return true;
-      } catch (error) {
-        console.error('Auth check error:', error);
-        router.push('/admin/login');
-        return false;
-      }
-    };
-    
-    checkAuth().then(isAuthenticated => {
-      setAuthChecked(isAuthenticated);
-    });
-  }, [propertyId, router]);
-  
-  // Load property data only after authentication is confirmed
-  useEffect(() => {
-    if (!authChecked) return;
-    
     if (!propertyId) {
       setError('Property ID is missing');
       setIsLoading(false);
       return;
     }
-    
+
     const fetchProperty = async () => {
       try {
         console.log(`Fetching property via API: ${propertyId}`);
-        
+
         // Use the API endpoint instead of direct Firebase queries
         const response = await fetch(`/api/properties/${propertyId}`, {
           method: 'GET',
           credentials: 'include'
         });
-        
+
         if (response.ok) {
           const { property: propertyData } = await response.json();
           setProperty({
@@ -110,7 +76,7 @@ function EditVacantPropertyContent() {
     };
     
     fetchProperty();
-  }, [propertyId, authChecked]);
+  }, [propertyId]);
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

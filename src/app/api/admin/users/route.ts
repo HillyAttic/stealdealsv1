@@ -62,63 +62,86 @@ export async function GET(request: NextRequest) {
       const offset = (page - 1) * limit;
       const paginatedUsers = filteredUsers.slice(offset, offset + limit);
 
-      // Get wishlist counts for displayed users
+      // Get wishlist counts for displayed users using batched queries
       let wishlistCounts: Record<string, number> = {};
       try {
         const { db } = await import('@/lib/firebase-server-admin');
         const displayedUserIds = paginatedUsers.map(u => u.id);
-        const counts = await Promise.all(
-          displayedUserIds.map(async (userId) => {
-            try {
-              const snapshot = await db.collection('wishlists').doc(userId).collection('items').get();
-              return { userId, count: snapshot.size };
-            } catch {
-              return { userId, count: 0 };
-            }
-          })
+
+        // Use getAll() for batched reads instead of N+1 queries
+        const userRefs = displayedUserIds.map(userId =>
+          db.collection('wishlists').doc(userId)
         );
-        for (const { userId, count } of counts) {
-          wishlistCounts[userId] = count;
-        }
+        const userDocs = await db.getAll(...userRefs);
+
+        // For each user document, get the items subcollection count
+        // Using Promise.all with getAll for batched subcollection reads
+        const itemReads = userDocs
+          .filter(doc => doc.exists)
+          .map(doc => db.collection('wishlists').doc(doc.id).collection('items').get());
+
+        const itemSnapshots = await Promise.all(itemReads);
+        const userIdsWithWishlists = userDocs.filter(doc => doc.exists).map(doc => doc.id);
+
+        userIdsWithWishlists.forEach((userId, index) => {
+          wishlistCounts[userId] = itemSnapshots[index]?.size || 0;
+        });
+
+        // Set count to 0 for users without wishlist docs
+        displayedUserIds.forEach(userId => {
+          if (!(userId in wishlistCounts)) {
+            wishlistCounts[userId] = 0;
+          }
+        });
       } catch (wishlistError) {
         console.warn('[Admin Users API] Failed to fetch wishlist counts:', wishlistError);
       }
 
-      // Transform user data for admin dashboard
-      const transformedUsers = await Promise.all(
-        paginatedUsers.map(async (u) => {
-          // Try to get additional user data from Firestore
-          let firestoreUser = null;
-          try {
-            firestoreUser = await getUserById(u.id);
-          } catch {}
+      // Transform user data for admin dashboard - use batched reads
+      const { db } = await import('@/lib/firebase-server-admin');
 
-          return {
-            id: u.id,
-            name: u.displayName || u.email?.split('@')[0] || firestoreUser?.name || 'Unknown User',
-            email: u.email || 'No email',
-            role: firestoreUser?.role || 'user',
-            isActive: !u.disabled,
-            emailVerified: u.emailVerified,
-            provider: u.provider === 'google.com' ? 'google' : 'email',
-            createdAt: u.createdAt || new Date().toISOString(),
-            lastLoginAt: u.lastSignInAt || null,
-            lastActiveAt: null,
-            imageUrl: u.photoURL,
-            phoneNumber: null,
-            banned: u.disabled || false,
-            locked: false,
-            hasImage: !!u.photoURL,
-            twoFactorEnabled: false,
-            backupCodeEnabled: false,
-            totpEnabled: false,
-            externalAccounts: u.provider === 'google.com' ? [{ provider: 'google', emailAddress: u.email }] : [],
-            totalViews: 0,
-            wishlistCount: wishlistCounts[u.id] || 0,
-            lastWishlistActivity: null,
-          };
-        })
+      // Batch fetch all user documents from Firestore using getAll()
+      const userDocRefs = paginatedUsers.map(u =>
+        db.collection('users').doc(u.id)
       );
+      const firestoreUserDocs = await db.getAll(...userDocRefs);
+
+      // Create a map for quick lookup
+      const firestoreUsersMap = new Map<string, any>();
+      firestoreUserDocs.forEach(doc => {
+        if (doc.exists) {
+          firestoreUsersMap.set(doc.id, doc.data());
+        }
+      });
+
+      const transformedUsers = paginatedUsers.map((u) => {
+        const firestoreUser = firestoreUsersMap.get(u.id);
+
+        return {
+          id: u.id,
+          name: u.displayName || u.email?.split('@')[0] || firestoreUser?.name || 'Unknown User',
+          email: u.email || 'No email',
+          role: firestoreUser?.role || 'user',
+          isActive: !u.disabled,
+          emailVerified: u.emailVerified,
+          provider: u.provider === 'google.com' ? 'google' : 'email',
+          createdAt: u.createdAt || new Date().toISOString(),
+          lastLoginAt: u.lastSignInAt || null,
+          lastActiveAt: null,
+          imageUrl: u.photoURL,
+          phoneNumber: null,
+          banned: u.disabled || false,
+          locked: false,
+          hasImage: !!u.photoURL,
+          twoFactorEnabled: false,
+          backupCodeEnabled: false,
+          totpEnabled: false,
+          externalAccounts: u.provider === 'google.com' ? [{ provider: 'google', emailAddress: u.email }] : [],
+          totalViews: 0,
+          wishlistCount: wishlistCounts[u.id] || 0,
+          lastWishlistActivity: null,
+        };
+      });
 
       const totalUsers = filteredUsers.length;
       const activeUsers = transformedUsers.filter(u => u.isActive).length;

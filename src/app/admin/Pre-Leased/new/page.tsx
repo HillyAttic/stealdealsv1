@@ -141,26 +141,10 @@ function NewPreLeasedPropertyContent() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   // Check authentication using HTTP-only cookies
+  // Note: AdminLayout already handles auth verification, so this is just a fallback
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Use the auth check API endpoint
-        const response = await fetch('/api/auth/check', {
-          method: 'GET',
-          credentials: 'include', // Important to include cookies
-        });
-        
-        if (!response.ok) {
-          throw new Error('Authentication failed');
-        }
-      } catch (err) {
-        console.error("Auth check failed:", err);
-        router.push('/admin/login');
-      }
-    };
-    
-    checkAuth();
-  }, [router]);
+    // Auth is handled by AdminLayout - no redundant check needed
+  }, []);
   
   // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {

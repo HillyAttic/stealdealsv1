@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/firebase-server-admin';
 import { revalidateTag } from 'next/cache';
+import { sortByNewest } from '@/lib/sort';
 
 // Get all plots using Firebase Admin SDK (bypasses security rules)
 export async function GET(request: NextRequest) {
@@ -24,7 +25,8 @@ export async function GET(request: NextRequest) {
 
     console.log(`[Plots API] Fetched ${plots.length} plots from Firestore`);
 
-    const paginatedPlots = plots.slice(0, limit);
+    const sorted = sortByNewest(plots);
+    const paginatedPlots = sorted.slice(0, limit);
 
     const response = NextResponse.json({
       plots: paginatedPlots || [],

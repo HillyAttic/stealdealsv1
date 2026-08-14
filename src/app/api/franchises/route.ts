@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/firebase-server-admin';
 import { revalidateTag } from 'next/cache';
+import { sortByNewest } from '@/lib/sort';
 
 interface Franchise {
   id: string;
@@ -92,9 +93,11 @@ export async function GET() {
       });
     });
 
+    const sorted = sortByNewest(franchises);
+
     const response = NextResponse.json({
-      franchises,
-      total: franchises.length
+      franchises: sorted,
+      total: sorted.length
     });
 
     response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');

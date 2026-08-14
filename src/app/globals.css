@@ -147,6 +147,58 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-jost);
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /* Primary color shades */
+  --color-primary-50: #E6F0F7;
+  --color-primary-100: #CCE1EE;
+  --color-primary-200: #99C3DD;
+  --color-primary-300: #66A5CC;
+  --color-primary-400: #3387BB;
+  --color-primary-500: #154D71;
+  --color-primary-600: #113E5A;
+  --color-primary-700: #0D2E43;
+  --color-primary-800: #081F2C;
+  --color-primary-900: #041015;
+  --color-primary-950: #020B0D;
+
+  /* Secondary color shades */
+  --color-secondary-50: #E8F3FB;
+  --color-secondary-100: #D0E6F7;
+  --color-secondary-200: #A1CEEF;
+  --color-secondary-300: #72B5E7;
+  --color-secondary-400: #439DDF;
+  --color-secondary-500: #1C6EA4;
+  --color-secondary-600: #165883;
+  --color-secondary-700: #114262;
+  --color-secondary-800: #0B2C41;
+  --color-secondary-900: #061620;
+  --color-secondary-950: #030B10;
+
+  /* Accent color shades */
+  --color-accent-50: #EBF6FD;
+  --color-accent-100: #D7EDFA;
+  --color-accent-200: #AFDCF6;
+  --color-accent-300: #87CAF1;
+  --color-accent-400: #5FB8ED;
+  --color-accent-500: #33A1E0;
+  --color-accent-600: #2981B3;
+  --color-accent-700: #1F6186;
+  --color-accent-800: #154059;
+  --color-accent-900: #0A202C;
+  --color-accent-950: #051016;
+
+  /* Highlight color shades */
+  --color-highlight-50: #FFFEF7;
+  --color-highlight-100: #FFFCEE;
+  --color-highlight-200: #FFF9DD;
+  --color-highlight-300: #FFF6CC;
+  --color-highlight-400: #FFF3BB;
+  --color-highlight-500: #FFF9AF;
+  --color-highlight-600: #FFED66;
+  --color-highlight-700: #FFE41D;
+  --color-highlight-800: #D4BE00;
+  --color-highlight-900: #8B7E00;
+  --color-highlight-950: #5C5300;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -338,4 +390,121 @@ body.modal-open header {
   -webkit-line-clamp: 2;
   line-clamp: 2; /* Standard property for compatibility */
   overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN PANEL STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Shimmer skeleton loader */
+@keyframes adminShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.admin-skeleton {
+  background: linear-gradient(
+    90deg,
+    #e2e8f0 25%,
+    #f1f5f9 50%,
+    #e2e8f0 75%
+  );
+  background-size: 200% 100%;
+  animation: adminShimmer 1.8s ease-in-out infinite;
+  border-radius: 0.375rem;
+}
+
+.admin-skeleton-dark {
+  background: linear-gradient(
+    90deg,
+    #1e293b 25%,
+    #334155 50%,
+    #1e293b 75%
+  );
+  background-size: 200% 100%;
+  animation: adminShimmer 1.8s ease-in-out infinite;
+  border-radius: 0.375rem;
+}
+
+/* Glassmorphism card */
+.admin-glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Admin sidebar scrollbar */
+.admin-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.admin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+.admin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Page transition */
+@keyframes adminPageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-page-enter {
+  animation: adminPageEnter 0.35s ease-out forwards;
+}
+
+/* Gradient text utility */
+.admin-gradient-text {
+  background: linear-gradient(135deg, #154D71, #33A1E0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Active nav indicator */
+.admin-nav-active {
+  position: relative;
+}
+.admin-nav-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 70%;
+  background: #33A1E0;
+  border-radius: 0 2px 2px 0;
+}
+
+/* Smooth focus ring for inputs */
+.admin-input-focus {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.admin-input-focus:focus {
+  border-color: #154D71;
+  box-shadow: 0 0 0 3px rgba(21, 77, 113, 0.1);
+  outline: none;
+}
+
+/* Card hover lift */
+.admin-card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.admin-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(21, 77, 113, 0.15),
+              0 4px 10px -5px rgba(21, 77, 113, 0.1);
 }

@@ -1,310 +1,170 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import Link from 'next/link';
 import AdminLayout from '../components/AdminLayout';
-import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
-import ClientOnly from '@/components/ClientOnly';
 import { Plot } from '@/types/property';
 import { PlotModal } from '@/components/plots';
+import { useAdminData, useAdminMutation } from '@/hooks/useAdminData';
+import { AdminCard, AdminButton, AdminModal, AdminEmptyState, SkeletonLoader } from '@/components/admin/ui';
 
 export default function PlotsAdmin() {
   return (
     <AdminLayout>
-      <ClientOnly
-        fallback={
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
-            <p className="ml-2">Loading plots...</p>
-          </div>
-        }
-      >
-        <PlotsAdminContent />
-      </ClientOnly>
+      <PlotsAdminContent />
     </AdminLayout>
   );
 }
 
 function PlotsAdminContent() {
-  const router = useRouter();
-  const [plots, setPlots] = useState<Plot[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Check authentication and load plots
-  useEffect(() => {
-    const checkAuthAndLoadData = async () => {
-      try {
-        // Check authentication
-        const authResponse = await fetch('/api/auth/check', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        
-        if (!authResponse.ok) {
-          throw new Error('Authentication failed');
-        }
+  const { data, isLoading, error } = useAdminData('/api/plots');
+  const plots: Plot[] = data?.plots || [];
 
-        // Load plots
-        const plotsResponse = await fetch('/api/plots', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        
-        if (plotsResponse.ok) {
-          const data = await plotsResponse.json();
-          setPlots(data.plots || []);
-        } else {
-          throw new Error('Failed to load plots');
-        }
-      } catch (err: any) {
-        console.error("Error:", err);
-        if (err.message.includes('Authentication')) {
-          router.push('/admin/login');
-        } else {
-          setError(err.message || 'Failed to load plots');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    checkAuthAndLoadData();
-  }, [router]);
+  const { mutate: deletePlot } = useAdminMutation({
+    invalidateKeys: ['/api/plots'],
+  });
 
-  // Filter plots based on search term
+  const handleDelete = async (id: string) => {
+    if (!id) return;
+    const result = await deletePlot(`/api/plots/${id}`, { method: 'DELETE' });
+    if (result !== null) setDeleteConfirm(null);
+  };
+
   const filteredPlots = plots.filter(plot =>
     plot.project?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     plot.developerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     plot.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Handle delete plot
-  const handleDelete = async (id: string) => {
-    if (!id) return;
-    
-    try {
-      const response = await fetch(`/api/plots/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        setPlots(plots.filter(plot => plot.id !== id));
-        setDeleteConfirm(null);
-      } else {
-        throw new Error('Failed to delete plot');
-      }
-    } catch (err: any) {
-      console.error('Delete error:', err);
-      setError(err.message || 'Failed to delete plot');
-    }
-  };
-
-  // Format currency
-  const formatCurrency = (amount: number): string => {
-    return `₹${amount.toLocaleString('en-IN')}`;
-  };
+  const formatCurrency = (amount: number): string => `₹${amount.toLocaleString('en-IN')}`;
 
   return (
     <>
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Plot Inventory</h1>
-        <div className="flex gap-2">
-          <Link
-            href="/admin/plots/new"
-            className="px-3 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-800 flex items-center text-sm"
-          >
-            <FaPlus className="mr-1" />
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Plot Inventory</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Manage plot projects and listings</p>
+        </div>
+        <AdminButton icon={<FaPlus />}>
+          <Link href="/admin/plots/new" className="flex items-center gap-2">
             <span className="hidden sm:inline">Add New Plot</span>
             <span className="sm:hidden">Add</span>
           </Link>
-        </div>
+        </AdminButton>
       </div>
-        
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
-          {error}
-        </div>
-      )}
 
-      {/* Search and Filter */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-grow">
+      <AdminCard className="mb-5">
+        <div className="relative">
           <input
             type="text"
             placeholder="Search plots by project, developer, or location..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 pl-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-200 text-sm admin-input-focus hover:border-gray-300"
           />
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
         </div>
-      </div>
-        
-        {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-900"></div>
+      </AdminCard>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-5 text-sm">{error.message}</div>
+      )}
+
+      {isLoading ? (
+        <SkeletonLoader type="table" rows={6} columns={8} />
+      ) : (
+        <>
+          <div className="mb-3">
+            <p className="text-sm text-gray-500">
+              Showing <span className="font-semibold text-gray-700">{filteredPlots.length}</span> of <span className="font-semibold text-gray-700">{plots.length}</span> plots
+            </p>
           </div>
-        ) : (
-          <>
-            <div className="mb-4">
-              <p className="text-gray-600">
-                Showing {filteredPlots.length} of {plots.length} plots
-              </p>
-            </div>
-            
-            {filteredPlots.length === 0 ? (
-              <div className="text-center py-20">
-                <BsBuilding className="text-gray-300 text-6xl mx-auto mb-4" />
-                <h3 className="text-xl text-gray-600 mb-2">
-                  {plots.length === 0 ? 'No plots found' : 'No matching plots'}
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {plots.length === 0 ? 'Create your first plot project' : 'Try adjusting your search criteria'}
-                </p>
-                {plots.length === 0 && (
-                  <Link
-                    href="/admin/plots/new"
-                    className="px-4 py-2 bg-blue-900 text-white rounded hover:bg-blue-800"
-                  >
-                    Add New Plot
-                  </Link>
-                )}
-              </div>
-            ) : (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">PID</th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[120px]">PROJECT</th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">DEVELOPER</th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">LOCATION</th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">STATUS</th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[100px]">PLOT SIZE</th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap min-w-[120px]">INVESTMENT</th>
-                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredPlots.map((plot, index) => (
-                  <tr key={plot.id} className="hover:bg-gray-50">
-                    <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
-                      <span className="font-mono text-xs text-gray-500">
-                        P{String(index + 1).padStart(3, '0')}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{plot.project}</div>
-                      {plot.images && plot.images[0] && (
-                        <img 
-                          src={plot.images[0]} 
-                          alt={plot.project}
-                          className="w-12 h-8 object-cover rounded mt-1"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">{plot.developerName}</td>
-                    <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">{plot.location}</td>
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        plot.status === 'Ready to Move In' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {plot.status}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">
-                      {plot.plotSize?.min}-{plot.plotSize?.max} {plot.plotSize?.unit}
-                    </td>
-                    <td className="px-3 py-3 text-sm text-gray-900 whitespace-nowrap">
-                      {formatCurrency(plot.investmentStartsFrom?.amount || 0)} / {plot.investmentStartsFrom?.unit}
-                    </td>
-                    <td className="px-3 py-3 text-sm font-medium whitespace-nowrap">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => {
-                            setSelectedPlot(plot);
-                            setIsModalOpen(true);
-                          }}
-                          className="text-indigo-600 hover:text-indigo-900 p-1"
-                          title="View Plot"
-                        >
-                          <FaEye />
-                        </button>
-                        <Link
-                          href={`/admin/plots/edit/${plot.id}`}
-                          className="text-yellow-600 hover:text-yellow-900 p-1"
-                          title="Edit Plot"
-                        >
-                          <FaPencilAlt />
-                        </Link>
-                        <button
-                          onClick={() => setDeleteConfirm(plot.id || null)}
-                          className="text-red-600 hover:text-red-900 p-1"
-                          title="Delete Plot"
-                        >
-                          <FaTrash />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+
+          {filteredPlots.length === 0 ? (
+            <AdminCard>
+              <AdminEmptyState
+                icon={<BsBuilding className="text-3xl" />}
+                title={plots.length === 0 ? 'No plots found' : 'No matching plots'}
+                description={plots.length === 0 ? 'Create your first plot project' : 'Try adjusting your search criteria'}
+              />
+            </AdminCard>
+          ) : (
+            <AdminCard padding="none" className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="bg-gray-50/80 border-b border-gray-100">
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">PID</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[120px]">Project</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Developer</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Plot Size</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Investment</th>
+                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {filteredPlots.map((plot, index) => (
+                      <tr key={plot.id} className="hover:bg-primary-50/30 transition-colors">
+                        <td className="px-3 py-3 text-sm whitespace-nowrap">
+                          <span className="font-mono text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+                            P{String(filteredPlots.length - index).padStart(3, '0')}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{plot.project}</div>
+                          {plot.images?.[0] && (
+                            <img src={plot.images[0]} alt={plot.project} className="w-12 h-8 object-cover rounded mt-1" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          )}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">{plot.developerName}</td>
+                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">{plot.location}</td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${plot.status === 'Ready to Move In' ? 'bg-emerald-50 text-emerald-700' : 'bg-primary-50 text-primary-700'}`}>
+                            {plot.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">
+                          {plot.plotSize?.min}-{plot.plotSize?.max} {plot.plotSize?.unit}
+                        </td>
+                        <td className="px-3 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">
+                          {formatCurrency(plot.investmentStartsFrom?.amount || 0)} / {plot.investmentStartsFrom?.unit}
+                        </td>
+                        <td className="px-3 py-3 text-sm whitespace-nowrap">
+                          <div className="flex space-x-1.5">
+                            <button onClick={() => { setSelectedPlot(plot); setIsModalOpen(true); }} className="p-1.5 rounded-lg text-primary-500 hover:bg-primary-50 transition-colors" title="View"><FaEye className="text-xs" /></button>
+                            <Link href={`/admin/plots/edit/${plot.id}`} className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors" title="Edit"><FaPencilAlt className="text-xs" /></Link>
+                            <button onClick={() => setDeleteConfirm(plot.id || null)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete"><FaTrash className="text-xs" /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-            </div>
-            )}
-          </>
-        )}
-        
-        {/* Plot Detail Modal */}
-        <PlotModal
-          plot={selectedPlot}
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedPlot(null);
-          }}
-        />
+            </AdminCard>
+          )}
+        </>
+      )}
 
-        {/* Delete Confirmation Modal */}
-        {deleteConfirm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Confirm Delete</h3>
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to delete this plot? This action cannot be undone.
-              </p>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => handleDelete(deleteConfirm)}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  Delete
-                </button>
-                <button
-                  onClick={() => setDeleteConfirm(null)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+      <PlotModal plot={selectedPlot} isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedPlot(null); }} />
+
+      <AdminModal isOpen={!!deleteConfirm} onClose={() => setDeleteConfirm(null)} title="Confirm Delete" size="sm"
+        footer={<>
+          <AdminButton variant="ghost" onClick={() => setDeleteConfirm(null)}>Cancel</AdminButton>
+          <AdminButton variant="danger" onClick={() => handleDelete(deleteConfirm!)}>Delete</AdminButton>
+        </>}
+      >
+        <p className="text-sm text-gray-600">Are you sure you want to delete this plot? This action cannot be undone.</p>
+      </AdminModal>
     </>
   );
 }

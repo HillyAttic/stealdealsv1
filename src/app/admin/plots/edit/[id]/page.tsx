@@ -95,7 +95,7 @@ function EditPlotContent({ plotId }: { plotId: string }) {
   
   // Check authentication and load plot data
   useEffect(() => {
-    const checkAuthAndLoadData = async () => {
+    const loadPlotData = async () => {
       try {
         // Validate plotId
         if (!plotId) {
@@ -104,34 +104,26 @@ function EditPlotContent({ plotId }: { plotId: string }) {
           return;
         }
 
-        // Check authentication
-        const authResponse = await fetch('/api/auth/check', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        
-        if (!authResponse.ok) {
-          throw new Error('Authentication failed');
-        }
-        
-        // Load plot data
+        // Note: AdminLayout already handles auth verification
+
+        // Load plot data directly
         const plotResponse = await fetch(`/api/plots/${plotId}`, {
           method: 'GET',
           credentials: 'include',
         });
-        
+
         if (!plotResponse.ok) {
           const errorData = await plotResponse.json().catch(() => ({}));
           throw new Error(errorData.error || `Failed to load plot data (${plotResponse.status})`);
         }
-        
+
         const responseData = await plotResponse.json();
         const { plot } = responseData;
-        
+
         if (!plot) {
           throw new Error('Plot data not found');
         }
-        
+
         // Populate form with existing data
         setFormData({
           developerName: plot.developerName || '',
@@ -150,24 +142,17 @@ function EditPlotContent({ plotId }: { plotId: string }) {
             ...Array(Math.max(0, 5 - (plot.images?.length || 0))).fill('')
           ].slice(0, 5)
         });
-        
+
       } catch (err: any) {
         console.error("Error:", err);
-        if (err.message.includes('Authentication')) {
-          router.push('/admin/login');
-        } else {
-          setError(err.message || 'Failed to load plot data');
-        }
-      } finally {
+        setError(err.message || 'Failed to load plot data');
         setIsLoadingData(false);
       }
     };
-    
-    if (plotId) {
-      checkAuthAndLoadData();
-    }
-  }, [router, plotId]);
-  
+
+    loadPlotData();
+  }, [plotId]);
+
   // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

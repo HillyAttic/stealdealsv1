@@ -55,7 +55,10 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { idToken, adminLogin, email, password } = body;
+    const { idToken, adminLogin, email, password, rememberMe } = body;
+
+    const cookieMaxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24; // 30 days or 24 hours
+    const jwtExpiry = rememberMe ? '30d' : '24h';
 
     console.log('[Auth] Starting admin authentication');
 
@@ -91,7 +94,7 @@ export async function POST(request: NextRequest) {
           permissions: null
         },
         JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: jwtExpiry }
       );
 
       const jsonResponse = NextResponse.json({
@@ -111,7 +114,7 @@ export async function POST(request: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24,
+        maxAge: cookieMaxAge,
         path: '/'
       });
 
@@ -126,7 +129,7 @@ export async function POST(request: NextRequest) {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24,
+        maxAge: cookieMaxAge,
         path: '/'
       });
 
@@ -265,7 +268,7 @@ export async function POST(request: NextRequest) {
           permissions: userPermissions
         },
         JWT_SECRET,
-        { expiresIn: '24h' }
+        { expiresIn: jwtExpiry }
       );
 
       // Create response
@@ -287,7 +290,7 @@ export async function POST(request: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24, // 24 hours
+        maxAge: cookieMaxAge,
         path: '/'
       });
 
@@ -303,7 +306,7 @@ export async function POST(request: NextRequest) {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24, // 24 hours
+        maxAge: cookieMaxAge,
         path: '/'
       });
 

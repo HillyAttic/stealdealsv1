@@ -1,12 +1,17 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FaBuilding, FaTachometerAlt, FaUser, FaSignOutAlt, FaDatabase, FaChartBar, FaBars, FaTimes, FaUsers, FaUserShield } from 'react-icons/fa';
+import {
+  FaBuilding, FaTachometerAlt, FaUser, FaSignOutAlt, FaDatabase,
+  FaChartBar, FaBars, FaTimes, FaUsers, FaUserShield, FaHeart,
+  FaChevronRight, FaBell,
+} from 'react-icons/fa';
 import Cookies from 'js-cookie';
 import ClientOnly from '@/components/ClientOnly';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
+import AdminBreadcrumb from '@/components/admin/ui/AdminBreadcrumb';
 
 interface AdminUser {
   uid: string;
@@ -19,7 +24,6 @@ interface AdminUser {
       plots: boolean;
       franchise: boolean;
       preleased: boolean;
-      // NEW PERMISSIONS ADDED
       dashboard: boolean;
       users: boolean;
       wishlist: boolean;
@@ -35,7 +39,6 @@ interface AdminUser {
       plots: boolean;
       franchise: boolean;
       preleased: boolean;
-      // NEW PERMISSIONS ADDED
       dashboard: boolean;
       users: boolean;
       wishlist: boolean;
@@ -52,7 +55,8 @@ interface NavigationItem {
   name: string;
   href: string;
   icon: ReactNode;
-  permission?: keyof AdminUser['effectivePermissions']['pages'] | 'manageUsers';
+  permission?: string;
+  group?: string;
 }
 
 interface AdminLayoutProps {
@@ -65,8 +69,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       fallback={
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="p-4 text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-blue-900 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading admin panel...</p>
+            <div className="animate-spin h-8 w-8 border-4 border-primary-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-500 text-sm">Loading admin panel...</p>
           </div>
         </div>
       }
@@ -80,21 +84,19 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [userName, setUserName] = useState('Admin');
+  const [userEmail, setUserEmail] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Helper function to add timeout to fetch calls
+  // Fetch with timeout
   const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs = 15000) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
     try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-      });
+      const response = await fetch(url, { ...options, signal: controller.signal });
       clearTimeout(timeoutId);
       return response;
     } catch (error) {
@@ -103,15 +105,13 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
     }
   };
 
+  // Auth check — runs once on mount
   useEffect(() => {
-    // Clean any Bitdefender attributes if the global cleaner function exists
     const win = window as Window & { __cleanBitdefenderAttributes?: () => void };
     if (win.__cleanBitdefenderAttributes) {
       win.__cleanBitdefenderAttributes();
     }
 
-    // Single API call — verify-permissions does both JWT check + DB permissions lookup
-    // Only run once on mount, not on every navigation
     const checkAuthAndPermissions = async () => {
       try {
         const response = await fetchWithTimeout('/api/auth/verify-permissions', {
@@ -119,32 +119,23 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
           credentials: 'include',
         }, 8000);
 
-        if (!response.ok) {
-          router.push('/admin/login');
-          return;
-        }
+        if (!response.ok) { router.push('/admin/login'); return; }
 
         const data = await response.json();
-
-        if (!data.success || !data.user) {
-          router.push('/admin/login');
-          return;
-        }
+        if (!data.success || !data.user) { router.push('/admin/login'); return; }
 
         const user = data.user;
         setCurrentUser(user);
 
-        // Set user name
         if (user.name) {
           setUserName(user.name);
         } else if (user.email) {
-          const name = user.email.split('@')[0];
-          setUserName(name.charAt(0).toUpperCase() + name.slice(1));
+          setUserName(user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1));
         }
+        setUserEmail(user.email || '');
 
-        // Build authorized pages set
+        // Check permissions for current page
         const authorized = new Set<string>();
-
         if (user.role === 'superuser') {
           authorized.add('/admin/dashboard');
           authorized.add('/admin/vacant');
@@ -170,14 +161,9 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
           if (pages.migration) authorized.add('/admin/migrate');
         }
 
-        // Check if current page is authorized
-        const currentPath = pathname;
         let isCurrentPageAuthorized = false;
-        for (const authorizedPath of authorized) {
-          if (currentPath.startsWith(authorizedPath)) {
-            isCurrentPageAuthorized = true;
-            break;
-          }
+        for (const p of authorized) {
+          if (pathname.startsWith(p)) { isCurrentPageAuthorized = true; break; }
         }
 
         if (!isCurrentPageAuthorized) {
@@ -188,9 +174,6 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         setIsAuthChecking(false);
       } catch (error) {
         console.error('[AdminLayout] Auth/permission check failed:', error);
-        if (error instanceof Error && error.name === 'AbortError') {
-          console.error('[AdminLayout] Request timed out');
-        }
         router.push('/admin/login');
       } finally {
         setIsAuthChecking(false);
@@ -198,33 +181,21 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
     };
 
     checkAuthAndPermissions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogout = async () => {
-    if (isLoggingOut) return; // Prevent double clicks
+    if (isLoggingOut) return;
     setIsLoggingOut(true);
-
     try {
-      // Call logout API
       await fetch('/api/auth/logout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // Important to include cookies
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       });
-
-      // Clear client-side cookies regardless of API response
       Cookies.remove('adminToken', { path: '/' });
       Cookies.remove('adminUser', { path: '/' });
-
-      // Redirect to login page
       router.push('/admin/login');
     } catch (error) {
-      console.error('Error during logout:', error);
-
-      // Fallback: still try to clear cookies and redirect
       Cookies.remove('adminToken', { path: '/' });
       Cookies.remove('adminUser', { path: '/' });
       router.push('/admin/login');
@@ -233,221 +204,227 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
     }
   };
 
-  // Navigation items with permission requirements
-  const allNavItems: NavigationItem[] = [
-    {
-      name: 'Dashboard',
-      href: '/admin/dashboard',
-      icon: <FaTachometerAlt />,      // Permission required - now controlled by dashboard permission
-      permission: 'dashboard'
-    },
-    {
-      name: 'Users',
-      href: '/admin/users',
-      icon: <FaUser />, permission: 'users'
-    },
-    {
-      name: 'Wishlist Analytics',
-      href: '/admin/wishlist-analytics',
-      icon: <FaChartBar />, permission: 'analytics'
-    },
-    {
-      name: 'Pre-leased',
-      href: '/admin/Pre-Leased',
-      icon: <FaBuilding />,
-      permission: 'preleased'
-    },
-    {
-      name: 'Vacant',
-      href: '/admin/vacant',
-      icon: <FaBuilding />,
-      permission: 'vacant'
-    },
-    {
-      name: 'Franchise',
-      href: '/admin/franchise',
-      icon: <FaBuilding />,
-      permission: 'franchise'
-    },
-    {
-      name: 'Plots',
-      href: '/admin/plots',
-      icon: <FaBuilding />,
-      permission: 'plots'
-    },
-    {
-      name: 'Migration',
-      href: '/admin/migrate',
-      icon: <FaDatabase />, permission: 'migration'
-    },
-  ];
-
-  // Filter navigation items based on user permissions
-  const getVisibleNavItems = (): NavigationItem[] => {
+  // Navigation items grouped
+  const navGroups = useMemo(() => {
     if (!currentUser) return [];
 
-    // For superusers, show all navigation items plus Manage Admins
-    if (currentUser.role === 'superuser') {
-      let superuserNavItems = [...allNavItems];
+    const isSuperuser = currentUser.role === 'superuser';
+    const pages = isSuperuser
+      ? null
+      : currentUser.effectivePermissions.pages;
 
-      // Add "Manage Admins" link for superusers
-      const userIndex = superuserNavItems.findIndex(item => item.name === 'Users');
-      if (userIndex !== -1) {
-        superuserNavItems.splice(userIndex + 1, 0, {
-          name: 'Manage Admins',
-          href: '/admin/manage-admins',
-          icon: <FaUserShield />
-        });
-      }
+    const canSee = (perm: string) =>
+      isSuperuser || (pages && (pages as any)[perm]);
 
-      return superuserNavItems;
+    const mainItems: NavigationItem[] = [];
+    const propertyItems: NavigationItem[] = [];
+    const toolsItems: NavigationItem[] = [];
+
+    // Main
+    if (canSee('dashboard')) {
+      mainItems.push({ name: 'Dashboard', href: '/admin/dashboard', icon: <FaTachometerAlt />, permission: 'dashboard', group: 'main' });
     }
 
-    const visibleItems = allNavItems.filter(item => {
-      // If no permission required, always show
-      if (!item.permission) return true;
+    // Properties
+    if (canSee('vacant')) propertyItems.push({ name: 'Vacant', href: '/admin/vacant', icon: <FaBuilding />, permission: 'vacant', group: 'properties' });
+    if (canSee('plots')) propertyItems.push({ name: 'Plots', href: '/admin/plots', icon: <FaBuilding />, permission: 'plots', group: 'properties' });
+    if (canSee('franchise')) propertyItems.push({ name: 'Franchise', href: '/admin/franchise', icon: <FaBuilding />, permission: 'franchise', group: 'properties' });
+    if (canSee('preleased')) propertyItems.push({ name: 'Pre-Leased', href: '/admin/Pre-Leased', icon: <FaBuilding />, permission: 'preleased', group: 'properties' });
 
-      // Check page permissions
-      if (item.permission in currentUser.effectivePermissions.pages) {
-        return currentUser.effectivePermissions.pages[item.permission as keyof AdminUser['effectivePermissions']['pages']];
-      }
-
-      return false;
-    });
-
-    // Add "Manage Admins" link for superusers only
-    if (currentUser.effectivePermissions.manageUsers) {
-      // Find the index after "Users" to insert "Manage Admins"
-      const userIndex = visibleItems.findIndex(item => item.name === 'Users');
-      if (userIndex !== -1) {
-        // Insert "Manage Admins" after "Users"
-        visibleItems.splice(userIndex + 1, 0, {
-          name: 'Manage Admins',
-          href: '/admin/manage-admins',
-          icon: <FaUserShield />
-        });
-      }
+    // Tools
+    if (canSee('users')) mainItems.push({ name: 'Users', href: '/admin/users', icon: <FaUser />, permission: 'users', group: 'main' });
+    if (isSuperuser || currentUser.effectivePermissions?.manageUsers) {
+      mainItems.push({ name: 'Manage Admins', href: '/admin/manage-admins', icon: <FaUserShield />, group: 'main' });
     }
+    if (canSee('analytics')) toolsItems.push({ name: 'Wishlist Analytics', href: '/admin/wishlist-analytics', icon: <FaChartBar />, permission: 'analytics', group: 'tools' });
+    if (canSee('wishlist')) toolsItems.push({ name: 'Wishlist', href: '/admin/wishlist-analytics', icon: <FaHeart />, permission: 'wishlist', group: 'tools' });
+    if (canSee('migration')) toolsItems.push({ name: 'Migration', href: '/admin/migrate', icon: <FaDatabase />, permission: 'migration', group: 'tools' });
 
-    return visibleItems;
-  };
+    const groups: { label: string; items: NavigationItem[] }[] = [];
+    if (mainItems.length > 0) groups.push({ label: 'Main', items: mainItems });
+    if (propertyItems.length > 0) groups.push({ label: 'Properties', items: propertyItems });
+    if (toolsItems.length > 0) groups.push({ label: 'Tools', items: toolsItems });
 
-  const navItems = getVisibleNavItems();
+    return groups;
+  }, [currentUser]);
 
-  // Show loading state while checking auth
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+
+  const userInitial = userName.charAt(0).toUpperCase();
+
+  // Loading state — skeleton layout
   if (isAuthChecking) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="p-4 text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-blue-900 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+      <div className="min-h-screen bg-gray-50 flex">
+        {/* Sidebar skeleton */}
+        <div className="w-[260px] bg-gradient-to-b from-primary-600 to-primary-800 p-5 hidden md:block">
+          <div className="admin-skeleton h-8 w-32 mb-8 opacity-20" />
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="admin-skeleton h-10 w-full mb-2 opacity-15" />
+          ))}
+        </div>
+        {/* Main area skeleton */}
+        <div className="flex-1 p-6">
+          <div className="admin-skeleton h-6 w-48 mb-6" />
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="admin-skeleton h-24 rounded-xl" />
+            ))}
+          </div>
+          <div className="admin-skeleton h-64 rounded-xl" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Admin header */}
-      <header className="bg-blue-900 text-white py-4 px-4 md:px-6 shadow-md">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 mr-2 rounded hover:bg-blue-800 transition-colors"
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
-            </button>
-
-            <Link href="/admin/dashboard" className="text-lg md:text-xl font-bold flex items-center">
-              <FaBuilding className="mr-2" />
-              <span className="hidden sm:inline">StealDeals Admin</span>
-              <span className="sm:hidden">Admin</span>
-            </Link>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* ── SIDEBAR ── */}
+      <aside
+        className={`
+          fixed md:sticky top-0 left-0 z-50 md:z-10
+          min-h-screen w-[260px] flex-shrink-0
+          bg-gradient-to-b from-primary-600 via-primary-700 to-primary-800
+          text-white
+          transform transition-transform duration-300 ease-out
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          flex flex-col
+          shadow-xl md:shadow-none
+        `}
+      >
+        {/* Brand */}
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+          <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center">
+            <FaBuilding className="text-white text-sm" />
           </div>
+          <div>
+            <h1 className="text-base font-bold tracking-tight">StealDeals</h1>
+            <p className="text-[10px] text-white/50 font-medium uppercase tracking-widest">Admin Panel</p>
+          </div>
+          {/* Mobile close */}
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="ml-auto md:hidden p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <FaTimes className="text-white/70 text-sm" />
+          </button>
+        </div>
 
-          <div className="flex items-center">
-            <div className="mr-2 md:mr-4 text-right">
-              <div className="text-xs md:text-sm text-blue-100">Welcome,</div>
-              <div className="text-sm md:text-base font-semibold">{userName}</div>
-              {currentUser && (
-                <div className="text-xs text-blue-200 capitalize">
-                  {currentUser.role}
-                </div>
-              )}
+        {/* Nav groups */}
+        <nav className="flex-1 overflow-y-auto admin-scrollbar px-3 py-4 space-y-5">
+          {navGroups.map((group) => (
+            <div key={group.label}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/50 px-3 mb-2">
+                {group.label}
+              </p>
+              <ul className="space-y-0.5">
+                {group.items.map((item) => {
+                  const active = isActive(item.href);
+                  return (
+                    <li key={item.name}>
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`
+                          group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium
+                          transition-all duration-200
+                          ${active
+                            ? 'bg-white/15 text-white shadow-sm admin-nav-active'
+                            : 'text-white/70 hover:text-white hover:bg-white/8'
+                          }
+                        `}
+                      >
+                        <span className={`flex-shrink-0 text-sm ${active ? 'text-accent-400' : 'text-white/50 group-hover:text-white/80'}`}>
+                          {item.icon}
+                        </span>
+                        <span className="truncate">{item.name}</span>
+                        {active && (
+                          <FaChevronRight className="ml-auto text-[8px] text-white/50" />
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
+
+        {/* User card at bottom */}
+        <div className="px-3 py-4 border-t border-white/10">
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/8">
+            <div className="w-8 h-8 rounded-full bg-accent-500 flex items-center justify-center text-xs font-bold text-white shadow-sm">
+              {userInitial}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-white truncate">{userName}</p>
+              <p className="text-[10px] text-white/40 truncate">{currentUser?.role || 'admin'}</p>
             </div>
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="p-2 rounded-full hover:bg-blue-800 transition-colors disabled:opacity-50"
+              className="p-1.5 rounded-lg text-white/40 hover:text-red-300 hover:bg-white/10 transition-colors disabled:opacity-50"
               title="Logout"
             >
-              <FaSignOutAlt />
+              <FaSignOutAlt className="text-xs" />
             </button>
           </div>
         </div>
-      </header>
+      </aside>
 
-      <div className="flex flex-1 relative">
-        {/* Mobile menu overlay */}
-        {isMobileMenuOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
+      {/* Mobile overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden animate-fadeIn"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
 
-        {/* Sidebar - Desktop: always visible, Mobile: slide-in */}
-        <aside className={`
-          fixed md:relative top-0 left-0 h-full md:h-auto
-          w-64 bg-white border-r border-gray-200 shadow-md
-          transform transition-transform duration-300 ease-in-out
-          z-50 md:z-auto
-          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          md:block
-          pt-16 md:pt-0
-        `}>
-          {/* Mobile close button */}
-          <div className="md:hidden absolute top-4 right-4">
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 rounded hover:bg-gray-100"
-            >
-              <FaTimes className="text-gray-600" />
-            </button>
+      {/* ── MAIN CONTENT ── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header bar */}
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-gray-100 px-4 md:px-6 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {/* Mobile hamburger */}
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+              >
+                <FaBars />
+              </button>
+              <AdminBreadcrumb />
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Search indicator */}
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 text-xs text-gray-400">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span>Search...</span>
+              </div>
+
+              {/* User avatar (desktop) */}
+              <div className="hidden md:flex items-center gap-2 pl-3 border-l border-gray-100">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-xs font-bold text-white shadow-sm">
+                  {userInitial}
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-semibold text-gray-800 leading-tight">{userName}</p>
+                  <p className="text-[10px] text-gray-400 capitalize">{currentUser?.role}</p>
+                </div>
+              </div>
+            </div>
           </div>
+        </header>
 
-          <nav className="p-4">
-            <ul className="space-y-2">
-              {navItems.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center p-3 rounded-md transition-colors ${pathname === item.href
-                      ? 'bg-blue-50 font-medium'
-                      : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    style={pathname === item.href ? { color: 'rgb(28, 110, 164)' } : {}}
-                  >
-                    <span className="mr-3">{item.icon}</span>
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
-
-        {/* Main content */}
-        <main className="flex-1 p-4 md:p-6 w-full overflow-x-hidden">
+        {/* Page content */}
+        <main className="flex-1 p-4 md:p-6 overflow-x-hidden admin-page-enter">
           {children}
         </main>
       </div>
 
-      {/* Scroll-to-bottom button with circular progress ring */}
       <ScrollToBottom showProgress={true} />
     </div>
   );
