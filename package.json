@@ -33,8 +33,7 @@
     "deploy:full": "npm run validate-env && npm run deploy && npm run deploy:verify"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.31.4",
-    "@emotion/react": "^11.14.0",
+        "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@next/third-parties": "^15.5.2",
     "@types/dompurify": "^3.0.5",

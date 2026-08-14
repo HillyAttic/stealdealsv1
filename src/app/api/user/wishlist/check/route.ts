@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { optionalAuth } from '@/lib/auth/middleware';
-import { currentUser } from '@clerk/nextjs/server';
+import { getServerSession } from '@/lib/auth-server-session';
 import { isInWishlist } from '@/lib/database/firestore-wishlist';
 
 // Enhanced logging utility for wishlist check operations
@@ -32,34 +31,17 @@ function logWishlistCheck(
   }
 }
 
-// Enhanced user ID extraction with Clerk integration and fallback
-async function extractUserId(request: NextRequest & { user?: any }): Promise<string | null> {
+// User ID extraction with Firebase integration
+async function extractUserId(): Promise<string | null> {
   try {
-    // First try to get user from Clerk
-    const clerkUser = await currentUser();
-    if (clerkUser?.id) {
-      logWishlistCheck('user_extraction', clerkUser.id, undefined, { source: 'clerk' });
-      return clerkUser.id;
+    // Primary: Firebase server session
+    const session = await getServerSession();
+    if (session?.uid) {
+      logWishlistCheck('user_extraction', session.uid, undefined, { source: 'firebase_session' });
+      return session.uid;
     }
-    
-    // Fallback to middleware user (for development/testing)
-    if (request.user?.id) {
-      logWishlistCheck('user_extraction', request.user.id, undefined, { source: 'middleware' });
-      return request.user.id;
-    }
-    
-    // Development fallback - check for mock user headers
-    const mockUserId = request.headers.get('x-mock-user-id');
-    if (mockUserId) {
-      logWishlistCheck('user_extraction', mockUserId, undefined, { source: 'mock_header' });
-      return mockUserId;
-    }
-    
-    // Final fallback for development
-    const devUserId = 'user-1';
-    logWishlistCheck('user_extraction', devUserId, undefined, { source: 'development_fallback' });
-    return devUserId;
-    
+
+    return null;
   } catch (error) {
     logWishlistCheck('user_extraction', 'unknown', undefined, undefined, error as Error);
     return null;
@@ -68,13 +50,12 @@ async function extractUserId(request: NextRequest & { user?: any }): Promise<str
 
 // GET /api/user/wishlist/check?propertyId=xxx - Check if property is in wishlist
 export async function GET(request: NextRequest) {
-  return optionalAuth(request, async (requestWithUser) => {
-    const startTime = Date.now();
-    let userId: string | null = null;
-    
-    try {
-      // Enhanced user ID extraction
-      userId = await extractUserId(requestWithUser);
+  const startTime = Date.now();
+  let userId: string | null = null;
+
+  try {
+    // Extract user ID from Firebase session
+    userId = await extractUserId();
       
       if (!userId) {
         logWishlistCheck('check_wishlist', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
@@ -165,6 +146,5 @@ export async function GET(request: NextRequest) {
         },
         { status: 500 }
       );
-    }
-  });
+  }
 }

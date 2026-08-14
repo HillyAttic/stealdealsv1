@@ -75,6 +75,48 @@ const nextConfig: NextConfig = {
     pagesBufferLength: 5,
   },
   webpack: (config, { dev, isServer }) => {
+    if (!isServer) {
+      // firebase-admin is a Node.js-only package (uses http2 + node:* builtins like
+      // node:events, node:process, node:stream, node:util). firestore-wishlist.ts is a
+      // hybrid module imported by BOTH client contexts (RTDB/real-time listeners) and server
+      // API routes (Admin SDK). A plain dynamic import() lets webpack follow the chain into
+      // firebase-admin for the client bundle, which crashes the browser build.
+      //
+      // Mark firebase-admin (and its gRPC transport) as EXTERNAL for client builds: webpack
+      // then emits `require('firebase-admin')` without ever parsing its source, so none of
+      // the Node-only internals are compiled for the browser. The admin code path only runs
+      // on the server, where it resolves from node_modules — this is purely a guard so the
+      // client build never sees http2 / node:* imports.
+      config.externals = config.externals || [];
+      if (!Array.isArray(config.externals)) {
+        config.externals = [config.externals];
+      }
+      if (!config.externals.includes('firebase-admin')) {
+        config.externals.push('firebase-admin');
+      }
+
+      // Keep the per-module fallbacks as a secondary safety net for any bare-name Node
+      // builtins that slip through transitive dependencies.
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        http2: false,
+        crypto: false,
+        http: false,
+        https: false,
+        stream: false,
+        buffer: false,
+        util: false,
+        url: false,
+        zlib: false,
+        path: false,
+        os: false,
+        child_process: false,
+      };
+    }
+
     if (!isServer && dev) {
       // Reduce excessive Fast Refresh rebuilds
       config.watchOptions = {
@@ -135,6 +177,9 @@ const nextConfig: NextConfig = {
       }
     ];
   },
+
+  // Keep firebase-admin out of client bundles (it needs Node.js builtins)
+  serverExternalPackages: ['firebase-admin'],
 
   // Debug route generation
   ...(process.env.NODE_ENV === 'production' && {

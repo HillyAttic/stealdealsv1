@@ -11,14 +11,10 @@ export async function GET(request: NextRequest) {
       status: health.status,
       timestamp: new Date().toISOString(),
       configuration: {
-        hasClerkPublishableKey: !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-        hasClerkSecretKey: !!process.env.CLERK_SECRET_KEY,
         hasFirebaseApiKey: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
         hasFirebaseProjectId: !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
         hasFirebaseDatabaseUrl: !!process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
         firebaseDatabaseUrl: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
-        clerkKeyType: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.includes('pk_live_') ? 'production' : 
-                     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.includes('pk_test_') ? 'development' : 'unknown'
       },
       validation: health.details
     };

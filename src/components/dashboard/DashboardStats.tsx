@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardStatsData {
   wishlistCount: number;
@@ -11,7 +11,7 @@ interface DashboardStatsData {
 }
 
 export function DashboardStats() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStatsData>({
     wishlistCount: 0,
     viewedProperties: 0,

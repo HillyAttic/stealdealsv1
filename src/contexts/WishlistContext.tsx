@@ -2,7 +2,7 @@
 
 // WishlistContext with fixed infinite loop prevention using refs
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   addToWishlist as addToWishlistDB,
   removeFromWishlist as removeFromWishlistDB,
@@ -32,8 +32,9 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 const WISHLIST_STORAGE_KEY = 'stealdeals_wishlist_temp';
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
-  const { isSignedIn, userId } = useAuth();
-  const { user } = useUser();
+  const { user, loading } = useAuth();
+  const isSignedIn = !!user;
+  const userId = user?.uid;
   const [wishlistItems, setWishlistItems] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

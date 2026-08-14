@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { currentUser } from '@clerk/nextjs/server';
+import { getServerSession } from '@/lib/auth-server-session';
 import { getUserWishlist, getRawWishlistItems } from '@/lib/database/firestore-wishlist';
 import { firestoreDb } from '@/lib/firestore';
 import { collection, getDocs } from 'firebase/firestore';
@@ -16,11 +16,11 @@ export async function GET(request: NextRequest) {
     console.log(`[DEBUG_WISHLIST] Testing wishlist for user: ${testUserId}`);
 
     // Get current user info
-    let clerkUser;
+    let firebaseUser;
     try {
-      clerkUser = await currentUser();
+      firebaseUser = await getServerSession();
     } catch (error) {
-      console.error('[DEBUG_WISHLIST] Clerk currentUser() error:', error);
+      console.error('[DEBUG_WISHLIST] getServerSession() error:', error);
     }
 
     // Test Firestore connection
@@ -68,9 +68,9 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
       testUserId,
-      clerkUser: clerkUser ? {
-        id: clerkUser.id,
-        primaryEmailAddress: clerkUser.primaryEmailAddress?.emailAddress
+      firestoreUser: firebaseUser ? {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email
       } : null,
       firestore: {
         connected: firestoreConnected,

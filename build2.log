@@ -1,0 +1,936 @@
+﻿node.exe : npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help 
+npmrc` for supported config options.
+At line:1 char:1
++ & "C:\nvm4w\nodejs/node.exe" "C:\nvm4w\nodejs/node_modules/npm/bin/np ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...config options.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ ⚠ Linting is disabled.
+ ⚠ The config property `experimental.turbo` is deprecated. Move this setting to `config.turbopack` or run `npx 
+@next/codemod@latest next-experimental-turbo-to-turbopack .`
+[BUILD_DEBUG] Generating build ID...
+   ▲ Next.js 15.5.9
+   - Environments: .env.local, .env.production
+   - Experiments (use with caution):
+     ✓ optimizeCss
+     ✓ scrollRestoration
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+Browserslist: browsers data (caniuse-lite) is 16 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled successfully in 26.8s
+   Skipping validation of types
+   Collecting page data ...
+[Firebase Admin] Initializing Firebase Admin SDK...
+[Firebase Admin] Environment: production
+[Firebase Admin] VERCEL: false
+[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_KEY not found in environment
+[Firebase Admin] Current working directory: D:\stealdealsv1
+[Firebase Admin] Checking path: D:\stealdealsv1\service-account.json
+[Firebase Admin] ✅ Firebase credentials loaded from: D:\stealdealsv1\service-account.json
+[Firebase Admin] Project ID: stealdeals-e89ab
+[Firebase Admin] Database URL: https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app
+[Firebase Admin] ✅ Private key has BEGIN header
+[Firebase Admin] ✅ Private key has END header
+[Firebase Admin] Private key diagnostic: 29 lines detected (after processing)
+[Firebase Admin] ✅ Firebase Admin initialized successfully for project: stealdeals-e89ab
+[Firebase Admin] Using Key ID: f2e670ca...
+[Firebase Admin] Initializing Firebase Admin SDK...
+[Firebase Admin] Environment: production
+[Firebase Admin] VERCEL: false
+[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_KEY not found in environment
+[Firebase Admin] Current working directory: D:\stealdealsv1
+[Firebase Admin] Checking path: D:\stealdealsv1\service-account.json
+[Firebase Admin] ✅ Firebase credentials loaded from: D:\stealdealsv1\service-account.json
+[Firebase Admin] Project ID: stealdeals-e89ab
+[Firebase Admin] Database URL: https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app
+[Firebase Admin] ✅ Private key has BEGIN header
+[Firebase Admin] ✅ Private key has END header
+[Firebase Admin] Private key diagnostic: 29 lines detected (after processing)
+[Firebase Admin] ✅ Firebase Admin initialized successfully for project: stealdeals-e89ab
+[Firebase Admin] Using Key ID: f2e670ca...
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+[Firebase Admin] Initializing Firebase Admin SDK...
+[Firebase Admin] Environment: production
+[Firebase Admin] VERCEL: false
+[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_KEY not found in environment
+[Firebase Admin] Current working directory: D:\stealdealsv1
+[Firebase Admin] Checking path: D:\stealdealsv1\service-account.json
+[Firebase Admin] ✅ Firebase credentials loaded from: D:\stealdealsv1\service-account.json
+[Firebase Admin] Project ID: stealdeals-e89ab
+[Firebase Admin] Database URL: https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app
+[Firebase Admin] ✅ Private key has BEGIN header
+[Firebase Admin] ✅ Private key has END header
+[Firebase Admin] Private key diagnostic: 29 lines detected (after processing)
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+(node:6572) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security 
+implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[Firebase Admin] ✅ Firebase Admin initialized successfully for project: stealdeals-e89ab
+[Firebase Admin] Using Key ID: f2e670ca...
+(node:13352) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security 
+implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+(node:2504) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security 
+implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[2026-08-14T07:29:54.619Z]  @firebase/database: FIREBASE WARNING: Database lives in a different region. Please change your 
+database URL to https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app 
+(https://stealdeals-e89ab-default-rtdb.firebaseio.com/) 
+[2026-08-14T07:29:55.047Z]  @firebase/database: FIREBASE WARNING: Database lives in a different region. Please change your 
+database URL to https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app 
+(https://stealdeals-e89ab-default-rtdb.firebaseio.com/) 
+   Generating static pages (0/103) ...
+[Firebase Admin] Initializing Firebase Admin SDK...
+[Firebase Admin] Environment: production
+[Firebase Admin] VERCEL: false
+[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_KEY not found in environment
+[Firebase Admin] Current working directory: D:\stealdealsv1
+[Firebase Admin] Checking path: D:\stealdealsv1\service-account.json
+[Firebase Admin] ✅ Firebase credentials loaded from: D:\stealdealsv1\service-account.json
+[Firebase Admin] Project ID: stealdeals-e89ab
+[Firebase Admin] Database URL: https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app
+[Firebase Admin] ✅ Private key has BEGIN header
+[Firebase Admin] ✅ Private key has END header
+[Firebase Admin] Private key diagnostic: 29 lines detected (after processing)
+[Firebase Admin] ✅ Firebase Admin initialized successfully for project: stealdeals-e89ab
+[Firebase Admin] Using Key ID: f2e670ca...
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+(node:13992) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security 
+implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[Firebase Admin] Initializing Firebase Admin SDK...
+[Firebase Admin] Environment: production
+[Firebase Admin] VERCEL: false
+[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_KEY not found in environment
+[Firebase Admin] Current working directory: D:\stealdealsv1
+[Firebase Admin] Checking path: D:\stealdealsv1\service-account.json
+[Firebase Admin] ✅ Firebase credentials loaded from: D:\stealdealsv1\service-account.json
+[Firebase Admin] Project ID: stealdeals-e89ab
+[Firebase Admin] Database URL: https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app
+[Firebase Admin] ✅ Private key has BEGIN header
+[Firebase Admin] ✅ Private key has END header
+[Firebase Admin] Private key diagnostic: 29 lines detected (after processing)
+[Firebase Admin] ✅ Firebase Admin initialized successfully for project: stealdeals-e89ab
+[Firebase Admin] Using Key ID: f2e670ca...
+(node:8416) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security 
+implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+[Cache] Fetching franchises from Firebase...
+Getting franchises from migrated structure first...
+[Cache] Fetching franchises from Firebase...
+Getting franchises from migrated structure first...
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+(node:7756) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security 
+implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+[2026-08-14T07:30:06.369Z]  @firebase/database: FIREBASE WARNING: Database lives in a different region. Please change your 
+database URL to https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app 
+(https://stealdeals-e89ab-default-rtdb.firebaseio.com/) 
+Migrated snapshot exists: true
+Processing migrated franchise item with key: PROP_FRAN_001
+  ✅ Added migrated franchise:  KIDZEE PRE SCHOOL (Education)
+Processing migrated franchise item with key: PROP_FRAN_002
+  ✅ Added migrated franchise: LITTLE LEADERS (Education)
+Processing migrated franchise item with key: PROP_FRAN_003
+  ✅ Added migrated franchise: ALPHABETZ INDIA (Education)
+Processing migrated franchise item with key: PROP_FRAN_004
+  ✅ Added migrated franchise: MAKOONS PLAY SCHOOL (Education)
+Processing migrated franchise item with key: PROP_FRAN_005
+  ✅ Added migrated franchise: EUROKIDS PRE SCHOOL (Education)
+Processing migrated franchise item with key: PROP_FRAN_006
+  ✅ Added migrated franchise: GO69 PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_007
+  ✅ Added migrated franchise: LITTLE ITALY (F&B)
+Processing migrated franchise item with key: PROP_FRAN_008
+  ✅ Added migrated franchise: NOTHING BEFORE COFFEE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_009
+  ✅ Added migrated franchise: KAKE DI HATTI (F&B)
+Processing migrated franchise item with key: PROP_FRAN_010
+  ✅ Added migrated franchise: CHAIAPPS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_011
+  ✅ Added migrated franchise: CHEELIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_012
+  ✅ Added migrated franchise: CHAILEELA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_013
+  ✅ Added migrated franchise: THE FUSION PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_014
+  ✅ Added migrated franchise: BIG BURGER CO. (F&B)
+Processing migrated franchise item with key: PROP_FRAN_015
+  ✅ Added migrated franchise: CHA BAR (F&B)
+Processing migrated franchise item with key: PROP_FRAN_016
+  ✅ Added migrated franchise: BIG YELLOW DOOR (F&B)
+Processing migrated franchise item with key: PROP_FRAN_017
+  ✅ Added migrated franchise: MASSIVE RESTAURANTS PVT. LTD. (F&B)
+Processing migrated franchise item with key: PROP_FRAN_018
+  ✅ Added migrated franchise: KAKAS KABAB N CHICKEN (F&B)
+Processing migrated franchise item with key: PROP_FRAN_019
+  ✅ Added migrated franchise: KAKE DA HOTEL (F&B)
+Processing migrated franchise item with key: PROP_FRAN_020
+  ✅ Added migrated franchise: AL-BAIK (F&B)
+Processing migrated franchise item with key: PROP_FRAN_021
+  ✅ Added migrated franchise: THE D PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_022
+  ✅ Added migrated franchise: UNCLE PETERS PANCAKE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_023
+  ✅ Added migrated franchise: BITTOO TIKKI WALA (BTW) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_024
+  ✅ Added migrated franchise: VEERJI CHAAP WALA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_025
+  ✅ Added migrated franchise: UNCLE JOHNS PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_026
+  ✅ Added migrated franchise: SANKALP RESTAURANT (F&B)
+Processing migrated franchise item with key: PROP_FRAN_027
+  ✅ Added migrated franchise: CHICAGO PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_028
+  ✅ Added migrated franchise: GELATO VINTO (ICE-CREAM) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_029
+  ✅ Added migrated franchise: GULAB WALA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_030
+  ✅ Added migrated franchise: AMRITSARI EXPRESS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_031
+  ✅ Added migrated franchise: JUMBO KING (F&B)
+Processing migrated franchise item with key: PROP_FRAN_032
+  ✅ Added migrated franchise: BURGER SINGH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_033
+  ✅ Added migrated franchise: SAMOSA SINGH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_034
+  ✅ Added migrated franchise: BURGRILL (F&B)
+Processing migrated franchise item with key: PROP_FRAN_035
+  ✅ Added migrated franchise: WAT A BURGER (F&B)
+Processing migrated franchise item with key: PROP_FRAN_036
+  ✅ Added migrated franchise: GHOOMAR TRADITIONAL THALI (F&B)
+Processing migrated franchise item with key: PROP_FRAN_037
+  ✅ Added migrated franchise: CHAAT LOUNGE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_038
+  ✅ Added migrated franchise: LOVELY BAKE STUDIO (F&B)
+Processing migrated franchise item with key: PROP_FRAN_039
+  ✅ Added migrated franchise: DONER & GYROS (QSR) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_040
+  ✅ Added migrated franchise: BIGGIES BURGER (F&B)
+Processing migrated franchise item with key: PROP_FRAN_041
+  ✅ Added migrated franchise: CONICAL GAUFER (F&B)
+Processing migrated franchise item with key: PROP_FRAN_042
+  ✅ Added migrated franchise: MONGINIS (CAKE SHOP) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_043
+  ✅ Added migrated franchise: CHAI SUTTA BAR (F&B)
+Processing migrated franchise item with key: PROP_FRAN_044
+  ✅ Added migrated franchise: CHAI CALLING (F&B)
+Processing migrated franchise item with key: PROP_FRAN_045
+  ✅ Added migrated franchise: TEALOGY CAFE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_046
+  ✅ Added migrated franchise: CHAI THELA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_047
+  ✅ Added migrated franchise: THE TEA PLANET (F&B)
+Processing migrated franchise item with key: PROP_FRAN_048
+  ✅ Added migrated franchise: DELHI CHAI CAFE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_049
+  ✅ Added migrated franchise: WHAT A SANDWICH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_050
+  ✅ Added migrated franchise: THE CHATPATA AFFAIR (F&B)
+Processing migrated franchise item with key: PROP_FRAN_051
+  ✅ Added migrated franchise: KHADAK SINGH DA DHABA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_052
+  ✅ Added migrated franchise: 7TH HEAVEN (F&B)
+Processing migrated franchise item with key: PROP_FRAN_053
+  ✅ Added migrated franchise: CHAWLA CHICKEN (F&B)
+Processing migrated franchise item with key: PROP_FRAN_054
+  ✅ Added migrated franchise: GOLA SIZZLERS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_055
+  ✅ Added migrated franchise: BURGER FARM (F&B)
+Processing migrated franchise item with key: PROP_FRAN_056
+  ✅ Added migrated franchise: BURGER MONK (F&B)
+Processing migrated franchise item with key: PROP_FRAN_057
+  ✅ Added migrated franchise: CAFE CHOCO CRAZE (CAFE LOUNGE) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_058
+  ✅ Added migrated franchise: CAFE CHOCO CRAZE(MULTISHAKE LOUNGE) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_059
+  ✅ Added migrated franchise: BURGERLAND (F&B)
+Processing migrated franchise item with key: PROP_FRAN_060
+  ✅ Added migrated franchise: NAZEER FOODS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_061
+  ✅ Added migrated franchise: BARISTA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_062
+  ✅ Added migrated franchise: ZOCA CAFE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_063
+  ✅ Added migrated franchise: WOW MOMO (F&B)
+Processing migrated franchise item with key: PROP_FRAN_064
+  ✅ Added migrated franchise: THE YELLOW BOWL (F&B)
+Processing migrated franchise item with key: PROP_FRAN_065
+  ✅ Added migrated franchise: U S PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_066
+  ✅ Added migrated franchise: FERNS N PETALS (CAKES) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_067
+  ✅ Added migrated franchise: BALISTA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_068
+  ✅ Added migrated franchise: FLOWER AURA (CAKES) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_069
+  ✅ Added migrated franchise: GIANIS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_070
+  ✅ Added migrated franchise: THE DRUNKEN BOTANIST (F&B)
+Processing migrated franchise item with key: PROP_FRAN_071
+  ✅ Added migrated franchise: DAHIBARA EXPRESS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_072
+  ✅ Added migrated franchise: THE FUSION PIZZA & BIG BURGER CO. (F&B)
+Processing migrated franchise item with key: PROP_FRAN_073
+  ✅ Added migrated franchise: BERCOS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_074
+  ✅ Added migrated franchise: SAMS PIZZA (DINE-IN) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_075
+  ✅ Added migrated franchise: BEEJI DE CHOLE BHATURE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_076
+  ✅ Added migrated franchise: PIND BHATURA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_077
+  ✅ Added migrated franchise: CHEESY CRAZY CAFE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_078
+  ✅ Added migrated franchise: MR SANDWICH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_079
+  ✅ Added migrated franchise: MOTI MAHAL DELUX (F&B)
+Processing migrated franchise item with key: PROP_FRAN_080
+  ✅ Added migrated franchise: CHAI NAGRI (F&B)
+Processing migrated franchise item with key: PROP_FRAN_081
+  ✅ Added migrated franchise: KULHAD CHAI (F&B)
+Processing migrated franchise item with key: PROP_FRAN_082
+  ✅ Added migrated franchise: CHAI KAAPI (F&B)
+Processing migrated franchise item with key: PROP_FRAN_083
+  ✅ Added migrated franchise: CAFÉ FRESPRESSO (F&B)
+Processing migrated franchise item with key: PROP_FRAN_084
+  ✅ Added migrated franchise: NANO CAFE BY FRESPRESSO HOSPITALITY (F&B)
+Processing migrated franchise item with key: PROP_FRAN_085
+  ✅ Added migrated franchise: SPYKAR LIFESTYLE (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_086
+  ✅ Added migrated franchise: PURPLE UNITED KIDS (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_087
+  ✅ Added migrated franchise: MOMATOS (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_088
+  ✅ Added migrated franchise: LINEN CLUB BY ADITYA BIRLA GROUP (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_089
+  ✅ Added migrated franchise: CANTABIL (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_090
+  ✅ Added migrated franchise: POPEES BABY CARE (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_091
+  ✅ Added migrated franchise: CARLTON LONDON INDIA (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_092
+  ✅ Added migrated franchise: FABINDIA (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_093
+  ✅ Added migrated franchise: CHIQUE OFFICIAL (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_094
+  ✅ Added migrated franchise: BODYCARE KIDS (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_095
+  ✅ Added migrated franchise: MAX LAB (Pharmaceutical)
+Processing migrated franchise item with key: PROP_FRAN_096
+  ✅ Added migrated franchise: DAVAINDIA (Pharmaceutical)
+Processing migrated franchise item with key: PROP_FRAN_097
+  ✅ Added migrated franchise: TASKAR INDIAS 1ST HEALTHCARE MALL (Pharmaceutical)
+Processing migrated franchise item with key: PROP_FRAN_098
+  ✅ Added migrated franchise: FRAMESKRAFT (Retail)
+Processing migrated franchise item with key: PROP_FRAN_099
+  ✅ Added migrated franchise: SUPER99 (Retail)
+Processing migrated franchise item with key: PROP_FRAN_100
+  ✅ Added migrated franchise: THE NEW SHOP (Retail)
+Processing migrated franchise item with key: PROP_FRAN_101
+  ✅ Added migrated franchise: GOODTOGO MEAT (Retail)
+Processing migrated franchise item with key: PROP_FRAN_102
+  ✅ Added migrated franchise: FERNS N PETALS (FLOWER) (Retail)
+Processing migrated franchise item with key: PROP_FRAN_103
+  ✅ Added migrated franchise: MEGA MART (Retail)
+Processing migrated franchise item with key: PROP_FRAN_104
+  ✅ Added migrated franchise: GFRESH MART (Retail)
+Processing migrated franchise item with key: PROP_FRAN_105
+  ✅ Added migrated franchise: TROLLY BOY (Retail)
+Processing migrated franchise item with key: PROP_FRAN_106
+  ✅ Added migrated franchise: CUTEBUZZ (Retail)
+Processing migrated franchise item with key: PROP_FRAN_107
+  ✅ Added migrated franchise: UCLEAN LAUNDRY SERVICES (Retail)
+Processing migrated franchise item with key: PROP_FRAN_108
+  ✅ Added migrated franchise: BUYBUY CART (Retail)
+Processing migrated franchise item with key: PROP_FRAN_109
+  ✅ Added migrated franchise: FLOWER AURA (FLOWERS) (Retail)
+Processing migrated franchise item with key: PROP_FRAN_110
+  ✅ Added migrated franchise: 7HEVEN (Retail)
+Processing migrated franchise item with key: PROP_FRAN_111
+  ✅ Added migrated franchise: EASYGYM (Sports, Fitness & Entertainments)
+Processing migrated franchise item with key: PROP_FRAN_112
+  ✅ Added migrated franchise: CULT FIT GYM (Sports, Fitness & Entertainments)
+Processing migrated franchise item with key: PROP_FRAN_113
+  ✅ Added migrated franchise: CURE FIT GYM (Sports, Fitness & Entertainments)
+Processing migrated franchise item with key: PROP_FRAN_116
+  ✅ Added migrated franchise: SUB91 (F&B)
+Processing migrated franchise item with key: PROP_FRAN_117
+  ✅ Added migrated franchise: ZORKO (F&B)
+Processing migrated franchise item with key: PROP_FRAN_118
+  ✅ Added migrated franchise: ROLL NATION (F&B)
+Processing migrated franchise item with key: PROP_FRAN_119
+  ✅ Added migrated franchise: JUMBO KING (F&B)
+Processing migrated franchise item with key: PROP_FRAN_120
+  ✅ Added migrated franchise: PURNABRAMHA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_121
+  ✅ Added migrated franchise: MAST BANARASI PAAN (F&B)
+Processing migrated franchise item with key: PROP_FRAN_122
+  ✅ Added migrated franchise: CHICAGO PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_123
+  ✅ Added migrated franchise: HONEY & DOUGH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_124
+  ✅ Added migrated franchise: FUN BYTES (F&B)
+Processing migrated franchise item with key: PROP_FRAN_125
+  ✅ Added migrated franchise: CHOCOLATE BASH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_126
+  ✅ Added migrated franchise: BREWERS THE COFFEE BAR (F&B)
+Processing migrated franchise item with key: PROP_FRAN_127
+  ✅ Added migrated franchise: BIGGIES BURGER (F&B)
+Processing migrated franchise item with key: PROP_FRAN_128
+  ✅ Added migrated franchise: Original Burger Co. (F&B)
+Processing migrated franchise item with key: PROP_FRAN_129
+  ✅ Added migrated franchise: MAD MOMO (F&B)
+Processing migrated franchise item with key: PROP_FRAN_130
+  ✅ Added migrated franchise: PAINKILLER CHAIWALA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_131
+  ✅ Added migrated franchise: CHHOTU MAHARAJ (F&B)
+Processing migrated franchise item with key: PROP_FRAN_132
+  ✅ Added migrated franchise: Kill No Kalorie (F&B)
+Processing migrated franchise item with key: PROP_FRAN_133
+  ✅ Added migrated franchise: THE BURGER COMPANY (F&B)
+Processing migrated franchise item with key: PROP_FRAN_134
+  ✅ Added migrated franchise: BURGER SINGH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_135
+  ✅ Added migrated franchise: GOPURE NATURAL ICE-CREAMS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_136
+  ✅ Added migrated franchise: NIRULA’S (F&B)
+Processing migrated franchise item with key: PROP_FRAN_137
+  ✅ Added migrated franchise: MYEON HUB (F&B)
+Processing migrated franchise item with key: PROP_FRAN_138
+  ✅ Added migrated franchise: BHUKKAD JUNCTION (F&B)
+Processing migrated franchise item with key: PROP_FRAN_139
+  ✅ Added migrated franchise: THE D PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_140
+  ✅ Added migrated franchise: THE BELGIAN FRIES CO. (F&B)
+Processing migrated franchise item with key: PROP_FRAN_141
+  ✅ Added migrated franchise: GREENOX (F&B)
+Processing migrated franchise item with key: PROP_FRAN_142
+  ✅ Added migrated franchise: THE NEW SHOP (Retail)
+Processing migrated franchise item with key: PROP_FRAN_144
+  ✅ Added migrated franchise: CLOG LONDON (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_145
+  ✅ Added migrated franchise: FAT TIGER  (F&B)
+Processing migrated franchise item with key: PROP_FRAN_146
+  ✅ Added migrated franchise: THE CHAI THEKA (F&B)
+Processing migrated franchise item with key: migratedProperties
+  ⚠️  Invalid migrated franchise data: migratedProperties
+Getting reference to legacy franchiseProperties...
+Migrated snapshot exists: true
+Processing migrated franchise item with key: PROP_FRAN_001
+  ✅ Added migrated franchise:  KIDZEE PRE SCHOOL (Education)
+Processing migrated franchise item with key: PROP_FRAN_002
+  ✅ Added migrated franchise: LITTLE LEADERS (Education)
+Processing migrated franchise item with key: PROP_FRAN_003
+  ✅ Added migrated franchise: ALPHABETZ INDIA (Education)
+Processing migrated franchise item with key: PROP_FRAN_004
+  ✅ Added migrated franchise: MAKOONS PLAY SCHOOL (Education)
+Processing migrated franchise item with key: PROP_FRAN_005
+  ✅ Added migrated franchise: EUROKIDS PRE SCHOOL (Education)
+Processing migrated franchise item with key: PROP_FRAN_006
+  ✅ Added migrated franchise: GO69 PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_007
+  ✅ Added migrated franchise: LITTLE ITALY (F&B)
+Processing migrated franchise item with key: PROP_FRAN_008
+  ✅ Added migrated franchise: NOTHING BEFORE COFFEE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_009
+  ✅ Added migrated franchise: KAKE DI HATTI (F&B)
+Processing migrated franchise item with key: PROP_FRAN_010
+  ✅ Added migrated franchise: CHAIAPPS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_011
+  ✅ Added migrated franchise: CHEELIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_012
+  ✅ Added migrated franchise: CHAILEELA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_013
+  ✅ Added migrated franchise: THE FUSION PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_014
+  ✅ Added migrated franchise: BIG BURGER CO. (F&B)
+Processing migrated franchise item with key: PROP_FRAN_015
+  ✅ Added migrated franchise: CHA BAR (F&B)
+Processing migrated franchise item with key: PROP_FRAN_016
+  ✅ Added migrated franchise: BIG YELLOW DOOR (F&B)
+Processing migrated franchise item with key: PROP_FRAN_017
+  ✅ Added migrated franchise: MASSIVE RESTAURANTS PVT. LTD. (F&B)
+Processing migrated franchise item with key: PROP_FRAN_018
+  ✅ Added migrated franchise: KAKAS KABAB N CHICKEN (F&B)
+Processing migrated franchise item with key: PROP_FRAN_019
+  ✅ Added migrated franchise: KAKE DA HOTEL (F&B)
+Processing migrated franchise item with key: PROP_FRAN_020
+  ✅ Added migrated franchise: AL-BAIK (F&B)
+Processing migrated franchise item with key: PROP_FRAN_021
+  ✅ Added migrated franchise: THE D PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_022
+  ✅ Added migrated franchise: UNCLE PETERS PANCAKE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_023
+  ✅ Added migrated franchise: BITTOO TIKKI WALA (BTW) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_024
+  ✅ Added migrated franchise: VEERJI CHAAP WALA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_025
+  ✅ Added migrated franchise: UNCLE JOHNS PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_026
+  ✅ Added migrated franchise: SANKALP RESTAURANT (F&B)
+Processing migrated franchise item with key: PROP_FRAN_027
+  ✅ Added migrated franchise: CHICAGO PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_028
+  ✅ Added migrated franchise: GELATO VINTO (ICE-CREAM) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_029
+  ✅ Added migrated franchise: GULAB WALA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_030
+  ✅ Added migrated franchise: AMRITSARI EXPRESS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_031
+  ✅ Added migrated franchise: JUMBO KING (F&B)
+Processing migrated franchise item with key: PROP_FRAN_032
+  ✅ Added migrated franchise: BURGER SINGH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_033
+  ✅ Added migrated franchise: SAMOSA SINGH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_034
+  ✅ Added migrated franchise: BURGRILL (F&B)
+Processing migrated franchise item with key: PROP_FRAN_035
+  ✅ Added migrated franchise: WAT A BURGER (F&B)
+Processing migrated franchise item with key: PROP_FRAN_036
+  ✅ Added migrated franchise: GHOOMAR TRADITIONAL THALI (F&B)
+Processing migrated franchise item with key: PROP_FRAN_037
+  ✅ Added migrated franchise: CHAAT LOUNGE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_038
+  ✅ Added migrated franchise: LOVELY BAKE STUDIO (F&B)
+Processing migrated franchise item with key: PROP_FRAN_039
+  ✅ Added migrated franchise: DONER & GYROS (QSR) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_040
+  ✅ Added migrated franchise: BIGGIES BURGER (F&B)
+Processing migrated franchise item with key: PROP_FRAN_041
+  ✅ Added migrated franchise: CONICAL GAUFER (F&B)
+Processing migrated franchise item with key: PROP_FRAN_042
+  ✅ Added migrated franchise: MONGINIS (CAKE SHOP) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_043
+  ✅ Added migrated franchise: CHAI SUTTA BAR (F&B)
+Processing migrated franchise item with key: PROP_FRAN_044
+  ✅ Added migrated franchise: CHAI CALLING (F&B)
+Processing migrated franchise item with key: PROP_FRAN_045
+  ✅ Added migrated franchise: TEALOGY CAFE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_046
+  ✅ Added migrated franchise: CHAI THELA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_047
+  ✅ Added migrated franchise: THE TEA PLANET (F&B)
+Processing migrated franchise item with key: PROP_FRAN_048
+  ✅ Added migrated franchise: DELHI CHAI CAFE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_049
+  ✅ Added migrated franchise: WHAT A SANDWICH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_050
+  ✅ Added migrated franchise: THE CHATPATA AFFAIR (F&B)
+Processing migrated franchise item with key: PROP_FRAN_051
+  ✅ Added migrated franchise: KHADAK SINGH DA DHABA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_052
+  ✅ Added migrated franchise: 7TH HEAVEN (F&B)
+Processing migrated franchise item with key: PROP_FRAN_053
+  ✅ Added migrated franchise: CHAWLA CHICKEN (F&B)
+Processing migrated franchise item with key: PROP_FRAN_054
+  ✅ Added migrated franchise: GOLA SIZZLERS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_055
+  ✅ Added migrated franchise: BURGER FARM (F&B)
+Processing migrated franchise item with key: PROP_FRAN_056
+  ✅ Added migrated franchise: BURGER MONK (F&B)
+Processing migrated franchise item with key: PROP_FRAN_057
+  ✅ Added migrated franchise: CAFE CHOCO CRAZE (CAFE LOUNGE) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_058
+  ✅ Added migrated franchise: CAFE CHOCO CRAZE(MULTISHAKE LOUNGE) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_059
+  ✅ Added migrated franchise: BURGERLAND (F&B)
+Processing migrated franchise item with key: PROP_FRAN_060
+  ✅ Added migrated franchise: NAZEER FOODS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_061
+  ✅ Added migrated franchise: BARISTA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_062
+  ✅ Added migrated franchise: ZOCA CAFE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_063
+  ✅ Added migrated franchise: WOW MOMO (F&B)
+Processing migrated franchise item with key: PROP_FRAN_064
+  ✅ Added migrated franchise: THE YELLOW BOWL (F&B)
+Processing migrated franchise item with key: PROP_FRAN_065
+  ✅ Added migrated franchise: U S PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_066
+  ✅ Added migrated franchise: FERNS N PETALS (CAKES) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_067
+  ✅ Added migrated franchise: BALISTA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_068
+  ✅ Added migrated franchise: FLOWER AURA (CAKES) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_069
+  ✅ Added migrated franchise: GIANIS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_070
+  ✅ Added migrated franchise: THE DRUNKEN BOTANIST (F&B)
+Processing migrated franchise item with key: PROP_FRAN_071
+  ✅ Added migrated franchise: DAHIBARA EXPRESS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_072
+  ✅ Added migrated franchise: THE FUSION PIZZA & BIG BURGER CO. (F&B)
+Processing migrated franchise item with key: PROP_FRAN_073
+  ✅ Added migrated franchise: BERCOS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_074
+  ✅ Added migrated franchise: SAMS PIZZA (DINE-IN) (F&B)
+Processing migrated franchise item with key: PROP_FRAN_075
+  ✅ Added migrated franchise: BEEJI DE CHOLE BHATURE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_076
+  ✅ Added migrated franchise: PIND BHATURA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_077
+  ✅ Added migrated franchise: CHEESY CRAZY CAFE (F&B)
+Processing migrated franchise item with key: PROP_FRAN_078
+  ✅ Added migrated franchise: MR SANDWICH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_079
+  ✅ Added migrated franchise: MOTI MAHAL DELUX (F&B)
+Processing migrated franchise item with key: PROP_FRAN_080
+  ✅ Added migrated franchise: CHAI NAGRI (F&B)
+Processing migrated franchise item with key: PROP_FRAN_081
+  ✅ Added migrated franchise: KULHAD CHAI (F&B)
+Processing migrated franchise item with key: PROP_FRAN_082
+  ✅ Added migrated franchise: CHAI KAAPI (F&B)
+Processing migrated franchise item with key: PROP_FRAN_083
+  ✅ Added migrated franchise: CAFÉ FRESPRESSO (F&B)
+Processing migrated franchise item with key: PROP_FRAN_084
+  ✅ Added migrated franchise: NANO CAFE BY FRESPRESSO HOSPITALITY (F&B)
+Processing migrated franchise item with key: PROP_FRAN_085
+  ✅ Added migrated franchise: SPYKAR LIFESTYLE (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_086
+  ✅ Added migrated franchise: PURPLE UNITED KIDS (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_087
+  ✅ Added migrated franchise: MOMATOS (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_088
+  ✅ Added migrated franchise: LINEN CLUB BY ADITYA BIRLA GROUP (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_089
+  ✅ Added migrated franchise: CANTABIL (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_090
+  ✅ Added migrated franchise: POPEES BABY CARE (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_091
+  ✅ Added migrated franchise: CARLTON LONDON INDIA (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_092
+  ✅ Added migrated franchise: FABINDIA (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_093
+  ✅ Added migrated franchise: CHIQUE OFFICIAL (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_094
+  ✅ Added migrated franchise: BODYCARE KIDS (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_095
+  ✅ Added migrated franchise: MAX LAB (Pharmaceutical)
+Processing migrated franchise item with key: PROP_FRAN_096
+  ✅ Added migrated franchise: DAVAINDIA (Pharmaceutical)
+Processing migrated franchise item with key: PROP_FRAN_097
+  ✅ Added migrated franchise: TASKAR INDIAS 1ST HEALTHCARE MALL (Pharmaceutical)
+Processing migrated franchise item with key: PROP_FRAN_098
+  ✅ Added migrated franchise: FRAMESKRAFT (Retail)
+Processing migrated franchise item with key: PROP_FRAN_099
+  ✅ Added migrated franchise: SUPER99 (Retail)
+Processing migrated franchise item with key: PROP_FRAN_100
+  ✅ Added migrated franchise: THE NEW SHOP (Retail)
+Processing migrated franchise item with key: PROP_FRAN_101
+  ✅ Added migrated franchise: GOODTOGO MEAT (Retail)
+Processing migrated franchise item with key: PROP_FRAN_102
+  ✅ Added migrated franchise: FERNS N PETALS (FLOWER) (Retail)
+Processing migrated franchise item with key: PROP_FRAN_103
+  ✅ Added migrated franchise: MEGA MART (Retail)
+Processing migrated franchise item with key: PROP_FRAN_104
+  ✅ Added migrated franchise: GFRESH MART (Retail)
+Processing migrated franchise item with key: PROP_FRAN_105
+  ✅ Added migrated franchise: TROLLY BOY (Retail)
+Processing migrated franchise item with key: PROP_FRAN_106
+  ✅ Added migrated franchise: CUTEBUZZ (Retail)
+Processing migrated franchise item with key: PROP_FRAN_107
+  ✅ Added migrated franchise: UCLEAN LAUNDRY SERVICES (Retail)
+Processing migrated franchise item with key: PROP_FRAN_108
+  ✅ Added migrated franchise: BUYBUY CART (Retail)
+Processing migrated franchise item with key: PROP_FRAN_109
+  ✅ Added migrated franchise: FLOWER AURA (FLOWERS) (Retail)
+Processing migrated franchise item with key: PROP_FRAN_110
+  ✅ Added migrated franchise: 7HEVEN (Retail)
+Processing migrated franchise item with key: PROP_FRAN_111
+  ✅ Added migrated franchise: EASYGYM (Sports, Fitness & Entertainments)
+Processing migrated franchise item with key: PROP_FRAN_112
+  ✅ Added migrated franchise: CULT FIT GYM (Sports, Fitness & Entertainments)
+Processing migrated franchise item with key: PROP_FRAN_113
+  ✅ Added migrated franchise: CURE FIT GYM (Sports, Fitness & Entertainments)
+Processing migrated franchise item with key: PROP_FRAN_116
+  ✅ Added migrated franchise: SUB91 (F&B)
+Processing migrated franchise item with key: PROP_FRAN_117
+  ✅ Added migrated franchise: ZORKO (F&B)
+Processing migrated franchise item with key: PROP_FRAN_118
+  ✅ Added migrated franchise: ROLL NATION (F&B)
+Processing migrated franchise item with key: PROP_FRAN_119
+  ✅ Added migrated franchise: JUMBO KING (F&B)
+Processing migrated franchise item with key: PROP_FRAN_120
+  ✅ Added migrated franchise: PURNABRAMHA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_121
+  ✅ Added migrated franchise: MAST BANARASI PAAN (F&B)
+Processing migrated franchise item with key: PROP_FRAN_122
+  ✅ Added migrated franchise: CHICAGO PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_123
+  ✅ Added migrated franchise: HONEY & DOUGH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_124
+  ✅ Added migrated franchise: FUN BYTES (F&B)
+Processing migrated franchise item with key: PROP_FRAN_125
+  ✅ Added migrated franchise: CHOCOLATE BASH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_126
+  ✅ Added migrated franchise: BREWERS THE COFFEE BAR (F&B)
+Processing migrated franchise item with key: PROP_FRAN_127
+  ✅ Added migrated franchise: BIGGIES BURGER (F&B)
+Processing migrated franchise item with key: PROP_FRAN_128
+  ✅ Added migrated franchise: Original Burger Co. (F&B)
+Processing migrated franchise item with key: PROP_FRAN_129
+  ✅ Added migrated franchise: MAD MOMO (F&B)
+Processing migrated franchise item with key: PROP_FRAN_130
+  ✅ Added migrated franchise: PAINKILLER CHAIWALA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_131
+  ✅ Added migrated franchise: CHHOTU MAHARAJ (F&B)
+Processing migrated franchise item with key: PROP_FRAN_132
+  ✅ Added migrated franchise: Kill No Kalorie (F&B)
+Processing migrated franchise item with key: PROP_FRAN_133
+  ✅ Added migrated franchise: THE BURGER COMPANY (F&B)
+Processing migrated franchise item with key: PROP_FRAN_134
+  ✅ Added migrated franchise: BURGER SINGH (F&B)
+Processing migrated franchise item with key: PROP_FRAN_135
+  ✅ Added migrated franchise: GOPURE NATURAL ICE-CREAMS (F&B)
+Processing migrated franchise item with key: PROP_FRAN_136
+  ✅ Added migrated franchise: NIRULA’S (F&B)
+Processing migrated franchise item with key: PROP_FRAN_137
+  ✅ Added migrated franchise: MYEON HUB (F&B)
+Processing migrated franchise item with key: PROP_FRAN_138
+  ✅ Added migrated franchise: BHUKKAD JUNCTION (F&B)
+Processing migrated franchise item with key: PROP_FRAN_139
+  ✅ Added migrated franchise: THE D PIZZA (F&B)
+Processing migrated franchise item with key: PROP_FRAN_140
+  ✅ Added migrated franchise: THE BELGIAN FRIES CO. (F&B)
+Processing migrated franchise item with key: PROP_FRAN_141
+  ✅ Added migrated franchise: GREENOX (F&B)
+Processing migrated franchise item with key: PROP_FRAN_142
+  ✅ Added migrated franchise: THE NEW SHOP (Retail)
+Processing migrated franchise item with key: PROP_FRAN_144
+  ✅ Added migrated franchise: CLOG LONDON (Fashion)
+Processing migrated franchise item with key: PROP_FRAN_145
+  ✅ Added migrated franchise: FAT TIGER  (F&B)
+Processing migrated franchise item with key: PROP_FRAN_146
+  ✅ Added migrated franchise: THE CHAI THEKA (F&B)
+Processing migrated franchise item with key: migratedProperties
+  ⚠️  Invalid migrated franchise data: migratedProperties
+Getting reference to legacy franchiseProperties...
+Legacy snapshot exists: false
+No legacy franchises found in database
+Returning 143 franchises
+[Cache] Fetched 143 franchises
+[Cache Performance] franchise-page-generation: 1392ms (143 items)
+[Perf] Cache franchise-page-generation: 1392ms
+[ISR] Generated franchise page with 143 franchises in 1392ms
+Legacy snapshot exists: false
+No legacy franchises found in database
+Returning 143 franchises
+[Cache] Fetched 143 franchises
+[Cache Performance] franchise-metadata-generation: 1502ms (143 items)
+[Perf] Cache franchise-metadata-generation: 1502ms
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+[2026-08-14T07:30:08.527Z]  @firebase/database: FIREBASE WARNING: Database lives in a different region. Please change your 
+database URL to https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app 
+(https://stealdeals-e89ab-default-rtdb.firebaseio.com/) 
+[2026-08-14T07:30:10.435Z]  @firebase/database: FIREBASE WARNING: Database lives in a different region. Please change your 
+database URL to https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app 
+(https://stealdeals-e89ab-default-rtdb.firebaseio.com/) 
+[2026-08-14T07:30:09.204Z]  @firebase/database: FIREBASE WARNING: Database lives in a different region. Please change your 
+database URL to https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app 
+(https://stealdeals-e89ab-default-rtdb.firebaseio.com/) 
+[Cache] Fetching plots from Firebase...
+Getting plots from migrated structure first...
+[Cache] Fetching plots from Firebase...
+Getting plots from migrated structure first...
+Migrated plots snapshot exists: true
+Processing migrated plot item with key: PROP_PLOT_001
+  ✅ Added migrated plot: Bird Estate
+Getting reference to legacy plots...
+Migrated plots snapshot exists: true
+Processing migrated plot item with key: PROP_PLOT_001
+  ✅ Added migrated plot: Bird Estate
+Getting reference to legacy plots...
+Legacy plots snapshot exists: false
+No legacy plots found in database
+Returning 1 plots
+[Cache] Fetched 1 plots
+[Cache Performance] plots-page-generation: 391ms (1 items)
+[Perf] Cache plots-page-generation: 391ms
+[ISR] Generated plots page with 1 plots in 391ms
+Legacy plots snapshot exists: false
+No legacy plots found in database
+Returning 1 plots
+[Cache] Fetched 1 plots
+[Cache Performance] plots-metadata-generation: 390ms (1 items)
+[Perf] Cache plots-metadata-generation: 390ms
+   Generating static pages (25/103) 
+[Cache] Fetching vacant properties with optimization...
+[Firebase] Fetching vacant properties from MIGRATED collections only
+[Cache] Fetching vacant properties with optimization...
+[Firebase] Fetching vacant properties from MIGRATED collections only
+[Firebase] Found 115 vacant properties in migrated collection
+[Cache] Fetched 115 vacant properties in 605ms
+[Cache Performance] page-generation: 821ms (115 items)
+[Perf] Cache page-generation: 821ms
+[ISR] Generated vacant properties page with 115 properties in 821ms
+[Firebase] Found 115 vacant properties in migrated collection
+[Cache] Fetched 115 vacant properties in 633ms
+[Cache Performance] metadata-generation: 855ms (115 items)
+[Perf] Cache metadata-generation: 855ms
+   Generating static pages (51/103) 
+   Generating static pages (77/103) 
+ ✓ Generating static pages (103/103)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS  Revalidate  Expire
+┌ ○ /                                    12.9 kB         333 kB
+├ ○ /_not-found                             1 kB         103 kB
+├ ○ /about                               7.28 kB         307 kB
+├ ○ /admin/dashboard                      4.8 kB         136 kB
+├ ○ /admin/franchise                     5.64 kB         331 kB
+├ ƒ /admin/franchise/edit/[id]           6.09 kB         221 kB
+├ ○ /admin/franchise/new                 7.13 kB         216 kB
+├ ○ /admin/login                         2.91 kB         208 kB
+├ ○ /admin/manage-admins                    5 kB         136 kB
+├ ○ /admin/migrate                       4.87 kB         136 kB
+├ ○ /admin/migrate-images                3.39 kB         134 kB
+├ ○ /admin/plots                         4.27 kB         329 kB
+├ ƒ /admin/plots/edit/[id]               3.56 kB         216 kB
+├ ○ /admin/plots/new                     3.19 kB         215 kB
+├ ○ /admin/Pre-Leased                    8.01 kB         145 kB
+├ ƒ /admin/Pre-Leased/edit/[id]          4.29 kB         212 kB
+├ ○ /admin/Pre-Leased/new                5.48 kB         215 kB
+├ ○ /admin/properties/edit/[id]          2.89 kB         134 kB
+├ ○ /admin/properties/new                4.16 kB         135 kB
+├ ○ /admin/subusers                      4.61 kB         135 kB
+├ ○ /admin/test                           2.5 kB         254 kB
+├ ○ /admin/users                          5.9 kB         137 kB
+├ ƒ /admin/users/[id]                    6.19 kB         137 kB
+├ ○ /admin/vacant                        3.69 kB         150 kB
+├ ƒ /admin/vacant/edit/[id]              3.77 kB         218 kB
+├ ○ /admin/vacant/new                    5.45 kB         214 kB
+├ ○ /admin/wishlist-analytics            5.88 kB         137 kB
+├ ○ /advertise                           5.19 kB         308 kB
+├ ƒ /api/admin/analytics                   285 B         102 kB
+├ ƒ /api/admin/cleanup-wishlists           285 B         102 kB
+├ ƒ /api/admin/dashboard-stats             285 B         102 kB
+├ ƒ /api/admin/database/health             285 B         102 kB
+├ ƒ /api/admin/firebase-users              285 B         102 kB
+├ ƒ /api/admin/health                      285 B         102 kB
+├ ƒ /api/admin/initialize                  285 B         102 kB
+├ ƒ /api/admin/migrate-images              285 B         102 kB
+├ ƒ /api/admin/realtime-stats              285 B         102 kB
+├ ƒ /api/admin/test                        285 B         102 kB
+├ ƒ /api/admin/user-details                285 B         102 kB
+├ ƒ /api/admin/user-realtime-stats         285 B         102 kB
+├ ƒ /api/admin/users                       285 B         102 kB
+├ ƒ /api/admin/users/[id]                  285 B         102 kB
+├ ƒ /api/admin/users/[id]/wishlist         285 B         102 kB
+├ ƒ /api/admin/wishlist-stats              285 B         102 kB
+├ ƒ /api/auth                              285 B         102 kB
+├ ƒ /api/auth/check                        285 B         102 kB
+├ ƒ /api/auth/csrf                         285 B         102 kB
+├ ƒ /api/auth/debug                        285 B         102 kB
+├ ƒ /api/auth/logout                       285 B         102 kB
+├ ƒ /api/auth/session                      285 B         102 kB
+├ ƒ /api/auth/session-status               285 B         102 kB
+├ ƒ /api/auth/set-token                    285 B         102 kB
+├ ƒ /api/auth/sync-user                    285 B         102 kB
+├ ƒ /api/auth/test                         285 B         102 kB
+├ ƒ /api/auth/test-flow                    285 B         102 kB
+├ ƒ /api/auth/test-session                 285 B         102 kB
+├ ƒ /api/auth/user/login                   285 B         102 kB
+├ ƒ /api/auth/user/logout                  285 B         102 kB
+├ ƒ /api/auth/user/refresh                 285 B         102 kB
+├ ƒ /api/auth/user/register                285 B         102 kB
+├ ƒ /api/auth/user/session                 285 B         102 kB
+├ ƒ /api/auth/verify-firebase-token        285 B         102 kB
+├ ƒ /api/auth/verify-permissions           285 B         102 kB
+├ ƒ /api/chat/gemini                       285 B         102 kB
+├ ƒ /api/contact                           285 B         102 kB
+├ ƒ /api/dashboard/metrics                 285 B         102 kB
+├ ƒ /api/debug/auth-status                 285 B         102 kB
+├ ƒ /api/debug/env                         285 B         102 kB
+├ ƒ /api/debug/property/[id]               285 B         102 kB
+├ ƒ /api/debug/wishlist                    285 B         102 kB
+├ ƒ /api/franchises                        285 B         102 kB
+├ ƒ /api/franchises/[id]                   285 B         102 kB
+├ ƒ /api/health                            285 B         102 kB
+├ ƒ /api/health/config                     285 B         102 kB
+├ ƒ /api/plots                             285 B         102 kB
+├ ƒ /api/plots/[id]                        285 B         102 kB
+├ ƒ /api/properties                        285 B         102 kB
+├ ƒ /api/properties/[id]                   285 B         102 kB
+├ ƒ /api/realtime                          285 B         102 kB
+├ ƒ /api/realtime/broadcast                285 B         102 kB
+├ ƒ /api/revalidate                        285 B         102 kB
+├ ƒ /api/security/validate                 285 B         102 kB
+├ ƒ /api/system/health                   4.06 kB         303 kB
+├ ƒ /api/user/avatar                       285 B         102 kB
+├ ƒ /api/user/delete                       285 B         102 kB
+├ ƒ /api/user/profile                      285 B         102 kB
+├ ƒ /api/user/wishlist                     285 B         102 kB
+├ ƒ /api/user/wishlist/[propertyId]        285 B         102 kB
+├ ƒ /api/user/wishlist/check               285 B         102 kB
+├ ○ /apple-icon.png                          0 B            0 B
+├ ○ /brand-license                       4.94 kB         308 kB
+├ ○ /contact                             4.49 kB         327 kB
+├ ○ /dashboard                             547 B         103 kB
+├ ○ /dashboard/profile                   3.71 kB         226 kB
+├ ○ /dashboard/wishlist                    546 B         103 kB
+├ ○ /expand-franchise                    5.57 kB         308 kB
+├ ○ /faq                                 4.47 kB         304 kB
+├ ○ /forgot-password                     3.69 kB         231 kB
+├ ○ /franchise                           5.72 kB         331 kB         10m      1y
+├ ƒ /franchise/[id]                      8.53 kB         335 kB
+├ ○ /horeca                               1.5 kB         301 kB
+├ ○ /icon.svg                                0 B            0 B
+├ ○ /inventory                           6.21 kB         333 kB
+├ ○ /loan-property                       1.72 kB         301 kB
+├ ○ /my-wishlist                         1.02 kB         300 kB
+├ ○ /plots                               3.44 kB         328 kB         10m      1y
+├ ƒ /plots/[id]                          7.84 kB         334 kB
+├ ○ /privacy                             5.13 kB         305 kB
+├ ○ /restaurant-india                    2.06 kB         302 kB
+├ ○ /saved-properties                    1.01 kB         300 kB
+├ ○ /sell-business                       4.41 kB         306 kB
+├ ○ /sign-in                             3.91 kB         232 kB
+├ ○ /sign-up                                4 kB         232 kB
+├ ○ /terms                               5.06 kB         305 kB
+├ ○ /test                                3.13 kB         126 kB
+├ ○ /test/realtime                       7.58 kB         293 kB
+├ ○ /vacant                              5.97 kB         321 kB          5m      1y
+├ ƒ /vacant/[id]                         7.69 kB         313 kB
+├ ○ /verify-email                        3.42 kB         251 kB
+├ ○ /wishlist-simple                     1.88 kB         287 kB
+└ ○ /wishlist-static                       285 B         102 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/1255-3f38644fe3778fb2.js      45.6 kB
+  ├ chunks/4bd1b696-100b9d70ed4e49c1.js  54.2 kB
+  └ other shared chunks (total)          2.14 kB
+
+
+ƒ Middleware                             33.8 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

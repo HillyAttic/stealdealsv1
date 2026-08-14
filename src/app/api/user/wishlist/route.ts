@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { optionalAuth } from '@/lib/auth/middleware';
-import { currentUser } from '@clerk/nextjs/server';
-import { 
-  getUserWishlist, 
-  addToWishlist, 
-  removeFromWishlist, 
+import { getServerSession } from '@/lib/auth-server-session';
+import {
+  getUserWishlist,
+  addToWishlist,
+  removeFromWishlist,
   getWishlistStats,
   isInWishlist,
   updateWishlistItem
@@ -47,188 +46,30 @@ function logWishlistOperation(
   }
 }
 
-// Enhanced user ID extraction with improved production authentication handling
-async function extractUserId(request: NextRequest & { user?: any }): Promise<string | null> {
+// Enhanced user ID extraction with Firebase integration
+async function extractUserId(): Promise<string | null> {
   try {
-    const isProduction = process.env.NODE_ENV === 'production';
-    
-    // First try to get user from Clerk with comprehensive error handling
-    try {
-      const clerkUser = await currentUser();
-      if (clerkUser?.id) {
-        logWishlistOperation('user_extraction', clerkUser.id, undefined, { 
-          source: 'clerk_success',
-          environment: isProduction ? 'production' : 'development'
-        });
-        return clerkUser.id;
-      }
-    } catch (clerkError) {
-      const errorMsg = clerkError instanceof Error ? clerkError.message : 'Unknown clerk error';
-      console.warn(`[Wishlist API] Clerk currentUser() failed in ${isProduction ? 'production' : 'development'}:`, errorMsg);
-      logWishlistOperation('user_extraction_clerk_error', 'unknown', undefined, {
-        error: errorMsg,
-        environment: isProduction ? 'production' : 'development',
-        errorStack: clerkError instanceof Error ? clerkError.stack : undefined
+    // Primary: Firebase server session
+    const session = await getServerSession();
+    if (session?.uid) {
+      logWishlistOperation('user_extraction', session.uid, undefined, {
+        source: 'firebase_session'
       });
-      
-      // In production, continue with alternative methods instead of failing
-      if (isProduction) {
-        console.log('[Wishlist API] Production: Attempting alternative authentication methods...');
-      }
-    }
-    
-    // Enhanced header-based authentication for production
-    const userIdHeader = request.headers.get('x-user-id');
-    if (userIdHeader) {
-      // More flexible user ID validation for production
-      if (isProduction) {
-        // Accept any non-empty user ID in production (Clerk IDs can have different formats)
-        if (userIdHeader.trim().length > 0 && (userIdHeader.startsWith('user_') || userIdHeader.includes('user'))) {
-          logWishlistOperation('user_extraction', userIdHeader, undefined, { 
-            source: 'user_id_header_production',
-            environment: 'production'
-          });
-          return userIdHeader;
-        }
-      } else {
-        // Development: Accept mock user IDs
-        if (userIdHeader.trim().length > 0) {
-          logWishlistOperation('user_extraction', userIdHeader, undefined, { 
-            source: 'user_id_header_dev',
-            environment: 'development'
-          });
-          return userIdHeader;
-        }
-      }
-    }
-    
-    // Enhanced cookie-based authentication for production
-    const clerkSession = request.cookies.get('__session')?.value || 
-                        request.cookies.get('__clerk_db_jwt')?.value ||
-                        request.cookies.get('__clerk_session')?.value;
-    
-    if (clerkSession && isProduction) {
-      console.log('[Wishlist API] Production: Found Clerk session in cookies, attempting to decode...');
-      // In production, if we have a session cookie, try to extract user info
-      // This is a fallback when currentUser() fails but session exists
-      try {
-        // For now, we'll use a simplified approach - in a real implementation,
-        // you'd decode the JWT token to extract the user ID
-        // This is a temporary workaround for production issues
-        const tempUserId = request.headers.get('x-fallback-user-id');
-        if (tempUserId) {
-          logWishlistOperation('user_extraction', tempUserId, undefined, { 
-            source: 'session_fallback_production',
-            environment: 'production',
-            hasSession: true
-          });
-          return tempUserId;
-        }
-      } catch (sessionError) {
-        console.warn('[Wishlist API] Failed to process session cookie:', sessionError);
-      }
-    }
-    
-    // Authorization header handling (for API clients)
-    const authHeader = request.headers.get('authorization');
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      console.log(`[Wishlist API] Found Bearer token in ${isProduction ? 'production' : 'development'}`);
-      
-      // In production, attempt to extract user ID from custom headers when Bearer token is present
-      if (isProduction && userIdHeader) {
-        logWishlistOperation('user_extraction', userIdHeader, undefined, { 
-          source: 'bearer_with_user_header',
-          environment: 'production',
-          hasBearer: true
-        });
-        return userIdHeader;
-      }
-    }
-    
-    // Middleware user fallback (enhanced for production)
-    if (request.user?.id) {
-      logWishlistOperation('user_extraction', request.user.id, undefined, { 
-        source: 'middleware_user',
-        environment: isProduction ? 'production' : 'development'
-      });
-      return request.user.id;
-    }
-    
-    // Check for mock user headers in both development and production
-    const mockUserId = request.headers.get('x-mock-user-id');
-    if (mockUserId) {
-      logWishlistOperation('user_extraction', mockUserId, undefined, { 
-        source: 'mock_header_' + (isProduction ? 'production' : 'development'), 
-        environment: isProduction ? 'production' : 'development'
-      });
-      return mockUserId;
-    }
-    
-    // Additional fallback for x-fallback-user-id header
-    const fallbackUserId = request.headers.get('x-fallback-user-id');
-    if (fallbackUserId) {
-      logWishlistOperation('user_extraction', fallbackUserId, undefined, { 
-        source: 'fallback_header_' + (isProduction ? 'production' : 'development'), 
-        environment: isProduction ? 'production' : 'development'
-      });
-      return fallbackUserId;
+      return session.uid;
     }
 
-    // Development-specific fallbacks
-    if (!isProduction) {
-      
-      // Final fallback for development only
-      const devUserId = 'user-1';
-      logWishlistOperation('user_extraction', devUserId, undefined, { 
-        source: 'development_fallback', 
-        environment: 'development' 
-      });
-      return devUserId;
-    }
-    
-    // Production: Enhanced debugging and graceful failure
-    const debugInfo = {
-      source: 'authentication_failure', 
-      environment: 'production',
-      hasAuthHeader: !!authHeader,
-      hasClerkSession: !!clerkSession,
-      hasUserIdHeader: !!userIdHeader,
-      middlewareUserExists: !!request.user,
-      cookieNames: request.cookies.getAll().map(c => c.name),
-      relevantHeaders: {
-        'x-user-id': request.headers.get('x-user-id'),
-        'x-fallback-user-id': request.headers.get('x-fallback-user-id'),
-        'authorization': authHeader ? 'Bearer ***' : null,
-        'user-agent': request.headers.get('user-agent')
-      }
-    };
-    
-    logWishlistOperation('user_extraction_failed', 'null', undefined, debugInfo);
-    
-    // In production, instead of returning null immediately, 
-    // try one more approach with a grace period for delayed authentication
-    if (isProduction) {
-      console.log('[Wishlist API] Production: All authentication methods failed. This might be a transient issue.');
-      
-      // Return null but with detailed logging for debugging
-      console.error('[Wishlist API] Production Authentication Failure - Debug Info:', JSON.stringify(debugInfo, null, 2));
-    }
-    
     return null;
-    
   } catch (error) {
     const errorDetails = error instanceof Error ? {
       message: error.message,
       name: error.name,
       stack: error.stack
     } : { message: 'Unknown error during user extraction' };
-    
-    logWishlistOperation('user_extraction_exception', 'unknown', undefined, { 
-      environment: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+
+    logWishlistOperation('user_extraction_exception', 'unknown', undefined, {
       errorDetails
     }, error as Error);
-    
+
     console.error(`[Wishlist API] Critical error in user extraction:`, errorDetails);
     return null;
   }
@@ -286,14 +127,13 @@ function validateWishlistRequest(body: any): { isValid: boolean; errors: string[
 
 // GET /api/user/wishlist - Get user's wishlist
 export const GET = withWishlistMonitoring(async (request: NextRequest, context) => {
-  return optionalAuth(request, async (requestWithUser) => {
-    const startTime = Date.now();
-    let userId: string | null = null;
-    
-    try {
-      // Enhanced user ID extraction
-      userId = await extractUserId(requestWithUser);
-      context.userId = userId || undefined;
+  const startTime = Date.now();
+  let userId: string | null = null;
+
+  try {
+    // Extract user ID from Firebase session
+    userId = await extractUserId();
+    context.userId = userId || undefined;
       
       if (!userId) {
         logWishlistOperation('get_wishlist', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
@@ -419,11 +259,10 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
           requestId: crypto.randomUUID(),
           timestamp: new Date().toISOString(),
           duration: `${duration}ms`,
-          fetchDuration: `${fetchDuration}ms`,
-          userSource: requestWithUser.user ? 'authenticated' : 'guest'
+          fetchDuration: `${fetchDuration}ms`
         }
       }, { headers });
-      
+
     } catch (error) {
       const duration = Date.now() - startTime;
       const errorDetails = error instanceof Error ? {
@@ -460,19 +299,17 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
         }
       );
     }
-  });
 });
 
 // POST /api/user/wishlist - Add/remove/update property in wishlist
 export const POST = withWishlistMonitoring(async (request: NextRequest, context) => {
-  return optionalAuth(request, async (requestWithUser) => {
     const startTime = Date.now();
     let userId: string | null = null;
     let requestBody: any = null;
-    
+
     try {
-      // Enhanced user ID extraction
-      userId = await extractUserId(requestWithUser);
+      // Extract user ID from Firebase session
+      userId = await extractUserId();
       
       if (!userId) {
         logWishlistOperation('wishlist_operation', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
@@ -761,19 +598,17 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
         { status: 500 }
       );
     }
-  });
 });
 
 // PUT /api/user/wishlist - Update wishlist item metadata
 export const PUT = withWishlistMonitoring(async (request: NextRequest, context) => {
-  return optionalAuth(request, async (requestWithUser) => {
     const startTime = Date.now();
     let userId: string | null = null;
     let requestBody: any = null;
-    
+
     try {
-      // Enhanced user ID extraction
-      userId = await extractUserId(requestWithUser);
+      // Extract user ID from Firebase session
+      userId = await extractUserId();
       
       if (!userId) {
         logWishlistOperation('update_wishlist_metadata', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
@@ -932,18 +767,16 @@ export const PUT = withWishlistMonitoring(async (request: NextRequest, context) 
         { status: 500 }
       );
     }
-  });
 });
 
 // DELETE /api/user/wishlist?propertyId=xxx - Remove property from wishlist
 export const DELETE = withWishlistMonitoring(async (request: NextRequest, context) => {
-  return optionalAuth(request, async (requestWithUser) => {
     const startTime = Date.now();
     let userId: string | null = null;
-    
+
     try {
-      // Enhanced user ID extraction
-      userId = await extractUserId(requestWithUser);
+      // Extract user ID from Firebase session
+      userId = await extractUserId();
       
       if (!userId) {
         logWishlistOperation('delete_from_wishlist', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
@@ -1053,5 +886,4 @@ export const DELETE = withWishlistMonitoring(async (request: NextRequest, contex
         { status: 500 }
       );
     }
-  });
 });

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { db } from '@/lib/firebase-server-admin';
-import { clerkClient } from '@clerk/nextjs/server';
-import { ActivityLogger } from '@/lib/services/activityLogger';
+import { FirebaseAdminUserService } from '@/lib/admin/firebase-admin-user-service';
 
 interface WishlistStatsResponse {
   totalUsers: number;
@@ -148,26 +147,23 @@ async function getPropertyDetails(propertyId: string): Promise<any> {
 
 async function getUserDetails(userId: string): Promise<{ id: string; name: string; email: string }> {
   try {
-    const client = await clerkClient();
-    const user = await client.users.getUser(userId);
+    const user = await FirebaseAdminUserService.getUser(userId);
 
     let userName = 'Unknown User';
-    if (user.firstName || user.lastName) {
-      userName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-    } else if (user.username) {
-      userName = user.username;
-    } else if (user.emailAddresses?.[0]?.emailAddress) {
-      userName = user.emailAddresses[0].emailAddress.split('@')[0];
+    if (user.displayName) {
+      userName = user.displayName;
+    } else if (user.email) {
+      userName = user.email.split('@')[0];
     }
 
     return {
       id: user.id,
       name: userName,
-      email: user.emailAddresses?.[0]?.emailAddress || 'No email'
+      email: user.email || 'No email'
     };
   } catch (error: any) {
-    if (error?.status === 404 || error?.clerkError) {
-      console.log(`[Admin Stats] User ${userId} not found in Clerk (likely deleted)`);
+    if (error?.code === 'auth/user-not-found') {
+      console.log(`[Admin Stats] User ${userId} not found in Firebase (likely deleted)`);
       return {
         id: userId,
         name: 'Deleted User',
@@ -222,6 +218,20 @@ export async function GET(request: NextRequest) {
               mostActiveUsers: [],
               averageItemsPerUser: 0,
               engagementDistribution: { '1-5': 0, '6-10': 0, '11-20': 0, '20+': 0 }
+            },
+            activityTrends: {
+              totalActivitiesToday: 0,
+              addActionsToday: 0,
+              removeActionsToday: 0,
+              dailyActivityTrend: [],
+              hourlyPattern: []
+            },
+            realTimeMetrics: {
+              activeUsersLastHour: 0,
+              propertiesAddedLastHour: 0,
+              propertiesRemovedLastHour: 0,
+              popularPropertyTypes: [],
+              locationTrends: []
             }
           },
           metadata: {
@@ -340,8 +350,26 @@ export async function GET(request: NextRequest) {
 
       if (includeRecentActivity) {
         try {
-          const activityLogger = ActivityLogger.getInstance();
-          const globalActivities = await activityLogger.getGlobalActivities(100);
+          // Use Admin SDK directly — ActivityLogger uses client SDK which is subject to
+          // security rules (globalActivities: read requires auth, write is Admin SDK only).
+          // On the server there is no client auth context, so client SDK reads fail.
+          const globalActivitiesSnap = await db
+            .collection('globalActivities')
+            .orderBy('timestamp', 'desc')
+            .limit(100)
+            .get();
+
+          const globalActivities: WishlistActivity[] = globalActivitiesSnap.docs.map(docSnap => {
+            const data = docSnap.data();
+            return {
+              id: docSnap.id,
+              userId: data.userId,
+              action: data.action,
+              propertyId: data.propertyId,
+              timestamp: data.timestamp,
+              metadata: data.metadata,
+            } as WishlistActivity;
+          });
           allActivities = globalActivities;
 
           const recentActivityData = globalActivities
@@ -366,10 +394,16 @@ export async function GET(request: NextRequest) {
           for (const activity of recentActivityData) {
             const userDetails = userDetailsMap.get(activity.userId);
 
-            let timestamp = activity.timestamp;
-            if (typeof timestamp === 'number') {
-              timestamp = new Date(timestamp).toISOString();
-            } else if (typeof timestamp === 'object' && timestamp !== null) {
+            let timestamp: string;
+            if (typeof activity.timestamp === 'number') {
+              timestamp = new Date(activity.timestamp).toISOString();
+            } else if (activity.timestamp && typeof activity.timestamp.toMillis === 'function') {
+              // Firestore Timestamp object
+              timestamp = new Date(activity.timestamp.toMillis()).toISOString();
+            } else if (activity.timestamp && typeof activity.timestamp.seconds === 'number') {
+              // Firestore Timestamp as plain object { seconds, nanoseconds }
+              timestamp = new Date(activity.timestamp.seconds * 1000).toISOString();
+            } else {
               timestamp = new Date().toISOString();
             }
 
@@ -409,7 +443,13 @@ export async function GET(request: NextRequest) {
       for (const activity of allActivities) {
         if (!activity.timestamp) continue;
 
-        const activityDate = new Date(typeof activity.timestamp === 'number' ? activity.timestamp : activity.timestamp);
+        const activityDate = (() => {
+          const ts = activity.timestamp;
+          if (typeof ts === 'number') return new Date(ts);
+          if (ts && typeof ts.toMillis === 'function') return new Date(ts.toMillis()); // Firestore Timestamp
+          if (ts && typeof ts.seconds === 'number') return new Date(ts.seconds * 1000); // plain {seconds, nanoseconds}
+          return new Date(ts as any);
+        })();
 
         if (activityDate >= today) {
           totalActivitiesToday++;
@@ -517,13 +557,14 @@ export async function GET(request: NextRequest) {
           percentage: Math.round((count / totalLocationWishlists) * 100)
         }));
 
-      // Get total users count from Clerk
+      // Get total users count from Firebase
       let totalUsers = 0;
       try {
-        const client = await clerkClient();
-        totalUsers = await client.users.getCount();
-      } catch (clerkError) {
-        console.warn('[Admin Stats] Failed to get total users count from Clerk:', clerkError);
+        const { auth } = await import('@/lib/firebase-server-admin');
+        const listUsersResult = await auth.listUsers(1000);
+        totalUsers = listUsersResult.users.length;
+      } catch (firebaseError) {
+        console.warn('[Admin Stats] Failed to get total users count from Firebase:', firebaseError);
         totalUsers = usersWithWishlists;
       }
 

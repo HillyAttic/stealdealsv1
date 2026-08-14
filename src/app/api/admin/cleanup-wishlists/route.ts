@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { db as adminFs } from '@/lib/firebase-server-admin';
-import { clerkClient } from '@clerk/nextjs/server';
+import { FirebaseAdminUserService } from '@/lib/admin/firebase-admin-user-service';
 
 export async function POST(request: NextRequest) {
     return requireAdminAuth(request, async (req) => {
@@ -32,15 +32,14 @@ export async function POST(request: NextRequest) {
             }
 
             const deletedUsers: string[] = [];
-            const client = await clerkClient();
 
             for (const userId of userIds) {
                 try {
-                    await client.users.getUser(userId);
+                    await FirebaseAdminUserService.getUser(userId);
                     // User exists, skip
                 } catch (error: any) {
                     if (error?.status === 404) {
-                        console.log(`[Cleanup] User ${userId} not found in Clerk`);
+                        console.log(`[Cleanup] User ${userId} not found in Firebase Auth`);
                         deletedUsers.push(userId);
 
                         if (!dryRun) {

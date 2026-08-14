@@ -4,17 +4,18 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { FaChevronDown } from 'react-icons/fa';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthButtonProps {
   className?: string;
 }
 
 const AuthButton: React.FC<AuthButtonProps> = ({ className }) => {
-  const { isSignedIn, signOut, isLoaded } = useAuth();
-  const { user } = useUser();
+  const { user, loading, signOut } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const router = useRouter();
+
+  const isSignedIn = !!user;
 
   const handleAuthClick = () => {
     if (isSignedIn && user) {
@@ -38,7 +39,7 @@ const AuthButton: React.FC<AuthButtonProps> = ({ className }) => {
   };
 
 
-  if (!isLoaded) {
+  if (loading) {
     return (
       <div className={`flex items-center space-x-2 px-4 py-2 ${className || ''}`}>
         <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -59,10 +60,10 @@ const AuthButton: React.FC<AuthButtonProps> = ({ className }) => {
               aria-label="User menu"
             >
               <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center">
-                {user.imageUrl ? (
+                {user.photoURL ? (
                   <Image
-                    src={user.imageUrl}
-                    alt={user.fullName || user.firstName || 'User'}
+                    src={user.photoURL}
+                    alt={user.displayName || 'User'}
                     width={32}
                     height={32}
                     className="w-full h-full object-cover"
@@ -78,7 +79,7 @@ const AuthButton: React.FC<AuthButtonProps> = ({ className }) => {
                 )}
               </div>
               <span className="hidden md:block text-sm font-medium text-gray-700 max-w-24 truncate">
-                {user.fullName || user.firstName || 'User'}
+                {user.displayName || user.email?.split('@')[0] || 'User'}
               </span>
               <FaChevronDown className={`w-3 h-3 text-gray-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -87,8 +88,8 @@ const AuthButton: React.FC<AuthButtonProps> = ({ className }) => {
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white/90 backdrop-blur-md rounded-lg shadow-xl border border-white/20 py-2 z-50">
                 <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900 truncate">{user.fullName || user.firstName || 'User'}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.primaryEmailAddress?.emailAddress}</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{user.displayName || 'User'}</p>
+                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
                 </div>
                 <button
                   onClick={handleDashboard}

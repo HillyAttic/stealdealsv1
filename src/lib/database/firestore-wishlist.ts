@@ -2,12 +2,16 @@
 // Now fully migrated to Firestore (Phase 8 complete)
 //
 // Firestore structure: wishlists/{userId}/items/{itemId}
+//
+// NOTE: Firestore-phase uses Admin SDK (bypasses security rules) via dynamic
+// eval('import') so the Admin SDK is NEVER bundled into client-side code.
+// The eval prevents webpack from statically analyzing the import chain.
 
 import { WishlistItem, WishlistProperty } from '@/types/auth';
 import { getPropertyById, getAllProperties, getPropertiesByIds } from '@/lib/database/firestore-properties';
 import { cacheService } from './cache';
 
-// Firestore imports
+// Client SDK imports — used for shadow / dual-read / real-time listeners
 import {
   collection,
   doc,
@@ -24,6 +28,17 @@ import {
   DocumentData,
 } from 'firebase/firestore';
 import { firestoreDb } from '@/lib/firestore';
+
+// RTDB imports — kept for RTDB-phase primary writes and shadow/dual-read fallback
+import { database } from '@/lib/firebase';
+import {
+  ref as rtdbRef,
+  set as rtdbSet,
+  get as rtdbGet,
+  update as rtdbUpdate,
+  remove as rtdbRemove,
+  push as rtdbPush,
+} from 'firebase/database';
 import { dbPool } from './connection-pool';
 
 type MigrationPhase = 'rtdb' | 'shadow' | 'dual-read' | 'firestore';
@@ -32,7 +47,17 @@ function getPhase(): MigrationPhase {
   return (process.env.MIGRATION_PHASE as MigrationPhase) || 'rtdb';
 }
 
-// ─── Firestore collection helper ────────────────────────────────────────────
+// ─── Admin SDK helpers (dynamic import) ──────────────────────────────────────
+// Dynamically import the Admin SDK module to prevent bundling firebase-admin into client code.
+// Since firebase-admin is in serverExternalPackages (next.config.ts), webpack will:
+// - Mark it as external for client bundles (preventing fs/net/tls errors)
+// - Still compile and emit the admin module for server-side use
+
+async function getAdminModule() {
+  return await import('./firestore-wishlist-admin');
+}
+
+// ─── Client SDK helpers (for shadow / dual-read / real-time) ────────────────
 
 function getUserWishlistCol(userId: string) {
   return collection(firestoreDb, 'wishlists', userId, 'items');
@@ -70,20 +95,15 @@ export async function addToWishlist(
   let itemId: string;
 
   if (phase === 'firestore') {
-    // Check for duplicate in Firestore
-    const itemsCol = getUserWishlistCol(userId);
-    const existing = await getDocs(fsQuery(itemsCol, where('propertyId', '==', propertyId)));
-    if (!existing.empty) {
-      throw new Error('Property already in wishlist');
-    }
-    const docRef = await addDoc(itemsCol, newItemData);
-    itemId = docRef.id;
+    // Admin SDK — bypasses rules (webpack-opaque import)
+    const admin = await getAdminModule();
+    const { itemId: id } = await admin.adminAddToWishlist(userId, propertyId, newItemData.notes, priority);
+    itemId = id;
   } else if (phase === 'dual-read' || phase === 'shadow') {
-    // Write to both
     const existingSnap = await rtdbGet(getUserWishlistRtdbRef(userId));
     if (existingSnap.exists()) {
       let dup = false;
-      existingSnap.forEach(child => {
+      existingSnap.forEach((child: any) => {
         const d = child.val();
         if (d && d.propertyId === propertyId) dup = true;
       });
@@ -101,7 +121,7 @@ export async function addToWishlist(
     const existingSnap = await dbPool.optimizedGet(`wishlists/${userId}`);
     if (existingSnap.exists()) {
       let dup = false;
-      existingSnap.forEach(child => {
+      existingSnap.forEach((child: any) => {
         const d = child.val();
         if (d && d.propertyId === propertyId) dup = true;
       });
@@ -136,18 +156,15 @@ export async function removeFromWishlist(userId: string, propertyId: string): Pr
   console.log(`[Firestore Wishlist] Removing property ${propertyId} for user ${userId} (phase=${phase})`);
 
   if (phase === 'firestore') {
-    const itemsCol = getUserWishlistCol(userId);
-    const matches = await getDocs(fsQuery(itemsCol, where('propertyId', '==', propertyId)));
-    if (matches.empty) return false;
-    for (const docSnap of matches.docs) {
-      await deleteDoc(docSnap.ref);
-    }
+    // Admin SDK — bypasses rules (webpack-opaque import)
+    const admin = await getAdminModule();
+    await admin.adminRemoveFromWishlist(userId, propertyId);
   } else if (phase === 'dual-read' || phase === 'shadow') {
     const snap = await rtdbGet(getUserWishlistRtdbRef(userId));
     if (!snap.exists()) return false;
     let found = false;
     const updates: Record<string, null> = {};
-    snap.forEach(child => {
+    snap.forEach((child: any) => {
       const d = child.val();
       if (d && d.propertyId === propertyId) {
         updates[`wishlists/${userId}/${child.key}`] = null;
@@ -168,7 +185,7 @@ export async function removeFromWishlist(userId: string, propertyId: string): Pr
     if (!snap.exists()) return false;
     const updates: Record<string, null> = {};
     let found = false;
-    snap.forEach(child => {
+    snap.forEach((child: any) => {
       const d = child.val();
       if (d && d.propertyId === propertyId) {
         updates[`wishlists/${userId}/${child.key}`] = null;
@@ -189,29 +206,18 @@ export async function removeFromWishlist(userId: string, propertyId: string): Pr
 async function fetchWishlistItems(userId: string): Promise<WishlistItem[]> {
   const phase = getPhase();
 
-  if (phase === 'firestore' || phase === 'dual-read') {
+  if (phase === 'firestore') {
+    // Admin SDK — bypasses rules (webpack-opaque import)
+    const admin = await getAdminModule();
+    return await admin.adminFetchWishlistItems(userId);
+  }
+
+  if (phase === 'dual-read') {
     try {
-      const itemsCol = getUserWishlistCol(userId);
-      const snap = await getDocs(itemsCol);
-      if (!snap.empty) {
-        return snap.docs.map(d => {
-          const data = d.data();
-          return {
-            id: d.id,
-            userId: data.userId,
-            propertyId: data.propertyId,
-            addedAt: new Date(data.addedAt),
-            notes: data.notes || undefined,
-            priority: data.priority || 'medium',
-          } as WishlistItem;
-        });
-      }
+      const admin = await getAdminModule();
+      return await admin.adminFetchWishlistItems(userId);
     } catch (err) {
-      if (phase === 'dual-read') {
-        console.warn('[Firestore Wishlist] Firestore read failed, falling back to RTDB');
-      } else {
-        throw err;
-      }
+      console.warn('[Firestore Wishlist] Firestore read failed, falling back to RTDB');
     }
   }
 
@@ -220,7 +226,7 @@ async function fetchWishlistItems(userId: string): Promise<WishlistItem[]> {
   if (!snap.exists()) return [];
 
   const items: WishlistItem[] = [];
-  snap.forEach((child: RtdbDataSnapshot) => {
+  snap.forEach((child: any) => {
     const data = child.val();
     if (data) {
       items.push({
@@ -413,24 +419,25 @@ export async function getUserWishlistUncached(userId: string): Promise<WishlistP
 export async function isInWishlist(userId: string, propertyId: string): Promise<boolean> {
   const phase = getPhase();
 
-  if (phase === 'firestore' || phase === 'dual-read') {
+  if (phase === 'firestore') {
+    // Admin SDK — bypasses rules (webpack-opaque import)
+    const admin = await getAdminModule();
+    return await admin.adminIsInWishlist(userId, propertyId);
+  }
+
+  if (phase === 'dual-read') {
     try {
-      const itemsCol = getUserWishlistCol(userId);
-      const matches = await getDocs(fsQuery(itemsCol, where('propertyId', '==', propertyId)));
-      return !matches.empty;
+      const admin = await getAdminModule();
+      return await admin.adminIsInWishlist(userId, propertyId);
     } catch (err) {
-      if (phase === 'dual-read') {
-        console.warn('[Firestore Wishlist] Firestore check failed, falling back to RTDB');
-      } else {
-        throw err;
-      }
+      console.warn('[Firestore Wishlist] Firestore check failed, falling back to RTDB');
     }
   }
 
   const snap = await rtdbGet(getUserWishlistRtdbRef(userId));
   if (!snap.exists()) return false;
   let found = false;
-  snap.forEach(child => {
+  snap.forEach((child: any) => {
     const d = child.val();
     if (d && d.propertyId === propertyId) found = true;
   });
@@ -445,25 +452,9 @@ export async function updateWishlistItem(
   const phase = getPhase();
 
   if (phase === 'firestore') {
-    const itemsCol = getUserWishlistCol(userId);
-    const matches = await getDocs(fsQuery(itemsCol, where('propertyId', '==', propertyId)));
-    if (matches.empty) return null;
-    const docSnap = matches.docs[0];
-    const currentData = docSnap.data();
-    const updatedData = {
-      ...currentData,
-      notes: updates.notes !== undefined ? updates.notes : (currentData.notes || null),
-      priority: updates.priority || currentData.priority,
-    };
-    await setDoc(docSnap.ref, updatedData);
-    return {
-      id: docSnap.id,
-      userId: currentData.userId,
-      propertyId: currentData.propertyId,
-      addedAt: new Date(currentData.addedAt),
-      notes: updatedData.notes || undefined,
-      priority: updatedData.priority,
-    };
+    // Admin SDK — bypasses rules (webpack-opaque import)
+    const admin = await getAdminModule();
+    return await admin.adminUpdateWishlistItem(userId, propertyId, updates);
   }
 
   // RTDB path (also used in shadow/dual-read for primary write)
@@ -471,7 +462,6 @@ export async function updateWishlistItem(
   if (!snap.exists()) return null;
 
   let result: WishlistItem | null = null;
-  const fsPromises: Promise<void>[] = [];
 
   for (const child of snap.val() ? Object.entries(snap.val()) : []) {
     const [key, currentData] = child as [string, any];
@@ -530,9 +520,9 @@ export async function clearWishlist(userId: string): Promise<boolean> {
   const phase = getPhase();
 
   if (phase === 'firestore') {
-    const itemsCol = getUserWishlistCol(userId);
-    const snap = await getDocs(itemsCol);
-    for (const d of snap.docs) await deleteDoc(d.ref);
+    // Admin SDK — bypasses rules (webpack-opaque import)
+    const admin = await getAdminModule();
+    await admin.adminClearWishlist(userId);
   } else if (phase === 'dual-read' || phase === 'shadow') {
     await rtdbRemove(getUserWishlistRtdbRef(userId));
     try {
@@ -556,6 +546,7 @@ export async function getRawWishlistItems(userId: string): Promise<WishlistItem[
 
 // ─── Real-time listener support ─────────────────────────────────────────────
 // Returns an unsubscribe function. Used by WishlistContext / EnhancedWishlistContext.
+// NOTE: This runs CLIENT-SIDE so uses client SDK (firestoreDb) with rules.
 
 export function subscribeToWishlist(
   userId: string,

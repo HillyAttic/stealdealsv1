@@ -1,154 +1,69 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
-import { clerkClient } from '@clerk/nextjs/server';
-import { getUserWishlist } from '@/lib/database/firestore-wishlist';
-import { WishlistProperty, UserActivity } from '@/types/auth';
-
-// Interface for admin UI wishlist items (extends WishlistProperty with UI-specific fields)
-interface AdminWishlistItem extends Omit<WishlistProperty, 'price' | 'addedAt'> {
-  price: number | string;
-  addedAt: string; // ISO string format
-  bedrooms: number | null;
-  bathrooms: number | null;
-  area: number | null;
-}
+import { FirebaseAdminUserService } from '@/lib/admin/firebase-admin-user-service';
+import { getUserById } from '@/lib/database/firestore-users';
 
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {
     try {
-
       const { searchParams } = new URL(request.url);
       const targetUserId = searchParams.get('userId');
 
       if (!targetUserId) {
-        return NextResponse.json(
-          { success: false, error: 'User ID is required' },
-          { status: 400 }
-        );
+        return NextResponse.json({ success: false, error: 'User ID is required' }, { status: 400 });
       }
 
-      // Get user details from Clerk
-      const client = await clerkClient();
-      const targetUser = await client.users.getUser(targetUserId);
-      
-      // Get user's wishlist items with full property details
-      let wishlist: AdminWishlistItem[] = [];
+      // Get Firebase Auth user
+      let firebaseUser;
       try {
-        console.log(`[API] Fetching wishlist with full property details for user: ${targetUserId}`);
-        let wishlistProperties = await getUserWishlist(targetUserId);
-        
-        // In development, also try the fallback user ID if no items found
-        if (wishlistProperties.length === 0 && process.env.NODE_ENV === 'development') {
-          console.log(`[API] No items found for ${targetUserId}, trying fallback user-1`);
-          wishlistProperties = await getUserWishlist('user-1');
-        }
-        
-        console.log(`[API] Found ${wishlistProperties.length} wishlist properties with full details`);
-        
-        // Convert to format expected by admin UI
-        wishlist = wishlistProperties.map(property => ({
-          id: property.id,
-          title: property.title,
-          location: property.location,
-          price: typeof property.price === 'number' ? property.price : property.price,
-          priceDisplay: typeof property.price === 'number' ? `₹${property.price.toLocaleString('en-IN')}` : property.price,
-          imageUrl: property.images && property.images.length > 0 ? property.images[0] : '/api/placeholder/300/200',
-          addedAt: property.addedAt.toISOString(),
-          type: property.type,
-          // These fields don't exist in our property structure, so we'll handle them in UI
-          bedrooms: null,
-          bathrooms: null,  
-          area: null, // We'll use property data to determine this in UI
-          notes: property.notes,
-          priority: property.priority,
-          // Add more property details for rich display
-          images: property.images || [],
-          developer: property.developer,
-          plotSize: property.plotSize,
-          category: property.category,
-          segment: property.segment,
-          description: property.description,
-          investorDiscoveryKitUrl: property.investorDiscoveryKitUrl
-        }));
-        
-        console.log(`[API] Successfully processed ${wishlist.length} wishlist items with full property details`);
-      } catch (error) {
-        console.warn('Failed to fetch wishlist for user:', targetUserId, error);
+        firebaseUser = await FirebaseAdminUserService.getUser(targetUserId);
+      } catch {
+        return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
       }
 
-      // Get user's activity (placeholder - activity tracking temporarily unavailable)
-      let activity: UserActivity[] = [];
+      // Get Firestore user data
+      const firestoreUser = await getUserById(targetUserId);
 
-      // Calculate analytics
-      const analytics = {
-        totalViews: activity.filter(a => a.type === 'property_view').length,
-        uniqueProperties: new Set(
-          activity
-            .filter(a => a.type === 'property_view' && a.metadata?.propertyId)
-            .map(a => a.metadata.propertyId)
-        ).size,
-        averageSessionDuration: 0 // This would need session tracking
-      };
-
-      const userDetails = {
-        id: targetUser.id,
-        name: `${targetUser.firstName || ''} ${targetUser.lastName || ''}`.trim() || 'Unknown User',
-        email: targetUser.emailAddresses[0]?.emailAddress || 'No email',
-        role: targetUser.publicMetadata?.role || 'user',
-        isActive: !targetUser.banned && !targetUser.locked,
-        emailVerified: targetUser.emailAddresses[0]?.verification?.status === 'verified',
-        provider: targetUser.externalAccounts[0]?.provider || 'email',
-        createdAt: targetUser.createdAt ? new Date(targetUser.createdAt).toISOString() : null,
-        lastLoginAt: targetUser.lastSignInAt ? new Date(targetUser.lastSignInAt).toISOString() : null,
-        lastActiveAt: targetUser.lastActiveAt ? new Date(targetUser.lastActiveAt).toISOString() : null,
-        imageUrl: targetUser.imageUrl,
-        phoneNumber: targetUser.phoneNumbers[0]?.phoneNumber || null,
-        banned: targetUser.banned,
-        locked: targetUser.locked,
-        hasImage: !!targetUser.imageUrl,
-        twoFactorEnabled: targetUser.twoFactorEnabled,
-        backupCodeEnabled: targetUser.backupCodeEnabled,
-        totpEnabled: targetUser.totpEnabled,
-        externalAccounts: targetUser.externalAccounts.map(account => ({
-          provider: account.provider,
-          emailAddress: account.emailAddress || ''
-        }))
-      };
-
-      return NextResponse.json({
-        success: true,
-        user: userDetails,
-        wishlist,
-        activity,
-        analytics
+      // Get wishlist items
+      const { db } = await import('@/lib/firebase-server-admin');
+      const wishlistSnapshot = await db.collection('wishlists').doc(targetUserId).collection('items').get();
+      const wishlistItems = wishlistSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          propertyId: data.propertyId,
+          title: data.title || 'Unknown',
+          price: data.price || 0,
+          location: data.location || '',
+          images: data.images || [],
+          type: data.type || '',
+          addedAt: data.addedAt?.toDate?.().toISOString() || new Date().toISOString(),
+          notes: data.notes || '',
+          priority: data.priority || 'medium',
+          bedrooms: data.bedrooms || null,
+          bathrooms: data.bathrooms || null,
+          area: data.area || null,
+        };
       });
 
+      const user = {
+        id: firebaseUser.id,
+        name: firebaseUser.displayName || firestoreUser?.name || firebaseUser.email?.split('@')[0] || 'Unknown',
+        email: firebaseUser.email || 'No email',
+        role: firestoreUser?.role || 'user',
+        isActive: !firebaseUser.disabled,
+        emailVerified: firebaseUser.emailVerified,
+        provider: firebaseUser.provider,
+        createdAt: firebaseUser.createdAt,
+        lastLoginAt: firebaseUser.lastSignInAt,
+        avatar: firebaseUser.photoURL || firestoreUser?.avatar,
+        preferences: firestoreUser?.preferences || {},
+      };
+
+      return NextResponse.json({ success: true, user, wishlist: wishlistItems, activity: [] });
     } catch (error) {
-      console.error('Error in user-details API:', error);
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Internal server error' 
-        },
-        { status: 500 }
-      );
+      console.error('[User Details API] Error:', error);
+      return NextResponse.json({ success: false, error: 'Failed to fetch user details' }, { status: 500 });
     }
   });
-}
-
-function getActivityDescription(activity: UserActivity): string {
-  switch (activity.type) {
-    case 'property_view':
-      return `Viewed property ${activity.metadata?.propertyId || 'unknown'}`;
-    case 'search':
-      return `Searched for "${activity.metadata?.query || 'unknown'}"`;
-    case 'wishlist_add':
-      return `Added property ${activity.metadata?.propertyId || 'unknown'} to wishlist`;
-    case 'wishlist_remove':
-      return `Removed property ${activity.metadata?.propertyId || 'unknown'} from wishlist`;
-    case 'contact_inquiry':
-      return `Made contact inquiry for property ${activity.metadata?.propertyId || 'unknown'}`;
-    default:
-      return `Performed ${activity.type} action`;
-  }
 }

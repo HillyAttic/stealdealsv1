@@ -25,20 +25,6 @@ export function validateEnvironmentConfig(): ConfigValidationResult {
 
   // Define required configuration
   const configs: RequiredConfig[] = [
-    // Clerk Configuration
-    {
-      name: 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
-      value: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-      required: true,
-      environments: ['development', 'production']
-    },
-    {
-      name: 'CLERK_SECRET_KEY',
-      value: process.env.CLERK_SECRET_KEY,
-      required: typeof window === 'undefined', // Only required on server-side
-      environments: ['development', 'production']
-    },
-
     // Firebase Configuration
     {
       name: 'NEXT_PUBLIC_FIREBASE_API_KEY',
@@ -104,27 +90,6 @@ export function validateEnvironmentConfig(): ConfigValidationResult {
       warnings.push(`Environment variable ${config.name} is empty`);
     }
   });
-
-  // Validate Clerk key consistency
-  const clerkPublishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  if (clerkPublishableKey) {
-    if (environment === 'production' && !clerkPublishableKey.includes('pk_live_')) {
-      warnings.push('Using non-production Clerk publishable key in production environment');
-    }
-    if (environment === 'development' && !clerkPublishableKey.includes('pk_test_') && !clerkPublishableKey.includes('pk_live_')) {
-      warnings.push('Clerk publishable key format may be incorrect for development');
-    }
-  }
-
-  const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-  if (clerkSecretKey) {
-    if (environment === 'production' && !clerkSecretKey.includes('sk_live_')) {
-      errors.push('Using non-production Clerk secret key in production environment - this is a security risk');
-    }
-    if (environment === 'development' && !clerkSecretKey.includes('sk_test_') && !clerkSecretKey.includes('sk_live_')) {
-      warnings.push('Clerk secret key format may be incorrect for development');
-    }
-  }
 
   // Validate Firebase database URL format
   const databaseUrl = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL;

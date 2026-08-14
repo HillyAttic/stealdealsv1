@@ -119,7 +119,7 @@ export async function GET(
       // Import the function to bypass cache if needed
       let wishlistProperties;
       if (bypassCache) {
-        const { getUserWishlistUncached } = await import('@/lib/database/wishlist');
+        const { getUserWishlistUncached } = await import('@/lib/database/firestore-wishlist');
         wishlistProperties = await getUserWishlistUncached(userId);
       } else {
         wishlistProperties = await getUserWishlist(userId);
@@ -314,7 +314,7 @@ export async function POST(
         }
 
         // Import the remove function and cache service
-        const { removeFromWishlist } = await import('@/lib/database/wishlist');
+        const { removeFromWishlist } = await import('@/lib/database/firestore-wishlist');
         const { cacheService } = await import('@/lib/database/cache');
         const removed = await removeFromWishlist(userId, propertyId);
         
@@ -385,7 +385,7 @@ export async function POST(
 
       } else if (action === 'clear_all') {
         // Import the clear function and cache service
-        const { clearWishlist } = await import('@/lib/database/wishlist');
+        const { clearWishlist } = await import('@/lib/database/firestore-wishlist');
         const { cacheService } = await import('@/lib/database/cache');
         const cleared = await clearWishlist(userId);
         

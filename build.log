@@ -1,0 +1,178 @@
+﻿node.exe : npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help 
+npmrc` for supported config options.
+At line:1 char:1
++ & "C:\nvm4w\nodejs/node.exe" "C:\nvm4w\nodejs/node_modules/npm/bin/np ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...config options.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ ⚠ Linting is disabled.
+ ⚠ The config property `experimental.turbo` is deprecated. Move this setting to `config.turbopack` or run `npx 
+@next/codemod@latest next-experimental-turbo-to-turbopack .`
+[BUILD_DEBUG] Generating build ID...
+   ▲ Next.js 15.5.9
+   - Environments: .env.local, .env.production
+   - Experiments (use with caution):
+     ✓ optimizeCss
+     ✓ scrollRestoration
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings in 18.3s
+
+./src/app/contact/page.tsx
+Attempted import error: 'AuthPrompt' is not exported from '@/components/auth' (imported as 'AuthPrompt').
+
+Import trace for requested module:
+./src/app/contact/page.tsx
+
+./src/app/franchise/[id]/page.tsx
+Attempted import error: 'AuthPrompt' is not exported from '@/components/auth' (imported as 'AuthPrompt').
+
+Import trace for requested module:
+./src/app/franchise/[id]/page.tsx
+
+./src/app/inventory/page.tsx
+Attempted import error: 'AuthPrompt' is not exported from '@/components/auth' (imported as 'AuthPrompt').
+
+Import trace for requested module:
+./src/app/inventory/page.tsx
+
+./src/app/plots/[id]/page.tsx
+Attempted import error: 'AuthPrompt' is not exported from '@/components/auth' (imported as 'AuthPrompt').
+
+Import trace for requested module:
+./src/app/plots/[id]/page.tsx
+
+./src/app/contact/page.tsx
+Attempted import error: 'AuthPrompt' is not exported from '@/components/auth' (imported as 'AuthPrompt').
+
+Import trace for requested module:
+./src/app/contact/page.tsx
+
+./src/app/franchise/[id]/page.tsx
+Attempted import error: 'AuthPrompt' is not exported from '@/components/auth' (imported as 'AuthPrompt').
+
+Import trace for requested module:
+./src/app/franchise/[id]/page.tsx
+
+./src/app/inventory/page.tsx
+Attempted import error: 'AuthPrompt' is not exported from '@/components/auth' (imported as 'AuthPrompt').
+
+Import trace for requested module:
+./src/app/inventory/page.tsx
+
+./src/app/plots/[id]/page.tsx
+Attempted import error: 'AuthPrompt' is not exported from '@/components/auth' (imported as 'AuthPrompt').
+
+Import trace for requested module:
+./src/app/plots/[id]/page.tsx
+
+./src/app/api/admin/users/[id]/wishlist/route.ts
+Module not found: Can't resolve '@/lib/database/wishlist' in 'D:\stealdealsv1\src\app\api\admin\users\[id]\wishlist'
+
+Import trace for requested module:
+./src/app/api/admin/users/[id]/wishlist/route.ts
+
+   Skipping validation of types
+   Collecting page data ...
+[Firebase Admin] Initializing Firebase Admin SDK...
+[Firebase Admin] Environment: production
+[Firebase Admin] VERCEL: false
+[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_KEY not found in environment
+[Firebase Admin] Current working directory: D:\stealdealsv1
+[Firebase Admin] Checking path: D:\stealdealsv1\service-account.json
+[Firebase Admin] ✅ Firebase credentials loaded from: D:\stealdealsv1\service-account.json
+[Firebase Admin] Project ID: stealdeals-e89ab
+[Firebase Admin] Database URL: https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app
+[Firebase Admin] ✅ Private key has BEGIN header
+[Firebase Admin] ✅ Private key has END header
+[Firebase Admin] Private key diagnostic: 29 lines detected (after processing)
+[Firebase Admin] ✅ Firebase Admin initialized successfully for project: stealdeals-e89ab
+[Firebase Admin] Using Key ID: f2e670ca...
+[Firebase Admin] Initializing Firebase Admin SDK...
+[Firebase Admin] Environment: production
+[Firebase Admin] VERCEL: false
+[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_KEY not found in environment
+[Firebase Admin] Current working directory: D:\stealdealsv1
+[Firebase Admin] Checking path: D:\stealdealsv1\service-account.json
+[Firebase Admin] ✅ Firebase credentials loaded from: D:\stealdealsv1\service-account.json
+[Firebase Admin] Project ID: stealdeals-e89ab
+[Firebase Admin] Database URL: https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app
+[Firebase Admin] ✅ Private key has BEGIN header
+[Firebase Admin] ✅ Private key has END header
+[Firebase Admin] Private key diagnostic: 29 lines detected (after processing)
+[Firebase Admin] ✅ Firebase Admin initialized successfully for project: stealdeals-e89ab
+[Firebase Admin] Using Key ID: f2e670ca...
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+[Firebase Admin] Initializing Firebase Admin SDK...
+[Firebase Admin] Environment: production
+[Firebase Admin] VERCEL: false
+[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_KEY not found in environment
+[Firebase Admin] Current working directory: D:\stealdealsv1
+[Firebase Admin] Checking path: D:\stealdealsv1\service-account.json
+[Firebase Admin] ✅ Firebase credentials loaded from: D:\stealdealsv1\service-account.json
+[Firebase Admin] Project ID: stealdeals-e89ab
+[Firebase Admin] Database URL: https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app
+[Firebase Admin] ✅ Private key has BEGIN header
+[Firebase Admin] ✅ Private key has END header
+[Firebase Admin] Private key diagnostic: 29 lines detected (after processing)
+(node:12344) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security 
+implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[Firebase Admin] ✅ Firebase Admin initialized successfully for project: stealdeals-e89ab
+[Firebase Admin] Using Key ID: f2e670ca...
+(node:2932) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security 
+implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ⚠ Using edge runtime on a page currently disables static generation for that page
+[2026-08-14T07:28:26.465Z]  @firebase/database: FIREBASE WARNING: Database lives in a different region. Please change your 
+database URL to https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app 
+(https://stealdeals-e89ab-default-rtdb.firebaseio.com/) 
+   Generating static pages (0/103) ...
+[Firebase Admin] Initializing Firebase Admin SDK...
+[Firebase Admin] Environment: production
+[Firebase Admin] VERCEL: false
+[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_KEY not found in environment
+[Firebase Admin] Current working directory: D:\stealdealsv1
+[Firebase Admin] Checking path: D:\stealdealsv1\service-account.json
+[Firebase Admin] ✅ Firebase credentials loaded from: D:\stealdealsv1\service-account.json
+[Firebase Admin] Project ID: stealdeals-e89ab
+[Firebase Admin] Database URL: https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app
+[Firebase Admin] ✅ Private key has BEGIN header
+[Firebase Admin] ✅ Private key has END header
+[Firebase Admin] Private key diagnostic: 29 lines detected (after processing)
+[Firebase Admin] ✅ Firebase Admin initialized successfully for project: stealdeals-e89ab
+[Firebase Admin] Using Key ID: f2e670ca...
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+[Firebase Admin] Initializing Firebase Admin SDK...
+[Firebase Admin] Environment: production
+[Firebase Admin] VERCEL: false
+[Firebase Admin] FIREBASE_SERVICE_ACCOUNT_KEY not found in environment
+[Firebase Admin] Current working directory: D:\stealdealsv1
+[Firebase Admin] Checking path: D:\stealdealsv1\service-account.json
+[Firebase Admin] ✅ Firebase credentials loaded from: D:\stealdealsv1\service-account.json
+[Firebase Admin] Project ID: stealdeals-e89ab
+[Firebase Admin] Database URL: https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app
+[Firebase Admin] ✅ Private key has BEGIN header
+[Firebase Admin] ✅ Private key has END header
+[Firebase Admin] Private key diagnostic: 29 lines detected (after processing)
+[Firebase Admin] ✅ Firebase Admin initialized successfully for project: stealdeals-e89ab
+[Firebase Admin] Using Key ID: f2e670ca...
+Error occurred prerendering page "/contact". Read more: https://nextjs.org/docs/messages/prerender-error
+[Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but 
+got: undefined.] {
+  digest: '1103642281'
+}
+Export encountered an error on /contact/page: /contact, exiting the build.
+[Config Validation] 🔍 Environment: production
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+ ⨯ Next.js build worker exited with code: 1 and signal: null

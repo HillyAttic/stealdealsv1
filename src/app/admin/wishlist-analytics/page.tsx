@@ -119,7 +119,36 @@ export default function WishlistAnalyticsPage() {
         throw new Error(data.error || 'Failed to fetch wishlist statistics');
       }
 
-      setStats(data.stats);
+      // Normalize stats to ensure all nested objects have safe defaults
+      const rawStats = data.stats;
+      const normalizedStats: WishlistStats = {
+        ...rawStats,
+        wishlistsByPriority: rawStats.wishlistsByPriority || { low: 0, medium: 0, high: 0 },
+        userEngagementMetrics: {
+          mostActiveUsers: [],
+          averageItemsPerUser: 0,
+          engagementDistribution: { '1-5': 0, '6-10': 0, '11-20': 0, '20+': 0 },
+          ...(rawStats.userEngagementMetrics || {}),
+        },
+        activityTrends: {
+          totalActivitiesToday: 0,
+          addActionsToday: 0,
+          removeActionsToday: 0,
+          dailyActivityTrend: [],
+          hourlyPattern: [],
+          ...(rawStats.activityTrends || {}),
+        },
+        realTimeMetrics: {
+          activeUsersLastHour: 0,
+          propertiesAddedLastHour: 0,
+          propertiesRemovedLastHour: 0,
+          popularPropertyTypes: [],
+          locationTrends: [],
+          ...(rawStats.realTimeMetrics || {}),
+        },
+      };
+
+      setStats(normalizedStats);
       setLastUpdated(new Date());
       setError(null); // Clear any previous errors on successful fetch
     } catch (err) {

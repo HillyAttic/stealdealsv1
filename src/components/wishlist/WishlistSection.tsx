@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { FaHeart, FaMapMarkerAlt, FaRulerCombined, FaTrash, FaEdit, FaStar, FaEye } from 'react-icons/fa';
 import { WishlistProperty } from '@/types/auth';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/AuthContext';
 import { useEnhancedWishlistContext } from '@/contexts/EnhancedWishlistContext';
 
 interface WishlistSectionProps {
@@ -14,8 +14,8 @@ interface WishlistSectionProps {
 }
 
 export function WishlistSection({ className = '', showAll = false }: WishlistSectionProps) {
-  const { isSignedIn } = useAuth();
-  const { user } = useUser();
+  const { user, loading } = useAuth();
+  const isSignedIn = !!user;
   const { wishlistItems, wishlistCount, isLoading, refreshWishlist, removeFromWishlist } = useEnhancedWishlistContext();
   const [wishlistProperties, setWishlistProperties] = useState<WishlistProperty[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -61,11 +61,11 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
         };
         
         // Add user identification headers
-        if (typeof window !== 'undefined' && user?.id) {
-          headers['x-user-id'] = user.id;
+        if (typeof window !== 'undefined' && user?.uid) {
+          headers['x-user-id'] = user.uid;
           // Always send user headers when authenticated (both dev and production)
-          headers['x-mock-user-id'] = user.id;
-          headers['x-mock-user-email'] = user.primaryEmailAddress?.emailAddress || '';
+          headers['x-mock-user-id'] = user.uid;
+          headers['x-mock-user-email'] = user.email || '';
         } else if (!isSignedIn && typeof window !== 'undefined') {
           // For non-authenticated users, try to get from localStorage
           const stored = localStorage.getItem('stealdeals_wishlist_temp');
@@ -85,7 +85,7 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
           hasUserId: !!headers['x-user-id'],
           hasMockUserId: !!headers['x-mock-user-id'],
           isSignedIn,
-          userId: user?.id
+          userId: user?.uid
         });
 
         // OPTIMIZATION: Add performance timing
@@ -155,12 +155,12 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
     };
 
     // Only fetch if we have items and user is signed in
-    if (wishlistItems.size > 0 && isSignedIn && user?.id) {
+    if (wishlistItems.size > 0 && isSignedIn && user?.uid) {
       fetchDetailedWishlist();
     } else if (wishlistItems.size === 0) {
       setWishlistProperties([]);
     }
-  }, [memoizedWishlistItems, user?.id, isSignedIn]); // Use memoized wishlist items
+  }, [memoizedWishlistItems, user?.uid, isSignedIn]); // Use memoized wishlist items
 
   // Remove property from wishlist with immediate UI update
   const handleRemove = useCallback(async (propertyId: string) => {
@@ -202,11 +202,11 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
       };
       
       // Add user identification headers
-      if (typeof window !== 'undefined' && user?.id) {
-        headers['x-user-id'] = user.id;
+      if (typeof window !== 'undefined' && user?.uid) {
+        headers['x-user-id'] = user.uid;
         // Always send user headers when authenticated (both dev and production)
-        headers['x-mock-user-id'] = user.id;
-        headers['x-mock-user-email'] = user.primaryEmailAddress?.emailAddress || '';
+        headers['x-mock-user-id'] = user.uid;
+        headers['x-mock-user-email'] = user.email || '';
       }
 
       const response = await fetch(`/api/user/wishlist/${propertyId}`, {
@@ -237,7 +237,7 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
     } catch (error) {
       console.error('Error updating wishlist item:', error);
     }
-  }, [user?.id, editNotes, editPriority]);
+  }, [user?.uid, editNotes, editPriority]);
 
   // Start editing
   const startEditing = useCallback((property: WishlistProperty) => {

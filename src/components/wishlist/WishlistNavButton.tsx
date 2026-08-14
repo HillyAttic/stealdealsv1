@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { FaHeart, FaSignInAlt } from 'react-icons/fa';
-import { useAuth, SignInButton } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/AuthContext';
 import { useWishlist } from '@/hooks/useWishlist';
 
 interface WishlistNavButtonProps {
@@ -30,29 +30,32 @@ function WishlistAuthModal({ isOpen, onClose }: AuthAlertModalProps) {
         >
           ×
         </button>
-        
+
         {/* Content */}
         <div className="text-center">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
             <FaHeart className="h-6 w-6 text-red-600" />
           </div>
-          
+
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             Sign in to view your wishlist
           </h3>
-          
+
           <p className="text-sm text-gray-500 mb-6">
             Create a free account to save properties and view your personalized wishlist.
           </p>
-          
+
           <div className="space-y-3">
-            <SignInButton mode="modal">
-              <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <Link href="/sign-in">
+              <button
+                onClick={onClose}
+                className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
                 <FaSignInAlt className="mr-2" />
                 Sign In
               </button>
-            </SignInButton>
-            
+            </Link>
+
             <button
               onClick={onClose}
               className="w-full px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -67,7 +70,9 @@ function WishlistAuthModal({ isOpen, onClose }: AuthAlertModalProps) {
 }
 
 export function WishlistNavButton({ className = '', showText = false }: WishlistNavButtonProps) {
-  const { isSignedIn, userId } = useAuth();
+  const { user, loading } = useAuth();
+  const isSignedIn = !!user;
+  const userId = user?.uid;
   const { wishlistCount } = useWishlist();
   const [showAuthModal, setShowAuthModal] = useState(false);
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import {
   getRawWishlistItems,
@@ -33,8 +33,8 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 const WISHLIST_STORAGE_KEY = 'stealdeals_wishlist_temp';
 
 export function EnhancedWishlistProvider({ children }: { children: React.ReactNode }) {
-  const { isSignedIn } = useAuth();
-  const { user } = useUser();
+  const { user, loading } = useAuth();
+  const isSignedIn = !!user;
   const { showSuccess, showError, showWarning, showInfo } = useToast();
   
   // Create stable references for toast functions to prevent infinite re-renders
@@ -132,12 +132,12 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
 
   // Function to get current user ID (with fallback for development)
   const getCurrentUserId = useCallback((): string => {
-    if (user?.id) return user.id;
+    if (user?.uid) return user.uid;
     if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
       return 'user-1'; // Development fallback
     }
     return 'anonymous';
-  }, [user?.id]);
+  }, [user?.uid]);
 
   // Enhanced add to wishlist with retry and production resilience
   const addToWishlist = useCallback(async (propertyId: string): Promise<boolean> => {
@@ -504,7 +504,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
 
   // Enhanced initial load and listener setup with production resilience
   useEffect(() => {
-    const userId = user?.id || (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' ? 'user-1' : 'anonymous');
+    const userId = user?.uid || (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' ? 'user-1' : 'anonymous');
     const isProduction = process.env.NODE_ENV === 'production';
     
     console.log(`[EnhancedWishlistContext] 🚀 Initializing for user: ${userId}, authenticated: ${isSignedIn}, environment: ${isProduction ? 'production' : 'development'}`);
@@ -681,7 +681,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
       setIsLoading(false);
       setIsInitialized(true);
     }
-  }, [isSignedIn, user?.id]);
+  }, [isSignedIn, user?.uid]);
 
   // Update queued operations count periodically
   useEffect(() => {

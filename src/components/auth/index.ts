@@ -1,14 +1,5 @@
-// Authentication components
-export { default as AuthButton } from './AuthButton';
-export { default as AuthModal } from './AuthModal';
+export { default as SignedIn } from './SignedIn';
+export { default as SignedOut } from './SignedOut';
+export { default as UserDropdown } from './UserDropdown';
+export { default as UserButton } from './UserButton';
 export { AuthPrompt } from './AuthPrompt';
-export { default as SignInForm } from './SignInForm';
-export { default as SignUpForm } from './SignUpForm';
-export { AuthProvider } from './AuthProvider';
-
-// Error boundaries
-export { AuthErrorBoundary, withAuthErrorBoundary } from '../error-boundaries/AuthErrorBoundary';
-
-// Types
-export type { AuthError } from '@/lib/errors/auth-errors';
-export { AuthErrorCodes } from '@/types/auth';

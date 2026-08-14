@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaHeart, FaSpinner, FaClock, FaExclamationTriangle } from 'react-icons/fa';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEnhancedWishlistContext } from '@/contexts/EnhancedWishlistContext';
 import { WishlistErrorBoundary } from '@/components/error-boundaries/WishlistErrorBoundary';
@@ -24,7 +24,8 @@ function WishlistButtonContent({
   className = '',
   onToggle
 }: EnhancedWishlistButtonProps) {
-  const { isSignedIn } = useAuth();
+  const { user, loading } = useAuth();
+  const isSignedIn = !!user;
   const router = useRouter();
   const {
     isInWishlist,

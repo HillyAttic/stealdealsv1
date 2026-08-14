@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HealthStatus {
   component: string;
@@ -21,7 +21,9 @@ export function SystemHealthCheck({
   autoRefresh = true, 
   refreshInterval = 30000 
 }: SystemHealthCheckProps) {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { loading, user } = useAuth();
+  const isLoaded = !loading;
+  const isSignedIn = !!user;
   const [healthStatus, setHealthStatus] = useState<HealthStatus[]>([]);
   const [isChecking, setIsChecking] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -125,7 +127,6 @@ export function SystemHealthCheck({
 
       // Check Environment Configuration
       const hasRequiredEnv = !!(
-        process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
         process.env.NEXT_PUBLIC_APP_URL
       );

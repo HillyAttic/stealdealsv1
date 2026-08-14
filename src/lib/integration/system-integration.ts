@@ -104,8 +104,6 @@ export async function performHealthCheck() {
 // Configuration validation
 export function validateSystemConfiguration() {
   const requiredEnvVars = [
-    'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
-    'CLERK_SECRET_KEY',
     'NEXT_PUBLIC_FIREBASE_API_KEY',
     'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
     'NEXT_PUBLIC_FIREBASE_DATABASE_URL'

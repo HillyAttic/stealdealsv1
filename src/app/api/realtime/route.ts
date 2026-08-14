@@ -1,13 +1,15 @@
 import { NextRequest } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { getServerSession } from '@/lib/auth-server-session';
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
+    const session = await getServerSession();
+
+    if (!session) {
       return new Response('Unauthorized', { status: 401 });
     }
+
+    const userId = session.uid;
 
     const { searchParams } = new URL(request.url);
     const channel = searchParams.get('channel') || 'global';

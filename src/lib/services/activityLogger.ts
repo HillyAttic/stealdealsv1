@@ -1,6 +1,30 @@
 import { firestoreDb } from '@/lib/firestore';
 import { collection, doc, setDoc, getDocs, addDoc, query, orderBy, limit as fsLimit, serverTimestamp, Timestamp } from 'firebase/firestore';
 
+// Admin SDK import for writing to globalActivities (rule: allow write: if false → Admin SDK only)
+let adminDb: any = null;
+async function getAdminFirestore() {
+  if (!adminDb) {
+    try {
+      const mod = await import('@/lib/firebase-server-admin');
+      adminDb = mod.db;
+    } catch {
+      // Admin SDK not available — fall back to client SDK (will fail writes to globalActivities)
+      adminDb = firestoreDb;
+    }
+  }
+  return adminDb;
+}
+
+async function getAdminFieldValue() {
+  try {
+    const admin = await import('firebase-admin');
+    return admin.firestore.FieldValue.serverTimestamp();
+  } catch {
+    return serverTimestamp();
+  }
+}
+
 export interface WishlistActivity {
   id?: string;
   userId: string;
@@ -27,6 +51,7 @@ export class ActivityLogger {
 
   /**
    * Log wishlist activity with real timestamp
+   * Uses Admin SDK for writes (security rules require Admin SDK for globalActivities)
    */
   async logWishlistActivity(activity: Omit<WishlistActivity, 'id' | 'timestamp'>): Promise<string | null> {
     try {
@@ -36,30 +61,35 @@ export class ActivityLogger {
         propertyId: activity.propertyId
       });
 
+      const admDb = await getAdminFirestore();
+      const serverTs = await getAdminFieldValue();
+
       // Create activity data with server timestamp
-      const activityData: Omit<WishlistActivity, 'id'> = {
+      const activityData: Record<string, any> = {
         userId: activity.userId,
         action: activity.action,
         propertyId: activity.propertyId,
-        timestamp: serverTimestamp(),
-        metadata: activity.metadata ? {
-          ...(activity.metadata.notes !== undefined && { notes: activity.metadata.notes }),
-          ...(activity.metadata.priority !== undefined && { priority: activity.metadata.priority }),
-          ...(activity.metadata.reason !== undefined && { reason: activity.metadata.reason }),
-          ...(activity.metadata.adminUserId !== undefined && { adminUserId: activity.metadata.adminUserId })
-        } : {}
+        timestamp: serverTs,
       };
 
+      if (activity.metadata) {
+        const meta: Record<string, any> = {};
+        if (activity.metadata.notes !== undefined) meta.notes = activity.metadata.notes;
+        if (activity.metadata.priority !== undefined) meta.priority = activity.metadata.priority;
+        if (activity.metadata.reason !== undefined) meta.reason = activity.metadata.reason;
+        if (activity.metadata.adminUserId !== undefined) meta.adminUserId = activity.metadata.adminUserId;
+        if (Object.keys(meta).length > 0) activityData.metadata = meta;
+      }
+
       // Save to user activities subcollection: activities/{userId}/entries/{autoId}
-      const userActivitiesCol = collection(firestoreDb, 'activities', activity.userId, 'entries');
-      const docRef = await addDoc(userActivitiesCol, activityData);
+      const userEntriesCol = admDb.collection('activities').doc(activity.userId).collection('entries');
+      const docRef = await userEntriesCol.add(activityData);
       const activityId = docRef.id;
 
       // Also store in global activities feed for admin analytics
-      const globalActivitiesCol = collection(firestoreDb, 'globalActivities');
-      await setDoc(doc(globalActivitiesCol, activityId), {
+      await admDb.collection('globalActivities').doc(activityId).set({
         ...activityData,
-        createdAt: serverTimestamp()
+        createdAt: serverTs
       });
 
       console.log(`[ActivityLogger] ✅ Activity logged successfully: ${activityId}`);

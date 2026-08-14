@@ -3,8 +3,11 @@
 //
 // Firestore structure: users/{userId}
 // RTDB structure:      users/{userId}
+//
+// NOTE: Firestore-phase now uses Admin SDK (bypasses security rules) because
+// this module is imported by SERVER routes that have no signed-in client user.
 
-import { User, UserActivity, WishlistItem, UserPreferences } from '@/types/auth';
+import { User, UserPreferences } from '@/types/auth';
 
 // RTDB imports
 import { database } from '@/lib/firebase';
@@ -23,7 +26,11 @@ import {
   endAt,
 } from 'firebase/database';
 
-// Firestore imports
+// Admin SDK imports — used for Firestore-phase (server-side, no rules)
+import { db } from '@/lib/firebase-server-admin';
+import admin from 'firebase-admin';
+
+// Client SDK imports — kept for shadow / dual-read fallback paths ONLY
 import {
   collection,
   doc,
@@ -35,11 +42,6 @@ import {
   addDoc,
   query as fsQuery,
   where,
-  limit as fsLimit,
-  orderBy as fsOrderBy,
-  startAt as fsStartAt,
-  endAt as fsEndAt,
-  DocumentData,
 } from 'firebase/firestore';
 import { firestoreDb } from '@/lib/firestore';
 
@@ -49,6 +51,18 @@ function getPhase(): MigrationPhase {
   return (process.env.MIGRATION_PHASE as MigrationPhase) || 'rtdb';
 }
 
+// ─── Admin SDK helpers (primary for firestore phase) ──────────────────────
+
+function adminUsersCol() {
+  return (db as admin.firestore.Firestore).collection('users');
+}
+
+function adminUserDoc(userId: string) {
+  return (db as admin.firestore.Firestore).collection('users').doc(userId);
+}
+
+// ─── Client SDK helpers (fallback for shadow / dual-read only) ───────────────
+
 function usersCol() {
   return collection(firestoreDb, 'users');
 }
@@ -57,9 +71,27 @@ function userDoc(userId: string) {
   return doc(firestoreDb, 'users', userId);
 }
 
-// ─── Helper: serialize/deserialize user ─────────────────────────────────────
+// ─── Date normalization: handles Date, Timestamp, ISO strings ────────────────
 
-function serializeUser(user: User): DocumentData {
+function toDate(value: any): Date {
+  if (value instanceof Date) return value;
+  if (value?.toDate && typeof value.toDate === 'function') return value.toDate();
+  if (value?.seconds && typeof value.seconds === 'number') return new Date(value.seconds * 1000);
+  if (typeof value === 'string') return new Date(value);
+  return new Date();
+}
+
+function deserializeUser(id: string, data: any): User {
+  return {
+    ...data,
+    id,
+    createdAt: toDate(data.createdAt),
+    updatedAt: toDate(data.updatedAt),
+    lastLoginAt: toDate(data.lastLoginAt),
+  } as User;
+}
+
+function serializeUser(user: User): any {
   return {
     ...user,
     createdAt: user.createdAt.toISOString(),
@@ -68,23 +100,13 @@ function serializeUser(user: User): DocumentData {
   };
 }
 
-function deserializeUser(id: string, data: DocumentData): User {
-  return {
-    ...data,
-    id,
-    createdAt: new Date(data.createdAt),
-    updatedAt: new Date(data.updatedAt),
-    lastLoginAt: new Date(data.lastLoginAt),
-  } as User;
-}
-
 // ─── Create user ────────────────────────────────────────────────────────────
 
 export async function createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
   const phase = getPhase();
 
   if (phase === 'firestore') {
-    const docRef = await addDoc(usersCol(), {});
+    const docRef = adminUsersCol().doc();
     const userId = docRef.id;
     const user: User = {
       ...userData,
@@ -92,7 +114,7 @@ export async function createUser(userData: Omit<User, 'id' | 'createdAt' | 'upda
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    await setDoc(docRef, serializeUser(user));
+    await docRef.set(serializeUser(user));
     return user;
   }
 
@@ -125,8 +147,8 @@ export async function getUserById(userId: string): Promise<User | null> {
 
   if (phase === 'firestore' || phase === 'dual-read') {
     try {
-      const docSnap = await getDoc(userDoc(userId));
-      if (docSnap.exists()) {
+      const docSnap = await adminUserDoc(userId).get();
+      if (docSnap.exists) {
         return deserializeUser(docSnap.id, docSnap.data());
       }
       if (phase === 'firestore') return null;
@@ -160,8 +182,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
 
   if (phase === 'firestore' || phase === 'dual-read') {
     try {
-      const q = fsQuery(usersCol(), where('email', '==', normalizedEmail));
-      const snap = await getDocs(q);
+      const snap = await adminUsersCol().where('email', '==', normalizedEmail).get();
       if (!snap.empty) {
         const docSnap = snap.docs[0];
         return deserializeUser(docSnap.id, docSnap.data());
@@ -198,9 +219,7 @@ export async function getUserByProviderId(providerId: string, provider: string):
 
   if (phase === 'firestore' || phase === 'dual-read') {
     try {
-      const q = fsQuery(usersCol(), where('providerId', '==', providerId));
-      const snap = await getDocs(q);
-      // Filter by provider in case providerId is not unique across providers
+      const snap = await adminUsersCol().where('providerId', '==', providerId).get();
       for (const docSnap of snap.docs) {
         const data = docSnap.data();
         if (data.provider === provider) {
@@ -242,7 +261,7 @@ export async function updateUser(userId: string, updates: Partial<User>): Promis
   }
 
   if (phase === 'firestore') {
-    await updateDoc(userDoc(userId), updateData);
+    await adminUserDoc(userId).update(updateData);
     return (await getUserById(userId))!;
   }
 
@@ -267,7 +286,7 @@ export async function updateUserPreferences(userId: string, preferences: UserPre
   const phase = getPhase();
 
   if (phase === 'firestore') {
-    await updateDoc(userDoc(userId), { preferences });
+    await adminUserDoc(userId).update({ preferences });
     return;
   }
 
@@ -288,15 +307,24 @@ export async function deleteUser(userId: string): Promise<void> {
   const phase = getPhase();
 
   if (phase === 'firestore') {
-    await deleteDoc(userDoc(userId));
+    await adminUserDoc(userId).delete();
     // Delete user activities
-    const activitiesQ = fsQuery(collection(firestoreDb, 'userActivities'), where('userId', '==', userId));
-    const activitiesSnap = await getDocs(activitiesQ);
-    for (const d of activitiesSnap.docs) await deleteDoc(d.ref);
+    const activitiesSnap = await (db as admin.firestore.Firestore)
+      .collection('userActivities')
+      .where('userId', '==', userId)
+      .get();
+    const batch = (db as admin.firestore.Firestore).batch();
+    activitiesSnap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
     // Delete wishlist items (subcollection)
-    const wishlistCol = collection(firestoreDb, 'wishlists', userId, 'items');
-    const wishlistSnap = await getDocs(wishlistCol);
-    for (const d of wishlistSnap.docs) await deleteDoc(d.ref);
+    const wishlistSnap = await (db as admin.firestore.Firestore)
+      .collection('wishlists')
+      .doc(userId)
+      .collection('items')
+      .get();
+    const wishBatch = (db as admin.firestore.Firestore).batch();
+    wishlistSnap.docs.forEach(d => wishBatch.delete(d.ref));
+    await wishBatch.commit();
     return;
   }
 
@@ -329,7 +357,7 @@ export async function getUsers(page: number = 1, limit: number = 20): Promise<{ 
 
   if (phase === 'firestore' || phase === 'dual-read') {
     try {
-      const snap = await getDocs(usersCol());
+      const snap = await adminUsersCol().get();
       const allUsers = snap.docs.map(d => deserializeUser(d.id, d.data()));
       const total = allUsers.length;
       const start = (page - 1) * limit;
@@ -365,9 +393,7 @@ export async function searchUsers(searchTerm: string, limit: number = 20): Promi
 
   if (phase === 'firestore' || phase === 'dual-read') {
     try {
-      // Firestore doesn't support LIKE queries — fetch all and filter client-side
-      // (For large user bases, use a search service instead)
-      const snap = await getDocs(usersCol());
+      const snap = await adminUsersCol().get();
       const all = snap.docs.map(d => deserializeUser(d.id, d.data()));
       return all
         .filter(u => u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term))
@@ -406,7 +432,7 @@ export async function getUserStatistics(): Promise<{
 
   if (phase === 'firestore' || phase === 'dual-read') {
     try {
-      const snap = await getDocs(usersCol());
+      const snap = await adminUsersCol().get();
       const allUsers = snap.docs.map(d => d.data());
       return computeStats(allUsers);
     } catch (err) {
@@ -469,7 +495,7 @@ export async function updateUserProfile(userId: string, updates: {
   }
 
   if (phase === 'firestore') {
-    await updateDoc(userDoc(userId), updateData);
+    await adminUserDoc(userId).update(updateData);
     return getUserById(userId);
   }
 
@@ -485,7 +511,7 @@ export async function updateUserAvatar(userId: string, avatarUrl: string | null)
   const updateData = { avatar: avatarUrl, updatedAt: new Date().toISOString() };
 
   if (phase === 'firestore') {
-    await updateDoc(userDoc(userId), updateData);
+    await adminUserDoc(userId).update(updateData);
     return getUserById(userId);
   }
 
@@ -517,5 +543,76 @@ export async function deleteUserAccount(userId: string, password: string): Promi
   } catch (err) {
     console.error('Error deleting user account:', err);
     return { success: false, error: 'Failed to delete account' };
+  }
+}
+
+// ─── Firebase Auth Integration ──────────────────────────────────────────────
+
+/**
+ * Get user by Firebase UID (alias for getUserById)
+ * This is the primary lookup method for Firebase Auth integration
+ */
+export async function getUserByUid(uid: string): Promise<User | null> {
+  return getUserById(uid);
+}
+
+/**
+ * Create or update user document for Firebase Auth user
+ */
+export async function upsertUserForFirebaseAuth(
+  uid: string,
+  userData: Partial<User>
+): Promise<User> {
+  const phase = getPhase();
+  const now = new Date().toISOString();
+
+  const userDocPayload = {
+    ...userData,
+    id: uid,
+    updatedAt: now,
+  };
+
+  if (phase === 'firestore') {
+    await adminUserDoc(uid).set(userDocPayload, { merge: true });
+    return (await getUserById(uid))!;
+  }
+
+  // RTDB path
+  await rtdbSet(rtdbRef(database, `users/${uid}`), userDocPayload);
+
+  if (phase === 'shadow' || phase === 'dual-read') {
+    try {
+      await setDoc(doc(firestoreDb, 'users', uid), userDocPayload, { merge: true });
+    } catch (err) {
+      console.warn('[Firestore Users] Shadow upsert failed:', err);
+    }
+  }
+
+  return (await getUserById(uid))!;
+}
+
+/**
+ * Update last login timestamp for Firebase Auth user
+ */
+export async function updateFirebaseAuthLastLogin(uid: string): Promise<void> {
+  const phase = getPhase();
+  const now = new Date().toISOString();
+
+  if (phase === 'firestore') {
+    await adminUserDoc(uid).update({ lastLoginAt: now, updatedAt: now });
+    return;
+  }
+
+  await rtdbUpdate(rtdbRef(database, `users/${uid}`), {
+    lastLoginAt: now,
+    updatedAt: now
+  });
+
+  if (phase === 'shadow' || phase === 'dual-read') {
+    try {
+      await updateDoc(userDoc(uid), { lastLoginAt: now, updatedAt: now });
+    } catch (err) {
+      console.warn('[Firestore Users] Shadow last login update failed:', err);
+    }
   }
 }

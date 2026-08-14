@@ -8,7 +8,7 @@ import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
 import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
 import { FaUser, FaEnvelope, FaCalendar, FaHeart, FaEye, FaPhone, FaCheck, FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
 
-interface ClerkUser {
+interface FirebaseUser {
   id: string;
   name: string;
   email: string;
@@ -40,7 +40,7 @@ export default function AdminUserDetailsPage() {
   const router = useRouter();
   const userId = params.id as string;
   
-  const [user, setUser] = useState<ClerkUser | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'wishlist'>('overview');
@@ -108,7 +108,7 @@ export default function AdminUserDetailsPage() {
   };
 
   // Get user status
-  const getUserStatus = (user: ClerkUser) => {
+  const getUserStatus = (user: FirebaseUser) => {
     if (user.banned) return { status: 'Banned', color: 'text-red-600', bgColor: 'bg-red-100', icon: FaTimes };
     if (user.locked) return { status: 'Locked', color: 'text-orange-600', bgColor: 'bg-orange-100', icon: FaTimes };
     if (user.isActive) return { status: 'Active', color: 'text-green-600', bgColor: 'bg-green-100', icon: FaCheck };
@@ -319,13 +319,13 @@ export default function AdminUserDetailsPage() {
             {/* External Links */}
             <div className="mt-6 pt-6 border-t">
               <a
-                href={`https://dashboard.clerk.com`}
+                href={`https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/authentication/users`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 border border-purple-300 rounded-md shadow-sm text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100"
+                className="inline-flex items-center px-4 py-2 border border-orange-300 rounded-md shadow-sm text-sm font-medium text-orange-700 bg-orange-50 hover:bg-orange-100"
               >
                 <FaExternalLinkAlt className="mr-2" />
-                View in Clerk Dashboard
+                View in Firebase Console
               </a>
             </div>
           </div>

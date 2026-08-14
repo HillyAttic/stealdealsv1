@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface RealTimeEvent {
   type: 'connection' | 'user_update' | 'admin_update' | 'global_update' | 'heartbeat' | 'error';
@@ -44,8 +44,9 @@ const DEFAULT_OPTIONS: Required<UseRealTimeOptions> = {
  * Hook for managing Server-Sent Events real-time connections
  */
 export function useRealTime(options: UseRealTimeOptions = {}): UseRealTimeReturn {
-  const { isSignedIn, userId } = useAuth();
-  const { user } = useUser();
+  const { user, loading } = useAuth();
+  const isSignedIn = !!user;
+  const userId = user?.uid || null;
   const opts = { ...DEFAULT_OPTIONS, ...options };
   
   // Connection state

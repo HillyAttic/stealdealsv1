@@ -1,13 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
 
 export function ProfileManagement() {
-  const { isLoaded } = useAuth();
-  const { user, isLoaded: userLoaded } = useUser();
-  const authLoading = !isLoaded || !userLoaded;
+  const { user, appUser, loading } = useAuth();
+  const authLoading = loading;
   const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'notifications' | 'account'>('profile');
 
   // Show loading state
@@ -15,7 +14,7 @@ export function ProfileManagement() {
     return <LoadingSpinner message="Loading your profile..." />;
   }
 
-  if (!user) {
+  if (!user || !appUser) {
     return <div className="text-center py-8">Please sign in to view your profile.</div>;
   }
 
@@ -66,23 +65,23 @@ export function ProfileManagement() {
               {/* User Avatar */}
               <div className="flex items-center space-x-6">
                 <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-                  {user.avatar ? (
-                    <img 
-                      src={user.avatar} 
-                      alt={user.name}
+                  {appUser.avatar ? (
+                    <img
+                      src={appUser.avatar}
+                      alt={appUser.name}
                       className="w-20 h-20 rounded-full object-cover"
                     />
                   ) : (
                     <span className="text-3xl font-bold text-white">
-                      {user.name.charAt(0).toUpperCase()}
+                      {appUser.name.charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900">{user.name}</h3>
-                  <p className="text-gray-600">{user.email}</p>
+                  <h3 className="text-xl font-semibold text-gray-900">{appUser.name}</h3>
+                  <p className="text-gray-600">{appUser.email}</p>
                   <span className="inline-block mt-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                    {user.role === 'admin' ? 'Administrator' : 'User'}
+                    {appUser.role === 'admin' ? 'Administrator' : 'User'}
                   </span>
                 </div>
               </div>
@@ -94,7 +93,7 @@ export function ProfileManagement() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                     <input
                       type="text"
-                      value={user.name}
+                      value={appUser.name}
                       disabled
                       className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
                     />
@@ -103,7 +102,7 @@ export function ProfileManagement() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input
                       type="email"
-                      value={user.email}
+                      value={appUser.email}
                       disabled
                       className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
                     />
@@ -114,7 +113,7 @@ export function ProfileManagement() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
                     <input
                       type="text"
-                      value={user.id}
+                      value={appUser.id}
                       disabled
                       className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
                     />
@@ -123,7 +122,7 @@ export function ProfileManagement() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                     <input
                       type="text"
-                      value={user.role === 'admin' ? 'Administrator' : 'User'}
+                      value={appUser.role === 'admin' ? 'Administrator' : 'User'}
                       disabled
                       className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
                     />
