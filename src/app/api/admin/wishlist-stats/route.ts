@@ -180,6 +180,9 @@ async function getUserDetails(userId: string): Promise<{ id: string; name: strin
   }
 }
 
+
+
+
 // GET /api/admin/wishlist-stats — uses Firebase Admin SDK (bypasses security rules)
 export async function GET(request: NextRequest) {
   return requireAdminAuth(request, async (authenticatedRequest) => {
@@ -195,19 +198,31 @@ export async function GET(request: NextRequest) {
       const topPropertiesLimit = Math.min(parseInt(searchParams.get('topLimit') || '10'), 50);
       const recentActivityLimit = Math.min(parseInt(searchParams.get('activityLimit') || '20'), 100);
 
-      // Get all wishlists from Firestore using Admin SDK
+      // Read all wishlists from Firestore using Admin SDK
       const wishlistsCol = db.collection('wishlists');
       const userDocs = await wishlistsCol.get();
+      const userIds = userDocs.empty ? [] : userDocs.docs.map(d => d.id);
 
-      if (userDocs.empty) {
+      if (userIds.length === 0) {
+        // No data in either source — still try to get total user count for the dashboard
+        let totalUsers = 0;
+        try {
+          const { auth } = await import('@/lib/firebase-server-admin');
+          const listUsersResult = await auth.listUsers(1000);
+          totalUsers = listUsersResult.users.length;
+        } catch {
+          /* ignore */
+        }
+
         logAdminStatsOperation('get_wishlist_stats', adminUserId, {
-          result: 'no_wishlists_found'
+          result: 'no_wishlists_found',
+          firestoreUsers: userIds.length,
         });
 
         return NextResponse.json({
           success: true,
           stats: {
-            totalUsers: 0,
+            totalUsers,
             usersWithWishlists: 0,
             totalWishlistItems: 0,
             averageWishlistSize: 0,
@@ -238,20 +253,19 @@ export async function GET(request: NextRequest) {
             requestId: crypto.randomUUID(),
             timestamp: new Date().toISOString(),
             duration: `${Date.now() - startTime}ms`,
-            adminUserId
+            adminUserId,
+            dataSources: { firestore: userIds.length }
           }
         });
       }
 
-      const userIds = userDocs.docs.map(d => d.id);
-      const usersWithWishlists = userIds.length;
 
       let totalWishlistItems = 0;
       const propertyFrequency = new Map<string, number>();
       const priorityCount = { low: 0, medium: 0, high: 0 };
       const userWishlistSizes: number[] = [];
 
-      // Read all users' wishlist items in parallel using Admin SDK
+      // ── Read all users' wishlist items (Firestore-only) ──
       const userItemsResults = await Promise.all(
         userIds.map(async (userId) => {
           try {
@@ -285,6 +299,7 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      const usersWithWishlists = userIds.length;
       const averageWishlistSize = usersWithWishlists > 0 ? totalWishlistItems / usersWithWishlists : 0;
 
       // Get top wishlisted properties
@@ -345,7 +360,14 @@ export async function GET(request: NextRequest) {
       });
 
       // Process recent activity
-      const processedRecentActivity = [];
+      const processedRecentActivity: Array<{
+        userId: string;
+        userName?: string;
+        userEmail?: string;
+        action: 'add' | 'remove';
+        propertyId: string;
+        timestamp: string;
+      }> = [];
       let allActivities: WishlistActivity[] = [];
 
       if (includeRecentActivity) {
@@ -411,7 +433,7 @@ export async function GET(request: NextRequest) {
               userId: activity.userId,
               userName: userDetails?.name || `User ${activity.userId.substring(0, 8)}`,
               userEmail: userDetails?.email || `user-${activity.userId.substring(0, 8)}@system.local`,
-              action: activity.action,
+              action: activity.action as 'add' | 'remove',
               propertyId: activity.propertyId,
               timestamp: timestamp
             });
@@ -616,6 +638,9 @@ export async function GET(request: NextRequest) {
           timestamp: new Date().toISOString(),
           duration: `${duration}ms`,
           adminUserId,
+          dataSources: {
+            firestore: userIds.length,
+          },
           queryParams: {
             includeRecentActivity,
             includeUserDetails,
@@ -657,3 +682,4 @@ export async function GET(request: NextRequest) {
     }
   });
 }
+

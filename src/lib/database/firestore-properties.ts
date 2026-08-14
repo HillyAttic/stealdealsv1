@@ -444,7 +444,8 @@ export async function getPropertyById(id: string): Promise<Property | null> {
     if (docSnap.exists()) {
       return flattenPropertyByType(docSnap.id, docSnap.data());
     }
-    return null;
+    // RTDB fallback: property may still exist only in RTDB (not yet migrated)
+    console.warn(`[Firestore Properties] Property ${id} not found in Firestore, checking RTDB...`);
   }
 
   if (phase === 'dual-read') {
@@ -468,7 +469,10 @@ export async function getPropertyById(id: string): Promise<Property | null> {
 
   for (const { ref: collRef, flatten } of searches) {
     const snap = await rtdbGet(rtdbChild(collRef, id));
-    if (snap.exists()) return flatten(id, snap.val());
+    if (snap.exists()) {
+      console.log(`[Firestore Properties] ✅ Found property ${id} in RTDB (${collRef.key})`);
+      return flatten(id, snap.val());
+    }
   }
 
   // Legacy fallback
@@ -478,6 +482,7 @@ export async function getPropertyById(id: string): Promise<Property | null> {
       const lsnap = await rtdbGet(rtdbChild(legacyRef, id));
       if (lsnap.exists()) {
         const d = lsnap.val();
+        console.log(`[Firestore Properties] ✅ Found property ${id} in legacy RTDB collection`);
         return { ...d, id: lsnap.key || id } as Property;
       }
     } catch { /* continue */ }

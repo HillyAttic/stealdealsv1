@@ -97,6 +97,8 @@ export default function WishlistAnalyticsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const [migrating, setMigrating] = useState(false);
+  const [migrationResult, setMigrationResult] = useState<{ usersMigrated: number; itemsMigrated: number } | null>(null);
 
   // Fetch wishlist statistics
   const fetchWishlistStats = async (showRefresh = false) => {
@@ -160,6 +162,42 @@ export default function WishlistAnalyticsPage() {
     }
   };
 
+  // Migrate legacy RTDB data to Firestore
+  const migrateLegacyData = async () => {
+    if (!confirm('Migrate any legacy wishlist data from RTDB to Firestore? This will not affect existing Firestore data.')) {
+      return;
+    }
+
+    setMigrating(true);
+    try {
+      const response = await fetch('/api/admin/migrate-wishlists', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dryRun: false }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Migration failed');
+      }
+
+      setMigrationResult({
+        usersMigrated: data.usersMigrated || 0,
+        itemsMigrated: data.totalItemsMigrated || 0,
+      });
+
+      // Refresh stats after migration
+      await fetchWishlistStats(true);
+    } catch (err) {
+      console.error('Migration error:', err);
+      alert('Migration failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setMigrating(false);
+    }
+  };
+
   // Format date for display
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -173,6 +211,12 @@ export default function WishlistAnalyticsPage() {
   // Format price
   const formatPrice = (price: number) => {
     return price > 0 ? `₹${price.toLocaleString('en-IN')}` : 'Price on request';
+  };
+
+  // Safe percentage — returns 0 instead of NaN when denominator is 0
+  const safePercent = (numerator: number, denominator: number) => {
+    if (!denominator || denominator === 0) return 0;
+    return Math.round((numerator / denominator) * 100);
   };
 
   // Export analytics data
@@ -376,8 +420,31 @@ export default function WishlistAnalyticsPage() {
               <FaDownload className="mr-2" />
               Export CSV
             </button>
+            <button
+              onClick={migrateLegacyData}
+              disabled={migrating}
+              className="inline-flex items-center px-4 py-2 border border-purple-300 rounded-md shadow-sm text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 disabled:opacity-50"
+              title="Migrate any legacy RTDB wishlist data to Firestore"
+            >
+              {migrating ? (
+                <div className="w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mr-2"></div>
+              ) : (
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+              )}
+              Migrate Data
+            </button>
           </div>
         </div>
+
+        {migrationResult && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <p className="text-sm text-green-800">
+              Migration complete: {migrationResult.usersMigrated} users, {migrationResult.itemsMigrated} items migrated to Firestore.
+            </p>
+          </div>
+        )}
 
         {/* Overview Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -390,7 +457,7 @@ export default function WishlistAnalyticsPage() {
                 <p className="text-sm text-gray-600">Total Users</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
                 <p className="text-xs text-gray-500">
-                  {stats.usersWithWishlists} with wishlists ({Math.round((stats.usersWithWishlists / stats.totalUsers) * 100)}%)
+                  {stats.usersWithWishlists} with wishlists ({safePercent(stats.usersWithWishlists, stats.totalUsers)}%)
                 </p>
               </div>
             </div>
@@ -420,7 +487,7 @@ export default function WishlistAnalyticsPage() {
                 <p className="text-sm text-gray-600">High Priority Items</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.wishlistsByPriority.high}</p>
                 <p className="text-xs text-gray-500">
-                  {Math.round((stats.wishlistsByPriority.high / stats.totalWishlistItems) * 100)}% of total
+                  {safePercent(stats.wishlistsByPriority.high, stats.totalWishlistItems)}% of total
                 </p>
               </div>
             </div>
@@ -434,7 +501,7 @@ export default function WishlistAnalyticsPage() {
               <div className="ml-4">
                 <p className="text-sm text-gray-600">Engagement Rate</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {Math.round((stats.usersWithWishlists / stats.totalUsers) * 100)}%
+                  {safePercent(stats.usersWithWishlists, stats.totalUsers)}%
                 </p>
                 <p className="text-xs text-gray-500">
                   Users with active wishlists
@@ -452,21 +519,21 @@ export default function WishlistAnalyticsPage() {
               <div className="text-2xl font-bold text-red-600">{stats.wishlistsByPriority.high}</div>
               <div className="text-sm text-red-800">High Priority</div>
               <div className="text-xs text-gray-600 mt-1">
-                {Math.round((stats.wishlistsByPriority.high / stats.totalWishlistItems) * 100)}%
+                {safePercent(stats.wishlistsByPriority.high, stats.totalWishlistItems)}%
               </div>
             </div>
             <div className="text-center p-4 bg-yellow-50 rounded-lg">
               <div className="text-2xl font-bold text-yellow-600">{stats.wishlistsByPriority.medium}</div>
               <div className="text-sm text-yellow-800">Medium Priority</div>
               <div className="text-xs text-gray-600 mt-1">
-                {Math.round((stats.wishlistsByPriority.medium / stats.totalWishlistItems) * 100)}%
+                {safePercent(stats.wishlistsByPriority.medium, stats.totalWishlistItems)}%
               </div>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <div className="text-2xl font-bold text-green-600">{stats.wishlistsByPriority.low}</div>
               <div className="text-sm text-green-800">Low Priority</div>
               <div className="text-xs text-gray-600 mt-1">
-                {Math.round((stats.wishlistsByPriority.low / stats.totalWishlistItems) * 100)}%
+                {safePercent(stats.wishlistsByPriority.low, stats.totalWishlistItems)}%
               </div>
             </div>
           </div>
@@ -589,7 +656,7 @@ export default function WishlistAnalyticsPage() {
                 <div className="text-2xl font-bold text-gray-900">{count}</div>
                 <div className="text-sm text-gray-600">{range} items</div>
                 <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-2 ${getEngagementColor(range)}`}>
-                  {Math.round((count / stats.usersWithWishlists) * 100)}% of users
+                  {safePercent(count, stats.usersWithWishlists)}% of users
                 </div>
               </div>
             ))}
