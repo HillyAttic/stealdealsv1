@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+// Read from Firebase RTDB (same source the working frontend uses)
+import { getPlotById } from '@/lib/firebase';
 import { db } from '@/lib/firebase-server-admin';
 import { revalidateTag } from 'next/cache';
 
-// Get a specific plot by ID using Firebase Admin SDK
+// Get a specific plot by ID from RTDB
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -15,13 +17,13 @@ export async function GET(
       return NextResponse.json({ error: 'Plot ID is required' }, { status: 400 });
     }
 
-    const docSnap = await db.collection('properties').doc(id).get();
+    const plot = await getPlotById(id);
 
-    if (!docSnap.exists) {
-      return NextResponse.json({ error: 'Plot not found' }, { status: 404 });
+    if (plot) {
+      return NextResponse.json({ plot });
     }
 
-    return NextResponse.json({ plot: { ...docSnap.data(), id: docSnap.id } });
+    return NextResponse.json({ error: 'Plot not found' }, { status: 404 });
   } catch (error: any) {
     console.error('[Plots API] Error fetching plot:', error);
     return NextResponse.json(

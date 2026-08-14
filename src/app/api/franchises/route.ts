@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { db } from '@/lib/firebase-server-admin';
+// Read from Firebase RTDB (same source the working frontend uses) instead of Firestore.
+// The Firestore Admin SDK path was returning 0/empty because:
+//   1) No FIREBASE_SERVICE_ACCOUNT_KEY on Vercel → Admin SDK never initializes
+//   2) Properties actually live in RTDB (migratedProperties/*), not Firestore
+import { getAllFranchises } from '@/lib/firebase';
 import { revalidateTag } from 'next/cache';
 import { sortByNewest } from '@/lib/sort';
+import { db } from '@/lib/firebase-server-admin';
 
 interface Franchise {
   id: string;
@@ -42,56 +47,14 @@ interface Franchise {
   [key: string]: any;
 }
 
-// Get all franchises using Firebase Admin SDK (bypasses security rules)
+// Get all franchises from RTDB (same data the frontend displays)
 export async function GET() {
   try {
-    console.log('[Franchises API] Fetching franchises from Firestore via Admin SDK...');
+    console.log('[Franchises API] Fetching franchises from RTDB...');
 
-    const propertiesCol = db.collection('properties');
-    const snapshot = await propertiesCol.where('type', '==', 'franchise').get();
+    const franchises = await getAllFranchises();
 
-    console.log(`[Franchises API] Found ${snapshot.size} franchise documents`);
-
-    const franchises: Franchise[] = [];
-    snapshot.forEach((docSnap: any) => {
-      const data = docSnap.data();
-      const fd = data.franchiseDetails || {};
-
-      franchises.push({
-        ...data,
-        id: docSnap.id,
-        name: data.title || data.name || fd.name || 'Franchise Name',
-        industry: fd.industry || data.industry || 'Not specified',
-        segment: fd.segment || data.segment || '',
-        product: fd.product || data.product || '',
-        model: fd.model || data.model || '',
-        minArea: fd.minArea || data.minArea || '',
-        maxArea: fd.maxArea || data.maxArea || '',
-        minInvestment: fd.minInvestment || data.minInvestment || '',
-        maxInvestment: fd.maxInvestment || data.maxInvestment || '',
-        royalty: fd.royalty || data.royalty || 'Varies',
-        establishmentYear: fd.establishmentYear || data.establishmentYear || '',
-        franchiseStartedYear: fd.franchiseStartedYear || data.franchiseStartedYear || '',
-        numberOutlets: fd.numberOfOutlets || fd.numberOutlets || data.numberOutlets || '',
-        minPaybackPeriod: fd.minPaybackPeriod || data.minPaybackPeriod || '',
-        maxPaybackPeriod: fd.maxPaybackPeriod || data.maxPaybackPeriod || '',
-        headquarter: fd.headquarter || data.headquarter || data.location || 'Not specified',
-        remarks: fd.remarks || data.remarks || '',
-        brandDeck: fd.brandDeck || data.brandDeck || '',
-        productList: fd.productList || data.productList || '',
-        roiSheet: fd.roiSheet || data.roiSheet || '',
-        investorDiscoveryKitUrl: fd.investorDiscoveryKitUrl || data.investorDiscoveryKitUrl || '',
-        investment: data.price || parseFloat(fd.minInvestment) || 0,
-        location: data.location || fd.headquarter || 'Not specified',
-        status: data.status || 'Active',
-        roi: fd.royalty || data.roi || 'Varies',
-        image: data.images?.[0] || data.image || '',
-        images: data.images || [],
-        description: data.description || fd.remarks || '',
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
-      });
-    });
+    console.log(`[Franchises API] Found ${franchises.length} franchises from RTDB`);
 
     const sorted = sortByNewest(franchises);
 
@@ -101,18 +64,15 @@ export async function GET() {
     });
 
     response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
-    response.headers.set('X-Data-Source', 'firebase-admin-sdk');
+    response.headers.set('X-Data-Source', 'firebase-rtdb');
 
     return response;
   } catch (error: any) {
     console.error('[Franchises API] Error fetching franchises:', error);
-    const errorResponse = NextResponse.json(
+    return NextResponse.json(
       { franchises: [], total: 0, error: error.message || 'Failed to fetch franchises' },
       { status: 200 }
     );
-    errorResponse.headers.set('X-API-Cache', 'MISS');
-    errorResponse.headers.set('X-Error', 'true');
-    return errorResponse;
   }
 }
 

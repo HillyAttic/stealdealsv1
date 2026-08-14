@@ -4,6 +4,8 @@ import { db } from '@/lib/firebase-server-admin';
 import { revalidateTag } from 'next/cache';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { sortByNewest } from '@/lib/sort';
+// Read from Firebase RTDB (same source the working frontend uses) for GET requests
+import { getAllProperties as getRTDBProperties } from '@/lib/firebase';
 
 interface Property {
   id: string;
@@ -141,7 +143,7 @@ function flattenProperty(id: string, data: Record<string, any>): Property {
   return base;
 }
 
-// Get all properties with optional filtering using Firebase Admin SDK
+// Get all properties with optional filtering using Firebase RTDB (same source the frontend uses)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -165,16 +167,10 @@ export async function GET(request: NextRequest) {
       console.log('[Properties API] No valid authentication, returning all properties');
     }
 
-    // Fetch all properties from Firestore using Admin SDK (bypasses security rules)
-    const propertiesCol = db.collection('properties');
-    const snapshot = await propertiesCol.get();
+    // Fetch all properties from RTDB (same data the frontend displays)
+    const properties = await getRTDBProperties();
 
-    let properties: Property[] = [];
-    snapshot.forEach((docSnap: any) => {
-      properties.push(flattenProperty(docSnap.id, docSnap.data()));
-    });
-
-    console.log(`[Properties API] Fetched ${properties.length} properties from Firestore`);
+    console.log(`[Properties API] Fetched ${properties.length} properties from RTDB`);
 
     // Apply ownership filtering if user is authenticated and is a subuser without viewOthers permission
     if (currentUser) {
@@ -192,22 +188,24 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply filters
+    let filteredProperties = properties;
+
     if (category) {
-      properties = properties.filter(
+      filteredProperties = filteredProperties.filter(
         p => p.category?.toLowerCase() === category.toLowerCase()
       );
     }
 
     if (featured === 'true') {
-      properties = properties.filter(p => p.featured);
+      filteredProperties = filteredProperties.filter(p => p.featured);
     }
 
     // Filter by propertyType if specified
-    // Map display names to Firestore type values (e.g. "Pre-Leased" → "preleased")
+    // Map display names to property type values (e.g. "Pre-Leased" → "vacant", etc.)
     const typeAliasMap: Record<string, string> = {
-      'pre-leased': 'preleased',
-      'preleased': 'preleased',
-      'preleased property': 'preleased',
+      'pre-leased': 'pre-leased',
+      'preleased': 'pre-leased',
+      'preleased property': 'pre-leased',
       'vacant': 'vacant',
       'franchise': 'franchise',
       'plot': 'plot',
@@ -218,14 +216,14 @@ export async function GET(request: NextRequest) {
     const propertyType = searchParams.get('propertyType');
     if (propertyType) {
       const normalizedType = typeAliasMap[propertyType.toLowerCase()] || propertyType.toLowerCase();
-      properties = properties.filter(p => {
-        const itemType = (p.type || p.propertyType || '').toLowerCase();
+      filteredProperties = filteredProperties.filter(p => {
+        const itemType = (p.propertyType || p.type || '').toLowerCase();
         return itemType === normalizedType;
       });
     }
 
     // Sort by newest
-    const sorted = sortByNewest(properties);
+    const sorted = sortByNewest(filteredProperties);
 
     // Apply server-side pagination with offset and limit
     const total = sorted.length;
@@ -241,7 +239,7 @@ export async function GET(request: NextRequest) {
 
     response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
     response.headers.set('X-API-Cache', 'HIT');
-    response.headers.set('X-Data-Source', 'firebase-admin-sdk');
+    response.headers.set('X-Data-Source', 'firebase-rtdb');
 
     return response;
 

@@ -1,29 +1,22 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+// Read from Firebase RTDB (same source the working frontend uses) instead of Firestore.
+import { getAllPlots } from '@/lib/firebase';
 import { db } from '@/lib/firebase-server-admin';
 import { revalidateTag } from 'next/cache';
 import { sortByNewest } from '@/lib/sort';
 
-// Get all plots using Firebase Admin SDK (bypasses security rules)
+// Get all plots from RTDB (same data the frontend displays)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '1000');
 
-    console.log('[Plots API] Fetching plots from Firestore via Admin SDK');
+    console.log('[Plots API] Fetching plots from RTDB...');
 
-    const propertiesCol = db.collection('properties');
-    const snapshot = await propertiesCol.where('type', '==', 'plot').get();
+    const plots = await getAllPlots();
 
-    const plots: any[] = [];
-    snapshot.forEach((docSnap: any) => {
-      plots.push({
-        ...docSnap.data(),
-        id: docSnap.id
-      });
-    });
-
-    console.log(`[Plots API] Fetched ${plots.length} plots from Firestore`);
+    console.log(`[Plots API] Fetched ${plots.length} plots from RTDB`);
 
     const sorted = sortByNewest(plots);
     const paginatedPlots = sorted.slice(0, limit);
@@ -34,22 +27,16 @@ export async function GET(request: NextRequest) {
     });
 
     response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
-    response.headers.set('X-Data-Source', 'firebase-admin-sdk');
+    response.headers.set('X-Data-Source', 'firebase-rtdb');
 
     return response;
   } catch (error) {
     console.error('[Plots API] Error fetching plots:', error);
-    const errorResponse = NextResponse.json({
+    return NextResponse.json({
       plots: [],
       total: 0,
       error: 'Failed to fetch plots'
     }, { status: 200 });
-
-    errorResponse.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
-    errorResponse.headers.set('X-API-Cache', 'MISS');
-    errorResponse.headers.set('X-Error', 'true');
-
-    return errorResponse;
   }
 }
 

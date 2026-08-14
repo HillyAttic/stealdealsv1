@@ -1,29 +1,30 @@
 import { NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
-import { db } from '@/lib/firebase-server-admin';
+// Read from Firebase RTDB (same source the working frontend uses) instead of Firestore.
+// The Admin SDK / Firestore path was returning 0 because:
+//   1) No FIREBASE_SERVICE_ACCOUNT_KEY on Vercel → Admin SDK never initializes
+//   2) Properties actually live in RTDB (migratedProperties/*), not Firestore
+import { getAllProperties } from '@/lib/firebase';
+
+// Force this route to be dynamic so it always fetches fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // GET /api/admin/dashboard-stats — returns aggregated property counts and breakdowns
-// Uses Firebase Admin SDK (bypasses security rules) so it works regardless of deployed rules
+// Reads from Firebase RTDB via the same firebase.ts module used by the public frontend
 export async function GET(request: Request) {
   return requireAdminAuth(request, async () => {
     try {
-      const propertiesCol = db.collection('properties');
+      // Fetch all properties from RTDB (same data the frontend displays)
+      const allProperties = await getAllProperties();
 
-      // Fetch all property type counts in parallel
-      const [preleasedSnapshot, vacantSnapshot, franchiseSnapshot, plotsSnapshot] = await Promise.all([
-        propertiesCol.where('type', '==', 'preleased').get(),
-        propertiesCol.where('type', '==', 'vacant').get(),
-        propertiesCol.where('type', '==', 'franchise').get(),
-        propertiesCol.where('type', '==', 'plot').get()
-      ]);
+      // Count by type
+      let preleasedCount = 0;
+      let vacantCount = 0;
+      let franchiseCount = 0;
+      let plotsCount = 0;
 
-      const preleasedCount = preleasedSnapshot.size;
-      const vacantCount = vacantSnapshot.size;
-      const franchiseCount = franchiseSnapshot.size;
-      const plotsCount = plotsSnapshot.size;
-      const totalCount = preleasedCount + vacantCount + franchiseCount + plotsCount;
-
-      // Build category breakdown from vacant properties — flexible matching to handle data variations
+      // Category breakdown for vacant properties
       const categoryCounts: Record<string, number> = {
         'Industrial': 0,
         'High-Street': 0,
@@ -32,27 +33,7 @@ export async function GET(request: Request) {
         'Other': 0
       };
 
-      if (!vacantSnapshot.empty) {
-        vacantSnapshot.forEach((doc: any) => {
-          const data = doc.data();
-          const category = data.vacantDetails?.category || data.category || 'Other';
-          const lowerCategory = category.toLowerCase();
-
-          if (lowerCategory.includes('industrial')) {
-            categoryCounts['Industrial']++;
-          } else if (lowerCategory.includes('high-street') || lowerCategory.includes('high street') || lowerCategory.includes('street')) {
-            categoryCounts['High-Street']++;
-          } else if (lowerCategory.includes('mall') || lowerCategory.includes('shopping')) {
-            categoryCounts['Mall']++;
-          } else if (lowerCategory.includes('corporate') || lowerCategory.includes('office') || lowerCategory.includes('business')) {
-            categoryCounts['Corporate']++;
-          } else {
-            categoryCounts['Other']++;
-          }
-        });
-      }
-
-      // Build franchise industry breakdown — categories must match the dashboard UI's color mapping
+      // Industry breakdown for franchises
       const industryCounts: Record<string, number> = {
         'Education': 0,
         'F&B': 0,
@@ -62,17 +43,43 @@ export async function GET(request: Request) {
         'Sports, Fitness & Entertainments': 0
       };
 
-      if (!franchiseSnapshot.empty) {
-        franchiseSnapshot.forEach((doc: any) => {
-          const data = doc.data();
-          const industry = data.franchiseDetails?.industry || data.industry || '';
+      for (const property of allProperties) {
+        const type = (property.propertyType || property.type || '').toLowerCase();
 
+        if (type === 'preleased' || type === 'pre-leased') {
+          preleasedCount++;
+        } else if (type === 'vacant') {
+          vacantCount++;
+
+          // Categorize vacant property
+          const category = (property.vacantDetails?.category || property.category || '').toLowerCase();
+          if (category.includes('industrial')) {
+            categoryCounts['Industrial']++;
+          } else if (category.includes('high-street') || category.includes('high street') || category.includes('street')) {
+            categoryCounts['High-Street']++;
+          } else if (category.includes('mall') || category.includes('shopping')) {
+            categoryCounts['Mall']++;
+          } else if (category.includes('corporate') || category.includes('office') || category.includes('business')) {
+            categoryCounts['Corporate']++;
+          } else {
+            categoryCounts['Other']++;
+          }
+        } else if (type === 'franchise') {
+          franchiseCount++;
+
+          // Categorize franchise by industry
+          const industry = property.franchiseDetails?.industry || property.category || '';
           if (industryCounts.hasOwnProperty(industry)) {
             industryCounts[industry]++;
           }
-          // Unmatched industries are simply not counted (same behavior as old dashboard code)
-        });
+        } else if (type === 'plot' || type === 'plots') {
+          plotsCount++;
+        }
       }
+
+      const totalCount = preleasedCount + vacantCount + franchiseCount + plotsCount;
+
+      console.log(`[Dashboard API] RTDB stats: vacant=${vacantCount}, preleased=${preleasedCount}, franchise=${franchiseCount}, plots=${plotsCount}, total=${totalCount}`);
 
       return NextResponse.json({
         stats: {

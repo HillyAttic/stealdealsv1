@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+// Read from Firebase RTDB (same source the working frontend uses)
+import { getAllFranchises } from '@/lib/firebase';
 import { db } from '@/lib/firebase-server-admin';
 import { resolveIdParam, RouteParams } from '../../../../lib/params-utils';
 import { revalidateTag } from 'next/cache';
 
-// Get a single franchise using Firebase Admin SDK
+// Get a single franchise from RTDB
 export async function GET(
   request: NextRequest,
   { params }: { params: RouteParams<{ id: string }> }
@@ -13,51 +15,11 @@ export async function GET(
     const id = await resolveIdParam(params);
     console.log(`[Franchises API] Fetching franchise: ${id}`);
 
-    const docSnap = await db.collection('properties').doc(id).get();
+    const franchises = await getAllFranchises();
+    const franchise = franchises.find(f => f.id === id);
 
-    if (docSnap.exists) {
-      const data = docSnap.data() as any;
-      console.log(`[Franchises API] Found franchise: ${data?.title || data?.name || 'Unknown'}`);
-
-      const details = data.franchiseDetails || {};
-      const franchise = {
-        id: docSnap.id,
-        name: details.name || details.brand || data.title || data.name || 'Franchise Name',
-        industry: details.industry || data.industry || 'Not specified',
-        segment: details.segment || data.segment || '',
-        product: details.product || details.name || details.brand || data.product || data.title || '',
-        model: details.model || data.model || '',
-        minArea: details.minArea || data.minArea || '',
-        maxArea: details.maxArea || data.maxArea || '',
-        minInvestment: details.minInvestment || data.minInvestment || '',
-        maxInvestment: details.maxInvestment || data.maxInvestment || '',
-        royalty: details.royalty || data.royalty || 'Not specified',
-        establishmentYear: details.establishmentYear || data.establishmentYear || '',
-        franchiseStartedYear: details.franchiseStartedYear || data.franchiseStartedYear || '',
-        numberOutlets: details.numberOfOutlets || details.numberOutlets || data.numberOutlets || '',
-        minPaybackPeriod: details.minPaybackPeriod || data.minPaybackPeriod || '',
-        maxPaybackPeriod: details.maxPaybackPeriod || data.maxPaybackPeriod || '',
-        headquarter: details.headquarter || data.headquarter || data.location || '',
-        remarks: details.remarks || data.remarks || data.description || '',
-        brandDeck: details.brandDeck || data.brandDeck || '',
-        productList: details.productList || data.productList || '',
-        roiSheet: details.roiSheet || data.roiSheet || '',
-        investorDiscoveryKitUrl: details.investorDiscoveryKitUrl || data.investorDiscoveryKitUrl || '',
-        investment: details.minInvestment || data.price || data.investment || '',
-        location: details.headquarter || data.location || 'Location not specified',
-        status: data.status || 'Active',
-        roi: details.royalty || data.roi || 'Contact for details',
-        description: details.remarks || data.description || data.remarks || '',
-        image: data.images?.[0] || data.image || '',
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
-        franchiseDetails: details,
-        title: data.title || details.name || details.brand || 'Franchise Property',
-        type: data.type || 'franchise',
-        price: data.price || details.minInvestment || 0,
-        images: data.images || []
-      };
-
+    if (franchise) {
+      console.log(`[Franchises API] Found franchise: ${franchise.name}`);
       return NextResponse.json({ franchise });
     }
 

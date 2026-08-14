@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+// Read from Firebase RTDB (same source the working frontend uses)
+import { getPropertyById } from '@/lib/firebase';
 import { db } from '@/lib/firebase-server-admin';
 import { resolveIdParam, RouteParams } from '../../../../lib/params-utils';
 import { optionalAuth } from '@/lib/auth/middleware';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { revalidateTag } from 'next/cache';
 
-async function getPropertyByIdAdmin(id: string): Promise<Record<string, any> | null> {
+// Helper to get property from Firestore (used for write operations)
+async function getPropertyByIdFirestore(id: string): Promise<Record<string, any> | null> {
   const docSnap = await db.collection('properties').doc(id).get();
   if (!docSnap.exists) return null;
   return { ...docSnap.data(), id: docSnap.id } as Record<string, any>;
@@ -21,7 +24,8 @@ export async function GET(
       const id = await resolveIdParam(params);
       console.log(`[Properties API] Fetching property with ID: ${id}`);
 
-      const property = await getPropertyByIdAdmin(id);
+      // Read from RTDB (same source the frontend uses)
+      const property = await getPropertyById(id);
 
       if (!property) {
         return NextResponse.json({ error: 'Property not found' }, { status: 404 });
@@ -48,7 +52,7 @@ export async function PUT(
       const id = await resolveIdParam(params);
       console.log(`[Properties API] Updating property: ${id}`);
 
-      const existingProperty = await getPropertyByIdAdmin(id);
+      const existingProperty = await getPropertyByIdFirestore(id);
 
       if (!existingProperty) {
         return NextResponse.json({ error: 'Property not found' }, { status: 404 });
@@ -115,7 +119,7 @@ export async function DELETE(
       const id = await resolveIdParam(params);
       console.log(`[Properties API] Deleting property: ${id}`);
 
-      const existingProperty = await getPropertyByIdAdmin(id);
+      const existingProperty = await getPropertyByIdFirestore(id);
 
       if (!existingProperty) {
         return NextResponse.json({ error: 'Property not found' }, { status: 404 });
