@@ -202,6 +202,7 @@ export async function GET(request: NextRequest) {
 
     // Filter by propertyType if specified
     // Map display names to property type values that exist in RTDB data
+    // Note: In RTDB, pre-leased properties use 'lockable' and 'virtual' as propertyType
     const typeAliasMap: Record<string, string> = {
       'pre-leased': 'preleased',
       'preleased': 'preleased',
@@ -218,7 +219,11 @@ export async function GET(request: NextRequest) {
       const normalizedType = typeAliasMap[propertyType.toLowerCase()] || propertyType.toLowerCase();
       filteredProperties = filteredProperties.filter(p => {
         const itemType = (p.propertyType || p.type || '').toLowerCase();
-        // Match against both propertyType and type fields (RTDB data uses "Preleased", "Vacant", etc.)
+        // Match against both propertyType and type fields
+        // Pre-leased properties in RTDB may have 'lockable', 'virtual', or 'preleased' as type
+        if (normalizedType === 'preleased') {
+          return itemType === 'preleased' || itemType === 'pre-leased' || itemType === 'lockable' || itemType === 'virtual';
+        }
         return itemType === normalizedType || itemType === normalizedType.replace('-', '');
       });
     }

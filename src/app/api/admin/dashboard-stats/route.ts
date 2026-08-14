@@ -45,8 +45,11 @@ export async function GET(request: Request) {
 
       for (const property of allProperties) {
         const type = (property.propertyType || property.type || '').toLowerCase();
+        // In RTDB, pre-leased properties use 'lockable' and 'virtual' as propertyType
+        // (IDs start with PROP_PRLS_). Normalize all variants to 'preleased'.
+        const isPreleased = type === 'preleased' || type === 'pre-leased' || type === 'lockable' || type === 'virtual';
 
-        if (type === 'preleased' || type === 'pre-leased') {
+        if (isPreleased) {
           preleasedCount++;
         } else if (type === 'vacant') {
           vacantCount++;
