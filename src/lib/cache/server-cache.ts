@@ -2,6 +2,10 @@ import { unstable_cache } from 'next/cache';
 import { getVacantProperties, getAllFranchises, getAllPlots, Property, Franchise, Plot } from '../firebase';
 import { getOptimizedData, CACHE_KEYS, CACHE_TTL, MemoryCache } from '../firebase-optimized';
 
+// Detect if we're in a build environment (Vercel build phase)
+const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' ||
+                    (process.env.VERCEL && !process.env.VERCEL_ENV);
+
 // Cache configuration
 const CACHE_TAGS = {
   VACANT_PROPERTIES: 'vacant-properties',
@@ -21,21 +25,27 @@ const CACHE_REVALIDATE = {
  */
 export const getCachedVacantProperties = unstable_cache(
   async (): Promise<Property[]> => {
+    // During build time, return empty array to avoid Firebase initialization
+    if (isBuildTime) {
+      console.log('[Cache] Build time detected - returning empty vacant properties');
+      return [];
+    }
+
     console.log('[Cache] Fetching vacant properties with optimization...');
-    
+
     try {
       // Try optimized Firebase fetch with memory cache first
       const startTime = Date.now();
       const properties = await getVacantProperties();
       const duration = Date.now() - startTime;
-      
+
       console.log(`[Cache] Fetched ${properties.length} vacant properties in ${duration}ms`);
-      
+
       // Cache performance tracking
       if (duration > 1000) {
         console.warn(`[Cache] Slow vacant properties fetch: ${duration}ms`);
       }
-      
+
       return properties;
     } catch (error) {
       console.error('[Cache] Error fetching vacant properties:', error);
@@ -55,6 +65,12 @@ export const getCachedVacantProperties = unstable_cache(
  */
 export const getCachedFranchises = unstable_cache(
   async (): Promise<Franchise[]> => {
+    // During build time, return empty array to avoid Firebase initialization
+    if (isBuildTime) {
+      console.log('[Cache] Build time detected - returning empty franchises');
+      return [];
+    }
+
     console.log('[Cache] Fetching franchises from Firebase...');
     const franchises = await getAllFranchises();
     console.log(`[Cache] Fetched ${franchises.length} franchises`);
@@ -72,6 +88,12 @@ export const getCachedFranchises = unstable_cache(
  */
 export const getCachedPlots = unstable_cache(
   async (): Promise<Plot[]> => {
+    // During build time, return empty array to avoid Firebase initialization
+    if (isBuildTime) {
+      console.log('[Cache] Build time detected - returning empty plots');
+      return [];
+    }
+
     console.log('[Cache] Fetching plots from Firebase...');
     const plots = await getAllPlots();
     console.log(`[Cache] Fetched ${plots.length} plots`);

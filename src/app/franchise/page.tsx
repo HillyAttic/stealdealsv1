@@ -11,39 +11,24 @@ import { getCachedFranchises, trackCachePerformance } from '@/lib/cache/server-c
 export const revalidate = 600; // Revalidate every 10 minutes (franchises change less frequently)
 export const dynamic = 'force-dynamic'; // Force dynamic rendering - Firebase RTDB requires runtime credentials
 
-// Metadata for SEO
-export async function generateMetadata(): Promise<Metadata> {
-  const startTime = Date.now();
-  
-  try {
-    const franchises = await getCachedFranchises();
-    trackCachePerformance('franchise-metadata-generation', startTime, franchises.length);
-    
-    return {
-      title: `Franchise Opportunities - ${franchises.length} Available Franchises | StealDeals`,
-      description: `Explore ${franchises.length} franchise opportunities across India. Start your business with top brands and become a successful entrepreneur.`,
-      keywords: 'franchise opportunities, business franchise, franchise investment, brand partnership, entrepreneur, franchise business',
-      openGraph: {
-        title: `${franchises.length} Franchise Opportunities Available`,
-        description: 'Start your business with India\'s top brands and become a successful entrepreneur',
-        images: [
-          {
-            url: 'https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-            width: 1260,
-            height: 750,
-            alt: 'Franchise Opportunities',
-          },
-        ],
+// Metadata for SEO - use static metadata to avoid build-time Firebase calls
+export const metadata: Metadata = {
+  title: 'Franchise Opportunities | StealDeals',
+  description: 'Explore franchise opportunities across India. Start your business with top brands and become a successful entrepreneur.',
+  keywords: 'franchise opportunities, business franchise, franchise investment, brand partnership, entrepreneur, franchise business',
+  openGraph: {
+    title: 'Franchise Opportunities Available',
+    description: 'Start your business with India\'s top brands and become a successful entrepreneur',
+    images: [
+      {
+        url: 'https://images.pexels.com/photos/3184306/pexels-photo-3184306.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+        width: 1260,
+        height: 750,
+        alt: 'Franchise Opportunities',
       },
-    };
-  } catch (error) {
-    console.error('Error generating franchise metadata:', error);
-    return {
-      title: 'Franchise Opportunities | StealDeals',
-      description: 'Start your business with India\'s top brands and become a successful entrepreneur',
-    };
-  }
-}
+    ],
+  },
+};
 
 // Server Component with ISR
 export default async function FranchisePage() {

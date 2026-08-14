@@ -10,39 +10,24 @@ import { getCachedPlots, trackCachePerformance } from '@/lib/cache/server-cache'
 export const revalidate = 600; // Revalidate every 10 minutes (plots change less frequently)
 export const dynamic = 'force-dynamic'; // Force dynamic rendering - Firebase RTDB requires runtime credentials
 
-// Metadata for SEO
-export async function generateMetadata(): Promise<Metadata> {
-  const startTime = Date.now();
-  
-  try {
-    const plots = await getCachedPlots();
-    trackCachePerformance('plots-metadata-generation', startTime, plots.length);
-    
-    return {
-      title: `Plot Projects - ${plots.length} Available Plots | StealDeals`,
-      description: `Discover ${plots.length} premium plot projects for your investment and development needs. Find the perfect plot in prime locations.`,
-      keywords: 'plot projects, land investment, real estate plots, property development, land for sale',
-      openGraph: {
-        title: `${plots.length} Plot Projects Available`,
-        description: 'Discover premium plot projects for your investment and development needs',
-        images: [
-          {
-            url: 'https://images.pexels.com/photos/1078884/pexels-photo-1078884.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-            width: 1260,
-            height: 750,
-            alt: 'Plot Projects',
-          },
-        ],
+// Metadata for SEO - use static metadata to avoid build-time Firebase calls
+export const metadata: Metadata = {
+  title: 'Plot Projects | StealDeals',
+  description: 'Discover premium plot projects for your investment and development needs. Find the perfect plot in prime locations.',
+  keywords: 'plot projects, land investment, real estate plots, property development, land for sale',
+  openGraph: {
+    title: 'Plot Projects Available',
+    description: 'Discover premium plot projects for your investment and development needs',
+    images: [
+      {
+        url: 'https://images.pexels.com/photos/1078884/pexels-photo-1078884.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+        width: 1260,
+        height: 750,
+        alt: 'Plot Projects',
       },
-    };
-  } catch (error) {
-    console.error('Error generating plots metadata:', error);
-    return {
-      title: 'Plot Projects | StealDeals',
-      description: 'Discover premium plot projects for your investment and development needs',
-    };
-  }
-}
+    ],
+  },
+};
 
 // Server Component with ISR
 export default async function PlotsPage() {
