@@ -247,7 +247,6 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       mainItems.push({ name: 'Manage Admins', href: '/admin/manage-admins', icon: <TbUserShield />, group: 'main' });
     }
     if (canSee('analytics')) toolsItems.push({ name: 'Wishlist Analytics', href: '/admin/wishlist-analytics', icon: <TbChartBar />, permission: 'analytics', group: 'tools' });
-    if (canSee('wishlist')) toolsItems.push({ name: 'Wishlist', href: '/admin/wishlist-analytics', icon: <TbHeart />, permission: 'wishlist', group: 'tools' });
     if (canSee('migration')) toolsItems.push({ name: 'Migration', href: '/admin/migrate', icon: <TbDatabase />, permission: 'migration', group: 'tools' });
 
     const groups: { label: string; items: NavigationItem[] }[] = [];

@@ -14,80 +14,33 @@ import { PerformanceMonitor } from '@/lib/monitoring/performance';
 import { AnalyticsTracker } from '@/lib/monitoring/analytics';
 import { ActivityLogger } from '@/lib/services/activityLogger';
 
-// Force dynamic rendering to prevent caching in production
 export const dynamic = 'force-dynamic';
 
-// Enhanced logging utility for wishlist operations
-function logWishlistOperation(
-  operation: string, 
-  userId: string, 
-  propertyId?: string, 
-  metadata?: any,
-  error?: Error
-) {
-  const timestamp = new Date().toISOString();
-  const logData = {
-    timestamp,
-    operation,
-    userId,
-    propertyId,
-    metadata,
-    error: error ? {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    } : undefined
-  };
-  
-  if (error) {
-    console.error(`[Wishlist API] ❌ ${operation} failed:`, logData);
-  } else {
-    console.log(`[Wishlist API] ✅ ${operation} successful:`, logData);
-  }
-}
-
-// Enhanced user ID extraction with Firebase integration
-// Checks firebase-token cookie first, then falls back to x-user-id header
+// Extract user ID from Firebase session or x-user-id header
 async function extractUserId(request?: NextRequest): Promise<string | null> {
   try {
     // Primary: Firebase server session (firebase-token cookie)
     const session = await getServerSession();
     if (session?.uid) {
-      logWishlistOperation('user_extraction', session.uid, undefined, {
-        source: 'firebase_session'
-      });
       return session.uid;
     }
 
-    // Fallback: x-user-id header (sent by EnhancedWishlistContext)
+    // Fallback: x-user-id header
     if (request) {
       const headerUserId = request.headers.get('x-user-id');
       if (headerUserId && headerUserId.trim().length > 0) {
-        logWishlistOperation('user_extraction', headerUserId, undefined, {
-          source: 'x-user-id_header'
-        });
         return headerUserId;
       }
     }
 
     return null;
   } catch (error) {
-    const errorDetails = error instanceof Error ? {
-      message: error.message,
-      name: error.name,
-      stack: error.stack
-    } : { message: 'Unknown error during user extraction' };
-
-    logWishlistOperation('user_extraction_exception', 'unknown', undefined, {
-      errorDetails
-    }, error as Error);
-
-    console.error(`[Wishlist API] Critical error in user extraction:`, errorDetails);
+    console.error('[Wishlist API] Error extracting user ID:', error);
     return null;
   }
 }
 
-// Input validation schemas
+// Input validation
 interface WishlistRequestBody {
   propertyId: string;
   action: 'add' | 'remove' | 'update';
@@ -97,39 +50,34 @@ interface WishlistRequestBody {
 
 function validateWishlistRequest(body: any): { isValid: boolean; errors: string[]; data?: WishlistRequestBody } {
   const errors: string[] = [];
-  
+
   if (!body || typeof body !== 'object') {
     errors.push('Request body must be a valid JSON object');
     return { isValid: false, errors };
   }
-  
+
   const { propertyId, action, notes, priority } = body;
-  
-  // Validate propertyId
+
   if (!propertyId || typeof propertyId !== 'string' || propertyId.trim().length === 0) {
-    errors.push('Property ID is required and must be a non-empty string');
+    errors.push('Property ID is required');
   }
-  
-  // Validate action
+
   if (!action || !['add', 'remove', 'update'].includes(action)) {
-    errors.push('Action is required and must be one of: add, remove, update');
+    errors.push('Action must be: add, remove, or update');
   }
-  
-  // Validate notes (optional)
+
   if (notes !== undefined && typeof notes !== 'string') {
-    errors.push('Notes must be a string if provided');
+    errors.push('Notes must be a string');
   }
-  
-  // Validate priority (optional)
+
   if (priority !== undefined && !['low', 'medium', 'high'].includes(priority)) {
-    errors.push('Priority must be one of: low, medium, high');
+    errors.push('Priority must be: low, medium, or high');
   }
-  
-  // Additional validation for update action
+
   if (action === 'update' && notes === undefined && priority === undefined) {
-    errors.push('Update action requires at least notes or priority to be provided');
+    errors.push('Update requires notes or priority');
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -140,693 +88,224 @@ function validateWishlistRequest(body: any): { isValid: boolean; errors: string[
 // GET /api/user/wishlist - Get user's wishlist
 export const GET = withWishlistMonitoring(async (request: NextRequest, context) => {
   const startTime = Date.now();
-  let userId: string | null = null;
 
   try {
-    // Extract user ID from Firebase session or x-user-id header
-    userId = await extractUserId(request);
+    const userId = await extractUserId(request);
     context.userId = userId || undefined;
 
-      if (!userId) {
-        logWishlistOperation('get_wishlist', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Unable to identify user',
-            code: 'USER_IDENTIFICATION_FAILED'
-          },
-          { status: 401 }
-        );
-      }
-      
-      // Record performance metric
-      const performanceMonitor = PerformanceMonitor.getInstance();
-      performanceMonitor.recordMetric('wishlist_get_request', 1, 'count', {
-        userId,
-        requestId: context.requestId
-      });
-      
-      const { searchParams } = new URL(request.url);
-      const statsOnly = searchParams.get('stats') === 'true';
-      const limit = parseInt(searchParams.get('limit') || '1000'); // Increased default limit
-      const offset = parseInt(searchParams.get('offset') || '0');
-      
-      // Validate query parameters
-      if (limit < 1 || limit > 1000) {
-        logWishlistOperation('get_wishlist', userId, undefined, { limit, error: 'Invalid limit' });
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Limit must be between 1 and 1000',
-            code: 'INVALID_LIMIT'
-          },
-          { status: 400 }
-        );
-      }
-      
-      if (offset < 0) {
-        logWishlistOperation('get_wishlist', userId, undefined, { offset, error: 'Invalid offset' });
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Offset must be non-negative',
-            code: 'INVALID_OFFSET'
-          },
-          { status: 400 }
-        );
-      }
-      
-      if (statsOnly) {
-        const stats = await getWishlistStats(userId!);
-        const duration = Date.now() - startTime;
-        
-        logWishlistOperation('get_wishlist_stats', userId, undefined, { 
-          stats, 
-          duration: `${duration}ms` 
-        });
-        
-        return NextResponse.json({
-          success: true,
-          stats,
-          metadata: {
-            requestId: crypto.randomUUID(),
-            timestamp: new Date().toISOString(),
-            duration: `${duration}ms`
-          }
-        });
-      }
-      
-      // Enhanced cache control headers to prevent any caching in production
-      const headers = {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'Surrogate-Control': 'no-store',
-        'Vary': '*',
-        'X-Robots-Tag': 'noindex, nofollow, nosnippet, noarchive'
-      };
-      
-      // Production debug logging for Firebase reads
-      console.log(`[WISHLIST_DEBUG] About to fetch wishlist for user: ${userId} in ${process.env.NODE_ENV}`);
-      console.log(`[WISHLIST_DEBUG] Firebase config present: ${!!process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL}`);
-      console.log(`[WISHLIST_DEBUG] User authentication status: ${userId !== null}`);
-      
-      // OPTIMIZATION: Add performance tracing
-      const fetchStartTime = Date.now();
-      const wishlistProperties = await getUserWishlist(userId!);
-      const fetchDuration = Date.now() - fetchStartTime;
-      
-      console.log(`[WISHLIST_DEBUG] Firebase read result: ${wishlistProperties.length} properties found in ${fetchDuration}ms`);
-      if (wishlistProperties.length > 0) {
-        console.log(`[WISHLIST_DEBUG] Sample property titles:`, wishlistProperties.slice(0, 3).map(p => p.title));
-      }
-      
-      // Apply pagination
-      const paginatedProperties = wishlistProperties.slice(offset, offset + limit);
-      const hasMore = offset + limit < wishlistProperties.length;
-      
-      const duration = Date.now() - startTime;
-      
-      logWishlistOperation('get_wishlist', userId, undefined, { 
-        total: wishlistProperties.length,
-        returned: paginatedProperties.length,
-        limit,
-        offset,
-        hasMore,
-        duration: `${duration}ms`,
-        fetchDuration: `${fetchDuration}ms`
-      });
-      
+    if (!userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unable to identify user',
+          code: 'USER_IDENTIFICATION_FAILED'
+        },
+        { status: 401 }
+      );
+    }
+
+    // Record performance metric
+    const performanceMonitor = PerformanceMonitor.getInstance();
+    performanceMonitor.recordMetric('wishlist_get_request', 1, 'count', {
+      userId,
+      requestId: context.requestId
+    });
+
+    const { searchParams } = new URL(request.url);
+    const statsOnly = searchParams.get('stats') === 'true';
+    const limit = parseInt(searchParams.get('limit') || '1000');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
+    if (limit < 1 || limit > 1000) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Limit must be between 1 and 1000',
+          code: 'INVALID_LIMIT'
+        },
+        { status: 400 }
+      );
+    }
+
+    if (offset < 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Offset must be non-negative',
+          code: 'INVALID_OFFSET'
+        },
+        { status: 400 }
+      );
+    }
+
+    if (statsOnly) {
+      const stats = await getWishlistStats(userId);
       return NextResponse.json({
         success: true,
-        properties: paginatedProperties,
-        pagination: {
-          total: wishlistProperties.length,
-          limit,
-          offset,
-          hasMore,
-          nextOffset: hasMore ? offset + limit : null
-        },
+        stats,
         metadata: {
           requestId: crypto.randomUUID(),
           timestamp: new Date().toISOString(),
-          duration: `${duration}ms`,
-          fetchDuration: `${fetchDuration}ms`
+          duration: `${Date.now() - startTime}ms`
         }
-      }, { headers });
-
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      const errorDetails = error instanceof Error ? {
-        message: error.message,
-        name: error.name,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      } : { message: 'Unknown error occurred' };
-      
-      logWishlistOperation('get_wishlist', userId || 'unknown', undefined, { 
-        duration: `${duration}ms` 
-      }, error as Error);
-      
-      return NextResponse.json(
-        { 
-          success: false,
-          error: 'Failed to retrieve wishlist',
-          code: 'WISHLIST_RETRIEVAL_FAILED',
-          details: process.env.NODE_ENV === 'development' ? errorDetails : undefined,
-          metadata: {
-            requestId: crypto.randomUUID(),
-            timestamp: new Date().toISOString(),
-            duration: `${duration}ms`
-          }
-        },
-        { 
-          status: 500,
-          headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-            'Surrogate-Control': 'no-store',
-            'Vary': '*'
-          }
-        }
-      );
+      });
     }
+
+    // Cache headers - allow 5-minute browser cache for faster subsequent loads
+    const headers = {
+      'Cache-Control': 'private, max-age=300, stale-while-revalidate=60',
+      'Vary': 'Cookie, Authorization'
+    };
+
+    const wishlistProperties = await getUserWishlist(userId);
+
+    // Apply pagination
+    const paginatedProperties = wishlistProperties.slice(offset, offset + limit);
+    const hasMore = offset + limit < wishlistProperties.length;
+
+    const duration = Date.now() - startTime;
+
+    return NextResponse.json({
+      success: true,
+      properties: paginatedProperties,
+      pagination: {
+        total: wishlistProperties.length,
+        limit,
+        offset,
+        hasMore,
+        nextOffset: hasMore ? offset + limit : null
+      },
+      metadata: {
+        requestId: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        duration: `${duration}ms`
+      }
+    }, { headers });
+
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error('[Wishlist API] GET failed:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to retrieve wishlist',
+        code: 'WISHLIST_RETRIEVAL_FAILED',
+        details: process.env.NODE_ENV === 'development' ? error instanceof Error ? { message: error.message } : undefined : undefined,
+        metadata: {
+          requestId: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+          duration: `${duration}ms`
+        }
+      },
+      { status: 500 }
+    );
+  }
 });
 
 // POST /api/user/wishlist - Add/remove/update property in wishlist
 export const POST = withWishlistMonitoring(async (request: NextRequest, context) => {
-    const startTime = Date.now();
-    let userId: string | null = null;
-    let requestBody: any = null;
+  const startTime = Date.now();
+  let userId: string | null = null;
 
-    try {
-      // Extract user ID from Firebase session or x-user-id header
-      userId = await extractUserId(request);
+  try {
+    userId = await extractUserId(request);
 
-      if (!userId) {
-        logWishlistOperation('wishlist_operation', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Unable to identify user',
-            code: 'USER_IDENTIFICATION_FAILED'
-          },
-          { status: 401 }
-        );
-      }
-      
-      // Parse and validate request body
-      try {
-        requestBody = await request.json();
-      } catch (parseError) {
-        logWishlistOperation('wishlist_operation', userId, undefined, undefined, new Error('Invalid JSON in request body'));
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Invalid JSON in request body',
-            code: 'INVALID_JSON'
-          },
-          { status: 400 }
-        );
-      }
-      
-      const validation = validateWishlistRequest(requestBody);
-      if (!validation.isValid) {
-        logWishlistOperation('wishlist_operation', userId, undefined, { 
-          validationErrors: validation.errors,
-          requestBody 
-        });
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Validation failed',
-            code: 'VALIDATION_FAILED',
-            details: validation.errors
-          },
-          { status: 400 }
-        );
-      }
-      
-      const { propertyId, action, notes, priority } = validation.data!;
-      
-      if (action === 'add') {
-        // Check if already in wishlist
-        const alreadyInWishlist = await isInWishlist(userId!, propertyId);
-        if (alreadyInWishlist) {
-          logWishlistOperation('add_to_wishlist', userId, propertyId, { 
-            reason: 'already_exists' 
-          });
-          return NextResponse.json(
-            { 
-              success: false,
-              error: 'Property already in wishlist',
-              code: 'PROPERTY_ALREADY_IN_WISHLIST'
-            },
-            { status: 409 }
-          );
-        }
-        
-        const wishlistItem = await addToWishlist(
-          userId!, 
-          propertyId, 
-          notes, 
-          priority || 'medium'
-        );
-        
-        // Log real-time activity
-        try {
-          const activityLogger = ActivityLogger.getInstance();
-          await activityLogger.logWishlistActivity({
-            userId: userId!,
-            action: 'add',
-            propertyId,
-            metadata: {
-              notes,
-              priority: priority || 'medium'
-            }
-          });
-          console.log(`[Wishlist API] 📝 Activity logged: add ${propertyId} for user ${userId}`);
-        } catch (activityError) {
-          console.warn(`[Wishlist API] ⚠️ Failed to log activity:`, activityError);
-          // Don't fail the operation if activity logging fails
-        }
-        
-        // Broadcast real-time update with simplified approach
-        try {
-          const realTimeService = RealTimeService.getInstance();
-          // Get stats without detailed property lookup for better performance
-          const wishlistStats = { total: 0 }; // Simplified stats
-          realTimeService.broadcastWishlistUpdate(userId!, 'add', propertyId, wishlistStats.total);
-          console.log(`[Wishlist API] 📡 Real-time update broadcasted: add ${propertyId} for user ${userId}`);
-        } catch (broadcastError) {
-          console.warn(`[Wishlist API] ⚠️ Failed to broadcast real-time update:`, broadcastError);
-          // Don't fail the operation if broadcasting fails
-        }
-        
-        const duration = Date.now() - startTime;
-        
-        logWishlistOperation('add_to_wishlist', userId, propertyId, { 
-          notes,
-          priority: priority || 'medium',
-          duration: `${duration}ms`
-        });
-        
-        return NextResponse.json({
-          success: true,
-          message: 'Property added to wishlist',
-          item: wishlistItem,
-          metadata: {
-            requestId: crypto.randomUUID(),
-            timestamp: new Date().toISOString(),
-            duration: `${duration}ms`
-          }
-        });
-        
-      } else if (action === 'remove') {
-        const removed = await removeFromWishlist(userId!, propertyId);
-        
-        if (!removed) {
-          logWishlistOperation('remove_from_wishlist', userId, propertyId, { 
-            reason: 'not_found' 
-          });
-          return NextResponse.json(
-            { 
-              success: false,
-              error: 'Property not found in wishlist',
-              code: 'PROPERTY_NOT_IN_WISHLIST'
-            },
-            { status: 404 }
-          );
-        }
-        
-        // COMPLETELY CLEAR ALL CACHES to ensure consistency
-        try {
-          const { cacheService } = await import('@/lib/database/cache');
-          cacheService.clearAll();
-          console.log(`[Wishlist API] ✅ Completely cleared all caches after removing property ${propertyId} for user ${userId}`);
-        } catch (cacheError) {
-          console.warn(`[Wishlist API] ⚠️ Failed to clear all caches:`, cacheError);
-        }
-        
-        // Log real-time activity
-        try {
-          const activityLogger = ActivityLogger.getInstance();
-          await activityLogger.logWishlistActivity({
-            userId: userId!,
-            action: 'remove',
-            propertyId,
-            metadata: {}
-          });
-          console.log(`[Wishlist API] 📝 Activity logged: remove ${propertyId} for user ${userId}`);
-        } catch (activityError) {
-          console.warn(`[Wishlist API] ⚠️ Failed to log activity:`, activityError);
-          // Don't fail the operation if activity logging fails
-        }
-        
-        // Broadcast real-time update with simplified approach
-        try {
-          const realTimeService = RealTimeService.getInstance();
-          // Get stats without detailed property lookup for better performance
-          const wishlistStats = { total: 0 }; // Simplified stats
-          realTimeService.broadcastWishlistUpdate(userId!, 'remove', propertyId, wishlistStats.total);
-          console.log(`[Wishlist API] 📡 Real-time update broadcasted: remove ${propertyId} for user ${userId}`);
-        } catch (broadcastError) {
-          console.warn(`[Wishlist API] ⚠️ Failed to broadcast real-time update:`, broadcastError);
-          // Don't fail the operation if broadcasting fails
-        }
-        
-        const duration = Date.now() - startTime;
-        
-        logWishlistOperation('remove_from_wishlist', userId, propertyId, { 
-          duration: `${duration}ms`
-        });
-        
-        return NextResponse.json({
-          success: true,
-          message: 'Property removed from wishlist',
-          metadata: {
-            requestId: crypto.randomUUID(),
-            timestamp: new Date().toISOString(),
-            duration: `${duration}ms`
-          }
-        });
-        
-      } else if (action === 'update') {
-        const updatedItem = await updateWishlistItem(userId!, propertyId, {
-          notes,
-          priority
-        });
-        
-        if (!updatedItem) {
-          logWishlistOperation('update_wishlist_item', userId, propertyId, { 
-            reason: 'not_found',
-            updates: { notes, priority }
-          });
-          return NextResponse.json(
-            { 
-              success: false,
-              error: 'Property not found in wishlist',
-              code: 'PROPERTY_NOT_IN_WISHLIST'
-            },
-            { status: 404 }
-          );
-        }
-        
-        // Log real-time activity
-        try {
-          const activityLogger = ActivityLogger.getInstance();
-          await activityLogger.logWishlistActivity({
-            userId: userId!,
-            action: 'update',
-            propertyId,
-            metadata: {
-              notes,
-              priority
-            }
-          });
-          console.log(`[Wishlist API] 📝 Activity logged: update ${propertyId} for user ${userId}`);
-        } catch (activityError) {
-          console.warn(`[Wishlist API] ⚠️ Failed to log activity:`, activityError);
-          // Don't fail the operation if activity logging fails
-        }
-        
-        const duration = Date.now() - startTime;
-        
-        logWishlistOperation('update_wishlist_item', userId, propertyId, { 
-          updates: { notes, priority },
-          duration: `${duration}ms`
-        });
-        
-        return NextResponse.json({
-          success: true,
-          message: 'Wishlist item updated',
-          item: updatedItem,
-          metadata: {
-            requestId: crypto.randomUUID(),
-            timestamp: new Date().toISOString(),
-            duration: `${duration}ms`
-          }
-        });
-        
-      } else {
-        logWishlistOperation('wishlist_operation', userId, propertyId, { 
-          invalidAction: action 
-        });
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Invalid action. Use "add", "remove", or "update"',
-            code: 'INVALID_ACTION'
-          },
-          { status: 400 }
-        );
-      }
-      
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      const errorDetails = error instanceof Error ? {
-        message: error.message,
-        name: error.name,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      } : { message: 'Unknown error occurred' };
-      
-      logWishlistOperation('wishlist_operation', userId || 'unknown', undefined, { 
-        requestBody,
-        duration: `${duration}ms`
-      }, error as Error);
-      
+    if (!userId) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'Failed to update wishlist',
-          code: 'WISHLIST_OPERATION_FAILED',
-          details: process.env.NODE_ENV === 'development' ? errorDetails : undefined,
-          metadata: {
-            requestId: crypto.randomUUID(),
-            timestamp: new Date().toISOString(),
-            duration: `${duration}ms`
-          }
+          error: 'Unable to identify user',
+          code: 'USER_IDENTIFICATION_FAILED'
         },
-        { status: 500 }
+        { status: 401 }
       );
     }
-});
 
-// PUT /api/user/wishlist - Update wishlist item metadata
-export const PUT = withWishlistMonitoring(async (request: NextRequest, context) => {
-    const startTime = Date.now();
-    let userId: string | null = null;
-    let requestBody: any = null;
-
+    // Parse request body
+    let requestBody: any;
     try {
-      // Extract user ID from Firebase session or x-user-id header
-      userId = await extractUserId(request);
+      requestBody = await request.json();
+    } catch (parseError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid JSON in request body',
+          code: 'INVALID_JSON'
+        },
+        { status: 400 }
+      );
+    }
 
-      if (!userId) {
-        logWishlistOperation('update_wishlist_metadata', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
+    const validation = validateWishlistRequest(requestBody);
+    if (!validation.isValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Validation failed',
+          code: 'VALIDATION_FAILED',
+          details: validation.errors
+        },
+        { status: 400 }
+      );
+    }
+
+    const { propertyId, action, notes, priority } = validation.data!;
+
+    if (action === 'add') {
+      // Check if already in wishlist
+      const alreadyInWishlist = await isInWishlist(userId, propertyId);
+      if (alreadyInWishlist) {
         return NextResponse.json(
-          { 
+          {
             success: false,
-            error: 'Unable to identify user',
-            code: 'USER_IDENTIFICATION_FAILED'
+            error: 'Property already in wishlist',
+            code: 'PROPERTY_ALREADY_IN_WISHLIST'
           },
-          { status: 401 }
+          { status: 409 }
         );
       }
-      
-      // Parse and validate request body
+
+      const wishlistItem = await addToWishlist(userId, propertyId, notes, priority || 'medium');
+
+      // Log activity (non-blocking)
       try {
-        requestBody = await request.json();
-      } catch (parseError) {
-        logWishlistOperation('update_wishlist_metadata', userId, undefined, undefined, new Error('Invalid JSON in request body'));
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Invalid JSON in request body',
-            code: 'INVALID_JSON'
-          },
-          { status: 400 }
-        );
-      }
-      
-      const { propertyId, notes, priority } = requestBody;
-      
-      // Validate required fields
-      if (!propertyId || typeof propertyId !== 'string') {
-        logWishlistOperation('update_wishlist_metadata', userId, undefined, { 
-          error: 'Missing or invalid propertyId',
-          requestBody 
+        const activityLogger = ActivityLogger.getInstance();
+        await activityLogger.logWishlistActivity({
+          userId,
+          action: 'add',
+          propertyId,
+          metadata: { notes, priority: priority || 'medium' }
         });
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Property ID is required and must be a string',
-            code: 'INVALID_PROPERTY_ID'
-          },
-          { status: 400 }
-        );
+      } catch (err) {
+        // Ignore activity logging errors
       }
-      
-      // Validate that at least one field is being updated
-      if (notes === undefined && priority === undefined) {
-        logWishlistOperation('update_wishlist_metadata', userId, propertyId, { 
-          error: 'No fields to update' 
-        });
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'At least one field (notes or priority) must be provided for update',
-            code: 'NO_UPDATE_FIELDS'
-          },
-          { status: 400 }
-        );
+
+      // Broadcast real-time update (non-blocking)
+      try {
+        const realTimeService = RealTimeService.getInstance();
+        realTimeService.broadcastWishlistUpdate(userId, 'add', propertyId, 0);
+      } catch (err) {
+        // Ignore broadcast errors
       }
-      
-      // Validate priority if provided
-      if (priority !== undefined && !['low', 'medium', 'high'].includes(priority)) {
-        logWishlistOperation('update_wishlist_metadata', userId, propertyId, { 
-          error: 'Invalid priority',
-          priority 
-        });
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Priority must be one of: low, medium, high',
-            code: 'INVALID_PRIORITY'
-          },
-          { status: 400 }
-        );
-      }
-      
-      // Validate notes if provided
-      if (notes !== undefined && typeof notes !== 'string') {
-        logWishlistOperation('update_wishlist_metadata', userId, propertyId, { 
-          error: 'Invalid notes type' 
-        });
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Notes must be a string',
-            code: 'INVALID_NOTES'
-          },
-          { status: 400 }
-        );
-      }
-      
-      const updatedItem = await updateWishlistItem(userId!, propertyId, {
-        notes,
-        priority
-      });
-      
-      if (!updatedItem) {
-        logWishlistOperation('update_wishlist_metadata', userId, propertyId, { 
-          reason: 'not_found',
-          updates: { notes, priority }
-        });
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Property not found in wishlist',
-            code: 'PROPERTY_NOT_IN_WISHLIST'
-          },
-          { status: 404 }
-        );
-      }
-      
-      const duration = Date.now() - startTime;
-      
-      logWishlistOperation('update_wishlist_metadata', userId, propertyId, { 
-        updates: { notes, priority },
-        duration: `${duration}ms`
-      });
-      
+
       return NextResponse.json({
         success: true,
-        message: 'Wishlist item metadata updated',
-        item: updatedItem,
+        message: 'Property added to wishlist',
+        item: wishlistItem,
         metadata: {
           requestId: crypto.randomUUID(),
           timestamp: new Date().toISOString(),
-          duration: `${duration}ms`
+          duration: `${Date.now() - startTime}ms`
         }
       });
-      
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      const errorDetails = error instanceof Error ? {
-        message: error.message,
-        name: error.name,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      } : { message: 'Unknown error occurred' };
-      
-      logWishlistOperation('update_wishlist_metadata', userId || 'unknown', undefined, { 
-        requestBody,
-        duration: `${duration}ms`
-      }, error as Error);
-      
-      return NextResponse.json(
-        { 
-          success: false,
-          error: 'Failed to update wishlist item metadata',
-          code: 'WISHLIST_UPDATE_FAILED',
-          details: process.env.NODE_ENV === 'development' ? errorDetails : undefined,
-          metadata: {
-            requestId: crypto.randomUUID(),
-            timestamp: new Date().toISOString(),
-            duration: `${duration}ms`
-          }
-        },
-        { status: 500 }
-      );
-    }
-});
 
-// DELETE /api/user/wishlist?propertyId=xxx - Remove property from wishlist
-export const DELETE = withWishlistMonitoring(async (request: NextRequest, context) => {
-    const startTime = Date.now();
-    let userId: string | null = null;
+    } else if (action === 'remove') {
+      const removed = await removeFromWishlist(userId, propertyId);
 
-    try {
-      // Extract user ID from Firebase session or x-user-id header
-      userId = await extractUserId(request);
-
-      if (!userId) {
-        logWishlistOperation('delete_from_wishlist', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Unable to identify user',
-            code: 'USER_IDENTIFICATION_FAILED'
-          },
-          { status: 401 }
-        );
-      }
-      
-      const { searchParams } = new URL(request.url);
-      const propertyId = searchParams.get('propertyId');
-      
-      if (!propertyId) {
-        logWishlistOperation('delete_from_wishlist', userId, undefined, { 
-          error: 'Missing propertyId parameter' 
-        });
-        return NextResponse.json(
-          { 
-            success: false,
-            error: 'Property ID is required as a query parameter',
-            code: 'MISSING_PROPERTY_ID'
-          },
-          { status: 400 }
-        );
-      }
-      
-      const removed = await removeFromWishlist(userId!, propertyId);
-      
       if (!removed) {
-        logWishlistOperation('delete_from_wishlist', userId, propertyId, { 
-          reason: 'not_found' 
-        });
         return NextResponse.json(
-          { 
+          {
             success: false,
             error: 'Property not found in wishlist',
             code: 'PROPERTY_NOT_IN_WISHLIST'
@@ -834,68 +313,326 @@ export const DELETE = withWishlistMonitoring(async (request: NextRequest, contex
           { status: 404 }
         );
       }
-      
-      // COMPLETELY CLEAR ALL CACHES to ensure consistency
+
+      // Clear cache (non-blocking)
       try {
         const { cacheService } = await import('@/lib/database/cache');
         cacheService.clearAll();
-        console.log(`[Wishlist API] ✅ Completely cleared all caches after deleting property ${propertyId} for user ${userId}`);
-      } catch (cacheError) {
-        console.warn(`[Wishlist API] ⚠️ Failed to clear all caches:`, cacheError);
+      } catch (err) {
+        // Ignore cache errors
       }
-      
-      // Broadcast real-time update
+
+      // Log activity (non-blocking)
+      try {
+        const activityLogger = ActivityLogger.getInstance();
+        await activityLogger.logWishlistActivity({
+          userId,
+          action: 'remove',
+          propertyId,
+          metadata: {}
+        });
+      } catch (err) {
+        // Ignore activity logging errors
+      }
+
+      // Broadcast real-time update (non-blocking)
       try {
         const realTimeService = RealTimeService.getInstance();
-        const wishlistStats = await getWishlistStats(userId!);
-        realTimeService.broadcastWishlistUpdate(userId!, 'remove', propertyId, wishlistStats.total);
-        console.log(`[Wishlist API] 📡 Real-time update broadcasted: remove ${propertyId} for user ${userId}`);
-      } catch (broadcastError) {
-        console.warn(`[Wishlist API] ⚠️ Failed to broadcast real-time update:`, broadcastError);
-        // Don't fail the operation if broadcasting fails
+        realTimeService.broadcastWishlistUpdate(userId, 'remove', propertyId, 0);
+      } catch (err) {
+        // Ignore broadcast errors
       }
-      
-      const duration = Date.now() - startTime;
-      
-      logWishlistOperation('delete_from_wishlist', userId, propertyId, { 
-        duration: `${duration}ms`
-      });
-      
+
       return NextResponse.json({
         success: true,
         message: 'Property removed from wishlist',
         metadata: {
           requestId: crypto.randomUUID(),
           timestamp: new Date().toISOString(),
-          duration: `${duration}ms`
+          duration: `${Date.now() - startTime}ms`
         }
       });
-      
-    } catch (error) {
-      const duration = Date.now() - startTime;
-      const errorDetails = error instanceof Error ? {
-        message: error.message,
-        name: error.name,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      } : { message: 'Unknown error occurred' };
-      
-      logWishlistOperation('delete_from_wishlist', userId || 'unknown', undefined, { 
-        duration: `${duration}ms`
-      }, error as Error);
-      
+
+    } else if (action === 'update') {
+      const updatedItem = await updateWishlistItem(userId, propertyId, { notes, priority });
+
+      if (!updatedItem) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Property not found in wishlist',
+            code: 'PROPERTY_NOT_IN_WISHLIST'
+          },
+          { status: 404 }
+        );
+      }
+
+      // Log activity (non-blocking)
+      try {
+        const activityLogger = ActivityLogger.getInstance();
+        await activityLogger.logWishlistActivity({
+          userId,
+          action: 'update',
+          propertyId,
+          metadata: { notes, priority }
+        });
+      } catch (err) {
+        // Ignore activity logging errors
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Wishlist item updated',
+        item: updatedItem,
+        metadata: {
+          requestId: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+          duration: `${Date.now() - startTime}ms`
+        }
+      });
+
+    } else {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: 'Failed to remove property from wishlist',
-          code: 'WISHLIST_DELETE_FAILED',
-          details: process.env.NODE_ENV === 'development' ? errorDetails : undefined,
-          metadata: {
-            requestId: crypto.randomUUID(),
-            timestamp: new Date().toISOString(),
-            duration: `${duration}ms`
-          }
+          error: 'Invalid action',
+          code: 'INVALID_ACTION'
         },
-        { status: 500 }
+        { status: 400 }
       );
     }
+
+  } catch (error) {
+    console.error('[Wishlist API] POST failed:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to update wishlist',
+        code: 'WISHLIST_OPERATION_FAILED',
+        details: process.env.NODE_ENV === 'development' ? error instanceof Error ? { message: error.message } : undefined : undefined,
+        metadata: {
+          requestId: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+          duration: `${Date.now() - startTime}ms`
+        }
+      },
+      { status: 500 }
+    );
+  }
+});
+
+// PUT /api/user/wishlist - Update wishlist item metadata
+export const PUT = withWishlistMonitoring(async (request: NextRequest, context) => {
+  const startTime = Date.now();
+
+  try {
+    const userId = await extractUserId(request);
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unable to identify user',
+          code: 'USER_IDENTIFICATION_FAILED'
+        },
+        { status: 401 }
+      );
+    }
+
+    // Parse request body
+    let requestBody: any;
+    try {
+      requestBody = await request.json();
+    } catch (parseError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid JSON in request body',
+          code: 'INVALID_JSON'
+        },
+        { status: 400 }
+      );
+    }
+
+    const { propertyId, notes, priority } = requestBody;
+
+    if (!propertyId || typeof propertyId !== 'string') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Property ID is required',
+          code: 'INVALID_PROPERTY_ID'
+        },
+        { status: 400 }
+      );
+    }
+
+    if (notes === undefined && priority === undefined) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'At least one field (notes or priority) must be provided',
+          code: 'NO_UPDATE_FIELDS'
+        },
+        { status: 400 }
+      );
+    }
+
+    if (priority !== undefined && !['low', 'medium', 'high'].includes(priority)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Priority must be: low, medium, or high',
+          code: 'INVALID_PRIORITY'
+        },
+        { status: 400 }
+      );
+    }
+
+    if (notes !== undefined && typeof notes !== 'string') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Notes must be a string',
+          code: 'INVALID_NOTES'
+        },
+        { status: 400 }
+      );
+    }
+
+    const updatedItem = await updateWishlistItem(userId, propertyId, { notes, priority });
+
+    if (!updatedItem) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Property not found in wishlist',
+          code: 'PROPERTY_NOT_IN_WISHLIST'
+        },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Wishlist item metadata updated',
+      item: updatedItem,
+      metadata: {
+        requestId: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        duration: `${Date.now() - startTime}ms`
+      }
+    });
+
+  } catch (error) {
+    console.error('[Wishlist API] PUT failed:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to update wishlist item metadata',
+        code: 'WISHLIST_UPDATE_FAILED',
+        details: process.env.NODE_ENV === 'development' ? error instanceof Error ? { message: error.message } : undefined : undefined,
+        metadata: {
+          requestId: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+          duration: `${Date.now() - startTime}ms`
+        }
+      },
+      { status: 500 }
+    );
+  }
+});
+
+// DELETE /api/user/wishlist?propertyId=xxx - Remove property from wishlist
+export const DELETE = withWishlistMonitoring(async (request: NextRequest, context) => {
+  const startTime = Date.now();
+
+  try {
+    const userId = await extractUserId(request);
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unable to identify user',
+          code: 'USER_IDENTIFICATION_FAILED'
+        },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const propertyId = searchParams.get('propertyId');
+
+    if (!propertyId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Property ID is required',
+          code: 'MISSING_PROPERTY_ID'
+        },
+        { status: 400 }
+      );
+    }
+
+    const removed = await removeFromWishlist(userId, propertyId);
+
+    if (!removed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Property not found in wishlist',
+          code: 'PROPERTY_NOT_IN_WISHLIST'
+        },
+        { status: 404 }
+      );
+    }
+
+    // Clear cache (non-blocking)
+    try {
+      const { cacheService } = await import('@/lib/database/cache');
+      cacheService.clearAll();
+    } catch (err) {
+      // Ignore cache errors
+    }
+
+    // Broadcast real-time update (non-blocking)
+    try {
+      const realTimeService = RealTimeService.getInstance();
+      const stats = await getWishlistStats(userId);
+      realTimeService.broadcastWishlistUpdate(userId, 'remove', propertyId, stats.total);
+    } catch (err) {
+      // Ignore broadcast errors
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Property removed from wishlist',
+      metadata: {
+        requestId: crypto.randomUUID(),
+        timestamp: new Date().toISOString(),
+        duration: `${Date.now() - startTime}ms`
+      }
+    });
+
+  } catch (error) {
+    console.error('[Wishlist API] DELETE failed:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to remove property from wishlist',
+        code: 'WISHLIST_DELETE_FAILED',
+        details: process.env.NODE_ENV === 'development' ? error instanceof Error ? { message: error.message } : undefined : undefined,
+        metadata: {
+          requestId: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+          duration: `${Date.now() - startTime}ms`
+        }
+      },
+      { status: 500 }
+    );
+  }
 });

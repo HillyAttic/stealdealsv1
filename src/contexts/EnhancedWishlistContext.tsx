@@ -75,37 +75,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     }
   }, []);
 
-  // Update queued operations count - simplified without offline queue
-  const updateQueuedOperationsCount = useCallback(() => {
-    // For now, just set to 0 since we're not using offline queue
-    setQueuedOperations(0);
-  }, []);
-
-  // Setup online/offline detection
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    setIsOnline(navigator.onLine);
-    
-    const handleOnline = () => {
-      setIsOnline(true);
-      showSuccessRef('Connection restored', 'Syncing your wishlist changes...');
-      updateQueuedOperationsCount();
-    };
-    
-    const handleOffline = () => {
-      setIsOnline(false);
-      showWarningRef('Connection lost', 'Your changes will be saved and synced when connection is restored');
-    };
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []); // No dependencies needed - functions are stable and operations are self-contained
+  // Offline queue tracking removed — no longer needed
 
   // Clear error function
   const clearError = useCallback(() => {
@@ -170,15 +140,6 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               'x-user-id': userId
             };
             
-            console.log(`[EnhancedWishlistContext] Adding to wishlist (attempt ${attempt + 1}):`, {
-              propertyId,
-              userId,
-              environment: process.env.NODE_ENV
-            });
-            
-            // OPTIMIZATION: Add performance timing
-            const fetchStartTime = Date.now();
-            
             // Use API endpoint without retry parameter to reduce complexity
             const response = await fetch(`/api/user/wishlist`, {
               method: 'POST',
@@ -190,41 +151,35 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               })
             });
             
-            const fetchDuration = Date.now() - fetchStartTime;
-            console.log(`[EnhancedWishlistContext] API request completed in ${fetchDuration}ms`);
-            
             if (!response.ok) {
               const errorData = await response.json().catch(() => ({}));
               const error = new Error(errorData.error || `HTTP ${response.status}`);
-              
+
               // Only retry on specific transient errors
               if ((response.status === 401 || response.status === 503) && attempt < maxRetries) {
-                console.warn(`[EnhancedWishlistContext] Transient error (attempt ${attempt + 1}), retrying...`);
                 lastError = error;
-                await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1))); // Reduced delay
+                await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
                 continue;
               }
-              
+
               throw error;
             }
-            
+
             const data = await response.json();
             if (!data.success) {
               const error = new Error(data.error || 'Failed to add to wishlist');
-              
+
               // Only retry on server errors
               if ((response.status >= 500) && attempt < maxRetries) {
-                console.warn(`[EnhancedWishlistContext] Server error (attempt ${attempt + 1}), retrying...`);
                 lastError = error;
-                await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1))); // Reduced delay
+                await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
                 continue;
               }
-              
+
               throw error;
             }
-            
+
             showSuccessRef('Added to wishlist', 'Property saved to your wishlist');
-            console.log(`[EnhancedWishlistContext] ✅ Successfully added ${propertyId} after ${attempt + 1} attempts`);
             // The Firebase listener will update the UI automatically
             break;
           } else {
@@ -241,7 +196,6 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
         
       } catch (error) {
         lastError = error as Error;
-        console.error(`[EnhancedWishlistContext] ❌ Attempt ${attempt + 1} failed for ${propertyId}:`, error);
         
         // If this is the last attempt, break and handle error below
         if (attempt === maxRetries) {
@@ -254,7 +208,6 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     try {
       // If we got here and have an error, all attempts failed
       if (lastError) {
-        console.error(`[EnhancedWishlistContext] ❌ All ${maxRetries + 1} attempts failed for ${propertyId}:`, lastError);
         
         // Revert optimistic update
         setWishlistItems(previousItems);
@@ -304,16 +257,11 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     try {
       setIsLoading(true);
       setError(null);
-      
-      // OPTIMIZATION: Add performance timing
-      const fetchStartTime = Date.now();
+
       const items = await getRawWishlistItems(userId);
-      const fetchDuration = Date.now() - fetchStartTime;
-      
+
       const propertyIds = new Set(items.map(item => item.propertyId));
       setWishlistItems(propertyIds);
-      console.log(`[EnhancedWishlistContext] ✅ Manual refresh: ${propertyIds.size} items in ${fetchDuration}ms`);
-      showSuccessRef('Wishlist refreshed', 'Your wishlist has been updated');
       
     } catch (error) {
       console.error('[EnhancedWishlistContext] ❌ Manual refresh error:', error);
@@ -328,27 +276,25 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
   // Enhanced remove from wishlist with retry and production resilience
   const removeFromWishlist = useCallback(async (propertyId: string): Promise<boolean> => {
     const userId = getCurrentUserId();
-    console.log(`[EnhancedWishlistContext] ➖ Removing property ${propertyId} for user ${userId}`);
-    
+
     // Check if exists
     if (!wishlistItems.has(propertyId)) {
-      console.log(`[EnhancedWishlistContext] ⚠️ Property ${propertyId} not in wishlist`);
       return false;
     }
 
     // Set loading state for this specific property
     setOperationLoadingState(propertyId, true);
-    
+
     // Optimistic update
     const previousItems = new Set(wishlistItems);
     const newItems = new Set(wishlistItems);
     newItems.delete(propertyId);
     setWishlistItems(newItems);
-    
+
     // Simplified retry mechanism - reduce retries in production
-    const maxRetries = process.env.NODE_ENV === 'production' ? 1 : 1; // Changed from 3 to 1
+    const maxRetries = process.env.NODE_ENV === 'production' ? 1 : 1;
     let lastError: Error | null = null;
-    
+
     try {
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
@@ -359,16 +305,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
                 'Content-Type': 'application/json',
                 'x-user-id': userId
               };
-              
-              console.log(`[EnhancedWishlistContext] Removing from wishlist (attempt ${attempt + 1}):`, {
-                propertyId,
-                userId,
-                environment: process.env.NODE_ENV
-              });
-              
-              // OPTIMIZATION: Add performance timing
-              const fetchStartTime = Date.now();
-              
+
               // Use API endpoint without retry parameter to reduce complexity
               const response = await fetch(`/api/user/wishlist`, {
                 method: 'POST',
@@ -378,48 +315,42 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
                   action: 'remove'
                 })
               });
-              
-              const fetchDuration = Date.now() - fetchStartTime;
-              console.log(`[EnhancedWishlistContext] API request completed in ${fetchDuration}ms`);
-              
+
               if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 const error = new Error(errorData.error || `HTTP ${response.status}`);
-                
+
                 // Only retry on specific transient errors
                 if ((response.status === 401 || response.status === 503) && attempt < maxRetries) {
-                  console.warn(`[EnhancedWishlistContext] Transient error (attempt ${attempt + 1}), retrying...`);
                   lastError = error;
-                  await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1))); // Reduced delay
+                  await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
                   continue;
                 }
-                
+
                 throw error;
               }
-              
+
               const data = await response.json();
               if (!data.success) {
                 const error = new Error(data.error || 'Failed to remove from wishlist');
-                
+
                 // Only retry on server errors
                 if ((response.status >= 500) && attempt < maxRetries) {
-                  console.warn(`[EnhancedWishlistContext] Server error (attempt ${attempt + 1}), retrying...`);
                   lastError = error;
-                  await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1))); // Reduced delay
+                  await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)));
                   continue;
                 }
-                
+
                 throw error;
               }
-              
-              console.log(`[EnhancedWishlistContext] ✅ Successfully removed ${propertyId} after ${attempt + 1} attempts`);
+
               showSuccessRef('Removed from wishlist', 'Property removed from your wishlist');
-              
+
               // Force refresh to ensure cache consistency
               setTimeout(() => {
                 refreshWishlist();
               }, 1000);
-              
+
               // The Firebase listener will update the UI automatically
               break;
             } else {
@@ -437,19 +368,16 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
           
         } catch (error) {
           lastError = error as Error;
-          console.error(`[EnhancedWishlistContext] ❌ Attempt ${attempt + 1} failed for removing ${propertyId}:`, error);
-          
+
           // If this is the last attempt, break and handle error below
           if (attempt === maxRetries) {
             break;
           }
         }
       }
-      
+
       // If we got here and have an error, all attempts failed
       if (lastError) {
-        console.error(`[EnhancedWishlistContext] ❌ All ${maxRetries + 1} attempts failed for removing ${propertyId}:`, lastError);
-        
         // Revert optimistic update
         setWishlistItems(previousItems);
         
@@ -480,13 +408,11 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
   const retryFailedOperations = useCallback(async () => {
     try {
       // For now, just refresh the wishlist
-      showInfoRef('Retrying operations', 'Refreshing your wishlist...');
       await refreshWishlist();
     } catch (error) {
-      console.error('[EnhancedWishlistContext] ❌ Error retrying operations:', error);
       showErrorRef('Retry Error', 'Failed to retry pending operations');
     }
-  }, [showInfoRef, refreshWishlist]);
+  }, [refreshWishlist, showErrorRef]);
 
   // Check if property is in wishlist
   const isInWishlist = useCallback((propertyId: string): boolean => {
@@ -506,14 +432,12 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
   useEffect(() => {
     const userId = user?.uid || (typeof window !== 'undefined' && process.env.NODE_ENV === 'development' ? 'user-1' : 'anonymous');
     const isProduction = process.env.NODE_ENV === 'production';
-    
-    console.log(`[EnhancedWishlistContext] 🚀 Initializing for user: ${userId}, authenticated: ${isSignedIn}, environment: ${isProduction ? 'production' : 'development'}`);
-    
+
     try {
       // Production-aware authentication check
       const shouldUseFirebase = () => {
         if (!isSignedIn) return false;
-        
+
         // In production, be more lenient about user ID requirements
         if (isProduction) {
           // Allow Firebase setup if we have any valid user indicator
@@ -523,28 +447,23 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
           return userId !== 'anonymous' && userId !== 'user-1' && userId;
         }
       };
-      
+
       if (shouldUseFirebase()) {
         // Authenticated user - use Firebase with real-time listener
         if (!isListenerActive) {
           setIsLoading(true);
-          
+
           // Enhanced Firebase setup with error recovery
           const setupFirebaseListener = (attempt: number = 0) => {
             try {
-              console.log(`[EnhancedWishlistContext] Setting up Firebase listener (attempt ${attempt + 1}) for user: ${userId}`);
-              
               // Setup Firebase real-time listener
               const unsubscribe = subscribeToWishlist(userId, (items: WishlistItem[]) => {
                 try {
-                  console.log(`[EnhancedWishlistContext] 🔄 Real-time update received for user: ${userId}`);
-
                   if (!items || items.length === 0) {
-                    console.log(`[EnhancedWishlistContext] 📭 No wishlist data, setting empty`);
                     setWishlistItems(new Set());
                     setIsLoading(false);
                     setIsInitialized(true);
-                    setError(null); // Clear any previous errors
+                    setError(null);
                     return;
                   }
 
@@ -554,19 +473,15 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
                       propertyIds.add(item.propertyId);
                     }
                   }
-
-                  console.log(`[EnhancedWishlistContext] 🔄 Real-time update: ${propertyIds.size} items`);
                   setWishlistItems(propertyIds);
                   setIsLoading(false);
                   setIsInitialized(true);
                   setError(null);
 
                 } catch (error) {
-                  console.error('[EnhancedWishlistContext] ❌ Error processing real-time update:', error);
-
                   // In production, be more resilient to processing errors
                   if (isProduction) {
-                    setError(null); // Don't show error to user for processing issues
+                    setError(null);
                     setIsLoading(false);
                     setIsInitialized(true);
                   } else {
@@ -575,11 +490,8 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
                   }
                 }
               }, (error) => {
-                console.error(`[EnhancedWishlistContext] ❌ Firebase listener error (attempt ${attempt + 1}):`, error);
-
                 // Enhanced error handling with retry logic
                 if (isProduction && attempt < 2) {
-                  console.log(`[EnhancedWishlistContext] Production: Retrying Firebase connection in 3 seconds...`);
                   setTimeout(() => {
                     setupFirebaseListener(attempt + 1);
                   }, 3000 * (attempt + 1));
@@ -592,17 +504,14 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
 
                   // In production, fall back to local storage even for authenticated users
                   if (isProduction) {
-                    console.log('[EnhancedWishlistContext] Production: Falling back to localStorage due to Firebase issues');
                     try {
                       const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
                       if (stored) {
                         const items = JSON.parse(stored);
                         setWishlistItems(new Set(items));
-                        console.log(`[EnhancedWishlistContext] 📱 Production fallback: Loaded ${items.length} items from localStorage`);
                         setIsInitialized(true);
                       }
                     } catch (localError) {
-                      console.error('[EnhancedWishlistContext] ❌ Production: Failed localStorage fallback:', localError);
                       setIsInitialized(true);
                     }
                   }
@@ -610,15 +519,12 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               });
 
               setIsListenerActive(true);
-              
+
               return () => {
-                console.log(`[EnhancedWishlistContext] 🔥 Cleaning up Firebase listener for user ${userId}`);
                 unsubscribe();
                 setIsListenerActive(false);
               };
             } catch (setupError) {
-              console.error(`[EnhancedWishlistContext] ❌ Firebase setup error (attempt ${attempt + 1}):`, setupError);
-              
               if (isProduction && attempt < 2) {
                 setTimeout(() => {
                   setupFirebaseListener(attempt + 1);
@@ -635,10 +541,9 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
         }
       } else {
         // Non-authenticated user or production fallback - use localStorage
-        console.log(`[EnhancedWishlistContext] 📱 Using localStorage (authenticated: ${isSignedIn}, production: ${isProduction})`);
         setIsLoading(false);
         setIsInitialized(true);
-        
+
         // Load from localStorage with enhanced error handling
         if (typeof window !== 'undefined') {
           try {
@@ -647,35 +552,29 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               const items = JSON.parse(stored);
               if (Array.isArray(items)) {
                 setWishlistItems(new Set(items));
-                console.log(`[EnhancedWishlistContext] 📱 Loaded ${items.length} items from localStorage`);
               } else {
-                console.warn('[EnhancedWishlistContext] Invalid localStorage data format, resetting');
                 localStorage.removeItem(WISHLIST_STORAGE_KEY);
               }
             }
-            setError(null); // Clear any previous errors
+            setError(null);
           } catch (error) {
-            console.error('[EnhancedWishlistContext] ❌ Failed to load from localStorage:', error);
-            
             // Clear corrupted localStorage data
             try {
               localStorage.removeItem(WISHLIST_STORAGE_KEY);
             } catch (clearError) {
-              console.error('[EnhancedWishlistContext] ❌ Failed to clear corrupted localStorage:', clearError);
+              // Ignore
             }
-            
-            const errorMsg = isProduction 
-              ? null // Don't show localStorage errors to production users
+
+            const errorMsg = isProduction
+              ? null
               : 'Failed to load saved wishlist items';
             setError(errorMsg);
           }
         }
       }
     } catch (error) {
-      console.error('[EnhancedWishlistContext] ❌ Initialization error:', error);
-      
-      const errorMsg = isProduction 
-        ? null // Don't show initialization errors to production users
+      const errorMsg = isProduction
+        ? null
         : 'Failed to initialize wishlist';
       setError(errorMsg);
       setIsLoading(false);
@@ -683,11 +582,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
     }
   }, [isSignedIn, user?.uid]);
 
-  // Update queued operations count periodically
-  useEffect(() => {
-    const interval = setInterval(updateQueuedOperationsCount, 5000);
-    return () => clearInterval(interval);
-  }, [updateQueuedOperationsCount]);
+  // Online/offline detection removed — simplified
 
   // Save localStorage whenever wishlistItems changes for non-authenticated users
   useEffect(() => {

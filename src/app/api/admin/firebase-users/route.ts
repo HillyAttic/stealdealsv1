@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
                     createdAt: data.createdAt || null,
                     permissions: data.permissions || {},
                     isActive: data.isActive !== false,
-                    createdBy: data.createdBy
+                    createdBy: data.createdBy,
+                    plainPassword: data.plainPassword || null,
                 });
             });
 
@@ -170,6 +171,7 @@ export async function POST(request: NextRequest) {
                     }
                     : permissions,
                 isActive: true,
+                plainPassword: password,
                 createdAt: new Date().toISOString(),
                 createdBy: adminUser.id
             };
@@ -240,6 +242,8 @@ export async function PUT(request: NextRequest) {
                 } catch (e) {
                     console.error("Failed to update password in Firebase Auth", e);
                 }
+                // Store the new plain password so it can be retrieved later
+                updateData.plainPassword = updateData.password;
                 delete updateData.password;
             }
 
