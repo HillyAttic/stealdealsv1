@@ -6,7 +6,8 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider,
   signOut as firebaseSignOutFn,
   sendPasswordResetEmail,
@@ -185,7 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogleHandler = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    await signInWithRedirect(auth, provider);
   };
 
   const signOutHandler = async () => {
