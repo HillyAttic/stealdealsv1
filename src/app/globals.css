@@ -508,3 +508,26 @@ body.modal-open header {
   box-shadow: 0 8px 25px -5px rgba(21, 77, 113, 0.15),
               0 4px 10px -5px rgba(21, 77, 113, 0.1);
 }
+
+/* Custom scrollbar for dashboard segments */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(139, 92, 246, 0.05);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.5));
+}
+
+/* Firefox scrollbar support */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.3) rgba(139, 92, 246, 0.05);
+}

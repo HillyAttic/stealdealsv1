@@ -24,14 +24,8 @@ export async function GET(request: Request) {
       let franchiseCount = 0;
       let plotsCount = 0;
 
-      // Category breakdown for vacant properties
-      const categoryCounts: Record<string, number> = {
-        'Industrial': 0,
-        'High-Street': 0,
-        'Mall': 0,
-        'Corporate': 0,
-        'Other': 0
-      };
+      // Segment breakdown for franchises
+      const segmentCounts: Record<string, number> = {};
 
       // Industry breakdown for franchises
       const industryCounts: Record<string, number> = {
@@ -53,22 +47,14 @@ export async function GET(request: Request) {
           preleasedCount++;
         } else if (type === 'vacant') {
           vacantCount++;
-
-          // Categorize vacant property
-          const category = (property.vacantDetails?.category || property.category || '').toLowerCase();
-          if (category.includes('industrial')) {
-            categoryCounts['Industrial']++;
-          } else if (category.includes('high-street') || category.includes('high street') || category.includes('street')) {
-            categoryCounts['High-Street']++;
-          } else if (category.includes('mall') || category.includes('shopping')) {
-            categoryCounts['Mall']++;
-          } else if (category.includes('corporate') || category.includes('office') || category.includes('business')) {
-            categoryCounts['Corporate']++;
-          } else {
-            categoryCounts['Other']++;
-          }
         } else if (type === 'franchise') {
           franchiseCount++;
+
+          // Categorize franchise by segment
+          const segment = property.franchiseDetails?.segment || property.segment || '';
+          if (segment) {
+            segmentCounts[segment] = (segmentCounts[segment] || 0) + 1;
+          }
 
           // Categorize franchise by industry
           const industry = property.franchiseDetails?.industry || property.category || '';
@@ -84,6 +70,15 @@ export async function GET(request: Request) {
 
       console.log(`[Dashboard API] RTDB stats: vacant=${vacantCount}, preleased=${preleasedCount}, franchise=${franchiseCount}, plots=${plotsCount}, total=${totalCount}`);
 
+      // Sort segments by count (descending)
+      const sortedSegments = Object.entries(segmentCounts)
+        .sort(([, a], [, b]) => b - a)
+        .reduce((acc, [key, value]) => {
+          acc.labels.push(key);
+          acc.data.push(value);
+          return acc;
+        }, { labels: [] as string[], data: [] as number[] });
+
       return NextResponse.json({
         stats: {
           preleased: preleasedCount,
@@ -92,10 +87,7 @@ export async function GET(request: Request) {
           plots: plotsCount,
           total: totalCount
         },
-        categoryData: {
-          labels: Object.keys(categoryCounts),
-          data: Object.values(categoryCounts)
-        },
+        segmentData: sortedSegments,
         franchiseData: {
           labels: Object.keys(industryCounts),
           data: Object.values(industryCounts)
@@ -107,7 +99,7 @@ export async function GET(request: Request) {
         {
           error: 'Failed to fetch dashboard stats',
           stats: { preleased: 0, vacant: 0, franchise: 0, plots: 0, total: 0 },
-          categoryData: { labels: [], data: [] },
+          segmentData: { labels: [], data: [] },
           franchiseData: { labels: [], data: [] }
         },
         { status: 200 }

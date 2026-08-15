@@ -658,6 +658,12 @@ export async function GET(request: NextRequest) {
         stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
       } : { message: 'Unknown error occurred' };
 
+      console.error('[Admin Stats API] ❌ Request failed:', {
+        error: errorDetails,
+        duration: `${duration}ms`,
+        adminUserId,
+      });
+
       logAdminStatsOperation(
         'get_wishlist_stats',
         adminUserId,
