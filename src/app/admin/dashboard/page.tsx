@@ -177,15 +177,19 @@ function AdminDashboardContent() {
         }
 
         if (franchiseEl && franchiseData.data.some(v => v > 0)) {
-          // Create gradient fills for bar chart
-          const fCtx = franchiseEl.getContext('2d');
-          const barColors = ['#2563eb', '#ef4444', '#ec4899', '#06b6d4', '#f59e0b', '#8b5cf6', '#10b981'];
-          const bgColors = barColors.map((color) => {
-            const gradient = fCtx.createLinearGradient(0, 0, 0, 280);
-            gradient.addColorStop(0, color);
-            gradient.addColorStop(1, color + '66');
-            return gradient;
-          });
+          // Solid vibrant colors for bars
+          const barColors = [
+            '#2563eb', // Blue
+            '#ef4444', // Red
+            '#ec4899', // Pink
+            '#06b6d4', // Cyan
+            '#f59e0b', // Amber
+            '#8b5cf6', // Purple
+            '#10b981', // Emerald
+            '#f97316', // Orange
+            '#14b8a6', // Teal
+            '#a855f7', // Violet
+          ];
 
           // Value label plugin
           const valueLabelPlugin = {
@@ -199,9 +203,9 @@ function AdminDashboardContent() {
                   ctx.save();
                   ctx.textAlign = 'center';
                   ctx.textBaseline = 'bottom';
-                  ctx.font = '600 12px Jost, sans-serif';
-                  ctx.fillStyle = '#334155';
-                  ctx.fillText(String(value), bar.x, bar.y - 8);
+                  ctx.font = '600 13px Jost, sans-serif';
+                  ctx.fillStyle = '#1e293b';
+                  ctx.fillText(String(value), bar.x, bar.y - 10);
                   ctx.restore();
                 }
               });
@@ -215,19 +219,19 @@ function AdminDashboardContent() {
               datasets: [{
                 label: 'Franchises by Industry',
                 data: franchiseData.data,
-                backgroundColor: bgColors,
+                backgroundColor: franchiseData.data.map((_: any, i: number) => barColors[i % barColors.length]),
                 borderWidth: 0,
-                borderRadius: 10,
+                borderRadius: 12,
                 borderSkipped: false,
-                barPercentage: 0.55,
-                categoryPercentage: 0.75,
+                barPercentage: 0.65,
+                categoryPercentage: 0.8,
               }],
             },
             plugins: [valueLabelPlugin],
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              layout: { padding: { top: 30, bottom: 0, left: 0, right: 0 } },
+              layout: { padding: { top: 35, bottom: 10, left: 10, right: 10 } },
               plugins: {
                 legend: { display: false },
                 tooltip: {
@@ -243,18 +247,18 @@ function AdminDashboardContent() {
                   beginAtZero: true,
                   ticks: {
                     stepSize: 20,
-                    font: { family: 'Jost', size: 11 },
-                    color: '#94a3b8',
-                    padding: 8,
+                    font: { family: 'Jost', size: 12, weight: '500' },
+                    color: '#64748b',
+                    padding: 10,
                   },
                   border: { display: false },
-                  grid: { color: 'rgba(0,0,0,0.04)', drawTicks: false },
+                  grid: { color: 'rgba(0,0,0,0.05)', drawTicks: false },
                 },
                 x: {
                   ticks: {
-                    font: { family: 'Jost', size: 11 },
-                    color: '#64748b',
-                    padding: 8,
+                    font: { family: 'Jost', size: 12, weight: '500' },
+                    color: '#475569',
+                    padding: 10,
                   },
                   border: { display: false },
                   grid: { display: false },

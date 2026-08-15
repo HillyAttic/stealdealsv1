@@ -47,15 +47,27 @@ function logWishlistOperation(
 }
 
 // Enhanced user ID extraction with Firebase integration
-async function extractUserId(): Promise<string | null> {
+// Checks firebase-token cookie first, then falls back to x-user-id header
+async function extractUserId(request?: NextRequest): Promise<string | null> {
   try {
-    // Primary: Firebase server session
+    // Primary: Firebase server session (firebase-token cookie)
     const session = await getServerSession();
     if (session?.uid) {
       logWishlistOperation('user_extraction', session.uid, undefined, {
         source: 'firebase_session'
       });
       return session.uid;
+    }
+
+    // Fallback: x-user-id header (sent by EnhancedWishlistContext)
+    if (request) {
+      const headerUserId = request.headers.get('x-user-id');
+      if (headerUserId && headerUserId.trim().length > 0) {
+        logWishlistOperation('user_extraction', headerUserId, undefined, {
+          source: 'x-user-id_header'
+        });
+        return headerUserId;
+      }
     }
 
     return null;
@@ -131,10 +143,10 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
   let userId: string | null = null;
 
   try {
-    // Extract user ID from Firebase session
-    userId = await extractUserId();
+    // Extract user ID from Firebase session or x-user-id header
+    userId = await extractUserId(request);
     context.userId = userId || undefined;
-      
+
       if (!userId) {
         logWishlistOperation('get_wishlist', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
         return NextResponse.json(
@@ -308,9 +320,9 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
     let requestBody: any = null;
 
     try {
-      // Extract user ID from Firebase session
-      userId = await extractUserId();
-      
+      // Extract user ID from Firebase session or x-user-id header
+      userId = await extractUserId(request);
+
       if (!userId) {
         logWishlistOperation('wishlist_operation', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
         return NextResponse.json(
@@ -607,9 +619,9 @@ export const PUT = withWishlistMonitoring(async (request: NextRequest, context) 
     let requestBody: any = null;
 
     try {
-      // Extract user ID from Firebase session
-      userId = await extractUserId();
-      
+      // Extract user ID from Firebase session or x-user-id header
+      userId = await extractUserId(request);
+
       if (!userId) {
         logWishlistOperation('update_wishlist_metadata', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
         return NextResponse.json(
@@ -775,9 +787,9 @@ export const DELETE = withWishlistMonitoring(async (request: NextRequest, contex
     let userId: string | null = null;
 
     try {
-      // Extract user ID from Firebase session
-      userId = await extractUserId();
-      
+      // Extract user ID from Firebase session or x-user-id header
+      userId = await extractUserId(request);
+
       if (!userId) {
         logWishlistOperation('delete_from_wishlist', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));
         return NextResponse.json(

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FaSearch, FaUser, FaEnvelope, FaCalendar, FaEye, FaEdit, FaCheck, FaTimes, FaExternalLinkAlt, FaUserCheck, FaBan, FaLock, FaHeart, FaSort, FaSortUp, FaSortDown, FaFilter } from 'react-icons/fa';
 import Link from 'next/link';
 import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
 import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
 
-interface ClerkUser {
+interface FirebaseUser {
   id: string;
   name: string;
   email: string;
@@ -55,7 +55,7 @@ interface PaginationInfo {
 }
 
 export function UserManagement() {
-  const [users, setUsers] = useState<ClerkUser[]>([]);
+  const [users, setUsers] = useState<FirebaseUser[]>([]);
   const [statistics, setStatistics] = useState<UserStatistics | null>(null);
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
@@ -66,6 +66,7 @@ export function UserManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
   
   // Enhanced filtering and sorting
   const [sortBy, setSortBy] = useState<'name' | 'email' | 'createdAt' | 'wishlistCount' | 'lastLoginAt'>('createdAt');
@@ -73,7 +74,7 @@ export function UserManagement() {
   const [wishlistFilter, setWishlistFilter] = useState<'all' | 'with_wishlist' | 'without_wishlist'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'banned'>('all');
 
-  // Fetch users data from Clerk
+  // Fetch users data from Firebase Auth
   const fetchUsers = async (page: number = 1, search: string = '') => {
     try {
       setIsLoading(true);
@@ -97,16 +98,27 @@ export function UserManagement() {
       });
 
       const data = await response.json();
+      
+      console.log('[UserManagement] API Response:', { 
+        ok: response.ok, 
+        status: response.status,
+        success: data.success, 
+        error: data.error,
+        details: data.details,
+        userCount: data.users?.length 
+      });
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to fetch users from Clerk');
+        const errorMessage = data.error || data.details || 'Failed to fetch users from Firebase';
+        console.error('[UserManagement] Fetch failed:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       setUsers(data.users);
       setPagination(data.pagination);
       setStatistics(data.statistics);
     } catch (err) {
-      console.error('Error fetching Clerk users:', err);
+      console.error('Error fetching Firebase users:', err);
       setError(err instanceof Error ? err.message : 'Failed to load users');
     } finally {
       setIsLoading(false);
@@ -244,31 +256,40 @@ export function UserManagement() {
   };
 
   // Get user status
-  const getUserStatus = (user: ClerkUser) => {
+  const getUserStatus = (user: FirebaseUser) => {
     if (user.banned) return { status: 'Banned', color: 'text-red-600', icon: FaBan };
     if (user.locked) return { status: 'Locked', color: 'text-orange-600', icon: FaLock };
     if (user.isActive) return { status: 'Active', color: 'text-green-600', icon: FaCheck };
     return { status: 'Inactive', color: 'text-gray-600', icon: FaTimes };
   };
 
+  // Handle image load error - mark as broken to show fallback
+  const handleImageError = useCallback((userId: string) => {
+    setBrokenImages(prev => {
+      const next = new Set(prev);
+      next.add(userId);
+      return next;
+    });
+  }, []);
+
   if (isLoading && users.length === 0) {
-    return <LoadingSpinner message="Loading Clerk users..." />;
+    return <LoadingSpinner message="Loading Firebase users..." />;
   }
 
   if (error && users.length === 0) {
-    // Check if this is a Clerk configuration error
-    const isClerkConfigError = error.includes('Clerk configuration') || error.includes('CLERK_SECRET_KEY');
+    // Check if this is a Firebase configuration error
+    const isFirebaseConfigError = error.includes('Firebase configuration') || error.includes('FIREBASE_SERVICE_ACCOUNT_KEY');
     
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Clerk User Management</h1>
-            <p className="text-gray-600">Manage and monitor Clerk authenticated users</p>
+            <h1 className="text-2xl font-bold text-gray-900">Firebase User Management</h1>
+            <p className="text-gray-600">Manage and monitor Firebase authenticated users</p>
           </div>
         </div>
         
-        {isClerkConfigError ? (
+        {isFirebaseConfigError ? (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <div className="flex items-start">
               <div className="flex-shrink-0">
@@ -276,22 +297,21 @@ export function UserManagement() {
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">
-                  Clerk Configuration Required
+                  Firebase Configuration Required
                 </h3>
                 <div className="mt-2 text-sm text-red-700">
                   <p className="mb-3">{error}</p>
                   <div className="bg-red-100 p-3 rounded border">
                     <h4 className="font-medium mb-2">To Fix This Issue:</h4>
                     <ol className="list-decimal list-inside space-y-1 text-xs">
-                      <li>Go to <a href="https://dashboard.clerk.com" target="_blank" rel="noopener noreferrer" className="text-red-800 underline font-medium">Clerk Dashboard</a></li>
-                      <li>Navigate to API Keys section</li>
-                      <li>Copy your <strong>Secret key</strong> (starts with sk_live_...)</li>
-                      <li>Copy your <strong>Publishable key</strong> (starts with pk_live_...)</li>
-                      <li>Set these in your production environment variables:</li>
+                      <li>Go to <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" className="text-red-800 underline font-medium">Firebase Console</a></li>
+                      <li>Navigate to Project Settings {'>'} Service Accounts</li>
+                      <li>Generate a new private key (downloads JSON file)</li>
+                      <li>Set the entire JSON content as environment variable</li>
+                      <li>Or place the file as service-account.json in project root</li>
                     </ol>
                     <div className="mt-2 p-2 bg-red-200 rounded font-mono text-xs">
-                      CLERK_SECRET_KEY=sk_live_your_actual_key<br/>
-                      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_your_actual_key
+                      FIREBASE_SERVICE_ACCOUNT_KEY=&#123;...json content...&#125;
                     </div>
                   </div>
                 </div>
@@ -330,14 +350,12 @@ export function UserManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clerk User Management</h1>
-          <p className="text-gray-600">Manage and monitor Clerk authenticated users</p>
+          <h1 className="text-2xl font-bold text-gray-900">Firebase User Management</h1>
+          <p className="text-gray-600">Manage and monitor Firebase authenticated users</p>
         </div>
         <div className="flex items-center space-x-2 text-sm text-gray-500">
           <FaLock />
-          <span>Admin authenticated via Firebase</span>
-          <span>•</span>
-          <span>Users from Clerk</span>
+          <span>Authenticated via Firebase</span>
         </div>
       </div>
 
@@ -554,11 +572,12 @@ export function UserManagement() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
-                          {user.imageUrl ? (
+                          {user.imageUrl && !brokenImages.has(user.id) ? (
                             <img
                               className="h-10 w-10 rounded-full object-cover"
                               src={user.imageUrl}
                               alt={user.name}
+                              onError={() => handleImageError(user.id)}
                             />
                           ) : (
                             <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">

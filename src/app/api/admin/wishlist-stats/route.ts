@@ -199,30 +199,30 @@ export async function GET(request: NextRequest) {
       const recentActivityLimit = Math.min(parseInt(searchParams.get('activityLimit') || '20'), 100);
 
       // Read all wishlists from Firestore using Admin SDK
-      const wishlistsCol = db.collection('wishlists');
-      const userDocs = await wishlistsCol.get();
-      const userIds = userDocs.empty ? [] : userDocs.docs.map(d => d.id);
+      // NOTE: In Firestore, subcollections exist independently of parent documents.
+      // adminAddToWishlist writes to wishlists/{userId}/items/{docId} but does NOT
+      // create the parent wishlists/{userId} document. So we get user IDs from
+      // Firebase Auth instead of listing the wishlists collection.
+      let userIds: string[] = [];
+      try {
+        const { auth } = await import('@/lib/firebase-server-admin');
+        const listUsersResult = await auth.listUsers(1000);
+        userIds = listUsersResult.users.map(u => u.uid);
+      } catch (authError) {
+        console.warn('[Admin Stats] Failed to list users from Firebase Auth:', authError);
+      }
 
       if (userIds.length === 0) {
-        // No data in either source — still try to get total user count for the dashboard
-        let totalUsers = 0;
-        try {
-          const { auth } = await import('@/lib/firebase-server-admin');
-          const listUsersResult = await auth.listUsers(1000);
-          totalUsers = listUsersResult.users.length;
-        } catch {
-          /* ignore */
-        }
+        // No users found in Firebase Auth
 
         logAdminStatsOperation('get_wishlist_stats', adminUserId, {
-          result: 'no_wishlists_found',
-          firestoreUsers: userIds.length,
+          result: 'no_users_found',
         });
 
         return NextResponse.json({
           success: true,
           stats: {
-            totalUsers,
+            totalUsers: 0,
             usersWithWishlists: 0,
             totalWishlistItems: 0,
             averageWishlistSize: 0,
@@ -579,16 +579,8 @@ export async function GET(request: NextRequest) {
           percentage: Math.round((count / totalLocationWishlists) * 100)
         }));
 
-      // Get total users count from Firebase
-      let totalUsers = 0;
-      try {
-        const { auth } = await import('@/lib/firebase-server-admin');
-        const listUsersResult = await auth.listUsers(1000);
-        totalUsers = listUsersResult.users.length;
-      } catch (firebaseError) {
-        console.warn('[Admin Stats] Failed to get total users count from Firebase:', firebaseError);
-        totalUsers = usersWithWishlists;
-      }
+      // Total users from the already-fetched Auth list
+      const totalUsers = userIds.length;
 
       const duration = Date.now() - startTime;
 

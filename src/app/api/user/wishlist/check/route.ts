@@ -32,13 +32,23 @@ function logWishlistCheck(
 }
 
 // User ID extraction with Firebase integration
-async function extractUserId(): Promise<string | null> {
+// Checks firebase-token cookie first, then falls back to x-user-id header
+async function extractUserId(request?: NextRequest): Promise<string | null> {
   try {
-    // Primary: Firebase server session
+    // Primary: Firebase server session (firebase-token cookie)
     const session = await getServerSession();
     if (session?.uid) {
       logWishlistCheck('user_extraction', session.uid, undefined, { source: 'firebase_session' });
       return session.uid;
+    }
+
+    // Fallback: x-user-id header (sent by EnhancedWishlistContext)
+    if (request) {
+      const headerUserId = request.headers.get('x-user-id');
+      if (headerUserId && headerUserId.trim().length > 0) {
+        logWishlistCheck('user_extraction', headerUserId, undefined, { source: 'x-user-id_header' });
+        return headerUserId;
+      }
     }
 
     return null;
@@ -54,8 +64,8 @@ export async function GET(request: NextRequest) {
   let userId: string | null = null;
 
   try {
-    // Extract user ID from Firebase session
-    userId = await extractUserId();
+    // Extract user ID from Firebase session or x-user-id header
+    userId = await extractUserId(request);
       
       if (!userId) {
         logWishlistCheck('check_wishlist', 'unknown', undefined, undefined, new Error('Failed to extract user ID'));

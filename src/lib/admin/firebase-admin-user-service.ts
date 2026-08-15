@@ -1,4 +1,4 @@
-﻿import { admin } from '@/lib/auth/firebase-admin';
+﻿import { auth } from '@/lib/firebase-server-admin';
 
 /**
  * Firebase Admin User Service
@@ -14,7 +14,6 @@ export class FirebaseAdminUserService {
   } = {}) {
     const { limit = 100, pageToken } = options;
     
-    const auth = admin.auth();
     const result = await auth.listUsers(limit, pageToken);
     
     return {
@@ -37,7 +36,6 @@ export class FirebaseAdminUserService {
    * Get user by ID
    */
   static async getUser(uid: string) {
-    const auth = admin.auth();
     const user = await auth.getUser(uid);
     
     return {
@@ -57,7 +55,6 @@ export class FirebaseAdminUserService {
    * Get user by email
    */
   static async getUserByEmail(email: string) {
-    const auth = admin.auth();
     const user = await auth.getUserByEmail(email);
     
     return {
@@ -82,7 +79,6 @@ export class FirebaseAdminUserService {
     displayName?: string;
     photoURL?: string;
   }) {
-    const auth = admin.auth();
     const user = await auth.createUser(params);
     
     return {
@@ -105,7 +101,6 @@ export class FirebaseAdminUserService {
     photoURL?: string;
     disabled?: boolean;
   }) {
-    const auth = admin.auth();
     const user = await auth.updateUser(uid, params);
     
     return {
@@ -122,7 +117,6 @@ export class FirebaseAdminUserService {
    * Delete user
    */
   static async deleteUser(uid: string) {
-    const auth = admin.auth();
     await auth.deleteUser(uid);
   }
 
@@ -130,7 +124,6 @@ export class FirebaseAdminUserService {
    * Get total user count
    */
   static async getUserCount(): Promise<number> {
-    const auth = admin.auth();
     let count = 0;
     let pageToken: string | undefined;
     

@@ -68,13 +68,19 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
       // ALWAYS bypass cache for admin operations to ensure consistency
       params.append('bypassCache', 'true');
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch(`/api/admin/users/${userId}/wishlist?${params}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       const data = await response.json();
 
@@ -97,7 +103,11 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
       setWishlistStats(data.wishlist.stats);
     } catch (err) {
       console.error('Error fetching user wishlist:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load user wishlist');
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setError('Wishlist request timed out. The server took too long to respond. Please try again.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load user wishlist');
+      }
     } finally {
       setIsLoading(false);
     }

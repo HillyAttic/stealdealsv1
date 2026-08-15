@@ -444,8 +444,10 @@ export async function getPropertyById(id: string): Promise<Property | null> {
     if (docSnap.exists()) {
       return flattenPropertyByType(docSnap.id, docSnap.data());
     }
-    // RTDB fallback: property may still exist only in RTDB (not yet migrated)
-    console.warn(`[Firestore Properties] Property ${id} not found in Firestore, checking RTDB...`);
+    // Phase is 'firestore' — do NOT fall back to expensive RTDB sequential reads.
+    // Properties should be in Firestore; if not found, return null immediately.
+    console.warn(`[Firestore Properties] Property ${id} not found in Firestore, skipping RTDB fallback (phase=firestore)`);
+    return null;
   }
 
   if (phase === 'dual-read') {

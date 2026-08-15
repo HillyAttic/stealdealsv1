@@ -118,11 +118,48 @@ export async function GET(
       // Get user's complete wishlist with property details
       // Import the function to bypass cache if needed
       let wishlistProperties;
-      if (bypassCache) {
-        const { getUserWishlistUncached } = await import('@/lib/database/firestore-wishlist');
-        wishlistProperties = await getUserWishlistUncached(userId);
-      } else {
-        wishlistProperties = await getUserWishlist(userId);
+
+      // Helper: wrap async call with a timeout to prevent indefinite hangs
+      async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+        let timeoutId: ReturnType<typeof setTimeout>;
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+        });
+        try {
+          return await Promise.race([promise, timeoutPromise]);
+        } finally {
+          clearTimeout(timeoutId!);
+        }
+      }
+
+      try {
+        if (bypassCache) {
+          const { getUserWishlistUncached } = await import('@/lib/database/firestore-wishlist');
+          wishlistProperties = await withTimeout(getUserWishlistUncached(userId), 30000, 'Wishlist fetch');
+        } else {
+          wishlistProperties = await withTimeout(getUserWishlist(userId), 30000, 'Wishlist fetch');
+        }
+      } catch (fetchError) {
+        console.error('[Admin Wishlist API] Wishlist fetch failed:', fetchError);
+        // Return partial response with just wishlist items (no property enrichment)
+        try {
+          const { getRawWishlistItems } = await import('@/lib/database/firestore-wishlist');
+          const rawItems = await getRawWishlistItems(userId);
+          wishlistProperties = rawItems.map(item => ({
+            id: item.propertyId,
+            title: `Property ${item.propertyId}`,
+            price: 0,
+            location: 'Unable to load property details',
+            images: [],
+            type: 'Unknown',
+            addedAt: item.addedAt,
+            notes: item.notes,
+            priority: item.priority,
+          }));
+        } catch (fallbackError) {
+          console.error('[Admin Wishlist API] Fallback also failed:', fallbackError);
+          wishlistProperties = [];
+        }
       }
       
       // Filter by priority if specified

@@ -42,11 +42,22 @@ export async function GET(request: NextRequest) {
       const cacheKey = getCacheKey(page, limit, search);
       const cachedResult = getCachedData(cacheKey);
       if (cachedResult) {
+        console.log('[Admin Users API] Returning cached result');
         return NextResponse.json(cachedResult);
       }
 
+      console.log('[Admin Users API] Fetching users from Firebase Auth');
+      
       // Fetch users from Firebase Auth
-      const { users: firebaseUsers } = await FirebaseAdminUserService.listUsers({ limit: 1000 });
+      let firebaseUsers;
+      try {
+        const result = await FirebaseAdminUserService.listUsers({ limit: 1000 });
+        firebaseUsers = result.users;
+        console.log(`[Admin Users API] Fetched ${firebaseUsers.length} users from Firebase Auth`);
+      } catch (firebaseError) {
+        console.error('[Admin Users API] Firebase Auth error:', firebaseError);
+        throw new Error(`Firebase Authentication failed: ${firebaseError instanceof Error ? firebaseError.message : 'Unknown error'}`);
+      }
 
       // Apply search filter if provided
       let filteredUsers = firebaseUsers;
@@ -62,36 +73,25 @@ export async function GET(request: NextRequest) {
       const offset = (page - 1) * limit;
       const paginatedUsers = filteredUsers.slice(offset, offset + limit);
 
-      // Get wishlist counts for displayed users using batched queries
+      // Get wishlist counts for displayed users
+      // NOTE: In Firestore, subcollections can exist without parent documents.
+      // adminAddToWishlist writes to wishlists/{userId}/items/{docId} but does NOT
+      // create the parent wishlists/{userId} document. So we must query each user's
+      // items subcollection directly, without checking for parent doc existence.
       let wishlistCounts: Record<string, number> = {};
       try {
         const { db } = await import('@/lib/firebase-server-admin');
         const displayedUserIds = paginatedUsers.map(u => u.id);
 
-        // Use getAll() for batched reads instead of N+1 queries
-        const userRefs = displayedUserIds.map(userId =>
-          db.collection('wishlists').doc(userId)
+        // Directly query each user's items subcollection (no parent doc check needed)
+        const itemReads = displayedUserIds.map(userId =>
+          db.collection('wishlists').doc(userId).collection('items').get()
         );
-        const userDocs = await db.getAll(...userRefs);
-
-        // For each user document, get the items subcollection count
-        // Using Promise.all with getAll for batched subcollection reads
-        const itemReads = userDocs
-          .filter(doc => doc.exists)
-          .map(doc => db.collection('wishlists').doc(doc.id).collection('items').get());
 
         const itemSnapshots = await Promise.all(itemReads);
-        const userIdsWithWishlists = userDocs.filter(doc => doc.exists).map(doc => doc.id);
 
-        userIdsWithWishlists.forEach((userId, index) => {
+        displayedUserIds.forEach((userId, index) => {
           wishlistCounts[userId] = itemSnapshots[index]?.size || 0;
-        });
-
-        // Set count to 0 for users without wishlist docs
-        displayedUserIds.forEach(userId => {
-          if (!(userId in wishlistCounts)) {
-            wishlistCounts[userId] = 0;
-          }
         });
       } catch (wishlistError) {
         console.warn('[Admin Users API] Failed to fetch wishlist counts:', wishlistError);
@@ -185,11 +185,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(result);
     } catch (error) {
       console.error('[Admin Users API] Error:', error);
+      
+      let errorMessage = 'Failed to fetch users';
+      let errorDetails = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Provide more specific error messages
+      if (errorDetails.includes('Admin SDK')) {
+        errorMessage = 'Firebase Admin SDK not initialized. Please check FIREBASE_SERVICE_ACCOUNT_KEY environment variable.';
+      } else if (errorDetails.includes('Authentication')) {
+        errorMessage = 'Firebase Authentication error. Please verify your Firebase configuration.';
+      } else if (errorDetails.includes('permission')) {
+        errorMessage = 'Permission denied. Please check Firebase service account permissions.';
+      }
+      
       return NextResponse.json(
         {
           success: false,
-          error: 'Failed to fetch users',
-          details: error instanceof Error ? error.message : 'Unknown error',
+          error: errorMessage,
+          details: errorDetails,
           timestamp: new Date().toISOString(),
         },
         { status: 500 }

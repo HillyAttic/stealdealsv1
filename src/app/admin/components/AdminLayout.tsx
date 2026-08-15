@@ -336,7 +336,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
                         href={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={`
-                          group flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium
+                          group flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium uppercase tracking-wide
                           transition-all duration-200
                           ${active
                             ? 'bg-white/15 text-white shadow-sm admin-nav-active'
@@ -367,8 +367,8 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
               {userInitial}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{userName}</p>
-              <p className="text-xs text-white/40 truncate">{currentUser?.role || 'admin'}</p>
+              <p className="text-sm font-semibold text-white truncate uppercase tracking-wide">{userName}</p>
+              <p className="text-xs text-white/40 truncate uppercase tracking-wider">{currentUser?.role || 'admin'}</p>
             </div>
             <button
               onClick={handleLogout}
