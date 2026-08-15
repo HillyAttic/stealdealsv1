@@ -191,7 +191,7 @@ export const GET = withWishlistMonitoring(async (request: NextRequest, context) 
         success: false,
         error: 'Failed to retrieve wishlist',
         code: 'WISHLIST_RETRIEVAL_FAILED',
-        details: process.env.NODE_ENV === 'development' ? error instanceof Error ? { message: error.message } : undefined : undefined,
+        details: error instanceof Error ? { message: error.message } : undefined,
         metadata: {
           requestId: crypto.randomUUID(),
           timestamp: new Date().toISOString(),
@@ -402,7 +402,7 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
         success: false,
         error: 'Failed to update wishlist',
         code: 'WISHLIST_OPERATION_FAILED',
-        details: process.env.NODE_ENV === 'development' ? error instanceof Error ? { message: error.message } : undefined : undefined,
+        details: error instanceof Error ? { message: error.message } : undefined,
         metadata: {
           requestId: crypto.randomUUID(),
           timestamp: new Date().toISOString(),
@@ -525,7 +525,7 @@ export const PUT = withWishlistMonitoring(async (request: NextRequest, context) 
         success: false,
         error: 'Failed to update wishlist item metadata',
         code: 'WISHLIST_UPDATE_FAILED',
-        details: process.env.NODE_ENV === 'development' ? error instanceof Error ? { message: error.message } : undefined : undefined,
+        details: error instanceof Error ? { message: error.message } : undefined,
         metadata: {
           requestId: crypto.randomUUID(),
           timestamp: new Date().toISOString(),
@@ -617,7 +617,7 @@ export const DELETE = withWishlistMonitoring(async (request: NextRequest, contex
         success: false,
         error: 'Failed to remove property from wishlist',
         code: 'WISHLIST_DELETE_FAILED',
-        details: process.env.NODE_ENV === 'development' ? error instanceof Error ? { message: error.message } : undefined : undefined,
+        details: error instanceof Error ? { message: error.message } : undefined,
         metadata: {
           requestId: crypto.randomUUID(),
           timestamp: new Date().toISOString(),

@@ -60,6 +60,14 @@ async function getAdminModule() {
   return _adminModuleCache;
 }
 
+// Detect whether we are running on the server (Node.js) or in the browser.
+// Server-side code MUST always use Admin SDK (bypasses Firestore rules).
+// The client SDK (firestoreDb) has no auth context on the server, so any
+// read/write with it will be denied by security rules → 500 errors.
+function isServerSide(): boolean {
+  return typeof window === 'undefined';
+}
+
 // ─── Client SDK helpers (for shadow / dual-read / real-time) ────────────────
 
 function getUserWishlistCol(userId: string) {
@@ -85,7 +93,8 @@ export async function addToWishlist(
   priority: 'low' | 'medium' | 'high' = 'medium'
 ): Promise<WishlistItem> {
   const phase = getPhase();
-  console.log(`[Firestore Wishlist] Adding property ${propertyId} for user ${userId} (phase=${phase})`);
+  const serverSide = isServerSide();
+  console.log(`[Firestore Wishlist] Adding property ${propertyId} for user ${userId} (phase=${phase}, serverSide=${serverSide})`);
 
   const newItemData = {
     userId,
@@ -97,8 +106,10 @@ export async function addToWishlist(
 
   let itemId: string;
 
-  if (phase === 'firestore') {
+  if (phase === 'firestore' || serverSide) {
     // Admin SDK — bypasses rules (webpack-opaque import)
+    // On the server, ALWAYS use Admin SDK because the client SDK has no auth
+    // context and will be denied by Firestore security rules.
     const admin = await getAdminModule();
     const { itemId: id } = await admin.adminAddToWishlist(userId, propertyId, newItemData.notes, priority);
     itemId = id;
@@ -158,10 +169,12 @@ export async function addToWishlist(
 
 export async function removeFromWishlist(userId: string, propertyId: string): Promise<boolean> {
   const phase = getPhase();
-  console.log(`[Firestore Wishlist] Removing property ${propertyId} for user ${userId} (phase=${phase})`);
+  const serverSide = isServerSide();
+  console.log(`[Firestore Wishlist] Removing property ${propertyId} for user ${userId} (phase=${phase}, serverSide=${serverSide})`);
 
-  if (phase === 'firestore') {
+  if (phase === 'firestore' || serverSide) {
     // Admin SDK — bypasses rules (webpack-opaque import)
+    // On the server, ALWAYS use Admin SDK because the client SDK has no auth context.
     const admin = await getAdminModule();
     await admin.adminRemoveFromWishlist(userId, propertyId);
   } else if (phase === 'dual-read' || phase === 'shadow') {
@@ -210,9 +223,11 @@ export async function removeFromWishlist(userId: string, propertyId: string): Pr
 
 async function fetchWishlistItems(userId: string): Promise<WishlistItem[]> {
   const phase = getPhase();
+  const serverSide = isServerSide();
 
-  if (phase === 'firestore') {
+  if (phase === 'firestore' || serverSide) {
     // Admin SDK — bypasses rules (webpack-opaque import)
+    // On the server, ALWAYS use Admin SDK because the client SDK has no auth context.
     const admin = await getAdminModule();
     return await admin.adminFetchWishlistItems(userId);
   }
@@ -423,9 +438,11 @@ export async function getUserWishlistUncached(userId: string): Promise<WishlistP
 
 export async function isInWishlist(userId: string, propertyId: string): Promise<boolean> {
   const phase = getPhase();
+  const serverSide = isServerSide();
 
-  if (phase === 'firestore') {
+  if (phase === 'firestore' || serverSide) {
     // Admin SDK — bypasses rules (webpack-opaque import)
+    // On the server, ALWAYS use Admin SDK because the client SDK has no auth context.
     const admin = await getAdminModule();
     return await admin.adminIsInWishlist(userId, propertyId);
   }
@@ -455,9 +472,11 @@ export async function updateWishlistItem(
   updates: { notes?: string; priority?: 'low' | 'medium' | 'high' }
 ): Promise<WishlistItem | null> {
   const phase = getPhase();
+  const serverSide = isServerSide();
 
-  if (phase === 'firestore') {
+  if (phase === 'firestore' || serverSide) {
     // Admin SDK — bypasses rules (webpack-opaque import)
+    // On the server, ALWAYS use Admin SDK because the client SDK has no auth context.
     const admin = await getAdminModule();
     return await admin.adminUpdateWishlistItem(userId, propertyId, updates);
   }
@@ -523,9 +542,11 @@ export async function getWishlistStats(userId: string): Promise<{
 
 export async function clearWishlist(userId: string): Promise<boolean> {
   const phase = getPhase();
+  const serverSide = isServerSide();
 
-  if (phase === 'firestore') {
+  if (phase === 'firestore' || serverSide) {
     // Admin SDK — bypasses rules (webpack-opaque import)
+    // On the server, ALWAYS use Admin SDK because the client SDK has no auth context.
     const admin = await getAdminModule();
     await admin.adminClearWishlist(userId);
   } else if (phase === 'dual-read' || phase === 'shadow') {

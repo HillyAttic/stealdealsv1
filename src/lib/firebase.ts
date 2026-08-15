@@ -159,13 +159,29 @@ const auth = new Proxy({} as ReturnType<typeof getAuth>, {
   },
 });
 
+// Storage is exported as a getter function (not a Proxy) because Firebase's
+// storage ref() validates the instance via internal slots / instanceof checks
+// that a Proxy over {} cannot satisfy, causing "Cannot read properties of
+// undefined (reading 'path')" errors at upload time.
+function getStorageInstance(): ReturnType<typeof getStorage> {
+  return ensureStorage();
+}
+
+// Legacy alias — prefer getStorageInstance() for new code.
 const storage = new Proxy({} as ReturnType<typeof getStorage>, {
   get(_, prop, receiver) {
     const s = ensureStorage();
-    const val = Reflect.get(s as any, prop, receiver);
+    // Use the real instance as the receiver so internal-slot lookups succeed
+    const val = Reflect.get(s as any, prop, s);
     return typeof val === 'function' ? val.bind(s) : val;
   },
-});
+  has(_, prop) {
+    return Reflect.has(ensureStorage() as any, prop);
+  },
+  getPrototypeOf() {
+    return Reflect.getPrototypeOf(ensureStorage() as any);
+  },
+}) as ReturnType<typeof getStorage>;
 
 // Export references
 export {
@@ -173,6 +189,7 @@ export {
   database,
   auth,
   storage,
+  getStorageInstance,
   propertiesRef,
   vacantPropertiesRef,
   preleasedPropertiesRef,

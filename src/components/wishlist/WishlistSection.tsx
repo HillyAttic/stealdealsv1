@@ -50,14 +50,15 @@ export function WishlistSection({ className = '', showAll = false }: WishlistSec
           signal: controller.signal,
         });
 
+        const data = await response.json().catch(() => null);
+
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
+          const errorMsg = data?.error || data?.details?.message || `HTTP ${response.status}`;
+          throw new Error(errorMsg);
         }
 
-        const data = await response.json();
-
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to load wishlist');
+        if (!data?.success) {
+          throw new Error(data?.error || 'Failed to load wishlist');
         }
 
         setWishlistProperties(data.properties || []);

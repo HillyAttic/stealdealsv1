@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, ChangeEvent } from 'react';
-import { storage } from '@/lib/firebase';
+import { getStorageInstance } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface ImageUploaderProps {
@@ -37,7 +37,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
       const timestamp = Date.now();
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       const storagePath = `uploads/${timestamp}-${safeName}`;
-      const storageRef = ref(storage, storagePath);
+      const storageRef = ref(getStorageInstance(), storagePath);
 
       // Upload the file to Firebase Storage
       const snapshot = await uploadBytes(storageRef, file, {
