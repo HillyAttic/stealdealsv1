@@ -578,6 +578,9 @@ export function FirebaseAdminUserManagement() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Created
                                 </th>
+                                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -617,6 +620,24 @@ export function FirebaseAdminUserManagement() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {formatDate(user.createdAt)}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <button
+                                                onClick={() => {/* Add edit handler */}}
+                                                title="Edit User"
+                                                className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                            >
+                                                <FaEdit className="text-sm" />
+                                            </button>
+                                            <button
+                                                onClick={() => {/* Add delete handler */}}
+                                                title="Delete User"
+                                                className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                            >
+                                                <FaTrash className="text-sm" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

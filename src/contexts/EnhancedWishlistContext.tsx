@@ -346,12 +346,7 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
 
               showSuccessRef('Removed from wishlist', 'Property removed from your wishlist');
 
-              // Force refresh to ensure cache consistency
-              setTimeout(() => {
-                refreshWishlist();
-              }, 1000);
-
-              // The Firebase listener will update the UI automatically
+              // Note: Firebase listener will update UI automatically - no need to refresh
               break;
             } else {
               // For offline mode, just show warning
@@ -460,7 +455,11 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
               const unsubscribe = subscribeToWishlist(userId, (items: WishlistItem[]) => {
                 try {
                   if (!items || items.length === 0) {
-                    setWishlistItems(new Set());
+                    // Only update if not already empty
+                    setWishlistItems(current => {
+                      if (current.size === 0) return current; // Skip update if already empty
+                      return new Set();
+                    });
                     setIsLoading(false);
                     setIsInitialized(true);
                     setError(null);
@@ -473,7 +472,16 @@ export function EnhancedWishlistProvider({ children }: { children: React.ReactNo
                       propertyIds.add(item.propertyId);
                     }
                   }
-                  setWishlistItems(propertyIds);
+
+                  // Only update state if the set actually changed
+                  setWishlistItems(current => {
+                    if (current.size === propertyIds.size &&
+                        [...current].every(id => propertyIds.has(id))) {
+                      return current; // Same data, skip update
+                    }
+                    return propertyIds;
+                  });
+
                   setIsLoading(false);
                   setIsInitialized(true);
                   setError(null);

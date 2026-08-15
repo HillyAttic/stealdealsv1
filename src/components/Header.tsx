@@ -4,16 +4,28 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FaBars, FaTimes, FaHome, FaInfoCircle, FaWarehouse, FaLandmark, FaHandshake, FaUtensils, FaImages, FaPhoneAlt, FaUser, FaSignOutAlt } from "react-icons/fa";
+import { FaBars, FaTimes, FaHome, FaInfoCircle, FaWarehouse, FaLandmark, FaHandshake, FaUtensils, FaImages, FaPhoneAlt, FaUser, FaSignOutAlt, FaChevronDown } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { WishlistNavButton } from "@/components/wishlist/WishlistNavButton";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { isSignedIn, signOut, user, appUser, isLoaded, loading } = useAuth();
+
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    function handleUserMenuClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleUserMenuClickOutside);
+    return () => document.removeEventListener('mousedown', handleUserMenuClickOutside);
+  }, []);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -131,29 +143,41 @@ const Header = () => {
                   </button>
                 </Link>
               ) : (
-                <div className="flex items-center space-x-3">
-                  {/* User Avatar and Name */}
-                  <div className="flex items-center space-x-2">
-                    {appUser?.avatar ? (
-                      <img src={appUser.avatar} alt={appUser.name || "User"} className="w-8 h-8 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
-                        {(appUser?.name || user?.email || "U").charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <span className="text-sm font-medium text-gray-700 hidden lg:block">
-                      {appUser?.name || user?.email?.split("@")[0] || "User"}
-                    </span>
-                  </div>
-                  {/* Sign Out Button */}
+                <div className="relative" ref={userMenuRef}>
                   <button
-                    onClick={handleSignOut}
-                    className="flex items-center space-x-1 px-3 py-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                    title="Sign Out"
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                    aria-label="User menu"
                   >
-                    <FaSignOutAlt className="text-sm" />
-                    <span className="hidden lg:block text-sm">Sign Out</span>
+                    <div className="flex items-center space-x-2">
+                      {appUser?.avatar ? (
+                        <img src={appUser.avatar} alt={appUser.name || "User"} className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
+                          {(appUser?.name || user?.email || "U").charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-sm font-medium text-gray-700 hidden lg:block">
+                        {appUser?.name || user?.email?.split("@")[0] || "User"}
+                      </span>
+                      <FaChevronDown className={`text-xs text-gray-500 transition-transform duration-200 hidden lg:block ${userMenuOpen ? "rotate-180" : ""}`} />
+                    </div>
                   </button>
+
+                  {userMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          handleSignOut();
+                        }}
+                        className="w-full flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                      >
+                        <FaSignOutAlt className="text-sm" />
+                        <span className="text-sm">Sign Out</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

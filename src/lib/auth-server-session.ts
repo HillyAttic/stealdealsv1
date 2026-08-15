@@ -23,14 +23,14 @@ export async function getServerSession(): Promise<ServerSession | null> {
     }
 
     const decodedToken = await adminAuth.verifyIdToken(idToken);
-    const user = await adminAuth.getUser(decodedToken.uid);
-
+    // Optimization: Skip getUser() call - we only need uid for wishlist operations
+    // If email/displayName needed, can add optional param to fetch user profile
     return {
-      uid: user.uid,
-      email: user.email || null,
-      displayName: user.displayName || null,
-      photoURL: user.photoURL || null,
-      emailVerified: user.emailVerified,
+      uid: decodedToken.uid,
+      email: decodedToken.email || null,
+      displayName: decodedToken.name || null,
+      photoURL: decodedToken.picture || null,
+      emailVerified: decodedToken.email_verified || false,
     };
   } catch (error) {
     console.error('Error getting server session:', error);

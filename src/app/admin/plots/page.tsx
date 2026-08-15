@@ -98,48 +98,48 @@ function PlotsAdminContent() {
           ) : (
             <AdminCard padding="none" className="overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="min-w-full">
+                <table className="w-full table-fixed">
                   <thead>
                     <tr className="bg-gray-50/80 border-b border-gray-100">
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">PID</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[120px]">Project</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Developer</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Plot Size</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Investment</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">PID</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32 lg:w-40">Project</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 hidden lg:table-cell">Developer</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32 hidden xl:table-cell">Location</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-20 hidden md:table-cell">Status</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 hidden lg:table-cell">Plot Size</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Investment</th>
+                      <th className="px-2 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 sticky right-0 bg-gray-50/80">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {filteredPlots.map((plot, index) => (
                       <tr key={plot.id} className="hover:bg-primary-50/30 transition-colors">
-                        <td className="px-3 py-3 text-sm whitespace-nowrap">
-                          <span className="font-mono text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+                        <td className="px-2 py-2 whitespace-nowrap">
+                          <span className="font-mono text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
                             P{String(filteredPlots.length - index).padStart(3, '0')}
                           </span>
                         </td>
-                        <td className="px-3 py-3 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{plot.project}</div>
+                        <td className="px-2 py-2">
+                          <div className="text-sm font-medium text-gray-900 truncate">{plot.project}</div>
                           {plot.images?.[0] && (
-                            <img src={plot.images[0]} alt={plot.project} className="w-12 h-8 object-cover rounded mt-1" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            <img src={plot.images[0]} alt={plot.project} className="w-10 h-6 object-cover rounded mt-1" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                           )}
                         </td>
-                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">{plot.developerName}</td>
-                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">{plot.location}</td>
-                        <td className="px-3 py-3 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${plot.status === 'Ready to Move In' ? 'bg-emerald-50 text-emerald-700' : 'bg-primary-50 text-primary-700'}`}>
-                            {plot.status}
+                        <td className="px-2 py-2 text-xs text-gray-500 truncate hidden lg:table-cell">{plot.developerName}</td>
+                        <td className="px-2 py-2 text-xs text-gray-500 truncate hidden xl:table-cell">{plot.location}</td>
+                        <td className="px-2 py-2 whitespace-nowrap hidden md:table-cell">
+                          <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${plot.status === 'Ready to Move In' ? 'bg-emerald-50 text-emerald-700' : 'bg-primary-50 text-primary-700'}`}>
+                            {plot.status === 'Ready to Move In' ? 'Ready' : plot.status}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">
+                        <td className="px-2 py-2 text-xs text-gray-500 whitespace-nowrap hidden lg:table-cell">
                           {plot.plotSize?.min}-{plot.plotSize?.max} {plot.plotSize?.unit}
                         </td>
-                        <td className="px-3 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">
-                          {formatCurrency(plot.investmentStartsFrom?.amount || 0)} / {plot.investmentStartsFrom?.unit}
+                        <td className="px-2 py-2 text-xs text-gray-900 font-medium">
+                          <div className="truncate">{formatCurrency(plot.investmentStartsFrom?.amount || 0)} / {plot.investmentStartsFrom?.unit}</div>
                         </td>
-                        <td className="px-3 py-3 text-sm whitespace-nowrap">
-                          <div className="flex space-x-1.5">
+                        <td className="px-2 py-2 text-sm whitespace-nowrap sticky right-0 bg-white">
+                          <div className="flex items-center justify-center space-x-1">
                             <button onClick={() => { setSelectedPlot(plot); setIsModalOpen(true); }} className="p-1.5 rounded-lg text-primary-500 hover:bg-primary-50 transition-colors" title="View"><FaEye className="text-xs" /></button>
                             <Link href={`/admin/plots/edit/${plot.id}`} className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors" title="Edit"><FaPencilAlt className="text-xs" /></Link>
                             <button onClick={() => setDeleteConfirm(plot.id || null)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete"><FaTrash className="text-xs" /></button>

@@ -10,8 +10,6 @@
 import { WishlistItem, WishlistProperty } from '@/types/auth';
 import { getPropertyById, getAllProperties, getPropertiesByIds } from '@/lib/database/firestore-properties';
 import { cacheService } from './cache';
-
-// Client SDK imports — used for shadow / dual-read / real-time listeners
 import {
   collection,
   doc,
@@ -52,9 +50,14 @@ function getPhase(): MigrationPhase {
 // Since firebase-admin is in serverExternalPackages (next.config.ts), webpack will:
 // - Mark it as external for client bundles (preventing fs/net/tls errors)
 // - Still compile and emit the admin module for server-side use
+// Cached after first import to avoid repeated module resolution overhead
 
+let _adminModuleCache: typeof import('./firestore-wishlist-admin') | null = null;
 async function getAdminModule() {
-  return await import('./firestore-wishlist-admin');
+  if (!_adminModuleCache) {
+    _adminModuleCache = await import('./firestore-wishlist-admin');
+  }
+  return _adminModuleCache;
 }
 
 // ─── Client SDK helpers (for shadow / dual-read / real-time) ────────────────
@@ -140,7 +143,9 @@ export async function addToWishlist(
   };
 
   try {
-    cacheService.clearAll();
+    // Targeted cache invalidation — only wipe this user's wishlist cache, not the entire cache
+    cacheService.invalidateUserWishlist(userId);
+    cacheService.invalidateUserStats(userId);
   } catch (e) {
     console.warn('[Firestore Wishlist] Failed to clear cache after add:', e);
   }
@@ -196,7 +201,7 @@ export async function removeFromWishlist(userId: string, propertyId: string): Pr
     await dbPool.optimizedUpdate('', updates);
   }
 
-  try { cacheService.clearAll(); } catch (e) { /* ignore */ }
+  try { cacheService.invalidateUserWishlist(userId); } catch (e) { /* ignore */ }
   console.log(`[Firestore Wishlist] ✅ Removed property ${propertyId}`);
   return true;
 }
@@ -495,7 +500,7 @@ export async function updateWishlistItem(
     }
   }
 
-  try { cacheService.clearAll(); } catch (e) { /* ignore */ }
+  try { cacheService.invalidateUserWishlist(userId); } catch (e) { /* ignore */ }
   return result;
 }
 
@@ -536,7 +541,7 @@ export async function clearWishlist(userId: string): Promise<boolean> {
     await rtdbRemove(getUserWishlistRtdbRef(userId));
   }
 
-  try { cacheService.clearAll(); } catch (e) { /* ignore */ }
+  try { cacheService.invalidateUserCaches(userId); } catch (e) { /* ignore */ }
   return true;
 }
 

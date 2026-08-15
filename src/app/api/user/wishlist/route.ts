@@ -253,41 +253,33 @@ export const POST = withWishlistMonitoring(async (request: NextRequest, context)
     const { propertyId, action, notes, priority } = validation.data!;
 
     if (action === 'add') {
-      // Check if already in wishlist
-      const alreadyInWishlist = await isInWishlist(userId, propertyId);
-      if (alreadyInWishlist) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Property already in wishlist',
-            code: 'PROPERTY_ALREADY_IN_WISHLIST'
-          },
-          { status: 409 }
-        );
-      }
-
+      // Note: isInWishlist check is now done in adminAddToWishlist to avoid duplicate query
       const wishlistItem = await addToWishlist(userId, propertyId, notes, priority || 'medium');
 
-      // Log activity (non-blocking)
-      try {
-        const activityLogger = ActivityLogger.getInstance();
-        await activityLogger.logWishlistActivity({
-          userId,
-          action: 'add',
-          propertyId,
-          metadata: { notes, priority: priority || 'medium' }
-        });
-      } catch (err) {
-        // Ignore activity logging errors
-      }
+      // Log activity (truly non-blocking - don't await)
+      void (async () => {
+        try {
+          const activityLogger = ActivityLogger.getInstance();
+          await activityLogger.logWishlistActivity({
+            userId,
+            action: 'add',
+            propertyId,
+            metadata: { notes, priority: priority || 'medium' }
+          });
+        } catch (err) {
+          // Ignore activity logging errors
+        }
+      })();
 
-      // Broadcast real-time update (non-blocking)
-      try {
-        const realTimeService = RealTimeService.getInstance();
-        realTimeService.broadcastWishlistUpdate(userId, 'add', propertyId, 0);
-      } catch (err) {
-        // Ignore broadcast errors
-      }
+      // Broadcast real-time update (truly non-blocking - don't await)
+      void (async () => {
+        try {
+          const realTimeService = RealTimeService.getInstance();
+          realTimeService.broadcastWishlistUpdate(userId, 'add', propertyId, 0);
+        } catch (err) {
+          // Ignore broadcast errors
+        }
+      })();
 
       return NextResponse.json({
         success: true,

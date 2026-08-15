@@ -130,48 +130,50 @@ function VacantPropertiesContent() {
           ) : (
             <AdminCard padding="none" className="overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="min-w-full">
+                <table className="w-full table-fixed">
                   <thead>
                     <tr className="bg-gray-50/80 border-b border-gray-100">
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">PID</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[150px]">Location</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[100px]">Area</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[100px]">Rent</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider min-w-[100px]">Contact</th>
-                      <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">PID</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32 lg:w-40">Location</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 hidden md:table-cell">Category</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 hidden lg:table-cell">Area</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-20 hidden xl:table-cell">Type</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Rent</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 hidden lg:table-cell">Contact</th>
+                      <th className="px-2 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 sticky right-0 bg-gray-50/80">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {filteredProperties.map((property, index) => (
                       <tr key={property.id || `idx-${index}`} className="hover:bg-primary-50/30 transition-colors">
-                        <td className="px-3 py-3 text-sm whitespace-nowrap">
-                          <span className="font-mono text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+                        <td className="px-2 py-2 whitespace-nowrap">
+                          <span className="font-mono text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
                             V{String(filteredProperties.length - ((currentPage - 1) * PAGE_SIZE + index)).padStart(3, '0')}
                           </span>
                         </td>
-                        <td className="px-3 py-3 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{property.location || property.city || '-'}</div>
-                          <div className="text-xs text-gray-400">{property.state}</div>
+                        <td className="px-2 py-2">
+                          <div className="text-sm font-medium text-gray-900 truncate">{property.location || property.city || '-'}</div>
+                          <div className="text-xs text-gray-400 truncate">{property.state}</div>
                         </td>
-                        <td className="px-3 py-3 whitespace-nowrap">
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-primary-50 text-primary-700">
+                        <td className="px-2 py-2 whitespace-nowrap hidden md:table-cell">
+                          <span className="inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary-50 text-primary-700">
                             {property.category || 'General'}
                           </span>
                         </td>
-                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">
-                          <div>{property.superArea || property.carpetArea || '-'}</div>
-                          {property.floor && <div className="text-xs text-gray-400">Floor: {property.floor}</div>}
+                        <td className="px-2 py-2 text-xs text-gray-500 hidden lg:table-cell">
+                          <div className="truncate">{property.superArea || property.carpetArea || '-'}</div>
+                          {property.floor && <div className="text-xs text-gray-400">Fl: {property.floor}</div>}
                         </td>
-                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">{property.propertyType || 'Vacant'}</td>
-                        <td className="px-3 py-3 text-sm text-gray-900 font-medium whitespace-nowrap">{formatCurrency(property.rent || 0)}</td>
-                        <td className="px-3 py-3 text-sm text-gray-500 whitespace-nowrap">
-                          <div>{property.contactName || '-'}</div>
-                          {property.reference && <div className="text-xs text-gray-400">Ref: {property.reference}</div>}
+                        <td className="px-2 py-2 text-xs text-gray-500 whitespace-nowrap hidden xl:table-cell">{property.propertyType || 'Vacant'}</td>
+                        <td className="px-2 py-2 text-xs text-gray-900 font-medium">
+                          <div className="truncate">{formatCurrency(property.rent || 0)}</div>
                         </td>
-                        <td className="px-3 py-3 text-sm whitespace-nowrap">
-                          <div className="flex space-x-1.5">
+                        <td className="px-2 py-2 text-xs text-gray-500 hidden lg:table-cell">
+                          <div className="truncate">{property.contactName || '-'}</div>
+                          {property.reference && <div className="text-xs text-gray-400 truncate">Ref: {property.reference}</div>}
+                        </td>
+                        <td className="px-2 py-2 text-sm whitespace-nowrap sticky right-0 bg-white">
+                          <div className="flex items-center justify-center space-x-1">
                             <button onClick={() => { setSelectedProperty(property); setIsModalOpen(true); }} className="p-1.5 rounded-lg text-primary-500 hover:bg-primary-50 transition-colors" title="View"><FaEye className="text-xs" /></button>
                             {property.id ? (
                               <Link href={`/admin/vacant/edit/${property.id}`} className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors" title="Edit"><FaPencilAlt className="text-xs" /></Link>
