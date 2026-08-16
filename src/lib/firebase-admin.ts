@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 
 // Firebase configuration
@@ -13,16 +13,17 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ""
 };
 
-// Initialize Firebase
+// Initialize Firebase - reuse existing app if already initialized
 let app;
 let database;
 
 try {
-  // Check if Firebase app is already initialized
-  app = initializeApp(firebaseConfig);
+  // Reuse existing app instance (singleton pattern) to prevent duplicate apps
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
   database = getDatabase(app);
+  console.log("[Firebase Admin] ✅ Initialized using app:", app.name || "[DEFAULT]");
 } catch (error) {
-  console.error("Error initializing Firebase:", error);
+  console.error("[Firebase Admin] Error initializing Firebase:", error);
 }
 
 export { app, database }; 

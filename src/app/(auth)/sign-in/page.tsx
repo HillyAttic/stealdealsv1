@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,7 +9,15 @@ import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 
 export default function SignInPage() {
   const router = useRouter();
-  const { signIn, signInWithGoogle } = useAuth();
+  const { signIn, signInWithGoogle, isSignedIn, isLoaded } = useAuth();
+
+  // After Google popup sign-in, onAuthStateChanged fires and sets the user.
+  // Redirect to home if already signed in (handles redirect return).
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace('/');
+    }
+  }, [isLoaded, isSignedIn, router]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -43,12 +51,11 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
+      // Use popup-based Google sign-in
       await signInWithGoogle();
-      router.push('/');
     } catch (err: any) {
       console.error('Google sign in error:', err);
-      setError('Failed to sign in with Google');
-    } finally {
+      setError(err.message || 'Failed to sign in with Google');
       setLoading(false);
     }
   };

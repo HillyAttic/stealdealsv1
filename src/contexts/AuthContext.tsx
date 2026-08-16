@@ -6,8 +6,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   GoogleAuthProvider,
   signOut as firebaseSignOutFn,
   sendPasswordResetEmail,
@@ -186,12 +185,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogleHandler = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
+    provider.addScope('email');
+    provider.addScope('profile');
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    // Clear any stale Firebase auth data from session storage
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && (key.includes('firebase:redirectEvent') || key.includes('firebase:pendingRedirect'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    } catch (e) {
+      console.warn("[AuthContext] Failed to clear session storage:", e);
+    }
+
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error: any) {
+      if (error.code === 'auth/account-exists-with-different-credential' ||
+          error.code === 'auth/credential-already-in-use') {
+        throw new Error('This email is already registered with a different sign-in method. Please sign in with your email and password first, then you can link Google from your account settings.');
+      }
+      throw error;
+    }
   };
 
   const signOutHandler = async () => {
     await clearTokenCookie();
     await firebaseSignOutFn(auth);
+
+    // Clear Firebase auth data from session storage
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith('firebase:')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => sessionStorage.removeItem(key));
+    } catch (e) {
+      console.warn("[AuthContext] Failed to clear session storage:", e);
+    }
   };
 
   const resetPasswordHandler = async (email: string) => {
