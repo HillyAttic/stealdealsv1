@@ -462,7 +462,7 @@ body.modal-open header {
 }
 
 .admin-page-enter {
-  animation: adminPageEnter 0.35s ease-out forwards;
+  animation: adminPageEnter 0.35s ease-out;
 }
 
 /* Gradient text utility */
