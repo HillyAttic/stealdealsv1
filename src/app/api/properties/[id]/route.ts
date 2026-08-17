@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-// Read from Firebase RTDB (same source the working frontend uses)
-import { getPropertyById } from '@/lib/firebase';
+// Read from Firestore (migration complete)
+import { getPropertyById } from '@/lib/database/firestore-properties';
 import { db } from '@/lib/firebase-server-admin';
 import { resolveIdParam, RouteParams } from '../../../../lib/params-utils';
 import { optionalAuth } from '@/lib/auth/middleware';
@@ -24,7 +24,7 @@ export async function GET(
       const id = await resolveIdParam(params);
       console.log(`[Properties API] Fetching property with ID: ${id}`);
 
-      // Read from RTDB (same source the frontend uses)
+      // Read from Firestore
       const property = await getPropertyById(id);
 
       if (!property) {

@@ -1,22 +1,22 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-// Read from Firebase RTDB (same source the working frontend uses) instead of Firestore.
-import { getAllPlots } from '@/lib/firebase';
+// Read from Firestore (migration complete)
+import { getAllPlots } from '@/lib/database/firestore-properties';
 import { db } from '@/lib/firebase-server-admin';
 import { revalidateTag } from 'next/cache';
 import { sortByNewest } from '@/lib/sort';
 
-// Get all plots from RTDB (same data the frontend displays)
+// Get all plots from Firestore
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '1000');
 
-    console.log('[Plots API] Fetching plots from RTDB...');
+    console.log('[Plots API] Fetching plots from Firestore...');
 
     const plots = await getAllPlots();
 
-    console.log(`[Plots API] Fetched ${plots.length} plots from RTDB`);
+    console.log(`[Plots API] Fetched ${plots.length} plots from Firestore`);
 
     const sorted = sortByNewest(plots);
     const paginatedPlots = sorted.slice(0, limit);
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     });
 
     response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
-    response.headers.set('X-Data-Source', 'firebase-rtdb');
+    response.headers.set('X-Data-Source', 'firestore');
 
     return response;
   } catch (error) {

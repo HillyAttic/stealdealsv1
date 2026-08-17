@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache';
-import { getVacantProperties, getAllFranchises, getAllPlots, Property, Franchise, Plot } from '../firebase';
-import { getOptimizedData, CACHE_KEYS, CACHE_TTL, MemoryCache } from '../firebase-optimized';
+import { getVacantProperties, getAllFranchises, getAllPlots, Property, Franchise, Plot } from '@/lib/database/firestore-properties';
+// getOptimizedData, CACHE_KEYS, CACHE_TTL, MemoryCache were removed — Firestore is the sole data source now.
 
 // Detect if we're in a build environment (Vercel build phase)
 const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' ||

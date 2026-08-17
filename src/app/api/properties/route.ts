@@ -4,8 +4,8 @@ import { db } from '@/lib/firebase-server-admin';
 import { revalidateTag } from 'next/cache';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
 import { sortByNewest } from '@/lib/sort';
-// Read from Firebase RTDB (same source the working frontend uses) for GET requests
-import { getAllProperties as getRTDBProperties } from '@/lib/firebase';
+// Read from Firestore (migration complete)
+import { getAllProperties as getFirestoreProperties } from '@/lib/database/firestore-properties';
 
 interface Property {
   id: string;
@@ -143,7 +143,7 @@ function flattenProperty(id: string, data: Record<string, any>): Property {
   return base;
 }
 
-// Get all properties with optional filtering using Firebase RTDB (same source the frontend uses)
+// Get all properties with optional filtering using Firestore
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -167,10 +167,10 @@ export async function GET(request: NextRequest) {
       console.log('[Properties API] No valid authentication, returning all properties');
     }
 
-    // Fetch all properties from RTDB (same data the frontend displays)
-    const properties = await getRTDBProperties();
+    // Fetch all properties from Firestore (migration complete)
+    const properties = await getFirestoreProperties();
 
-    console.log(`[Properties API] Fetched ${properties.length} properties from RTDB`);
+    console.log(`[Properties API] Fetched ${properties.length} properties from Firestore`);
 
     // Apply ownership filtering if user is authenticated and is a subuser without viewOthers permission
     if (currentUser) {
@@ -201,8 +201,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter by propertyType if specified
-    // Map display names to property type values that exist in RTDB data
-    // Note: In RTDB, pre-leased properties use 'lockable' and 'virtual' as propertyType
+    // Map display names to property type values that exist in Firestore data
     const typeAliasMap: Record<string, string> = {
       'pre-leased': 'preleased',
       'preleased': 'preleased',
@@ -219,10 +218,8 @@ export async function GET(request: NextRequest) {
       const normalizedType = typeAliasMap[propertyType.toLowerCase()] || propertyType.toLowerCase();
       filteredProperties = filteredProperties.filter(p => {
         const itemType = (p.propertyType || p.type || '').toLowerCase();
-        // Match against both propertyType and type fields
-        // Pre-leased properties in RTDB may have 'lockable', 'virtual', or 'preleased' as type
         if (normalizedType === 'preleased') {
-          return itemType === 'preleased' || itemType === 'pre-leased' || itemType === 'lockable' || itemType === 'virtual';
+          return itemType === 'preleased' || itemType === 'pre-leased';
         }
         return itemType === normalizedType || itemType === normalizedType.replace('-', '');
       });
@@ -244,8 +241,8 @@ export async function GET(request: NextRequest) {
     });
 
     response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    response.headers.set('X-Data-Source', 'firestore');
     response.headers.set('X-API-Cache', 'HIT');
-    response.headers.set('X-Data-Source', 'firebase-rtdb');
 
     return response;
 

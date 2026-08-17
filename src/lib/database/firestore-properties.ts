@@ -1,9 +1,7 @@
-// Firestore properties module — parallel to firebase.ts property CRUD functions
-// Routes to RTDB or Firestore based on MIGRATION_PHASE env var
+// Firestore properties module — Firestore-only CRUD for properties, franchises, and plots
+// Migration complete: all operations go to Firestore exclusively.
 //
 // Firestore structure: properties/{id} with a `type` field ("vacant"|"preleased"|"franchise"|"plot")
-// RTDB structure:      migratedProperties/{type}/{id}
-//
 // All functions have identical signatures to their firebase.ts counterparts
 // so page components and API routes can switch imports without changes.
 
@@ -12,29 +10,6 @@ import { sortByNewest } from '@/lib/sort';
 
 // Re-export types so consumers can migrate imports in one go
 export type { Property, Franchise, Plot };
-
-// RTDB imports (used when phase = rtdb)
-import {
-  database,
-  migratedVacantRef,
-  migratedPreleasedRef,
-  migratedFranchiseRef,
-  migratedPlotsRef,
-  vacantPropertiesRef,
-  preleasedPropertiesRef,
-  franchisePropertiesRef,
-  plotsRef,
-  propertiesRef,
-} from '../firebase';
-import {
-  ref as rtdbRef,
-  get as rtdbGet,
-  set as rtdbSet,
-  update as rtdbUpdate,
-  remove as rtdbRemove,
-  child as rtdbChild,
-  DataSnapshot as RtdbDataSnapshot,
-} from 'firebase/database';
 
 // Firestore imports
 import {
@@ -52,12 +27,6 @@ import {
 } from 'firebase/firestore';
 import { firestoreDb } from '../firestore';
 
-type MigrationPhase = 'rtdb' | 'shadow' | 'dual-read' | 'firestore';
-
-function getPhase(): MigrationPhase {
-  return (process.env.MIGRATION_PHASE as MigrationPhase) || 'rtdb';
-}
-
 function propertiesCol() {
   return collection(firestoreDb, 'properties');
 }
@@ -66,17 +35,7 @@ function propertyDoc(id: string) {
   return doc(firestoreDb, 'properties', id);
 }
 
-// ─── RTDB ref helpers (mirror firebase.ts) ──────────────────────────────────
-
-function getPropertyRefByType(propertyType: string) {
-  if (propertyType === 'Vacant' || propertyType === 'vacant') return migratedVacantRef;
-  if (propertyType === 'Pre-Leased' || propertyType === 'preleased') return migratedPreleasedRef;
-  if (propertyType === 'Franchise' || propertyType === 'franchise') return migratedFranchiseRef;
-  if (propertyType === 'Plot' || propertyType === 'plot') return migratedPlotsRef;
-  return migratedVacantRef;
-}
-
-// ─── ID generation (shared with firebase.ts) ─────────────────────────────────
+// ─── ID generation ─────────────────────────────────────────────────────────
 
 export function generateUniquePropertyId(propertyType: string, sequence: number): string {
   const prefixes: { [key: string]: string } = {
@@ -90,52 +49,7 @@ export function generateUniquePropertyId(propertyType: string, sequence: number)
   return `${prefix}_${sequence.toString().padStart(3, '0')}`;
 }
 
-async function getNextSequenceNumberRTDB(propertyType: string): Promise<number> {
-  const appropriateRef = getPropertyRefByType(propertyType || '');
-  const snapshot = await rtdbGet(appropriateRef);
-  let highest = 0;
-  if (snapshot.exists()) {
-    snapshot.forEach((child: RtdbDataSnapshot) => {
-      const idStr = child.key;
-      if (!idStr) return;
-      const match = idStr.match(/PROP_[A-Z]{4}_([0-9]{3})$/);
-      if (match) {
-        const seq = parseInt(match[1]);
-        if (!isNaN(seq) && seq > highest) highest = seq;
-      } else {
-        const num = parseInt(idStr);
-        if (!isNaN(num) && num > highest) highest = num;
-      }
-    });
-  }
-  // Also check legacy collections
-  let legacyRef = null;
-  if (propertyType === 'Vacant' || propertyType === 'vacant') legacyRef = vacantPropertiesRef;
-  else if (propertyType === 'Pre-Leased' || propertyType === 'preleased') legacyRef = preleasedPropertiesRef;
-  else if (propertyType === 'Franchise' || propertyType === 'franchise') legacyRef = franchisePropertiesRef;
-  else if (propertyType === 'Plot' || propertyType === 'plot') legacyRef = plotsRef;
-
-  if (legacyRef) {
-    const lsnap = await rtdbGet(legacyRef);
-    if (lsnap.exists()) {
-      lsnap.forEach((child: RtdbDataSnapshot) => {
-        const idStr = child.key;
-        if (!idStr) return;
-        const match = idStr.match(/PROP_[A-Z]{4}_([0-9]{3})$/);
-        if (match) {
-          const seq = parseInt(match[1]);
-          if (!isNaN(seq) && seq > highest) highest = seq;
-        } else {
-          const num = parseInt(idStr);
-          if (!isNaN(num) && num > highest) highest = num;
-        }
-      });
-    }
-  }
-  return highest + 1;
-}
-
-async function getNextSequenceNumberFirestore(propertyType: string): Promise<number> {
+async function getNextSequenceNumber(propertyType: string): Promise<number> {
   const typeMap: Record<string, string> = {
     'Vacant': 'vacant', 'vacant': 'vacant',
     'Pre-Leased': 'preleased', 'preleased': 'preleased',
@@ -155,13 +69,7 @@ async function getNextSequenceNumberFirestore(propertyType: string): Promise<num
   return highest + 1;
 }
 
-export async function getNextSequenceNumber(propertyType: string): Promise<number> {
-  const phase = getPhase();
-  if (phase === 'firestore') return getNextSequenceNumberFirestore(propertyType);
-  return getNextSequenceNumberRTDB(propertyType);
-}
-
-// ─── Flatten helpers (normalize RTDB nested structures) ─────────────────────
+// ─── Flatten helpers (normalize data structures) ────────────────────────────
 
 function flattenVacant(key: string, data: any): Property {
   const vd = data.vacantDetails || {};
@@ -295,141 +203,31 @@ function flattenPropertyByType(key: string, data: any): Property {
 // ─── getAllProperties ────────────────────────────────────────────────────────
 
 export async function getAllProperties(): Promise<Property[]> {
-  const phase = getPhase();
-
-  if (phase === 'firestore') {
-    const snap = await getDocs(propertiesCol());
-    const properties: Property[] = [];
-    snap.forEach(d => {
-      properties.push(flattenPropertyByType(d.id, d.data()));
-    });
-    return sortByNewest(properties);
-  }
-
-  if (phase === 'dual-read') {
-    try {
-      const snap = await getDocs(propertiesCol());
-      if (!snap.empty) {
-        const properties: Property[] = [];
-        snap.forEach(d => properties.push(flattenPropertyByType(d.id, d.data())));
-        return sortByNewest(properties);
-      }
-    } catch (err) {
-      console.warn('[Firestore Properties] getAllProperties failed, falling back to RTDB');
-    }
-  }
-
-  // RTDB path (rtdb / shadow / dual-read fallback)
+  const snap = await getDocs(propertiesCol());
   const properties: Property[] = [];
-
-  const vacantSnap = await rtdbGet(migratedVacantRef);
-  if (vacantSnap.exists()) {
-    vacantSnap.forEach((child: RtdbDataSnapshot) => {
-      properties.push(flattenVacant(child.key!, child.val()));
-    });
-  }
-
-  const preleasedSnap = await rtdbGet(migratedPreleasedRef);
-  if (preleasedSnap.exists()) {
-    preleasedSnap.forEach((child: RtdbDataSnapshot) => {
-      properties.push(flattenPreleased(child.key!, child.val()));
-    });
-  }
-
-  const franchiseSnap = await rtdbGet(migratedFranchiseRef);
-  if (franchiseSnap.exists()) {
-    franchiseSnap.forEach((child: RtdbDataSnapshot) => {
-      const data = child.val();
-      if (data && typeof data === 'object' && ('title' in data || 'name' in data || 'franchiseDetails' in data)) {
-        properties.push(flattenFranchise(child.key!, data));
-      }
-    });
-  }
-
-  const plotsSnap = await rtdbGet(migratedPlotsRef);
-  if (plotsSnap.exists()) {
-    plotsSnap.forEach((child: RtdbDataSnapshot) => {
-      const data = child.val();
-      if (data && typeof data === 'object' && ('title' in data || 'plotDetails' in data)) {
-        properties.push(flattenPlot(child.key!, data));
-      }
-    });
-  }
-
+  snap.forEach(d => {
+    properties.push(flattenPropertyByType(d.id, d.data()));
+  });
   return sortByNewest(properties);
 }
 
 // ─── getVacantProperties ─────────────────────────────────────────────────────
 
 export async function getVacantProperties(): Promise<Property[]> {
-  const phase = getPhase();
-
-  if (phase === 'firestore') {
-    const q = fsQuery(propertiesCol(), where('type', '==', 'vacant'));
-    const snap = await getDocs(q);
-    const properties: Property[] = [];
-    snap.forEach(d => properties.push(flattenVacant(d.id, d.data())));
-    return sortByNewest(properties);
-  }
-
-  if (phase === 'dual-read') {
-    try {
-      const q = fsQuery(propertiesCol(), where('type', '==', 'vacant'));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const properties: Property[] = [];
-        snap.forEach(d => properties.push(flattenVacant(d.id, d.data())));
-        return sortByNewest(properties);
-      }
-    } catch (err) {
-      console.warn('[Firestore Properties] getVacantProperties failed, falling back to RTDB');
-    }
-  }
-
+  const q = fsQuery(propertiesCol(), where('type', '==', 'vacant'));
+  const snap = await getDocs(q);
   const properties: Property[] = [];
-  const snap = await rtdbGet(migratedVacantRef);
-  if (snap.exists()) {
-    snap.forEach((child: RtdbDataSnapshot) => {
-      properties.push(flattenVacant(child.key!, child.val()));
-    });
-  }
+  snap.forEach(d => properties.push(flattenVacant(d.id, d.data())));
   return sortByNewest(properties);
 }
 
 // ─── getPreleasedProperties ─────────────────────────────────────────────────
 
 export async function getPreleasedProperties(): Promise<Property[]> {
-  const phase = getPhase();
-
-  if (phase === 'firestore') {
-    const q = fsQuery(propertiesCol(), where('type', '==', 'preleased'));
-    const snap = await getDocs(q);
-    const properties: Property[] = [];
-    snap.forEach(d => properties.push(flattenPreleased(d.id, d.data())));
-    return sortByNewest(properties);
-  }
-
-  if (phase === 'dual-read') {
-    try {
-      const q = fsQuery(propertiesCol(), where('type', '==', 'preleased'));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const properties: Property[] = [];
-        snap.forEach(d => properties.push(flattenPreleased(d.id, d.data())));
-        return sortByNewest(properties);
-      }
-    } catch (err) {
-      console.warn('[Firestore Properties] getPreleasedProperties failed, falling back to RTDB');
-    }
-  }
-
+  const q = fsQuery(propertiesCol(), where('type', '==', 'preleased'));
+  const snap = await getDocs(q);
   const properties: Property[] = [];
-  const snap = await rtdbGet(migratedPreleasedRef);
-  if (snap.exists()) {
-    snap.forEach((child: RtdbDataSnapshot) => {
-      properties.push({ id: child.key!, ...child.val() });
-    });
-  }
+  snap.forEach(d => properties.push(flattenPreleased(d.id, d.data())));
   return sortByNewest(properties);
 }
 
@@ -437,59 +235,11 @@ export async function getPreleasedProperties(): Promise<Property[]> {
 
 export async function getPropertyById(id: string): Promise<Property | null> {
   if (!id || id.trim() === '') return null;
-  const phase = getPhase();
-
-  if (phase === 'firestore') {
-    const docSnap = await getDoc(propertyDoc(id));
-    if (docSnap.exists()) {
-      return flattenPropertyByType(docSnap.id, docSnap.data());
-    }
-    // Phase is 'firestore' — do NOT fall back to expensive RTDB sequential reads.
-    // Properties should be in Firestore; if not found, return null immediately.
-    console.warn(`[Firestore Properties] Property ${id} not found in Firestore, skipping RTDB fallback (phase=firestore)`);
-    return null;
+  const docSnap = await getDoc(propertyDoc(id));
+  if (docSnap.exists()) {
+    return flattenPropertyByType(docSnap.id, docSnap.data());
   }
-
-  if (phase === 'dual-read') {
-    try {
-      const docSnap = await getDoc(propertyDoc(id));
-      if (docSnap.exists()) {
-        return flattenPropertyByType(docSnap.id, docSnap.data());
-      }
-    } catch (err) {
-      console.warn(`[Firestore Properties] getPropertyById(${id}) failed, falling back to RTDB`);
-    }
-  }
-
-  // RTDB: check migrated collections in order
-  const searches: Array<{ ref: any; flatten: (k: string, d: any) => Property }> = [
-    { ref: migratedVacantRef, flatten: flattenVacant },
-    { ref: migratedPreleasedRef, flatten: flattenPreleased },
-    { ref: migratedFranchiseRef, flatten: (k, d) => flattenFranchise(k, d) as Property },
-    { ref: migratedPlotsRef, flatten: (k, d) => flattenPlot(k, d) as Property },
-  ];
-
-  for (const { ref: collRef, flatten } of searches) {
-    const snap = await rtdbGet(rtdbChild(collRef, id));
-    if (snap.exists()) {
-      console.log(`[Firestore Properties] ✅ Found property ${id} in RTDB (${collRef.key})`);
-      return flatten(id, snap.val());
-    }
-  }
-
-  // Legacy fallback
-  const legacySearches = [franchisePropertiesRef, vacantPropertiesRef, preleasedPropertiesRef, plotsRef, propertiesRef];
-  for (const legacyRef of legacySearches) {
-    try {
-      const lsnap = await rtdbGet(rtdbChild(legacyRef, id));
-      if (lsnap.exists()) {
-        const d = lsnap.val();
-        console.log(`[Firestore Properties] ✅ Found property ${id} in legacy RTDB collection`);
-        return { ...d, id: lsnap.key || id } as Property;
-      }
-    } catch { /* continue */ }
-  }
-
+  console.warn(`[Firestore Properties] Property ${id} not found in Firestore`);
   return null;
 }
 
@@ -510,8 +260,7 @@ export async function getPropertiesByIds(ids: string[]): Promise<Property[]> {
 // ─── addProperty ─────────────────────────────────────────────────────────────
 
 export async function addProperty(property: Property): Promise<Property> {
-  const phase = getPhase();
-  console.log('[Firestore Properties] Adding property (phase=%s):', phase, JSON.stringify(property));
+  console.log('[Firestore Properties] Adding property:', JSON.stringify(property));
 
   const typeMap: Record<string, string> = {
     'Vacant': 'vacant', 'vacant': 'vacant',
@@ -547,31 +296,14 @@ export async function addProperty(property: Property): Promise<Property> {
     updatedAt: Date.now(),
   };
 
-  if (phase === 'firestore') {
-    await setDoc(propertyDoc(uniqueId), completeProperty);
-    return { ...completeProperty, id: uniqueId } as Property;
-  }
-
-  // RTDB write
-  const appropriateRef = getPropertyRefByType(property.propertyType || '');
-  await rtdbSet(rtdbChild(appropriateRef, uniqueId), completeProperty);
-
-  if (phase === 'shadow' || phase === 'dual-read') {
-    try {
-      await setDoc(propertyDoc(uniqueId), completeProperty);
-    } catch (err) {
-      console.warn('[Firestore Properties] Shadow write failed for addProperty:', err);
-    }
-  }
-
+  await setDoc(propertyDoc(uniqueId), completeProperty);
   return { ...completeProperty, id: uniqueId } as Property;
 }
 
 // ─── updateProperty ──────────────────────────────────────────────────────────
 
 export async function updateProperty(id: string, property: Property): Promise<Property> {
-  const phase = getPhase();
-  console.log(`[Firestore Properties] Updating property ${id} (phase=${phase})`);
+  console.log(`[Firestore Properties] Updating property ${id}`);
 
   const sanitized: Record<string, any> = { ...property };
   Object.keys(sanitized).forEach(key => {
@@ -588,384 +320,103 @@ export async function updateProperty(id: string, property: Property): Promise<Pr
   sanitized.type = fsType;
   sanitized.updatedAt = Date.now();
 
-  if (phase === 'firestore') {
-    await updateDoc(propertyDoc(id), sanitized);
-    return { ...sanitized, id } as Property;
-  }
-
-  // RTDB: find property in migrated or legacy collections
-  const migratedCollections = [migratedVacantRef, migratedPreleasedRef, migratedFranchiseRef, migratedPlotsRef];
-  const appropriateRef = getPropertyRefByType(property.propertyType || '');
-  let foundProperty = false;
-
-  for (const collectionRef of migratedCollections) {
-    const tempSnapshot = await rtdbGet(rtdbChild(collectionRef, id));
-    if (tempSnapshot.exists()) {
-      foundProperty = true;
-      if (collectionRef !== appropriateRef) {
-        await rtdbRemove(rtdbChild(collectionRef, id));
-        await rtdbSet(rtdbChild(appropriateRef, id), sanitized);
-      } else {
-        await rtdbUpdate(rtdbChild(appropriateRef, id), sanitized);
-      }
-      break;
-    }
-  }
-
-  if (!foundProperty) {
-    const legacyCollections = [vacantPropertiesRef, preleasedPropertiesRef, franchisePropertiesRef, plotsRef, propertiesRef];
-    for (const collectionRef of legacyCollections) {
-      const tempSnapshot = await rtdbGet(rtdbChild(collectionRef, id));
-      if (tempSnapshot.exists()) {
-        foundProperty = true;
-        await rtdbRemove(rtdbChild(collectionRef, id));
-        await rtdbSet(rtdbChild(appropriateRef, id), sanitized);
-        break;
-      }
-    }
-  }
-
-  if (!foundProperty) {
-    await rtdbSet(rtdbChild(appropriateRef, id), { ...sanitized, createdAt: Date.now() });
-  }
-
-  if (phase === 'shadow' || phase === 'dual-read') {
-    try {
-      await updateDoc(propertyDoc(id), sanitized);
-    } catch (err) {
-      console.warn('[Firestore Properties] Shadow update failed:', err);
-    }
-  }
-
+  await updateDoc(propertyDoc(id), sanitized);
   return { ...sanitized, id } as Property;
 }
 
 // ─── deleteProperty ──────────────────────────────────────────────────────────
 
 export async function deleteProperty(id: string, propertyType?: string): Promise<boolean> {
-  const phase = getPhase();
-  console.log(`[Firestore Properties] Deleting property ${id} (phase=${phase})`);
-
-  if (phase === 'firestore') {
-    await deleteDoc(propertyDoc(id));
-    return true;
-  }
-
-  // RTDB
-  if (!propertyType) {
-    await rtdbRemove(rtdbChild(migratedVacantRef, id));
-    await rtdbRemove(rtdbChild(migratedPreleasedRef, id));
-    await rtdbRemove(rtdbChild(migratedFranchiseRef, id));
-    await rtdbRemove(rtdbChild(migratedPlotsRef, id));
-    await rtdbRemove(rtdbChild(vacantPropertiesRef, id));
-    await rtdbRemove(rtdbChild(preleasedPropertiesRef, id));
-    await rtdbRemove(rtdbChild(franchisePropertiesRef, id));
-    await rtdbRemove(rtdbChild(plotsRef, id));
-    await rtdbRemove(rtdbChild(propertiesRef, id));
-  } else {
-    const appropriateRef = getPropertyRefByType(propertyType);
-    await rtdbRemove(rtdbChild(appropriateRef, id));
-    // Also clean legacy
-    if (propertyType === 'Vacant' || propertyType === 'vacant') await rtdbRemove(rtdbChild(vacantPropertiesRef, id));
-    else if (propertyType === 'Pre-Leased' || propertyType === 'preleased') await rtdbRemove(rtdbChild(preleasedPropertiesRef, id));
-    else if (propertyType === 'Franchise' || propertyType === 'franchise') await rtdbRemove(rtdbChild(franchisePropertiesRef, id));
-    else if (propertyType === 'Plot' || propertyType === 'plot') await rtdbRemove(rtdbChild(plotsRef, id));
-    else await rtdbRemove(rtdbChild(propertiesRef, id));
-  }
-
-  if (phase === 'shadow' || phase === 'dual-read') {
-    try {
-      await deleteDoc(propertyDoc(id));
-    } catch (err) {
-      console.warn('[Firestore Properties] Shadow delete failed:', err);
-    }
-  }
-
+  console.log(`[Firestore Properties] Deleting property ${id}`);
+  await deleteDoc(propertyDoc(id));
   return true;
 }
 
 // ─── getAllFranchises ────────────────────────────────────────────────────────
 
 export async function getAllFranchises(): Promise<Franchise[]> {
-  const phase = getPhase();
-
-  if (phase === 'firestore') {
-    const q = fsQuery(propertiesCol(), where('type', '==', 'franchise'));
-    const snap = await getDocs(q);
-    const franchises: Franchise[] = [];
-    snap.forEach(d => {
-      const data = d.data();
-      const fd = data.franchiseDetails || {};
-      franchises.push({
-        ...data,
-        id: d.id,
-        name: data.title || data.name || fd.name || 'Franchise Name',
-        industry: fd.industry || data.industry || 'Not specified',
-        segment: fd.segment || data.segment || '',
-        model: fd.model || data.model || '',
-        minArea: fd.minArea || data.minArea || '',
-        maxArea: fd.maxArea || data.maxArea || '',
-        minInvestment: fd.minInvestment || data.minInvestment || '',
-        maxInvestment: fd.maxInvestment || data.maxInvestment || '',
-        headquarter: fd.headquarter || data.headquarter || data.location || 'Not specified',
-        investment: data.price || fd.minInvestment || 0,
-        location: data.location || fd.headquarter || 'Not specified',
-        status: 'Active',
-        roi: fd.royalty || 'Varies',
-        image: data.images?.[0] || data.image || '',
-      } as Franchise);
-    });
-    return sortByNewest(franchises);
-  }
-
-  if (phase === 'dual-read') {
-    try {
-      const q = fsQuery(propertiesCol(), where('type', '==', 'franchise'));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const franchises: Franchise[] = [];
-        snap.forEach(d => {
-          const data = d.data();
-          const fd = data.franchiseDetails || {};
-          franchises.push({
-            ...data,
-            id: d.id,
-            name: data.title || data.name || fd.name || 'Franchise Name',
-            industry: fd.industry || data.industry || 'Not specified',
-            headquarter: fd.headquarter || data.headquarter || data.location || 'Not specified',
-            investment: data.price || fd.minInvestment || 0,
-            location: data.location || fd.headquarter || 'Not specified',
-            status: 'Active',
-            roi: fd.royalty || 'Varies',
-            image: data.images?.[0] || data.image || '',
-          } as Franchise);
-        });
-        return sortByNewest(franchises);
-      }
-    } catch (err) {
-      console.warn('[Firestore Properties] getAllFranchises failed, falling back to RTDB');
-    }
-  }
-
-  // RTDB
+  const q = fsQuery(propertiesCol(), where('type', '==', 'franchise'));
+  const snap = await getDocs(q);
   const franchises: Franchise[] = [];
-  const migratedSnap = await rtdbGet(migratedFranchiseRef);
-  if (migratedSnap.exists()) {
-    migratedSnap.forEach((child: RtdbDataSnapshot) => {
-      const data = child.val();
-      if (data && typeof data === 'object' && ('title' in data || 'name' in data || 'franchiseDetails' in data)) {
-        const details = data.franchiseDetails || {};
-        franchises.push({
-          ...data,
-          id: child.key,
-          name: data.title || data.name || details.name || details.brand || 'Franchise Name',
-          industry: details.industry || data.industry || 'Not specified',
-          segment: details.segment || data.segment || '',
-          product: details.product || data.product || '',
-          model: details.model || data.model || '',
-          minArea: details.minArea || data.minArea || '',
-          maxArea: details.maxArea || data.maxArea || '',
-          minInvestment: details.minInvestment || data.minInvestment || '',
-          maxInvestment: details.maxInvestment || data.maxInvestment || '',
-          royalty: details.royalty || data.royalty || 'Not specified',
-          establishmentYear: details.establishmentYear || data.establishmentYear || '',
-          franchiseStartedYear: details.franchiseStartedYear || data.franchiseStartedYear || '',
-          numberOutlets: details.numberOfOutlets || details.numberOutlets || data.numberOutlets || '',
-          minPaybackPeriod: details.minPaybackPeriod || data.minPaybackPeriod || '',
-          maxPaybackPeriod: details.maxPaybackPeriod || data.maxPaybackPeriod || '',
-          headquarter: details.headquarter || data.headquarter || data.location || 'Location not specified',
-          investment: data.price || details.minInvestment || '',
-          location: data.location || details.headquarter || 'Location not specified',
-          status: 'Active',
-          roi: details.royalty || 'Varies',
-          description: data.description || '',
-          image: data.images?.[0] || data.image || '',
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-        });
-      }
-    });
-  }
-
-  // Legacy fallback
-  const legacySnap = await rtdbGet(franchisePropertiesRef);
-  if (legacySnap.exists()) {
-    legacySnap.forEach((child: RtdbDataSnapshot) => {
-      const data = child.val();
-      if (data && typeof data === 'object' && 'name' in data) {
-        franchises.push({ ...data, id: child.key });
-      }
-    });
-  }
-
+  snap.forEach(d => {
+    const data = d.data();
+    const fd = data.franchiseDetails || {};
+    franchises.push({
+      ...data,
+      id: d.id,
+      name: data.title || data.name || fd.name || 'Franchise Name',
+      industry: fd.industry || data.industry || 'Not specified',
+      segment: fd.segment || data.segment || '',
+      model: fd.model || data.model || '',
+      minArea: fd.minArea || data.minArea || '',
+      maxArea: fd.maxArea || data.maxArea || '',
+      minInvestment: fd.minInvestment || data.minInvestment || 0,
+      maxInvestment: fd.maxInvestment || data.maxInvestment || 0,
+      headquarter: fd.headquarter || data.headquarter || data.location || 'Not specified',
+      investment: data.price || fd.minInvestment || 0,
+      location: data.location || fd.headquarter || 'Not specified',
+      status: 'Active',
+      roi: fd.royalty || 'Varies',
+      image: data.images?.[0] || data.image || '',
+    } as Franchise);
+  });
   return sortByNewest(franchises);
 }
 
 // ─── getAllPlots ─────────────────────────────────────────────────────────────
 
 export async function getAllPlots(): Promise<Plot[]> {
-  const phase = getPhase();
-
-  if (phase === 'firestore') {
-    const q = fsQuery(propertiesCol(), where('type', '==', 'plot'));
-    const snap = await getDocs(q);
-    const plots: Plot[] = [];
-    snap.forEach(d => {
-      const data = d.data();
-      const pd = data.plotDetails || {};
-      plots.push({
-        ...data,
-        id: d.id,
-        project: pd.project || data.title || 'Plot Project',
-        developerName: pd.developerName || 'Developer not specified',
-        description: data.description || '',
-        status: pd.status || 'Available',
-        plotSize: pd.plotSize || { min: 0, max: 0, unit: 'sq.ft' },
-        location: data.location || 'Location not specified',
-        investmentStartsFrom: pd.investmentStartsFrom || { amount: 0, unit: 'sq.ft' },
-        investorDiscoveryKit: pd.investorDiscoveryKit || { title: 'Investor Discovery Kit', url: '', description: '' },
-        images: data.images || [],
-        keySalientFeatures: pd.keySalientFeatures || [],
-      } as Plot);
-    });
-    return sortByNewest(plots);
-  }
-
-  if (phase === 'dual-read') {
-    try {
-      const q = fsQuery(propertiesCol(), where('type', '==', 'plot'));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const plots: Plot[] = [];
-        snap.forEach(d => {
-          const data = d.data();
-          const pd = data.plotDetails || {};
-          plots.push({
-            ...data,
-            id: d.id,
-            project: pd.project || data.title || 'Plot Project',
-            developerName: pd.developerName || 'Developer not specified',
-            status: pd.status || 'Available',
-            plotSize: pd.plotSize || { min: 0, max: 0, unit: 'sq.ft' },
-            location: data.location || 'Location not specified',
-            investmentStartsFrom: pd.investmentStartsFrom || { amount: 0, unit: 'sq.ft' },
-            investorDiscoveryKit: pd.investorDiscoveryKit || { title: 'Investor Discovery Kit', url: '', description: '' },
-            images: data.images || [],
-            keySalientFeatures: pd.keySalientFeatures || [],
-          } as Plot);
-        });
-        return sortByNewest(plots);
-      }
-    } catch (err) {
-      console.warn('[Firestore Properties] getAllPlots failed, falling back to RTDB');
-    }
-  }
-
-  // RTDB
+  const q = fsQuery(propertiesCol(), where('type', '==', 'plot'));
+  const snap = await getDocs(q);
   const plots: Plot[] = [];
-  const migratedSnap = await rtdbGet(migratedPlotsRef);
-  if (migratedSnap.exists()) {
-    migratedSnap.forEach((child: RtdbDataSnapshot) => {
-      const data = child.val();
-      if (data && typeof data === 'object' && ('title' in data || 'plotDetails' in data)) {
-        const pd = data.plotDetails || {};
-        plots.push({
-          ...data,
-          id: child.key,
-          project: pd.project || data.title || 'Plot Project',
-          developerName: pd.developerName || 'Developer not specified',
-          description: data.description || '',
-          status: pd.status || 'Available',
-          plotSize: pd.plotSize || { min: 0, max: 0, unit: 'sq.ft' },
-          location: data.location || 'Location not specified',
-          investmentStartsFrom: pd.investmentStartsFrom || { amount: 0, unit: 'sq.ft' },
-          investorDiscoveryKit: pd.investorDiscoveryKit || { title: 'Investor Discovery Kit', url: '', description: '' },
-          images: data.images || [],
-          keySalientFeatures: pd.keySalientFeatures || [],
-        });
-      }
-    });
-  }
-
-  const legacySnap = await rtdbGet(plotsRef);
-  if (legacySnap.exists()) {
-    legacySnap.forEach((child: RtdbDataSnapshot) => {
-      const data = child.val();
-      if (data && typeof data === 'object' && 'project' in data && 'developerName' in data) {
-        plots.push({ ...data, id: child.key });
-      }
-    });
-  }
-
+  snap.forEach(d => {
+    const data = d.data();
+    const pd = data.plotDetails || {};
+    plots.push({
+      ...data,
+      id: d.id,
+      project: pd.project || data.title || 'Plot Project',
+      developerName: pd.developerName || 'Developer not specified',
+      description: data.description || '',
+      status: pd.status || 'Available',
+      plotSize: pd.plotSize || { min: 0, max: 0, unit: 'sq.ft' },
+      location: data.location || 'Location not specified',
+      investmentStartsFrom: pd.investmentStartsFrom || { amount: 0, unit: 'sq.ft' },
+      investorDiscoveryKit: pd.investorDiscoveryKit || { title: 'Investor Discovery Kit', url: '', description: '' },
+      images: data.images || [],
+      keySalientFeatures: pd.keySalientFeatures || [],
+    } as Plot);
+  });
   return sortByNewest(plots);
 }
 
 // ─── getPlotById ─────────────────────────────────────────────────────────────
 
 export async function getPlotById(id: string): Promise<Plot | null> {
-  const phase = getPhase();
-
-  if (phase === 'firestore') {
-    const docSnap = await getDoc(propertyDoc(id));
-    if (docSnap.exists() && docSnap.data().type === 'plot') {
-      const data = docSnap.data();
-      const pd = data.plotDetails || {};
-      return {
-        ...data,
-        id: docSnap.id,
-        project: pd.project || data.title || 'Plot Project',
-        developerName: pd.developerName || 'Developer not specified',
-        status: pd.status || 'Available',
-        plotSize: pd.plotSize || { min: 0, max: 0, unit: 'sq.ft' },
-        investmentStartsFrom: pd.investmentStartsFrom || { amount: 0, unit: 'sq.ft' },
-        investorDiscoveryKit: pd.investorDiscoveryKit || { title: '', url: '', description: '' },
-        images: data.images || [],
-        keySalientFeatures: pd.keySalientFeatures || [],
-      } as Plot;
-    }
-    return null;
-  }
-
-  if (phase === 'dual-read') {
-    try {
-      const docSnap = await getDoc(propertyDoc(id));
-      if (docSnap.exists() && docSnap.data().type === 'plot') {
-        const data = docSnap.data();
-        const pd = data.plotDetails || {};
-        return {
-          ...data,
-          id: docSnap.id,
-          project: pd.project || data.title || 'Plot Project',
-          developerName: pd.developerName || 'Developer not specified',
-          status: pd.status || 'Available',
-          plotSize: pd.plotSize || { min: 0, max: 0, unit: 'sq.ft' },
-          investmentStartsFrom: pd.investmentStartsFrom || { amount: 0, unit: 'sq.ft' },
-          investorDiscoveryKit: pd.investorDiscoveryKit || { title: '', url: '', description: '' },
-          images: data.images || [],
-          keySalientFeatures: pd.keySalientFeatures || [],
-        } as Plot;
-      }
-    } catch (err) {
-      console.warn(`[Firestore Properties] getPlotById(${id}) failed, falling back to RTDB`);
-    }
-  }
-
-  let snap = await rtdbGet(rtdbChild(migratedPlotsRef, id));
-  if (snap.exists()) {
-    const data = snap.val();
+  const docSnap = await getDoc(propertyDoc(id));
+  if (docSnap.exists() && docSnap.data().type === 'plot') {
+    const data = docSnap.data();
     const pd = data.plotDetails || {};
-    return { ...data, id: snap.key, project: pd.project || data.title || 'Plot Project', developerName: pd.developerName || 'Developer not specified', status: pd.status || 'Available', plotSize: pd.plotSize || { min: 0, max: 0, unit: 'sq.ft' }, investmentStartsFrom: pd.investmentStartsFrom || { amount: 0, unit: 'sq.ft' }, investorDiscoveryKit: pd.investorDiscoveryKit || { title: '', url: '', description: '' }, images: data.images || [], keySalientFeatures: pd.keySalientFeatures || [] } as Plot;
+    return {
+      ...data,
+      id: docSnap.id,
+      project: pd.project || data.title || 'Plot Project',
+      developerName: pd.developerName || 'Developer not specified',
+      status: pd.status || 'Available',
+      plotSize: pd.plotSize || { min: 0, max: 0, unit: 'sq.ft' },
+      investmentStartsFrom: pd.investmentStartsFrom || { amount: 0, unit: 'sq.ft' },
+      investorDiscoveryKit: pd.investorDiscoveryKit || { title: '', url: '', description: '' },
+      images: data.images || [],
+      keySalientFeatures: pd.keySalientFeatures || [],
+    } as Plot;
   }
-  snap = await rtdbGet(rtdbChild(plotsRef, id));
-  if (snap.exists()) return { ...snap.val(), id: snap.key };
   return null;
 }
 
 // ─── addPlot ─────────────────────────────────────────────────────────────────
 
 export async function addPlot(plot: Plot): Promise<Plot> {
-  const phase = getPhase();
-  console.log('[Firestore Properties] Adding plot (phase=%s)', phase);
+  console.log('[Firestore Properties] Adding plot');
 
   const sequenceNumber = await getNextSequenceNumber('Plot');
   const uniqueId = generateUniquePropertyId('Plot', sequenceNumber);
@@ -977,93 +428,32 @@ export async function addPlot(plot: Plot): Promise<Plot> {
     updatedAt: Date.now(),
   };
 
-  if (phase === 'firestore') {
-    await setDoc(propertyDoc(uniqueId), completePlot);
-    return { ...completePlot, id: uniqueId } as Plot;
-  }
-
-  await rtdbSet(rtdbChild(migratedPlotsRef, uniqueId), completePlot);
-
-  if (phase === 'shadow' || phase === 'dual-read') {
-    try {
-      await setDoc(propertyDoc(uniqueId), completePlot);
-    } catch (err) {
-      console.warn('[Firestore Properties] Shadow addPlot failed:', err);
-    }
-  }
-
+  await setDoc(propertyDoc(uniqueId), completePlot);
   return { ...completePlot, id: uniqueId } as Plot;
 }
 
 // ─── updatePlot ──────────────────────────────────────────────────────────────
 
 export async function updatePlot(id: string, plot: Plot): Promise<Plot> {
-  const phase = getPhase();
-  console.log(`[Firestore Properties] Updating plot ${id} (phase=${phase})`);
+  console.log(`[Firestore Properties] Updating plot ${id}`);
 
   const updateData = { ...plot, type: 'plot', updatedAt: Date.now() };
-
-  if (phase === 'firestore') {
-    await updateDoc(propertyDoc(id), updateData);
-    return { ...plot, id } as Plot;
-  }
-
-  // RTDB: find in migrated or legacy
-  let targetRef = rtdbChild(migratedPlotsRef, id);
-  let found = false;
-
-  const migratedSnap = await rtdbGet(rtdbChild(migratedPlotsRef, id));
-  if (migratedSnap.exists()) {
-    found = true;
-  } else {
-    const legacySnap = await rtdbGet(rtdbChild(plotsRef, id));
-    if (legacySnap.exists()) {
-      found = true;
-      targetRef = rtdbChild(plotsRef, id);
-    }
-  }
-
-  if (!found) {
-    targetRef = rtdbChild(migratedPlotsRef, id);
-  }
-
-  await rtdbUpdate(targetRef, updateData);
-
-  if (phase === 'shadow' || phase === 'dual-read') {
-    try {
-      await updateDoc(propertyDoc(id), updateData);
-    } catch (err) {
-      console.warn('[Firestore Properties] Shadow updatePlot failed:', err);
-    }
-  }
-
+  await updateDoc(propertyDoc(id), updateData);
   return { ...plot, id } as Plot;
 }
 
 // ─── deletePlot ──────────────────────────────────────────────────────────────
 
 export async function deletePlot(id: string): Promise<boolean> {
-  const phase = getPhase();
-  console.log(`[Firestore Properties] Deleting plot ${id} (phase=${phase})`);
-
-  if (phase === 'firestore') {
-    await deleteDoc(propertyDoc(id));
-    return true;
-  }
-
-  await rtdbRemove(rtdbChild(migratedPlotsRef, id));
-  await rtdbRemove(rtdbChild(plotsRef, id));
-
-  if (phase === 'shadow' || phase === 'dual-read') {
-    try {
-      await deleteDoc(propertyDoc(id));
-    } catch (err) {
-      console.warn('[Firestore Properties] Shadow deletePlot failed:', err);
-    }
-  }
-
+  console.log(`[Firestore Properties] Deleting plot ${id}`);
+  await deleteDoc(propertyDoc(id));
   return true;
 }
 
-// Re-export ref helper for backward compatibility with code that imports it from this module
-export { getPropertyRefByType };
+// Re-export for backward compatibility
+export function getPropertyRefByType(propertyType: string) {
+  // This function is no longer needed in Firestore-only mode
+  // but kept for API compatibility with code that imports it
+  console.warn('[Firestore Properties] getPropertyRefByType is deprecated — all operations use Firestore');
+  return null;
+}

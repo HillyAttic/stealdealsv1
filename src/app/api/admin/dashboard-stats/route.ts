@@ -1,21 +1,18 @@
 import { NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
-// Read from Firebase RTDB (same source the working frontend uses) instead of Firestore.
-// The Admin SDK / Firestore path was returning 0 because:
-//   1) No FIREBASE_SERVICE_ACCOUNT_KEY on Vercel → Admin SDK never initializes
-//   2) Properties actually live in RTDB (migratedProperties/*), not Firestore
-import { getAllProperties } from '@/lib/firebase';
+// Read from Firestore (migration complete)
+import { getAllProperties } from '@/lib/database/firestore-properties';
 
 // Force this route to be dynamic so it always fetches fresh data
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 // GET /api/admin/dashboard-stats — returns aggregated property counts and breakdowns
-// Reads from Firebase RTDB via the same firebase.ts module used by the public frontend
+// Reads from Firestore (migration complete)
 export async function GET(request: Request) {
   return requireAdminAuth(request, async () => {
     try {
-      // Fetch all properties from RTDB (same data the frontend displays)
+      // Fetch all properties from Firestore (migration complete)
       const allProperties = await getAllProperties();
 
       // Count by type
@@ -39,7 +36,7 @@ export async function GET(request: Request) {
 
       for (const property of allProperties) {
         const type = (property.propertyType || property.type || '').toLowerCase();
-        // In RTDB, pre-leased properties use 'lockable' and 'virtual' as propertyType
+        // In Firestore, pre-leased properties use 'preleased' as type
         // (IDs start with PROP_PRLS_). Normalize all variants to 'preleased'.
         const isPreleased = type === 'preleased' || type === 'pre-leased' || type === 'lockable' || type === 'virtual';
 
@@ -68,7 +65,7 @@ export async function GET(request: Request) {
 
       const totalCount = preleasedCount + vacantCount + franchiseCount + plotsCount;
 
-      console.log(`[Dashboard API] RTDB stats: vacant=${vacantCount}, preleased=${preleasedCount}, franchise=${franchiseCount}, plots=${plotsCount}, total=${totalCount}`);
+      console.log(`[Dashboard API] Firestore stats: vacant=${vacantCount}, preleased=${preleasedCount}, franchise=${franchiseCount}, plots=${plotsCount}, total=${totalCount}`);
 
       // Sort segments by count (descending)
       const sortedSegments = Object.entries(segmentCounts)

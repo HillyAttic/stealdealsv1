@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-// Read from Firebase RTDB (same source the working frontend uses)
-import { getAllFranchises } from '@/lib/firebase';
+// Read from Firestore (migration complete)
+import { getAllFranchises } from '@/lib/database/firestore-properties';
 import { db } from '@/lib/firebase-server-admin';
 import { resolveIdParam, RouteParams } from '../../../../lib/params-utils';
 import { revalidateTag } from 'next/cache';
 
-// Get a single franchise from RTDB
+// Get a single franchise from Firestore
 export async function GET(
   request: NextRequest,
   { params }: { params: RouteParams<{ id: string }> }

@@ -1,13 +1,14 @@
 // Firebase configuration for StealDeals app
+// Migration complete: all CRUD operations use Firestore.
+// This module now only initializes the Firebase app and exports auth/storage.
+// For property/franchise/plot/wishlist/user CRUD, use the modules in @/lib/database/.
+
 import { initializeApp, getApps } from 'firebase/app';
-import { getDatabase, ref, set, get, push, child, update, remove, DataSnapshot } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 import { validateConfigOrThrow, logConfigValidation } from '@/lib/config/validation';
-import { sortByNewest } from '@/lib/sort';
 
 // Detect if we're in a build environment (Vercel build phase)
-// During build, we skip Firebase initialization to avoid URL validation errors
 const isBuildTime = process.env.NEXT_PHASE === 'phase-production-build' ||
                     (process.env.VERCEL && !process.env.VERCEL_ENV);
 
@@ -17,26 +18,22 @@ if (isBuildTime) {
 
 // Validate environment configuration before initializing Firebase
 try {
-  // Only enforce strict validation in actual production deployment, not local builds
   const isActualProduction = process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production';
   if (isActualProduction) {
     validateConfigOrThrow();
   } else {
-    // Just log validation results for local builds
     logConfigValidation();
   }
 } catch (error) {
   console.error('[Firebase] Configuration validation failed:', error);
   if (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production') {
-    throw error; // Only fail fast in actual production deployment
+    throw error;
   }
 }
 
-// Your Firebase configuration
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL || "https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
@@ -44,14 +41,8 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ""
 };
 
-// Fix for region-specific database URL if incorrectly set in env
-if (firebaseConfig.databaseURL && firebaseConfig.databaseURL.includes('firebaseio.com')) {
-  console.warn('[Firebase] Detected incorrect database region URL in config, auto-correcting to asia-southeast1');
-  firebaseConfig.databaseURL = 'https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app';
-}
-
 // Enhanced Firebase configuration validation
-const requiredFields = ['apiKey', 'projectId', 'databaseURL'];
+const requiredFields = ['apiKey', 'projectId'];
 const missingFields = requiredFields.filter(field => !firebaseConfig[field as keyof typeof firebaseConfig]);
 
 if (missingFields.length > 0) {
@@ -75,7 +66,7 @@ function ensureApp() {
   return _app;
 }
 
-// Lazy proxy for app - defer initialization until accessed
+// Lazy proxy for app
 const app = new Proxy({} as ReturnType<typeof initializeApp>, {
   get(_, prop, receiver) {
     const a = ensureApp();
@@ -84,19 +75,8 @@ const app = new Proxy({} as ReturnType<typeof initializeApp>, {
   },
 });
 
-// Guard RTDB / auth / storage init so the module doesn't crash during Vercel
-// build when environment variables or the default URL may be invalid/absent
-// at build time.  They are lazily created on first access via the proxy.
-let _database: ReturnType<typeof getDatabase> | null = null;
 let _auth: ReturnType<typeof getAuth> | null = null;
 let _storage: ReturnType<typeof getStorage> | null = null;
-
-function ensureDatabase() {
-  if (!_database) {
-    _database = getDatabase(ensureApp());
-  }
-  return _database;
-}
 
 function ensureAuth() {
   if (!_auth) {
@@ -112,45 +92,6 @@ function ensureStorage() {
   return _storage;
 }
 
-// --- Lazy RTDB refs via Proxy -------------------------------------------
-// ref() calls getDatabase() under the hood.  During Vercel build the RTDB
-// URL may not be available yet, so we wrap each ref in a Proxy that defers
-// the actual `ref()` call until the object is first accessed.
-function lazyRtdbRef(path: string) {
-  let _ref: ReturnType<typeof ref> | null = null;
-  return new Proxy({} as ReturnType<typeof ref>, {
-    get(_, prop, receiver) {
-      if (!_ref) {
-        _ref = ref(ensureDatabase(), path);
-      }
-      const val = Reflect.get(_ref as any, prop, receiver);
-      return typeof val === 'function' ? val.bind(_ref) : val;
-    },
-  });
-}
-
-// Legacy references
-const propertiesRef = lazyRtdbRef('properties');
-const vacantPropertiesRef = lazyRtdbRef('vacantProperties');
-const preleasedPropertiesRef = lazyRtdbRef('preleasedProperties');
-const franchisePropertiesRef = lazyRtdbRef('franchiseProperties');
-const plotsRef = lazyRtdbRef('plots');
-
-// New type-organized structure from migration
-const migratedVacantRef = lazyRtdbRef('migratedProperties/vacant');
-const migratedPreleasedRef = lazyRtdbRef('migratedProperties/preleased');
-const migratedFranchiseRef = lazyRtdbRef('migratedProperties/franchise');
-const migratedPlotsRef = lazyRtdbRef('migratedProperties/plots');
-
-// Lazy proxies for database, auth, and storage — defer initialization until accessed
-const database = new Proxy({} as ReturnType<typeof getDatabase>, {
-  get(_, prop, receiver) {
-    const db = ensureDatabase();
-    const val = Reflect.get(db as any, prop, receiver);
-    return typeof val === 'function' ? val.bind(db) : val;
-  },
-});
-
 const auth = new Proxy({} as ReturnType<typeof getAuth>, {
   get(_, prop, receiver) {
     const a = ensureAuth();
@@ -159,19 +100,13 @@ const auth = new Proxy({} as ReturnType<typeof getAuth>, {
   },
 });
 
-// Storage is exported as a getter function (not a Proxy) because Firebase's
-// storage ref() validates the instance via internal slots / instanceof checks
-// that a Proxy over {} cannot satisfy, causing "Cannot read properties of
-// undefined (reading 'path')" errors at upload time.
 function getStorageInstance(): ReturnType<typeof getStorage> {
   return ensureStorage();
 }
 
-// Legacy alias — prefer getStorageInstance() for new code.
 const storage = new Proxy({} as ReturnType<typeof getStorage>, {
   get(_, prop, receiver) {
     const s = ensureStorage();
-    // Use the real instance as the receiver so internal-slot lookups succeed
     const val = Reflect.get(s as any, prop, s);
     return typeof val === 'function' ? val.bind(s) : val;
   },
@@ -183,25 +118,7 @@ const storage = new Proxy({} as ReturnType<typeof getStorage>, {
   },
 }) as ReturnType<typeof getStorage>;
 
-// Export references
-export {
-  app,
-  database,
-  auth,
-  storage,
-  getStorageInstance,
-  propertiesRef,
-  vacantPropertiesRef,
-  preleasedPropertiesRef,
-  franchisePropertiesRef,
-  plotsRef,
-  migratedVacantRef,
-  migratedPreleasedRef,
-  migratedFranchiseRef,
-  migratedPlotsRef
-};
-
-// Property interface matching our application's property structure
+// Re-export types for backward compatibility
 export interface Property {
   id: string;
   title?: string;
@@ -238,25 +155,18 @@ export interface Property {
   contactNumber?: string;
   channel?: string;
   propertyType?: string;
-  unitType?: string; // Unit type for vacant properties (Independent Unit, Standalone Building, etc.)
-  image?: string; // Image URL for the property
-
-  // Additional vacant property fields
+  unitType?: string;
+  image?: string;
   facing?: string;
   length?: string;
   width?: string;
   height?: string;
-
-  // Ownership tracking fields
-  createdBy?: string;  // UID of the admin who created this property
-  lastModifiedBy?: string;  // UID of the admin who last modified this property
-
-  // Additional timestamp fields
+  createdBy?: string;
+  lastModifiedBy?: string;
   createdAt?: number;
   updatedAt?: number;
 }
 
-// Franchise interface
 export interface Franchise {
   id?: string | null;
   name: string;
@@ -279,1183 +189,47 @@ export interface Franchise {
   brandDeck?: string;
   productList?: string;
   roiSheet?: string;
-  investment: number;  // Legacy field
-  location: string;    // Legacy field
+  investment: number;
+  location: string;
   status: string;
-  roi: string;         // Legacy field
-  description?: string; // Legacy field
+  roi: string;
+  description?: string;
   requirements?: string;
   image?: string;
   createdAt?: number;
   updatedAt?: number;
 }
 
-// Plot interface for plots collection
 export interface Plot {
   id?: string | null;
   developerName: string;
   project: string;
   description: string;
-  status: string; // "Ready to Move In" or "Future Delivery"
+  status: string;
   plotSize: {
     min: number;
     max: number;
-    unit: string; // "sq.yds", "sq.mt", "sq.ft"
+    unit: string;
   };
   location: string;
   investmentStartsFrom: {
     amount: number;
-    unit: string; // "sq.yds", "sq.mt", "sq.ft"
+    unit: string;
   };
   investorDiscoveryKit: {
     title: string;
     url: string;
     description: string;
   };
-  keySalientFeatures?: string[]; // Array of key salient features
-  images: string[]; // Array of image URLs
+  keySalientFeatures?: string[];
+  images: string[];
   createdAt?: number;
   updatedAt?: number;
 }
 
-// Function to get the appropriate reference based on property type (MIGRATED ONLY)
-export function getPropertyRefByType(propertyType: string) {
-  console.log(`[Firebase] Getting MIGRATED reference for property type: "${propertyType}"`);
-
-  if (propertyType === 'Vacant' || propertyType === 'vacant') {
-    console.log('[Firebase] Using migratedVacantRef');
-    return migratedVacantRef;
-  } else if (propertyType === 'Pre-Leased' || propertyType === 'preleased') {
-    console.log('[Firebase] Using migratedPreleasedRef');
-    return migratedPreleasedRef;
-  } else if (propertyType === 'Franchise' || propertyType === 'franchise') {
-    console.log('[Firebase] Using migratedFranchiseRef');
-    return migratedFranchiseRef;
-  } else if (propertyType === 'Plot' || propertyType === 'plot') {
-    console.log('[Firebase] Using migratedPlotsRef');
-    return migratedPlotsRef;
-  }
-
-  console.log(`[Firebase] Unknown property type "${propertyType}" - returning vacant ref as default`);
-  return migratedVacantRef; // Default to migrated vacant instead of legacy
-}
-
-// Function to get all properties (combines all property collections from migrated structure)
-export async function getAllProperties(): Promise<Property[]> {
-  try {
-    const properties: Property[] = [];
-
-    // Get migrated vacant properties
-    const migratedVacantSnapshot = await get(migratedVacantRef);
-    if (migratedVacantSnapshot.exists()) {
-      migratedVacantSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        const data = childSnapshot.val();
-        const vacantDetails = data.vacantDetails || {};
-
-        // Flatten the nested structure for vacant properties
-        properties.push({
-          id: childSnapshot.key,
-          title: data.title || data.location || 'Vacant Property',
-          // Extract from vacantDetails
-          category: vacantDetails.category || data.category || 'Industrial',
-          location: data.location || vacantDetails.location || 'Location not specified',
-          city: vacantDetails.city || data.city || '',
-          state: vacantDetails.state || data.state || '',
-          district: vacantDetails.district || data.district || '',
-          subDistrict: vacantDetails.subDistrict || data.subDistrict || '',
-          floor: vacantDetails.floor || data.floor || '',
-          facing: vacantDetails.facing || data.facing || '',
-          carpetArea: vacantDetails.carpetArea || data.carpetArea || '',
-          superArea: vacantDetails.superArea || data.superArea || '',
-          length: vacantDetails.length || data.length || '',
-          width: vacantDetails.width || data.width || '',
-          height: vacantDetails.height || data.height || '',
-          rent: vacantDetails.rent || data.rent || data.price || 0,
-          price: data.price || vacantDetails.rent || 0,
-          contactName: vacantDetails.contactName || data.contactName || '',
-          contactNumber: vacantDetails.contactNumber || data.contactNumber || '',
-          reference: vacantDetails.reference || data.reference || '',
-          propertyType: vacantDetails.propertyType || 'Vacant',
-          unitType: vacantDetails.unitType || data.unitType || '',
-          image: data.image || vacantDetails.image || '',
-          // Include all original data
-          ...data
-        });
-      });
-    }
-
-    // Get migrated preleased properties
-    const migratedPreleasedSnapshot = await get(migratedPreleasedRef);
-    if (migratedPreleasedSnapshot.exists()) {
-      migratedPreleasedSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        const data = childSnapshot.val();
-        const preleasedDetails = data.preleasedDetails || {};
-
-        // Flatten the nested structure for preleased properties
-        properties.push({
-          id: childSnapshot.key,
-          title: data.title || preleasedDetails.tenant || 'Preleased Property',
-          // Extract from preleasedDetails
-          tenant: preleasedDetails.tenant || data.tenant || '',
-          category: preleasedDetails.category || data.category || 'Preleased',
-          buildingName: preleasedDetails.buildingName || data.buildingName || '',
-          location: data.location || preleasedDetails.location || 'Location not specified',
-          floor: preleasedDetails.floor || data.floor || '',
-          totalArea: preleasedDetails.totalArea || data.totalArea || '',
-          areaOnSale: preleasedDetails.areaOnSale || data.areaOnSale || '',
-          rent: parseFloat(typeof preleasedDetails.rent === 'string' ? preleasedDetails.rent.replace(/[^0-9.]/g, '') : preleasedDetails.rent || '0') || data.rent || 0,
-          price: data.price || parseFloat(typeof preleasedDetails.rent === 'string' ? preleasedDetails.rent.replace(/[^0-9.]/g, '') : preleasedDetails.rent || '0') || 0,
-          leaseTerm: preleasedDetails.leaseTerm || data.leaseTerm || '',
-          remainingLease: preleasedDetails.remainingLease || data.remainingLease || '',
-          lockIn: preleasedDetails.lockIn || data.lockIn || '',
-          escalation: preleasedDetails.escalation || data.escalation || '',
-          securityDeposit: preleasedDetails.securityDeposit || data.securityDeposit || '',
-          roi: preleasedDetails.roi || data.roi || '',
-          propertyStatus: preleasedDetails.propertyStatus || data.propertyStatus || '',
-          reference: preleasedDetails.reference || data.reference || '',
-          channel: preleasedDetails.channel || data.channel || '',
-          propertyType: preleasedDetails.propertyType || 'Preleased',
-          type: 'preleased',
-          // Include all original data
-          ...data
-        });
-      });
-    }
-
-    // Get migrated franchise properties
-    const migratedFranchiseSnapshot = await get(migratedFranchiseRef);
-    if (migratedFranchiseSnapshot.exists()) {
-      migratedFranchiseSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        const data = childSnapshot.val();
-        const franchiseDetails = data.franchiseDetails || {};
-
-        // Flatten the nested structure for franchise properties
-        properties.push({
-          id: childSnapshot.key,
-          title: data.title || data.name || franchiseDetails.name || franchiseDetails.brand || 'Franchise',
-          name: data.title || data.name || franchiseDetails.name || franchiseDetails.brand || 'Franchise',
-          category: 'Franchise',
-          location: data.location || franchiseDetails.headquarter || 'Location not specified',
-          price: parseFloat(typeof data.price === 'string' ? data.price.replace(/[^0-9.]/g, '') : data.price || '0') || parseFloat(typeof franchiseDetails.minInvestment === 'string' ? franchiseDetails.minInvestment.replace(/[^0-9.]/g, '') : franchiseDetails.minInvestment || '0') || 0,
-          investment: parseFloat(typeof data.price === 'string' ? data.price.replace(/[^0-9.]/g, '') : data.price || '0') || parseFloat(typeof franchiseDetails.minInvestment === 'string' ? franchiseDetails.minInvestment.replace(/[^0-9.]/g, '') : franchiseDetails.minInvestment || '0') || 0,
-          // Extract from franchiseDetails
-          industry: franchiseDetails.industry || data.industry || 'Not specified',
-          segment: franchiseDetails.segment || data.segment || '',
-          model: franchiseDetails.model || data.model || '',
-          minInvestment: parseFloat(typeof franchiseDetails.minInvestment === 'string' ? franchiseDetails.minInvestment.replace(/[^0-9.]/g, '') : franchiseDetails.minInvestment || '0') || 0,
-          maxInvestment: parseFloat(typeof franchiseDetails.maxInvestment === 'string' ? franchiseDetails.maxInvestment.replace(/[^0-9.]/g, '') : franchiseDetails.maxInvestment || '0') || 0,
-          royalty: franchiseDetails.royalty || data.royalty || 'Not specified',
-          headquarter: franchiseDetails.headquarter || data.headquarter || data.location || '',
-          description: data.description || '',
-          image: data.images?.[0] || data.image || '',
-          propertyType: 'Franchise',
-          type: 'franchise',
-          // Include all original data
-          ...data
-        });
-      });
-    }
-
-    // Get migrated plots
-    const migratedPlotsSnapshot = await get(migratedPlotsRef);
-    if (migratedPlotsSnapshot.exists()) {
-      migratedPlotsSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        const data = childSnapshot.val();
-        const plotDetails = data.plotDetails || {};
-
-        // Flatten the nested structure for plot properties
-        properties.push({
-          id: childSnapshot.key,
-          title: data.title || plotDetails.project || data.project || 'Plot',
-          project: plotDetails.project || data.project || data.title || 'Plot Project',
-          developerName: plotDetails.developerName || data.developerName || 'Developer not specified',
-          category: 'Plot',
-          location: data.location || 'Location not specified',
-          price: data.price || plotDetails.investmentStartsFrom?.amount || 0,
-          investmentStartsFrom: plotDetails.investmentStartsFrom || data.investmentStartsFrom || { amount: 0, unit: 'sq.yds' },
-          plotSize: plotDetails.plotSize || data.plotSize || { min: 0, max: 0, unit: 'sq.yds' },
-          status: plotDetails.status || data.status || 'Available',
-          description: data.description || '',
-          images: data.images || [],
-          image: data.images?.[0] || '',
-          propertyType: 'Plot',
-          type: 'plot',
-          // Include all original data
-          ...data
-        });
-      });
-    }
-
-    // Fallback: Get legacy properties (for backward compatibility)
-    const vacantSnapshot = await get(vacantPropertiesRef);
-    if (vacantSnapshot.exists()) {
-      vacantSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        properties.push({
-          id: childSnapshot.key,
-          ...childSnapshot.val()
-        });
-      });
-    }
-
-    const preleasedSnapshot = await get(preleasedPropertiesRef);
-    if (preleasedSnapshot.exists()) {
-      preleasedSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        properties.push({
-          id: childSnapshot.key,
-          ...childSnapshot.val()
-        });
-      });
-    }
-
-    const franchiseSnapshot = await get(franchisePropertiesRef);
-    if (franchiseSnapshot.exists()) {
-      franchiseSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        const franchiseData = childSnapshot.val();
-        properties.push({
-          id: childSnapshot.key,
-          title: franchiseData.name || franchiseData.title,
-          category: 'Franchise',
-          location: franchiseData.location || franchiseData.headquarter,
-          price: franchiseData.investment || franchiseData.minInvestment,
-          description: franchiseData.description,
-          image: franchiseData.image,
-          propertyType: 'Franchise',
-          ...franchiseData
-        });
-      });
-    }
-
-    const plotsSnapshot = await get(plotsRef);
-    if (plotsSnapshot.exists()) {
-      plotsSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        const plotData = childSnapshot.val();
-        properties.push({
-          id: childSnapshot.key,
-          title: plotData.project || plotData.title,
-          category: 'Plot',
-          location: plotData.location,
-          price: plotData.investmentStartsFrom?.amount,
-          description: plotData.description,
-          image: plotData.images?.[0],
-          propertyType: 'Plot',
-          ...plotData
-        });
-      });
-    }
-
-    const legacySnapshot = await get(propertiesRef);
-    if (legacySnapshot.exists()) {
-      legacySnapshot.forEach((childSnapshot: DataSnapshot) => {
-        properties.push({
-          id: childSnapshot.key,
-          ...childSnapshot.val()
-        });
-      });
-    }
-
-    return properties;
-  } catch (error) {
-    console.error('Error fetching properties from Firebase:', error);
-    throw error;
-  }
-}
-
-// Function to get all vacant properties (MIGRATED ONLY)
-export async function getVacantProperties(): Promise<Property[]> {
-  try {
-    const properties: Property[] = [];
-
-    console.log('[Firebase] Fetching vacant properties from MIGRATED collections only');
-
-    // Get from migrated structure ONLY
-    const migratedSnapshot = await get(migratedVacantRef);
-    if (migratedSnapshot.exists()) {
-      migratedSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        const data = childSnapshot.val();
-        const vacantDetails = data.vacantDetails || {};
-
-        // Flatten the nested structure for vacant properties
-        properties.push({
-          id: childSnapshot.key,
-          title: data.title || data.location || 'Vacant Property',
-          // Extract from vacantDetails
-          category: vacantDetails.category || data.category || 'Industrial',
-          location: data.location || vacantDetails.location || 'Location not specified',
-          city: vacantDetails.city || data.city || '',
-          state: vacantDetails.state || data.state || '',
-          district: vacantDetails.district || data.district || '',
-          subDistrict: vacantDetails.subDistrict || data.subDistrict || '',
-          floor: vacantDetails.floor || data.floor || '',
-          facing: vacantDetails.facing || data.facing || '',
-          carpetArea: vacantDetails.carpetArea || data.carpetArea || '',
-          superArea: vacantDetails.superArea || data.superArea || '',
-          length: vacantDetails.length || data.length || '',
-          width: vacantDetails.width || data.width || '',
-          height: vacantDetails.height || data.height || '',
-          rent: vacantDetails.rent || data.rent || data.price || 0,
-          price: data.price || vacantDetails.rent || 0,
-          contactName: vacantDetails.contactName || data.contactName || '',
-          contactNumber: vacantDetails.contactNumber || data.contactNumber || '',
-          reference: vacantDetails.reference || data.reference || '',
-          propertyType: vacantDetails.propertyType || 'Vacant',
-          unitType: vacantDetails.unitType || data.unitType || '',
-          image: data.image || vacantDetails.image || '',
-          // Include all original data
-          ...data
-        });
-      });
-    }
-
-    console.log(`[Firebase] Found ${properties.length} vacant properties in migrated collection`);
-
-    // Sort newest-first by creation date so freshly added properties appear at the top
-    return sortByNewest(properties);
-  } catch (error) {
-    console.error('Error fetching vacant properties from Firebase:', error);
-    throw error;
-  }
-}
-
-// Function to get all preleased properties (MIGRATED ONLY)
-export async function getPreleasedProperties(): Promise<Property[]> {
-  try {
-    const properties: Property[] = [];
-
-    console.log('[Firebase] Fetching preleased properties from MIGRATED collections only');
-
-    // Get from migrated structure ONLY
-    const migratedSnapshot = await get(migratedPreleasedRef);
-    if (migratedSnapshot.exists()) {
-      migratedSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        properties.push({
-          id: childSnapshot.key,
-          ...childSnapshot.val()
-        });
-      });
-    }
-
-    console.log(`[Firebase] Found ${properties.length} preleased properties in migrated collection`);
-
-    // Sort newest-first by creation date so freshly added properties appear at the top
-    return sortByNewest(properties);
-  } catch (error) {
-    console.error('Error fetching preleased properties from Firebase:', error);
-    throw error;
-  }
-}
-
-// Function to get a property by ID (checks all property collections including migrated)
-export async function getPropertyById(id: string): Promise<Property | null> {
-  try {
-    if (!id || id.trim() === '') {
-      console.log(`[Firebase] Invalid property ID provided: "${id}"`);
-      return null;
-    }
-
-    console.log(`[Firebase] Searching for property ID: "${id}" in MIGRATED collections only`);
-
-    // Log the search pattern to help debug production issues - MIGRATED ONLY
-    const searchOrder = [
-      'migratedProperties/vacant',
-      'migratedProperties/preleased',
-      'migratedProperties/franchise',
-      'migratedProperties/plots'
-    ];
-    console.log(`[Firebase] Migrated-only search order for ${id}:`, searchOrder);
-
-    // Try migrated collections first
-    let snapshot = await get(child(migratedVacantRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in migratedProperties/vacant`);
-      const data = snapshot.val();
-
-      // Handle nested vacant details structure
-      let property = { id: snapshot.key, ...data };
-      if (data.vacantDetails) {
-        const details = data.vacantDetails;
-        property = {
-          ...property,
-          category: details.category || data.category || 'Vacant',
-          city: details.city || data.city || '',
-          state: details.state || data.state || '',
-          district: details.district || data.district || '',
-          floor: details.floor || data.floor || '',
-          facing: details.facing || data.facing || '',
-          carpetArea: details.carpetArea || data.carpetArea || '',
-          superArea: details.superArea || data.superArea || '',
-          rent: details.rent || data.rent || data.price || 0,
-          contactName: details.contactName || data.contactName || '',
-          contactNumber: details.contactNumber || data.contactNumber || '',
-          reference: details.reference || data.reference || '',
-          propertyType: details.propertyType || data.propertyType || 'Vacant'
-        };
-      }
-
-      return property;
-    }
-
-    snapshot = await get(child(migratedPreleasedRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in migratedProperties/preleased`);
-      const data = snapshot.val();
-
-      // Handle nested preleased details structure
-      let property = { id: snapshot.key, ...data };
-      if (data.preleasedDetails) {
-        const details = data.preleasedDetails;
-        property = {
-          ...property,
-          tenant: details.tenant || data.tenant || '',
-          category: details.category || data.category || 'Pre-Leased',
-          buildingName: details.buildingName || data.buildingName || '',
-          floor: details.floor || data.floor || '',
-          totalArea: details.totalArea || data.totalArea || '',
-          areaOnSale: details.areaOnSale || data.areaOnSale || '',
-          rent: parseFloat(typeof details.rent === 'string' ? details.rent.replace(/[^0-9.]/g, '') : details.rent || '0') || data.rent || 0,
-          leaseTerm: details.leaseTerm || data.leaseTerm || '',
-          remainingLease: details.remainingLease || data.remainingLease || '',
-          lockIn: details.lockIn || data.lockIn || '',
-          escalation: details.escalation || data.escalation || '',
-          securityDeposit: details.securityDeposit || data.securityDeposit || '',
-          roi: details.roi || data.roi || '',
-          propertyStatus: details.propertyStatus || data.propertyStatus || '',
-          reference: details.reference || data.reference || '',
-          channel: details.channel || data.channel || '',
-          propertyType: details.propertyType || data.propertyType || 'Pre-Leased'
-        };
-      }
-
-      return property;
-    }
-
-    snapshot = await get(child(migratedFranchiseRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in migratedProperties/franchise`);
-      const data = snapshot.val();
-
-      // Handle nested franchise details structure
-      let franchiseData = data;
-      if (data.franchiseDetails) {
-        const details = data.franchiseDetails;
-        franchiseData = {
-          ...data,
-          // Map nested fields to root level for compatibility
-          name: data.title || data.name || details.name || details.brand || '',
-          industry: details.industry || data.industry || '',
-          segment: details.segment || data.segment || '',
-          model: details.model || data.model || '',
-          minArea: details.minArea || data.minArea || '',
-          maxArea: details.maxArea || data.maxArea || '',
-          minInvestment: details.minInvestment || data.minInvestment || '',
-          maxInvestment: details.maxInvestment || data.maxInvestment || '',
-          royalty: details.royalty || data.royalty || '',
-          establishmentYear: details.establishmentYear || data.establishmentYear || '',
-          franchiseStartedYear: details.franchiseStartedYear || data.franchiseStartedYear || '',
-          numberOutlets: details.numberOfOutlets || details.numberOutlets || data.numberOutlets || '',
-          minPaybackPeriod: details.minPaybackPeriod || data.minPaybackPeriod || '',
-          maxPaybackPeriod: details.maxPaybackPeriod || data.maxPaybackPeriod || '',
-          headquarter: details.headquarter || data.headquarter || data.location || '',
-          remarks: data.description || details.remarks || data.remarks || '',
-          image: data.images?.[0] || data.image || ''
-        };
-      }
-
-      return {
-        id: snapshot.key,
-        title: franchiseData.name || franchiseData.title,
-        category: 'Franchise',
-        location: franchiseData.location || franchiseData.headquarter,
-        price: franchiseData.investment || franchiseData.minInvestment,
-        description: franchiseData.description,
-        image: franchiseData.image,
-        propertyType: 'Franchise',
-        ...franchiseData
-      };
-    }
-
-    snapshot = await get(child(migratedPlotsRef, id));
-    if (snapshot.exists()) {
-      console.log(`[Firebase] Found property ${id} in migratedProperties/plots`);
-      const data = snapshot.val();
-
-      // Handle nested plot details structure
-      let plotData = data;
-      if (data.plotDetails) {
-        const details = data.plotDetails;
-        plotData = {
-          ...data,
-          // Extract from plotDetails if available
-          project: details.project || data.title || 'Plot Project',
-          developerName: details.developerName || 'Developer not specified',
-          status: details.status || 'Available',
-          plotSize: details.plotSize || { min: 0, max: 0, unit: 'sq.ft' },
-          investmentStartsFrom: details.investmentStartsFrom || { amount: 0, unit: 'sq.ft' },
-          investorDiscoveryKit: details.investorDiscoveryKit || {
-            title: 'Investor Discovery Kit',
-            url: '',
-            description: 'Investment information package'
-          },
-          keySalientFeatures: details.keySalientFeatures || []
-        };
-      }
-
-      return {
-        id: snapshot.key,
-        title: plotData.project || plotData.title,
-        category: 'Plot',
-        location: plotData.location,
-        price: plotData.investmentStartsFrom?.amount,
-        description: plotData.description,
-        image: plotData.images?.[0],
-        propertyType: 'Plot',
-        ...plotData
-      };
-    }
-
-    console.log(`[Firebase] Property ${id} not found in MIGRATED collections, searching LEGACY collections as fallback...`);
-
-    // FALLBACK: Search legacy collections for backward compatibility
-    const legacySearchOrder = [
-      { ref: franchisePropertiesRef, name: 'franchiseProperties' },
-      { ref: vacantPropertiesRef, name: 'vacantProperties' },
-      { ref: preleasedPropertiesRef, name: 'preleasedProperties' },
-      { ref: plotsRef, name: 'plots' },
-      { ref: propertiesRef, name: 'properties' }
-    ];
-
-    for (const { ref: legacyRef, name: collectionName } of legacySearchOrder) {
-      try {
-        const legacySnapshot = await get(child(legacyRef, id));
-        if (legacySnapshot.exists()) {
-          console.log(`[Firebase] ✅ Found property ${id} in LEGACY collection: ${collectionName}`);
-          const legacyData = legacySnapshot.val();
-
-          // Transform legacy data to match current Property interface
-          const property = {
-            id: legacySnapshot.key || id,
-            ...legacyData,
-            // Ensure required fields are present with fallbacks
-            title: legacyData.title || legacyData.name || legacyData.brand || `Property ${id}`,
-            location: legacyData.location || legacyData.headquarter || legacyData.city || 'Unknown Location',
-            category: legacyData.category || (collectionName === 'franchiseProperties' ? 'Franchise' : 'Property'),
-            propertyType: legacyData.propertyType || (collectionName === 'franchiseProperties' ? 'Franchise' : 'Property'),
-            price: legacyData.price || legacyData.investment || legacyData.minInvestment || 0,
-            image: legacyData.image || (legacyData.images && legacyData.images[0]) || '',
-            description: legacyData.description || legacyData.remarks || ''
-          };
-
-          console.log(`[Firebase] ✅ Successfully retrieved property from legacy collection: ${property.title}`);
-          return property;
-        }
-      } catch (legacyError) {
-        console.warn(`[Firebase] ⚠️ Error searching legacy collection ${collectionName}:`, legacyError);
-        continue; // Continue to next legacy collection
-      }
-    }
-
-    console.log(`[Firebase] ❌ Property ${id} not found in any collection (migrated or legacy)`);
-    return null;
-  } catch (error) {
-    console.error(`[Firebase] Error fetching property ${id}:`, error);
-    throw error;
-  }
-}
-
-// Function to get multiple properties by IDs in batch (MIGRATED ONLY)
-export async function getPropertiesByIds(ids: string[]): Promise<Property[]> {
-  try {
-    if (!ids || ids.length === 0) {
-      return [];
-    }
-
-    console.log(`[Firebase] Batch fetching ${ids.length} properties from MIGRATED collections only`);
-
-    // Remove duplicates
-    const uniqueIds = [...new Set(ids)];
-
-    // Get all properties in parallel using Promise.all
-    const propertyPromises = uniqueIds.map(async (id) => {
-      try {
-        const property = await getPropertyById(id);
-        return property ? { ...property, id } : null;
-      } catch (error) {
-        console.error(`[Firebase] Error fetching property ${id}:`, error);
-        return null;
-      }
-    });
-
-    const results = await Promise.all(propertyPromises);
-    const properties = results.filter((p): p is Property => p !== null);
-
-    console.log(`[Firebase] ✅ Batch fetch completed: ${properties.length}/${uniqueIds.length} properties found`);
-    return properties;
-  } catch (error) {
-    console.error('[Firebase] Error batch fetching properties:', error);
-    throw error;
-  }
-}
-
-// Function to generate unique property IDs in the new format
-export function generateUniquePropertyId(propertyType: string, sequence: number): string {
-  const prefixes: { [key: string]: string } = {
-    'Franchise': 'PROP_FRAN',
-    'franchise': 'PROP_FRAN',
-    'Plot': 'PROP_PLOT',
-    'plot': 'PROP_PLOT',
-    'Pre-Leased': 'PROP_PRLS',
-    'preleased': 'PROP_PRLS',
-    'Vacant': 'PROP_VCNT',
-    'vacant': 'PROP_VCNT',
-    'Regular': 'PROP_LEGC',
-    'default': 'PROP_LEGC'
-  };
-
-  const prefix = prefixes[propertyType] || prefixes['default'];
-  const paddedSequence = sequence.toString().padStart(3, '0');
-  return `${prefix}_${paddedSequence}`;
-}
-
-// Function to get the next sequence number for a property type
-export async function getNextSequenceNumber(propertyType: string): Promise<number> {
-  try {
-    const appropriate_ref = getPropertyRefByType(propertyType || '');
-    const snapshot = await get(appropriate_ref);
-
-    let highestSequence = 0;
-
-    if (snapshot.exists()) {
-      snapshot.forEach((childSnapshot: DataSnapshot) => {
-        const idStr = childSnapshot.key;
-        if (idStr) {
-          // Check if it's a new format ID (PROP_XXXX_XXX)
-          const match = idStr.match(/PROP_[A-Z]{4}_([0-9]{3})$/);
-          if (match) {
-            const sequence = parseInt(match[1]);
-            if (!isNaN(sequence) && sequence > highestSequence) {
-              highestSequence = sequence;
-            }
-          } else {
-            // Handle legacy numeric IDs - convert them to sequence numbers
-            const idNum = parseInt(idStr);
-            if (!isNaN(idNum) && idNum > highestSequence) {
-              highestSequence = idNum;
-            }
-          }
-        }
-      });
-    }
-
-    // Also check legacy collections to avoid ID conflicts
-    let legacyRef;
-    if (propertyType === 'Vacant' || propertyType === 'vacant') {
-      legacyRef = vacantPropertiesRef;
-    } else if (propertyType === 'Pre-Leased' || propertyType === 'preleased') {
-      legacyRef = preleasedPropertiesRef;
-    } else if (propertyType === 'Franchise' || propertyType === 'franchise') {
-      legacyRef = franchisePropertiesRef;
-    } else if (propertyType === 'Plot' || propertyType === 'plot') {
-      legacyRef = plotsRef;
-    }
-
-    if (legacyRef) {
-      const legacySnapshot = await get(legacyRef);
-      if (legacySnapshot.exists()) {
-        legacySnapshot.forEach((childSnapshot: DataSnapshot) => {
-          const idStr = childSnapshot.key;
-          if (idStr) {
-            const match = idStr.match(/PROP_[A-Z]{4}_([0-9]{3})$/);
-            if (match) {
-              const sequence = parseInt(match[1]);
-              if (!isNaN(sequence) && sequence > highestSequence) {
-                highestSequence = sequence;
-              }
-            } else {
-              const idNum = parseInt(idStr);
-              if (!isNaN(idNum) && idNum > highestSequence) {
-                highestSequence = idNum;
-              }
-            }
-          }
-        });
-      }
-    }
-
-    return highestSequence + 1;
-  } catch (error) {
-    console.error('Error getting next sequence number:', error);
-    return 1; // Default to sequence 1 if there's an error
-  }
-}
-
-// Function to add a new property with enhanced ID generation
-export async function addProperty(property: Property): Promise<Property> {
-  try {
-    // Log the complete property data for debugging
-    console.log('Adding property with the following data:', JSON.stringify(property));
-
-    // Determine the appropriate reference based on property type
-    const appropriate_ref = getPropertyRefByType(property.propertyType || '');
-    console.log('Using reference:', appropriate_ref.key);
-
-    // Get the next sequence number for this property type
-    const sequenceNumber = await getNextSequenceNumber(property.propertyType || '');
-
-    // Generate the new unique ID
-    const uniqueId = generateUniquePropertyId(property.propertyType || '', sequenceNumber);
-    console.log(`Generated unique ID: ${uniqueId} for property type: ${property.propertyType}`);
-
-    // Ensure all fields from the property interface are included
-    const completeProperty = {
-      ...property,
-      location: property.location || '',
-      category: property.category || '',
-      state: property.state || '',
-      city: property.city || '',
-      district: property.district || '',
-      subDistrict: property.subDistrict || '',
-      floor: property.floor || '',
-      facing: property.facing || '',
-      superArea: property.superArea || '',
-      carpetArea: property.carpetArea || '',
-      length: property.length || '',
-      width: property.width || '',
-      height: property.height || '',
-      reference: property.reference || '',
-      contactName: property.contactName || '',
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    };
-
-    // Use the unique ID
-    await set(child(appropriate_ref, uniqueId), completeProperty);
-    console.log(`Property saved successfully with ID: ${uniqueId}`);
-
-    // Return the property with the new unique ID
-    return { ...completeProperty, id: uniqueId };
-  } catch (error) {
-    console.error('Error adding property to Firebase:', error);
-    throw error;
-  }
-}
-
-// Function to update a property (uses type-organized structure)
-export async function updateProperty(id: string, property: Property): Promise<Property> {
-  try {
-    // Sanitize property object to remove undefined values
-    const sanitizedProperty = { ...property };
-    Object.keys(sanitizedProperty).forEach(key => {
-      if ((sanitizedProperty as any)[key] === undefined) {
-        delete (sanitizedProperty as any)[key];
-      }
-    });
-
-    // Get the appropriate reference based on property type (migrated structure)
-    const appropriate_ref = getPropertyRefByType(sanitizedProperty.propertyType || '');
-    console.log(`Appropriate reference determined: ${appropriate_ref.key}`);
-
-    // Boolean to track if we found the property in any collection
-    let foundProperty = false;
-
-    // Check all collections to find where the property exists (migrated first, then legacy)
-    const migratedCollections = [migratedVacantRef, migratedPreleasedRef, migratedFranchiseRef, migratedPlotsRef];
-    const legacyCollections = [vacantPropertiesRef, preleasedPropertiesRef, franchisePropertiesRef, plotsRef, propertiesRef];
-
-    // First, check migrated collections
-    for (const collectionRef of migratedCollections) {
-      const tempSnapshot = await get(child(collectionRef, id));
-
-      if (tempSnapshot.exists()) {
-        foundProperty = true;
-        console.log(`Found property ${id} in migrated collection: ${collectionRef.key}`);
-
-        // If it's not in the right collection, move it
-        if (collectionRef !== appropriate_ref) {
-          console.log(`Moving property ${id} from ${collectionRef.key} to ${appropriate_ref.key}`);
-          await remove(child(collectionRef, id));
-          await set(child(appropriate_ref, id), {
-            ...sanitizedProperty,
-            updatedAt: Date.now()
-          });
-          console.log(`Property ${id} moved successfully to ${appropriate_ref.key}`);
-        } else {
-          // It's already in the right collection, just update it
-          console.log(`Updating property ${id} in place at ${collectionRef.key}`);
-          await update(child(appropriate_ref, id), {
-            ...sanitizedProperty,
-            updatedAt: Date.now()
-          });
-          console.log(`Property ${id} updated successfully in ${appropriate_ref.key}`);
-        }
-
-        break;
-      }
-    }
-
-    // If not found in migrated collections, check legacy collections
-    if (!foundProperty) {
-      for (const collectionRef of legacyCollections) {
-        const tempSnapshot = await get(child(collectionRef, id));
-
-        if (tempSnapshot.exists()) {
-          foundProperty = true;
-          console.log(`Found property ${id} in legacy collection: ${collectionRef.key}`);
-
-          // Move from legacy to appropriate migrated collection
-          console.log(`Moving property ${id} from legacy ${collectionRef.key} to migrated ${appropriate_ref.key}`);
-          await remove(child(collectionRef, id));
-          await set(child(appropriate_ref, id), {
-            ...sanitizedProperty,
-            updatedAt: Date.now()
-          });
-          console.log(`Property ${id} moved from legacy to migrated structure`);
-          break;
-        }
-      }
-    }
-
-    // If property wasn't found anywhere, create it in the appropriate migrated collection
-    if (!foundProperty) {
-      console.log(`Creating new property ${id} in ${appropriate_ref.key}`);
-      await set(child(appropriate_ref, id), {
-        ...sanitizedProperty,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      });
-      console.log(`New property ${id} created successfully in ${appropriate_ref.key}`);
-    }
-
-    return { ...sanitizedProperty, id } as Property;
-  } catch (error) {
-    console.error('Error updating property in Firebase:', error);
-    throw error;
-  }
-}
-
-// Function to delete a property (checks both migrated and legacy collections)
-export async function deleteProperty(id: string, propertyType?: string): Promise<boolean> {
-  try {
-    // Try to delete from all collections if property type is not specified
-    if (!propertyType) {
-      // Delete from migrated collections
-      await remove(child(migratedVacantRef, id));
-      await remove(child(migratedPreleasedRef, id));
-      await remove(child(migratedFranchiseRef, id));
-      await remove(child(migratedPlotsRef, id));
-      // Also delete from legacy collections for safety
-      await remove(child(vacantPropertiesRef, id));
-      await remove(child(preleasedPropertiesRef, id));
-      await remove(child(franchisePropertiesRef, id));
-      await remove(child(plotsRef, id));
-      await remove(child(propertiesRef, id));
-    } else {
-      // Delete from the appropriate migrated collection
-      const appropriate_ref = getPropertyRefByType(propertyType);
-      await remove(child(appropriate_ref, id));
-
-      // Also try legacy collections for safety
-      if (propertyType === 'Vacant' || propertyType === 'vacant') {
-        await remove(child(vacantPropertiesRef, id));
-      } else if (propertyType === 'Pre-Leased' || propertyType === 'preleased') {
-        await remove(child(preleasedPropertiesRef, id));
-      } else if (propertyType === 'Franchise' || propertyType === 'franchise') {
-        await remove(child(franchisePropertiesRef, id));
-      } else if (propertyType === 'Plot' || propertyType === 'plot') {
-        await remove(child(plotsRef, id));
-      } else {
-        await remove(child(propertiesRef, id));
-      }
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error deleting property from Firebase:', error);
-    throw error;
-  }
-}
-
-// Function to get all franchises (uses migrated structure first)
-export async function getAllFranchises(): Promise<Franchise[]> {
-  try {
-    const franchises: Franchise[] = [];
-    console.log("Getting franchises from migrated structure first...");
-
-    // Try migrated structure first
-    const migratedSnapshot = await get(migratedFranchiseRef);
-    console.log("Migrated snapshot exists:", migratedSnapshot.exists());
-    if (migratedSnapshot.exists()) {
-      migratedSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        console.log("Processing migrated franchise item with key:", childSnapshot.key);
-        const data = childSnapshot.val();
-        // Updated validation for migrated structure - check for 'title' instead of 'name'
-        if (data && typeof data === 'object' && ('title' in data || 'name' in data || 'franchiseDetails' in data)) {
-          // Extract franchiseDetails for easier access
-          const details = data.franchiseDetails || {};
-
-          // Convert migrated structure back to expected franchise format
-          // IMPORTANT: Spread ...data FIRST, then explicitly map fields AFTER so
-          // our normalized values (and childSnapshot.key) always win.
-          // This prevents a stored `id` field inside data from overwriting the actual Firebase key.
-          const franchiseData = {
-            ...data,
-            // Always use the actual Firebase key as the ID — never let stored data.id override it
-            id: childSnapshot.key,
-            // Normalized fields with franchiseDetails priority
-            name: data.title || data.name || details.name || details.brand || 'Franchise Name',
-            industry: details.industry || data.industry || 'Not specified',
-            segment: details.segment || data.segment || '',
-            product: details.product || data.product || '',
-            model: details.model || data.model || '',
-            minArea: details.minArea || data.minArea || '',
-            maxArea: details.maxArea || data.maxArea || '',
-            minInvestment: details.minInvestment || data.minInvestment || '',
-            maxInvestment: details.maxInvestment || data.maxInvestment || '',
-            royalty: details.royalty || data.royalty || 'Not specified',
-            establishmentYear: details.establishmentYear || data.establishmentYear || '',
-            franchiseStartedYear: details.franchiseStartedYear || data.franchiseStartedYear || '',
-            numberOutlets: details.numberOfOutlets || data.numberOutlets || '',
-            minPaybackPeriod: details.minPaybackPeriod || data.minPaybackPeriod || '',
-            maxPaybackPeriod: details.maxPaybackPeriod || data.maxPaybackPeriod || '',
-            headquarter: details.headquarter || data.headquarter || data.location || 'Location not specified',
-            investment: data.price || details.minInvestment || '',
-            location: data.location || details.headquarter || 'Location not specified',
-            status: 'Active',
-            roi: details.royalty || 'Varies',
-            description: data.description || '',
-            image: data.images?.[0] || data.image || '',
-            createdAt: data.createdAt,
-            updatedAt: data.updatedAt,
-          };
-          franchises.push(franchiseData);
-          console.log(`  ✅ Added migrated franchise: ${franchiseData.name} (${franchiseData.industry})`);
-        } else {
-          console.log(`  ⚠️  Invalid migrated franchise data: ${childSnapshot.key}`);
-        }
-      });
-    }
-
-    // Fallback to legacy franchiseProperties
-    console.log("Getting reference to legacy franchiseProperties...");
-    const legacySnapshot = await get(franchisePropertiesRef);
-    console.log("Legacy snapshot exists:", legacySnapshot.exists());
-    if (legacySnapshot.exists()) {
-      legacySnapshot.forEach((childSnapshot: DataSnapshot) => {
-        console.log("Processing legacy franchise item with key:", childSnapshot.key);
-        const data = childSnapshot.val();
-        if (data && typeof data === 'object' && 'name' in data) {
-          // Spread data FIRST then override id so stored data.id never masks the Firebase key
-          franchises.push({
-            ...data,
-            id: childSnapshot.key,
-          });
-          console.log(`  ✅ Added legacy franchise: ${data.name}`);
-        }
-      });
-    } else {
-      console.log("No legacy franchises found in database");
-    }
-
-    console.log("Returning", franchises.length, "franchises");
-
-    // Sort newest-first by creation date so freshly added franchises appear at the top
-    return sortByNewest(franchises);
-  } catch (error) {
-    console.error('Error fetching franchises from Firebase:', error);
-    throw error;
-  }
-}
-
-// Function to get all franchises - removed
-
-// ====================== PLOTS FUNCTIONS ======================
-
-// Function to get all plots (uses migrated structure first)
-export async function getAllPlots(): Promise<Plot[]> {
-  try {
-    const plots: Plot[] = [];
-    console.log("Getting plots from migrated structure first...");
-
-    // Try migrated structure first
-    const migratedSnapshot = await get(migratedPlotsRef);
-    console.log("Migrated plots snapshot exists:", migratedSnapshot.exists());
-    if (migratedSnapshot.exists()) {
-      migratedSnapshot.forEach((childSnapshot: DataSnapshot) => {
-        console.log("Processing migrated plot item with key:", childSnapshot.key);
-        const data = childSnapshot.val();
-        // Updated validation for migrated structure - check for title or plotDetails
-        if (data && typeof data === 'object' && ('title' in data || 'plotDetails' in data)) {
-          // Convert migrated structure back to expected plot format
-          const plotData = {
-            id: childSnapshot.key,
-            // Extract from plotDetails if available, otherwise use root level
-            project: data.plotDetails?.project || data.title || 'Plot Project',
-            developerName: data.plotDetails?.developerName || 'Developer not specified',
-            description: data.description || '',
-            status: data.plotDetails?.status || 'Available',
-            plotSize: data.plotDetails?.plotSize || { min: 0, max: 0, unit: 'sq.ft' },
-            location: data.location || 'Location not specified',
-            investmentStartsFrom: data.plotDetails?.investmentStartsFrom || { amount: 0, unit: 'sq.ft' },
-            investorDiscoveryKit: data.plotDetails?.investorDiscoveryKit || {
-              title: 'Investor Discovery Kit',
-              url: '',
-              description: 'Investment information package'
-            },
-            images: data.images || [],
-            keySalientFeatures: data.plotDetails?.keySalientFeatures || [],
-            // Include timestamps if available
-            createdAt: data.createdAt,
-            updatedAt: data.updatedAt,
-            // Include all original data
-            ...data
-          };
-          plots.push(plotData);
-          console.log(`  ✅ Added migrated plot: ${plotData.project}`);
-        } else {
-          console.log(`  ⚠️  Invalid migrated plot data: ${childSnapshot.key}`);
-        }
-      });
-    }
-
-    // Fallback to legacy plots
-    console.log("Getting reference to legacy plots...");
-    const legacySnapshot = await get(plotsRef);
-    console.log("Legacy plots snapshot exists:", legacySnapshot.exists());
-    if (legacySnapshot.exists()) {
-      legacySnapshot.forEach((childSnapshot: DataSnapshot) => {
-        console.log("Processing legacy plot item with key:", childSnapshot.key);
-        const data = childSnapshot.val();
-        if (data && typeof data === 'object' && 'project' in data && 'developerName' in data) {
-          const plotData = {
-            ...data,
-            id: childSnapshot.key
-          };
-          plots.push(plotData);
-          console.log(`  ✅ Added legacy plot: ${data.project}`);
-        }
-      });
-    } else {
-      console.log("No legacy plots found in database");
-    }
-
-    console.log("Returning", plots.length, "plots");
-
-    // Sort newest-first by creation date so freshly added plots appear at the top
-    return sortByNewest(plots);
-  } catch (error) {
-    console.error('Error fetching plots from Firebase:', error);
-    throw error;
-  }
-}
-
-// Function to get a plot by ID (checks migrated structure first)
-export async function getPlotById(id: string): Promise<Plot | null> {
-  try {
-    // Try migrated structure first
-    let snapshot = await get(child(migratedPlotsRef, id));
-    if (snapshot.exists()) {
-      console.log(`Found plot ${id} in migrated structure`);
-      return { ...snapshot.val(), id: snapshot.key };
-    }
-
-    // Fallback to legacy structure
-    snapshot = await get(child(plotsRef, id));
-    if (snapshot.exists()) {
-      console.log(`Found plot ${id} in legacy structure`);
-      return { ...snapshot.val(), id: snapshot.key };
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error fetching plot from Firebase:', error);
-    throw error;
-  }
-}
-
-// Function to add a new plot
-export async function addPlot(plot: Plot): Promise<Plot> {
-  try {
-    console.log('Adding plot with the following data:', JSON.stringify(plot));
-
-    // Get the next sequence number for plot properties
-    const sequenceNumber = await getNextSequenceNumber('Plot');
-
-    // Generate the new unique ID
-    const uniqueId = generateUniquePropertyId('Plot', sequenceNumber);
-    console.log(`Generated unique ID: ${uniqueId} for plot`);
-
-    // Ensure all fields are included
-    const completePlot = {
-      ...plot,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    };
-
-    // Use the unique ID
-    await set(child(plotsRef, uniqueId), completePlot);
-    console.log(`Plot saved successfully with ID: ${uniqueId}`);
-
-    // Return the plot with the new unique ID
-    return { ...completePlot, id: uniqueId };
-  } catch (error) {
-    console.error('Error adding plot to Firebase:', error);
-    throw error;
-  }
-}
-
-// Function to update a plot
-export async function updatePlot(id: string, plot: Plot): Promise<Plot> {
-  try {
-    console.log(`Updating plot ${id}`);
-
-    let foundPlot = false;
-    let targetRef = child(plotsRef, id); // Default to legacy
-
-    // Check if plot exists in migrated collection first
-    const migratedSnapshot = await get(child(migratedPlotsRef, id));
-    if (migratedSnapshot.exists()) {
-      console.log('Updating plot in migrated collection');
-      targetRef = child(migratedPlotsRef, id);
-      foundPlot = true;
-    } else {
-      // Check legacy collection
-      const legacySnapshot = await get(child(plotsRef, id));
-      if (legacySnapshot.exists()) {
-        console.log('Updating plot in legacy collection');
-        targetRef = child(plotsRef, id);
-        foundPlot = true;
-      }
-    }
-
-    if (!foundPlot) {
-      console.log('Plot not found in any collection, creating in migrated collection');
-      targetRef = child(migratedPlotsRef, id);
-    }
-
-    await update(targetRef, {
-      ...plot,
-      updatedAt: Date.now()
-    });
-
-    console.log(`Plot ${id} updated successfully`);
-    return { ...plot, id };
-  } catch (error) {
-    console.error('Error updating plot in Firebase:', error);
-    throw error;
-  }
-}
-
-// Function to delete a plot
-export async function deletePlot(id: string): Promise<boolean> {
-  try {
-    console.log(`Deleting plot ${id} from both collections`);
-
-    // Delete from both migrated and legacy collections to ensure complete removal
-    await remove(child(migratedPlotsRef, id));
-    await remove(child(plotsRef, id));
-
-    console.log(`Plot ${id} deleted successfully`);
-    return true;
-  } catch (error) {
-    console.error('Error deleting plot from Firebase:', error);
-    throw error;
-  }
-} 
+export {
+  app,
+  auth,
+  storage,
+  getStorageInstance,
+};

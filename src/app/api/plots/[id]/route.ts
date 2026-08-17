@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-// Read from Firebase RTDB (same source the working frontend uses)
-import { getPlotById } from '@/lib/firebase';
+// Read from Firestore (migration complete)
+import { getPlotById } from '@/lib/database/firestore-properties';
 import { db } from '@/lib/firebase-server-admin';
 import { revalidateTag } from 'next/cache';
 
-// Get a specific plot by ID from RTDB
+// Get a specific plot by ID from Firestore
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

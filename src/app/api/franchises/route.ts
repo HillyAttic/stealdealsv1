@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-// Read from Firebase RTDB (same source the working frontend uses) instead of Firestore.
-// The Firestore Admin SDK path was returning 0/empty because:
-//   1) No FIREBASE_SERVICE_ACCOUNT_KEY on Vercel → Admin SDK never initializes
-//   2) Properties actually live in RTDB (migratedProperties/*), not Firestore
-import { getAllFranchises } from '@/lib/firebase';
+// Read from Firestore (migration complete)
+import { getAllFranchises } from '@/lib/database/firestore-properties';
 import { revalidateTag } from 'next/cache';
 import { sortByNewest } from '@/lib/sort';
 import { db } from '@/lib/firebase-server-admin';
@@ -47,14 +44,14 @@ interface Franchise {
   [key: string]: any;
 }
 
-// Get all franchises from RTDB (same data the frontend displays)
+// Get all franchises from Firestore
 export async function GET() {
   try {
-    console.log('[Franchises API] Fetching franchises from RTDB...');
+    console.log('[Franchises API] Fetching franchises from Firestore...');
 
     const franchises = await getAllFranchises();
 
-    console.log(`[Franchises API] Found ${franchises.length} franchises from RTDB`);
+    console.log(`[Franchises API] Found ${franchises.length} franchises from Firestore`);
 
     const sorted = sortByNewest(franchises);
 
@@ -64,7 +61,7 @@ export async function GET() {
     });
 
     response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
-    response.headers.set('X-Data-Source', 'firebase-rtdb');
+    response.headers.set('X-Data-Source', 'firestore');
 
     return response;
   } catch (error: any) {
