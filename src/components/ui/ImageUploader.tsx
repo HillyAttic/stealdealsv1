@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useRef, ChangeEvent } from 'react';
-import { getStorageInstance } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface ImageUploaderProps {
   onImageUrlGenerated?: (url: string) => void;
@@ -33,33 +31,40 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     setIsCopied(false);
 
     try {
-      // Generate a unique path: uploads/{timestamp}-{originalFilename}
-      const timestamp = Date.now();
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const storagePath = `uploads/${timestamp}-${safeName}`;
-      const storageRef = ref(getStorageInstance(), storagePath);
+      // Upload via server-side API (uses Firebase Admin SDK, bypasses Storage security rules)
+      const formData = new FormData();
+      formData.append('file', file);
 
-      // Upload the file to Firebase Storage
-      const snapshot = await uploadBytes(storageRef, file, {
-        contentType: file.type,
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
       });
 
-      // Get the public download URL
-      const downloadUrl = await getDownloadURL(snapshot.ref);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Upload failed (${response.status})`);
+      }
 
-      setUploadedUrl(downloadUrl);
+      const result = await response.json();
+
+      if (!result.success || !result.url) {
+        throw new Error('Upload succeeded but no URL was returned');
+      }
+
+      setUploadedUrl(result.url);
       setStatusMessage('Upload successful!');
 
       // Call the callback function to update the parent component
       if (onImageUrlGenerated) {
-        onImageUrlGenerated(downloadUrl);
+        onImageUrlGenerated(result.url);
       }
 
       // Auto-clear success message after 3 seconds
       setTimeout(() => {
         setStatusMessage('');
       }, 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload failed:', error);
       setStatusMessage('Failed to upload image');
       setTimeout(() => {

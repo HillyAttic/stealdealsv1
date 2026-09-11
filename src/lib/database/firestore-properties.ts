@@ -71,6 +71,38 @@ async function getNextSequenceNumber(propertyType: string): Promise<number> {
 
 // ─── Flatten helpers (normalize data structures) ────────────────────────────
 
+// Serialize Firestore Timestamps and other non-serializable objects to plain values
+function serializeFirestoreData(data: any): any {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  // Handle Firestore Timestamp objects (have seconds and nanoseconds)
+  if (data.seconds !== undefined && data.nanoseconds !== undefined) {
+    // Convert to JavaScript Date, then to ISO string
+    return new Date(data.seconds * 1000 + data.nanoseconds / 1000000).toISOString();
+  }
+
+  // Handle arrays
+  if (Array.isArray(data)) {
+    return data.map(item => serializeFirestoreData(item));
+  }
+
+  // Handle plain objects
+  if (typeof data === 'object' && data.constructor === Object) {
+    const serialized: any = {};
+    for (const key in data) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        serialized[key] = serializeFirestoreData(data[key]);
+      }
+    }
+    return serialized;
+  }
+
+  // Return primitives as-is
+  return data;
+}
+
 function flattenVacant(key: string, data: any): Property {
   const vd = data.vacantDetails || {};
   return {
@@ -206,7 +238,9 @@ export async function getAllProperties(): Promise<Property[]> {
   const snap = await getDocs(propertiesCol());
   const properties: Property[] = [];
   snap.forEach(d => {
-    properties.push(flattenPropertyByType(d.id, d.data()));
+    const rawData = d.data();
+    const data = serializeFirestoreData(rawData);
+    properties.push(flattenPropertyByType(d.id, data));
   });
   return sortByNewest(properties);
 }
@@ -217,7 +251,11 @@ export async function getVacantProperties(): Promise<Property[]> {
   const q = fsQuery(propertiesCol(), where('type', '==', 'vacant'));
   const snap = await getDocs(q);
   const properties: Property[] = [];
-  snap.forEach(d => properties.push(flattenVacant(d.id, d.data())));
+  snap.forEach(d => {
+    const rawData = d.data();
+    const data = serializeFirestoreData(rawData);
+    properties.push(flattenVacant(d.id, data));
+  });
   return sortByNewest(properties);
 }
 
@@ -227,7 +265,11 @@ export async function getPreleasedProperties(): Promise<Property[]> {
   const q = fsQuery(propertiesCol(), where('type', '==', 'preleased'));
   const snap = await getDocs(q);
   const properties: Property[] = [];
-  snap.forEach(d => properties.push(flattenPreleased(d.id, d.data())));
+  snap.forEach(d => {
+    const rawData = d.data();
+    const data = serializeFirestoreData(rawData);
+    properties.push(flattenPreleased(d.id, data));
+  });
   return sortByNewest(properties);
 }
 
@@ -237,7 +279,9 @@ export async function getPropertyById(id: string): Promise<Property | null> {
   if (!id || id.trim() === '') return null;
   const docSnap = await getDoc(propertyDoc(id));
   if (docSnap.exists()) {
-    return flattenPropertyByType(docSnap.id, docSnap.data());
+    const rawData = docSnap.data();
+    const data = serializeFirestoreData(rawData);
+    return flattenPropertyByType(docSnap.id, data);
   }
   console.warn(`[Firestore Properties] Property ${id} not found in Firestore`);
   return null;
@@ -339,7 +383,9 @@ export async function getAllFranchises(): Promise<Franchise[]> {
   const snap = await getDocs(q);
   const franchises: Franchise[] = [];
   snap.forEach(d => {
-    const data = d.data();
+    const rawData = d.data();
+    // Serialize Firestore Timestamps to plain objects before passing to client
+    const data = serializeFirestoreData(rawData);
     const fd = data.franchiseDetails || {};
     franchises.push({
       ...data,
@@ -358,6 +404,7 @@ export async function getAllFranchises(): Promise<Franchise[]> {
       status: 'Active',
       roi: fd.royalty || 'Varies',
       image: data.images?.[0] || data.image || '',
+      description: data.description || '',
     } as Franchise);
   });
   return sortByNewest(franchises);
@@ -370,7 +417,8 @@ export async function getAllPlots(): Promise<Plot[]> {
   const snap = await getDocs(q);
   const plots: Plot[] = [];
   snap.forEach(d => {
-    const data = d.data();
+    const rawData = d.data();
+    const data = serializeFirestoreData(rawData);
     const pd = data.plotDetails || {};
     plots.push({
       ...data,
@@ -395,7 +443,8 @@ export async function getAllPlots(): Promise<Plot[]> {
 export async function getPlotById(id: string): Promise<Plot | null> {
   const docSnap = await getDoc(propertyDoc(id));
   if (docSnap.exists() && docSnap.data().type === 'plot') {
-    const data = docSnap.data();
+    const rawData = docSnap.data();
+    const data = serializeFirestoreData(rawData);
     const pd = data.plotDetails || {};
     return {
       ...data,
