@@ -59,7 +59,8 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
       "Grocery",
       "Supermarkets & Marts",
       "Gift & Toys",
-      "Laundary Services"
+      "Laundary Services",
+      "Jewellery"
     ],
     "Sports, Fitness & Entertainments": [
       "Gymnasium"
