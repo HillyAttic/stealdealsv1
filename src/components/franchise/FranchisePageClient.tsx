@@ -64,6 +64,9 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
     ],
     "Sports, Fitness & Entertainments": [
       "Gymnasium"
+    ],
+    "Entertainment": [
+      "Multiplex"
     ]
   };
 
