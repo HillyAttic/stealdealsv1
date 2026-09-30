@@ -5,6 +5,7 @@ import { Providers } from "./providers";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ChatBotWrapper from "@/components/ChatBotWrapper";
 import { GoogleTagManager } from '@next/third-parties/google';
+import Script from 'next/script';
 
 const jost = Jost({
   variable: "--font-jost",
@@ -92,6 +93,19 @@ export default function RootLayout({
         >
           <Providers>{children}</Providers>
           <ChatBotWrapper />
+          <Script id="tawk-to" strategy="lazyOnload">
+            {`
+              var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+              (function(){
+                var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+                s1.async=true;
+                s1.src='https://embed.tawk.to/6abcc9063b7d273440456c12/1k3on2h5d';
+                s1.charset='UTF-8';
+                s1.setAttribute('crossorigin','*');
+                s0.parentNode.insertBefore(s1,s0);
+              })();
+            `}
+          </Script>
         </body>
       </html>
     </AuthProvider>

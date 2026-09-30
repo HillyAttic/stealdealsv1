@@ -67,7 +67,8 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
     ],
     "Entertainment": [
       "Multiplex"
-    ]
+    ],
+    "Salons": []
   };
 
   // Check for success message from FormSubmit
@@ -126,7 +127,10 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
 
   // Memoized filter options
   const filterOptions = useMemo(() => {
-    const industries = Array.from(new Set(franchises.map(f => getFranchiseField(f, 'industry')))).filter(Boolean);
+    const industries = Array.from(new Set([
+      ...Object.keys(categorySegmentMapping),
+      ...franchises.map(f => getFranchiseField(f, 'industry'))
+    ])).filter(Boolean);
     // Only use locations that exist in the database (from both location and headquarter fields)
     const allLocations = Array.from(new Set([
       ...franchises.map(f => f.location).filter(Boolean),
@@ -135,7 +139,7 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
     
     // Filter segments based on selected industry
     let segments = Array.from(new Set(franchises.map(f => getFranchiseField(f, 'segment')))).filter(Boolean);
-    if (selectedIndustry && categorySegmentMapping[selectedIndustry as keyof typeof categorySegmentMapping]) {
+    if (selectedIndustry && categorySegmentMapping[selectedIndustry as keyof typeof categorySegmentMapping]?.length) {
       segments = categorySegmentMapping[selectedIndustry as keyof typeof categorySegmentMapping];
     }
     
@@ -436,7 +440,6 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
                       className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
                       value={selectedSegment}
                       onChange={(e) => setSelectedSegment(e.target.value)}
-                      disabled={!selectedIndustry}
                     >
                       <option value="">All Segments</option>
                       {filterOptions.segments.map(segment => (
@@ -445,11 +448,8 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
                     </select>
                     <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
                   </div>
-                  {!selectedIndustry && (
-                    <p className="text-xs text-gray-500 mt-1">Select a category first</p>
-                  )}
                 </div>
-                
+
                 {/* Model Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>

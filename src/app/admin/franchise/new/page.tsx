@@ -213,6 +213,7 @@ function FranchiseForm() {
                   <option value="Retail">Retail</option>
                   <option value="Sports, Fitness & Entertainments">Sports, Fitness & Entertainments</option>
                   <option value="Entertainment">Entertainment</option>
+                  <option value="Salons">Salons</option>
                 </select>
                 <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                   <path d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z"></path>
@@ -230,7 +231,6 @@ function FranchiseForm() {
                   name="segment"
                   value={franchise.segment}
                   onChange={handleChange}
-                  disabled={!franchise.industry}
                 >
                   <option value="">All Segments</option>
                   <option value="Play Schools">Play Schools</option>
@@ -262,9 +262,6 @@ function FranchiseForm() {
                   <path d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z"></path>
                 </svg>
               </div>
-              {!franchise.industry && (
-                <p className="text-xs text-gray-500 mt-1">Select a category first</p>
-              )}
             </div>
           </div>
           
