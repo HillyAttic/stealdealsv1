@@ -68,7 +68,9 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
     "Entertainment": [
       "Multiplex"
     ],
-    "Salons": []
+    "Beauty & Personal Care": [
+      "Salons"
+    ]
   };
 
   // Check for success message from FormSubmit
