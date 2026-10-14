@@ -93,11 +93,11 @@ export default function AboutPage() {
         
         {/* About Company Section - Enhanced UI/UX with Theme Colors */}
         <section className="py-20 bg-gradient-to-br from-white via-[#8CCDEB]/20 to-white relative overflow-hidden">
-          {/* Decorative Background Elements */}
-          <div className="absolute inset-0">
-            <div className="absolute top-20 left-10 w-40 h-40 bg-[rgb(51,161,224)]/20 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-32 right-16 w-56 h-56 bg-[rgb(28,110,164)]/15 rounded-full blur-2xl animate-pulse"></div>
-            <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-[#8CCDEB]/25 rounded-full blur-xl animate-bounce"></div>
+          {/* Decorative Brand Wash */}
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-accent/10 blur-3xl"></div>
+            <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-secondary/10 blur-3xl"></div>
+            <div className="absolute top-1/3 left-1/2 w-64 h-64 rounded-full bg-primary/5 blur-3xl"></div>
           </div>
           
           <div className="container mx-auto px-4 relative z-10">
@@ -263,32 +263,31 @@ export default function AboutPage() {
         </section>
         
         {/* Recognition Section - Enhanced with Innovative UI/UX */}
-        <section className="py-20 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
-          {/* Animated Background Elements - Responsive for Mobile and Tablet */}
-          <div className="absolute inset-0">
-            <div className="absolute top-5 left-5 md:top-10 md:left-10 w-16 h-16 md:w-32 md:h-32 bg-blue-200/30 rounded-full blur-xl animate-pulse"></div>
-            <div className="absolute top-20 right-10 md:top-40 md:right-20 w-12 h-12 md:w-24 md:h-24 bg-purple-200/30 rounded-full blur-lg animate-bounce"></div>
-            <div className="absolute bottom-10 left-1/4 md:bottom-20 w-20 h-20 md:w-40 md:h-40 bg-indigo-200/20 rounded-full blur-2xl animate-pulse"></div>
-            <div className="absolute bottom-5 right-5 md:bottom-10 md:right-10 w-14 h-14 md:w-28 md:h-28 bg-pink-200/30 rounded-full blur-xl animate-bounce"></div>
+        <section className="py-20 bg-gradient-to-b from-accent-50 via-white to-secondary-50 relative overflow-hidden">
+          {/* Decorative Brand Wash */}
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-accent/10 blur-3xl"></div>
+            <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-secondary/10 blur-3xl"></div>
+            <div className="absolute top-1/3 left-1/2 w-64 h-64 rounded-full bg-primary/5 blur-3xl"></div>
           </div>
 
           <div className="container mx-auto px-4 relative z-10">
             <div className="text-center max-w-4xl mx-auto mb-20">
               {/* Premium Badge */}
-              <div className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full text-sm font-semibold mb-6 shadow-lg">
+              <div className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-full text-sm font-semibold mb-6 shadow-lg">
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 Industry Recognition & Awards
               </div>
               
-              <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gray-800 via-blue-800 to-purple-800 bg-clip-text text-transparent mb-6">
+              <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary-500 via-secondary-500 to-accent-500 bg-clip-text text-transparent mb-6">
                 Trusted Partners
               </h2>
-              <div className="w-32 h-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 mx-auto rounded-full mb-8 shadow-lg"></div>
+              <div className="w-32 h-2 bg-gradient-to-r from-primary-500 via-secondary-500 to-accent-500 mx-auto rounded-full mb-8 shadow-lg"></div>
               <p className="text-xl text-gray-600 leading-relaxed">
                 Recognized by India's leading real estate developers as their
-                <span className="font-semibold text-blue-600"> preferred consulting partner</span>
+                <span className="font-semibold text-secondary"> preferred consulting partner</span>
               </p>
             </div>
 
