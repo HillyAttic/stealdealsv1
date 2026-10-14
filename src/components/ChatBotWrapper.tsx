@@ -1,4 +1,29 @@
 'use client';
+
+// Bottom-left floating WhatsApp button.
+const WHATSAPP_URL = 'https://wa.me/919630403080';
+
+export default function ChatBotWrapper() {
+  return (
+    <a
+      href={WHATSAPP_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Chat with us on WhatsApp"
+      className="fixed bottom-4 left-4 z-[9999] block h-16 w-16 transition-transform hover:scale-110"
+    >
+      <img
+        src="/images/whatsapp.gif"
+        alt="Chat with us on WhatsApp"
+        className="h-full w-full object-contain"
+      />
+    </a>
+  );
+}
+
+/* ---- Wealth Calculator chatbot (commented out for now) ----
+
+'use client';
 import { useEffect } from 'react';
 
 export default function ChatBotWrapper() {
@@ -7,7 +32,7 @@ export default function ChatBotWrapper() {
     const chatbotWrapper = document.createElement('div');
     chatbotWrapper.id = 'stealdeals-chatbot-wrapper';
     chatbotWrapper.style.cssText = 'position: fixed; bottom: 10px; left: 10px; z-index: 9999; width: 75px; height: 75px; overflow: visible; pointer-events: none;';
-    
+
     // Create iframe for chatbot
     const chatbotFrame = document.createElement('iframe');
     chatbotFrame.id = 'stealdeals-chatbot-frame';
@@ -18,13 +43,13 @@ export default function ChatBotWrapper() {
     chatbotFrame.setAttribute('allowTransparency', 'true');
     // Set larger dimensions to ensure button is fully visible
     chatbotFrame.style.cssText = 'border: none; position: absolute; bottom: 0; left: 0; width: 75px; height: 75px; z-index: 9999; background: transparent; transition: all 0.3s ease; pointer-events: auto;';
-    
+
     // Add iframe to wrapper
     chatbotWrapper.appendChild(chatbotFrame);
-    
+
     // Add wrapper to body
     document.body.appendChild(chatbotWrapper);
-    
+
     // Handle communication with iframe
     window.addEventListener('message', function(event) {
       if (event.data === 'chatbot-opened') {
@@ -39,7 +64,7 @@ export default function ChatBotWrapper() {
         chatbotFrame.style.height = '75px';
       }
     });
-    
+
     return () => {
       document.body.removeChild(chatbotWrapper);
       window.removeEventListener('message', () => {});
@@ -47,4 +72,6 @@ export default function ChatBotWrapper() {
   }, []);
 
   return null;
-} 
+}
+
+---- */
