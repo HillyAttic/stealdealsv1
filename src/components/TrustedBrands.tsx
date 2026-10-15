@@ -27,12 +27,12 @@ const brandLogos = [
   {
     id: 5,
     name: 'KFC',
-    logoUrl: 'https://play-lh.googleusercontent.com/Rc4lqcpq5_Qmk8f5VEcUA4oWaZWb9j4z5lKvM3MCXv7dSz5uvxebLK4b1v2JyCoTuw'
+    logoUrl: '/top-brands/editkfc.png'
   },
   {
     id: 6,
     name: 'Starbucks',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/sco/thumb/d/d3/Starbucks_Corporation_Logo_2011.svg/2034px-Starbucks_Corporation_Logo_2011.svg.png'
+    logoUrl: '/top-brands/editstarbucks.png'
   },
   {
     id: 7,

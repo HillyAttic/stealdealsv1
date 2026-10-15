@@ -4,10 +4,11 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FaBars, FaTimes, FaHome, FaInfoCircle, FaWarehouse, FaLandmark, FaHandshake, FaUtensils, FaImages, FaPhoneAlt, FaUser, FaSignOutAlt, FaChevronDown } from "react-icons/fa";
+import { FaBars, FaTimes, FaHome, FaInfoCircle, FaWarehouse, FaLandmark, FaHandshake, FaUtensils, FaImages, FaPhoneAlt, FaUser, FaSignOutAlt, FaChevronDown, FaWhatsapp } from "react-icons/fa";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { WishlistNavButton } from "@/components/wishlist/WishlistNavButton";
+import { trackLead, whatsappUrl, GENERIC_WHATSAPP_MSG } from "@/lib/meta";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -52,10 +53,10 @@ const Header = () => {
 
   const navItems = [
     { name: "HOME", path: "/", icon: <FaHome className="mr-1" /> },
+    { name: "BE A FRANCHISE", path: "/franchise", icon: <FaHandshake className="mr-1" /> },
     { name: "ABOUT US", path: "/about", icon: <FaInfoCircle className="mr-1" /> },
     { name: "VACANT", path: "/vacant", icon: <FaImages className="mr-1" /> },
     { name: "PLOTS", path: "/plots", icon: <FaLandmark className="mr-1" /> },
-    { name: "BE A FRANCHISE", path: "/franchise", icon: <FaHandshake className="mr-1" /> },
     { name: "CONTACT", path: "/contact", icon: <FaPhoneAlt className="mr-1" /> }
   ];
 
@@ -130,6 +131,17 @@ const Header = () => {
 
             {/* Right side buttons - Wishlist and Authentication */}
             <div className="hidden md:flex items-center space-x-3 flex-shrink-0 ml-4">
+              <a
+                href={whatsappUrl(GENERIC_WHATSAPP_MSG)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat on WhatsApp"
+                onClick={() => trackLead('whatsapp', 'header')}
+                className="flex items-center justify-center w-9 h-9 rounded-full text-white transition-transform hover:scale-110"
+                style={{ backgroundColor: '#25D366' }}
+              >
+                <FaWhatsapp className="text-lg" />
+              </a>
               <WishlistNavButton className="bg-white" />
               
               {/* Authentication Buttons */}
@@ -202,6 +214,24 @@ const Header = () => {
                 </li>
               ))}
             </ul>
+
+            {/* Mobile WhatsApp CTA */}
+            <div className="px-4 mt-4">
+              <a
+                href={whatsappUrl(GENERIC_WHATSAPP_MSG)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  trackLead('whatsapp', 'header');
+                  toggleMobileMenu();
+                }}
+                className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-white font-semibold transition-colors duration-200"
+                style={{ backgroundColor: '#25D366' }}
+              >
+                <FaWhatsapp className="text-lg" />
+                <span>WhatsApp Us</span>
+              </a>
+            </div>
 
             {/* Mobile Wishlist and Authentication */}
             <div className="px-4 py-4 border-t border-white/20 mt-4 space-y-3">

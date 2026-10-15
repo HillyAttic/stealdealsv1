@@ -7,6 +7,7 @@ import { FranchiseCard, FranchiseModal, FranchiseContactModal } from '@/componen
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { SuccessMessage } from './SuccessMessage';
 import { Franchise, FranchiseDetails } from '@/types/franchise';
+import { trackLead } from '@/lib/meta';
 import { sortByNewest } from '@/lib/sort';
 
 interface FranchisePageClientProps {
@@ -19,6 +20,8 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
   const [selectedFranchise, setSelectedFranchise] = useState<Franchise | null>(null);
   const [investorKitFranchise, setInvestorKitFranchise] = useState<Franchise | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [cardRect, setCardRect] = useState<DOMRect | null>(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('');
@@ -250,6 +253,9 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
 
   // Handle franchise card click to open modal
   const handleFranchiseClick = async (franchise: Franchise) => {
+    if (loadingId) return;
+    setLoadingId(franchise.id);
+    const startedAt = Date.now();
     try {
       // Fetch fresh data from the API to ensure we have the latest information
       const response = await fetch(`/api/franchises/${franchise.id}`, {
@@ -273,7 +279,10 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
       setSelectedFranchise(franchise);
     }
     
+    // Keep the spinner up long enough to be seen even when the API is instant
+    await new Promise((r) => setTimeout(r, Math.max(0, 450 - (Date.now() - startedAt))));
     setIsModalOpen(true);
+    setLoadingId(null);
   };
 
   // Close modal
@@ -576,14 +585,18 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
                 {filteredFranchises.map((franchise) => (
                   <div
                     key={franchise.id}
-                    onClick={() => handleFranchiseClick(franchise)}
-                    className="cursor-pointer"
+                    onClick={(e) => {
+                      setCardRect(e.currentTarget.getBoundingClientRect());
+                      handleFranchiseClick(franchise);
+                    }}
+                    className="relative cursor-pointer"
                   >
-                    <FranchiseCard
-                      franchise={franchise}
-                      onOpenModal={handleFranchiseClick}
-                      showWishlist={true}
-                    />
+                    <FranchiseCard franchise={franchise} showWishlist={true} />
+                    {loadingId === franchise.id && (
+                      <div className="absolute inset-0 z-40 rounded-lg bg-white/70 backdrop-blur-sm flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-full border-4 border-primary-500 border-t-transparent animate-spin" />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -600,9 +613,10 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
               List Your Franchise Opportunity
             </h2>
             
-            <form 
-              action="https://formsubmit.co/ishank@stealdeals.co.in" 
+            <form
+              action="https://formsubmit.co/ishank@stealdeals.co.in"
               method="POST"
+              onSubmit={() => trackLead('form', 'franchise-listing')}
               className="bg-gray-50 p-8 rounded-lg shadow-md"
             >
               {/* Hidden fields for FormSubmit configuration */}
@@ -681,6 +695,7 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onOpenContactModal={handleOpenContactModal}
+        originRect={cardRect}
       />
       
       {/* Franchise Contact Modal */}

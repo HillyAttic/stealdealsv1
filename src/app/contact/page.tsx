@@ -8,6 +8,7 @@ import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock, FaFacebookF, FaTwitter, F
 import ClientOnly from '../../components/ClientOnly';
 import { useAuthPrompt } from '@/hooks/useAuthPrompt';
 import { AuthPrompt } from '@/components/auth';
+import { trackLead } from '@/lib/meta';
 
 export default function ContactPage() {
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -90,7 +91,13 @@ export default function ContactPage() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-800 mb-1">Phone Number</h3>
-                        <p className="text-gray-600">+91 96 3040 3080</p>
+                        <a
+                          href="tel:+919630403080"
+                          onClick={() => trackLead('call', 'contact')}
+                          className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors"
+                        >
+                          +91 96 3040 3080
+                        </a>
                       </div>
                     </div>
 
@@ -190,6 +197,7 @@ export default function ContactPage() {
                     <form
                       action="https://formsubmit.co/ishank@stealdeals.co.in"
                       method="POST"
+                      onSubmit={() => trackLead('form', 'contact')}
                       className="space-y-6"
                     >
                       {/* Hidden fields for FormSubmit configuration */}

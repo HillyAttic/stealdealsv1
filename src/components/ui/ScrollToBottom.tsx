@@ -84,7 +84,7 @@ export function ScrollToBottom({
   return (
     <button
       onClick={handleScrollClick}
-      className={`fixed bottom-6 right-6 z-50 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-300 ${className}`}
+      className={`fixed bottom-24 right-6 md:bottom-6 z-50 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all duration-300 transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-blue-300 ${className}`}
       style={{
         backgroundColor: 'rgb(28, 110, 164)'
       }}

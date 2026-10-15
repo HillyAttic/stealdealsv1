@@ -1,7 +1,8 @@
 'use client';
 
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes, FaWhatsapp } from 'react-icons/fa';
 import { Franchise } from '@/types/franchise';
+import { trackLead, whatsappUrl } from '@/lib/meta';
 
 interface FranchiseContactModalProps {
   franchise: Franchise | null;
@@ -68,9 +69,10 @@ export function FranchiseContactModal({ franchise, isOpen, onClose }: FranchiseC
         </div>
 
         <div className="p-4 md:p-6">
-          <form 
-            action="https://formsubmit.co/ishank@stealdeals.co.in" 
+          <form
+            action="https://formsubmit.co/ishank@stealdeals.co.in"
             method="POST"
+            onSubmit={() => trackLead('form', franchise.name)}
             className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"
           >
             <input type="hidden" name="_subject" value={`Franchise Inquiry - ${franchise.name} (Contact Modal)`} />
@@ -183,6 +185,17 @@ export function FranchiseContactModal({ franchise, isOpen, onClose }: FranchiseC
                 Send Request
               </button>
             </div>
+
+            <a
+              href={whatsappUrl(`Hi, I am interested in the ${franchise.name} franchise. Please share investment details and next steps.`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackLead('whatsapp', franchise.name)}
+              className="md:col-span-2 flex items-center justify-center gap-2 bg-[#25D366] text-white py-2 md:py-3 px-4 rounded-lg font-semibold hover:bg-[#1ebe5b] transition-colors text-sm md:text-base"
+            >
+              <FaWhatsapp />
+              Instead, WhatsApp us about this franchise
+            </a>
           </form>
         </div>
       </div>

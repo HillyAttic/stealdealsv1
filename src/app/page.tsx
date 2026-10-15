@@ -12,6 +12,10 @@ import { FaBed, FaBath, FaRulerCombined, FaMapMarkerAlt, FaBuilding, FaUsers, Fa
 import { FaUtensils, FaHotel, FaStore, FaArrowRight, FaQuoteLeft, FaChevronRight, FaHandshake, FaPhone, FaEnvelope, FaChartLine } from 'react-icons/fa';
 import TrustedBrands from '@/components/TrustedBrands';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
+import { trackLead, whatsappUrl } from '@/lib/meta';
+
+const HERO_WHATSAPP_MSG = 'Hi, I am interested in becoming a franchise partner with Steal Deals. Please share opportunities.';
+const CTA_BAND_WHATSAPP_MSG = 'Hi, I am interested in franchise opportunities with Steal Deals. Please connect me with an expert.';
 
 // Component to handle search params with Suspense boundary
 function SearchParamsHandler({ setShowAuthModal }: { setShowAuthModal: (show: boolean) => void }) {
@@ -89,19 +93,19 @@ export default function Home() {
   const bestServices = [
     {
       id: 1,
-      title: 'Plots',
-      count: plotsCount,
-      icon: <FaMapMarkerAlt className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
-      image: 'https://prestigeprelaunchprojects.com/images/prestige-plots-devanahallii.jpg',
-      link: '/plots'
-    },
-    {
-      id: 2,
       title: 'Be a Franchise',
       count: franchisesCount,
       icon: <FaHandshake className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
       image: 'https://specials-images.forbesimg.com/imageserve/65bba21b5b2d37f74a168e56/960x0.jpg',
       link: '/franchise'
+    },
+    {
+      id: 2,
+      title: 'Plots',
+      count: plotsCount,
+      icon: <FaMapMarkerAlt className="text-3xl" style={{ color: 'rgb(28, 110, 164)' }} />,
+      image: 'https://prestigeprelaunchprojects.com/images/prestige-plots-devanahallii.jpg',
+      link: '/plots'
     }
   ];
   
@@ -166,12 +170,15 @@ export default function Home() {
                     </span>
                   </h1>
                   <p className="text-white text-xl md:text-2xl mb-10 font-light leading-relaxed animate-slideUp" style={{ animationDelay: '0.4s' }}>
-                    Lease with Confidence, <span className="text-blue-300">Grow with Ease</span>
+                    Become a Franchise Partner, <span className="text-blue-300">Grow with Ease</span>
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center animate-slideUp" style={{ animationDelay: '0.6s' }}>
-                    <Link 
-                      href="/franchise" 
-                      className="group inline-flex items-center justify-center text-white py-2.5 px-4 sm:py-3 sm:px-8 rounded-md text-sm sm:text-lg font-medium transition-all duration-300 hover:shadow-lg"
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 justify-center animate-slideUp" style={{ animationDelay: '0.6s' }}>
+                    <a
+                      href={whatsappUrl(HERO_WHATSAPP_MSG)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => trackLead('whatsapp', 'hero')}
+                      className="group inline-flex items-center justify-center whitespace-nowrap text-white py-2.5 px-4 sm:py-3 sm:px-8 rounded-md text-sm sm:text-lg font-medium transition-all duration-300 hover:shadow-lg"
                       style={{
                         backgroundColor: 'rgb(28, 110, 164)',
                         boxShadow: '0 4px 14px 0 rgba(28, 110, 164, 0.2)'
@@ -185,16 +192,15 @@ export default function Home() {
                         e.currentTarget.style.boxShadow = '0 4px 14px 0 rgba(28, 110, 164, 0.2)';
                       }}
                     >
-                      <span className="hidden sm:inline">View all Franchises</span>
-                      <span className="sm:hidden">All Franchises</span>
+                      <span className="hidden sm:inline">Become a Franchise Partner</span>
+                      <span className="sm:hidden">Become a Partner</span>
                       <FaChevronRight className="ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-                    </Link>
-                    <Link 
-                      href="/plots" 
-                      className="inline-flex items-center justify-center bg-transparent border-2 border-white text-white py-2.5 px-4 sm:py-3 sm:px-8 rounded-md text-sm sm:text-lg font-medium transition-all duration-300 hover:bg-white/10"
+                    </a>
+                    <Link
+                      href="/franchise"
+                      className="inline-flex items-center justify-center whitespace-nowrap bg-transparent border-2 border-white/40 text-white/90 py-2.5 px-4 sm:py-3 sm:px-8 rounded-md text-sm sm:text-lg font-medium transition-all duration-300 hover:bg-white/10"
                     >
-                      <span className="hidden sm:inline">View all Plots</span>
-                      <span className="sm:hidden">View all Plots</span>
+                      View All Franchises
                     </Link>
                   </div>
                 </div>
@@ -364,7 +370,7 @@ export default function Home() {
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 transition-transform duration-300 hover:scale-105 hover:shadow-md">
                       <div className="mb-3 text-xl" style={{ color: 'rgb(28, 110, 164)' }}>
                         <FaBuilding className="inline-block mr-2" />
-                        <span className="font-bold">Frachise Expansion</span>
+                        <span className="font-bold">Franchise Expansion</span>
                       </div>
                       <p className="text-sm text-gray-700">Scalable franchise opportunities across sectors, connecting investors with profitable, growth-ready brands.</p>
                     </div>
@@ -374,7 +380,7 @@ export default function Home() {
                         <FaHome className="inline-block mr-2" />
                         <span className="font-bold">Investment in Plots</span>
                       </div>
-                      <p className="text-sm text-gray-700">Prime plots for development with strong potential for appreciation and versatile use.x`</p>
+                      <p className="text-sm text-gray-700">Prime plots for development with strong potential for appreciation and versatile use.</p>
                     </div>
                     
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 transition-transform duration-300 hover:scale-105 hover:shadow-md">
@@ -561,14 +567,14 @@ export default function Home() {
           
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
-              <h6 className="font-semibold mb-3 uppercase tracking-wider" style={{ color: 'rgb(28, 110, 164)' }}>Excellence in</h6>
+              <h6 className="font-semibold mb-3 uppercase tracking-wider" style={{ color: 'rgb(28, 110, 164)' }}>Partner With Leading Brands</h6>
               <h2 className="text-4xl font-bold text-gray-800 mb-6 relative inline-block">
-                Best Services
+                Start Your Franchise Journey
                 <span className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-24 h-1" style={{ backgroundColor: 'rgb(28, 110, 164)' }}></span>
               </h2>
               <p className="text-gray-600 max-w-3xl mx-auto mt-8 text-lg">
-                Our website is dedicated to providing a comprehensive and user-friendly experience for 
-                individuals and businesses looking to rent or lease properties for commercial purposes.
+                Explore verified franchise opportunities across India's top brands, or invest in premium
+                plots and commercial properties with expert guidance at every step.
               </p>
             </div>
             
@@ -667,21 +673,24 @@ export default function Home() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch">
-                <Link 
-                  href="/contact" 
+                <a
+                  href={whatsappUrl(CTA_BAND_WHATSAPP_MSG)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackLead('whatsapp', 'cta-band')}
                   className="group flex-1 inline-flex items-center justify-center bg-white text-[rgb(21,77,113)] px-6 py-3 sm:px-8 sm:py-4 rounded-lg text-base sm:text-lg font-bold hover:bg-white/90 hover:text-[rgb(28,110,164)] transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 min-w-0"
                 >
                   <FaPhone className="mr-2 sm:mr-3 group-hover:animate-pulse flex-shrink-0" />
-                  <span className="truncate">Schedule Consultation</span>
+                  <span className="truncate">Talk to a Franchise Expert</span>
                   <FaArrowRight className="ml-2 sm:ml-3 transform group-hover:translate-x-1 transition-transform duration-300 flex-shrink-0" />
-                </Link>
-                
-                <Link 
-                  href="/franchise" 
+                </a>
+
+                <Link
+                  href="/franchise"
                   className="flex-1 inline-flex items-center justify-center bg-transparent border-2 border-white text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg text-base sm:text-lg font-bold hover:bg-white hover:text-[rgb(21,77,113)] transition-all duration-300 min-w-0"
                 >
                   <FaListUl className="mr-2 sm:mr-3 flex-shrink-0" />
-                  <span className="truncate">Browse Properties</span>
+                  <span className="truncate">Browse Franchises</span>
                 </Link>
               </div>
               

@@ -1,16 +1,17 @@
 'use client';
 
-// Bottom-left floating WhatsApp button.
-const WHATSAPP_URL = 'https://wa.me/919630403080';
+import { trackLead, whatsappUrl, GENERIC_WHATSAPP_MSG } from '@/lib/meta';
 
+// Bottom-left floating WhatsApp button (desktop only; mobile gets StickyCtaBar).
 export default function ChatBotWrapper() {
   return (
     <a
-      href={WHATSAPP_URL}
+      href={whatsappUrl(GENERIC_WHATSAPP_MSG)}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"
-      className="fixed bottom-4 left-4 z-[9999] block h-16 w-16 transition-transform hover:scale-110"
+      onClick={() => trackLead('whatsapp')}
+      className="fixed bottom-4 left-4 z-[9999] hidden md:block h-16 w-16 transition-transform hover:scale-110"
     >
       <img
         src="/images/whatsapp.gif"
