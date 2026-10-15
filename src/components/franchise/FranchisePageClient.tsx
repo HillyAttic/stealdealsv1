@@ -29,7 +29,8 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
   const [selectedSegment, setSelectedSegment] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedInvestmentRange, setSelectedInvestmentRange] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(24);
 
   // Category to Segment mapping based on your requirements
   const categorySegmentMapping = {
@@ -153,6 +154,11 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
     return { industries, allLocations, segments, models };
   }, [franchises, selectedIndustry]);
 
+  // Reset the visible window whenever the filter set changes
+  useEffect(() => {
+    setVisibleCount(24);
+  }, [searchTerm, selectedIndustry, selectedLocation, selectedSegment, selectedModel, selectedInvestmentRange]);
+
   // Reset segment when industry changes
   useEffect(() => {
     if (selectedIndustry) {
@@ -255,7 +261,6 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
   const handleFranchiseClick = async (franchise: Franchise) => {
     if (loadingId) return;
     setLoadingId(franchise.id);
-    const startedAt = Date.now();
     try {
       // Fetch fresh data from the API to ensure we have the latest information
       const response = await fetch(`/api/franchises/${franchise.id}`, {
@@ -279,8 +284,6 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
       setSelectedFranchise(franchise);
     }
     
-    // Keep the spinner up long enough to be seen even when the API is instant
-    await new Promise((r) => setTimeout(r, Math.max(0, 450 - (Date.now() - startedAt))));
     setIsModalOpen(true);
     setLoadingId(null);
   };
@@ -582,7 +585,7 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
                 </h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredFranchises.map((franchise) => (
+                {filteredFranchises.slice(0, visibleCount).map((franchise) => (
                   <div
                     key={franchise.id}
                     onClick={(e) => {
@@ -600,6 +603,17 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
                   </div>
                 ))}
               </div>
+
+              {visibleCount < filteredFranchises.length && (
+                <div className="text-center mt-10">
+                  <button
+                    onClick={() => setVisibleCount((c) => c + 24)}
+                    className="px-8 py-3 bg-primary text-white rounded-md hover:bg-secondary transition-colors font-medium"
+                  >
+                    Load 24 More ({filteredFranchises.length - visibleCount} remaining)
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>

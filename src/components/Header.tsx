@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FaBars, FaTimes, FaHome, FaInfoCircle, FaWarehouse, FaLandmark, FaHandshake, FaUtensils, FaImages, FaPhoneAlt, FaUser, FaSignOutAlt, FaChevronDown, FaWhatsapp } from "react-icons/fa";
+import { FaBars, FaTimes, FaUser, FaSignOutAlt, FaChevronDown, FaWhatsapp } from "react-icons/fa";
+import { LuHouse, LuHandshake, LuInfo, LuImages, LuLandmark, LuPhoneCall } from "react-icons/lu";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { WishlistNavButton } from "@/components/wishlist/WishlistNavButton";
@@ -51,13 +52,13 @@ const Header = () => {
     return () => { document.head.removeChild(style); };
   }, []);
 
-  const navItems = [
-    { name: "HOME", path: "/", icon: <FaHome className="mr-1" /> },
-    { name: "BE A FRANCHISE", path: "/franchise", icon: <FaHandshake className="mr-1" /> },
-    { name: "ABOUT US", path: "/about", icon: <FaInfoCircle className="mr-1" /> },
-    { name: "VACANT", path: "/vacant", icon: <FaImages className="mr-1" /> },
-    { name: "PLOTS", path: "/plots", icon: <FaLandmark className="mr-1" /> },
-    { name: "CONTACT", path: "/contact", icon: <FaPhoneAlt className="mr-1" /> }
+  const navItems: { name: string; path: string; icon: React.ReactNode; highlight?: boolean }[] = [
+    { name: "HOME", path: "/", icon: <LuHouse size={18} strokeWidth={2} /> },
+    { name: "BE A FRANCHISE", path: "/franchise", icon: <LuHandshake size={18} strokeWidth={2} />, highlight: true },
+    { name: "ABOUT US", path: "/about", icon: <LuInfo size={18} strokeWidth={2} /> },
+    { name: "VACANT", path: "/vacant", icon: <LuImages size={18} strokeWidth={2} /> },
+    { name: "PLOTS", path: "/plots", icon: <LuLandmark size={18} strokeWidth={2} /> },
+    { name: "CONTACT", path: "/contact", icon: <LuPhoneCall size={18} strokeWidth={2} /> }
   ];
 
   return (
@@ -116,10 +117,18 @@ const Header = () => {
                     <li className="nav-item-animation" style={{ animationDelay: `${index * 0.05}s` }}>
                       <Link
                         href={item.path}
-                        className={`relative font-medium text-lg px-2 py-1 flex items-center justify-center whitespace-nowrap font-['cooper black'] tracking-wide transition-all duration-300 ${pathname === item.path ? "font-semibold after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-100 after:transition-transform after:duration-300" : "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-0 after:transition-transform after:duration-300 hover:after:scale-x-100"}`}
-                        style={{ color: pathname === item.path ? "rgb(21, 77, 113)" : "rgb(28, 110, 164)" }}
-                        onMouseEnter={(e) => { if (pathname !== item.path) e.currentTarget.style.color = "rgb(21, 77, 113)"; }}
-                        onMouseLeave={(e) => { if (pathname !== item.path) e.currentTarget.style.color = "rgb(28, 110, 164)"; }}
+                        className={`relative font-medium text-lg px-2 py-1 flex items-center justify-center whitespace-nowrap font-['cooper black'] tracking-wide transition-all duration-300 ${item.highlight ? "rounded-full shadow-sm hover:shadow-md" : pathname === item.path ? "font-semibold after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-100 after:transition-transform after:duration-300" : "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-0 after:transition-transform after:duration-300 hover:after:scale-x-100"}`}
+                        style={item.highlight
+                          ? { color: "white", backgroundColor: "rgb(28, 110, 164)", padding: "0.35rem 1.1rem" }
+                          : { color: pathname === item.path ? "rgb(21, 77, 113)" : "rgb(28, 110, 164)" }}
+                        onMouseEnter={(e) => {
+                          if (item.highlight) e.currentTarget.style.backgroundColor = "rgb(21, 77, 113)";
+                          else if (pathname !== item.path) e.currentTarget.style.color = "rgb(21, 77, 113)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (item.highlight) e.currentTarget.style.backgroundColor = "rgb(28, 110, 164)";
+                          else if (pathname !== item.path) e.currentTarget.style.color = "rgb(28, 110, 164)";
+                        }}
                       >
                         {item.name}
                       </Link>
@@ -198,43 +207,54 @@ const Header = () => {
       </header>
 
       {/* Mobile Menu */}
-      <div className={`md:hidden fixed inset-0 z-[1001] bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`} onClick={toggleMobileMenu}>
+      <div className={`md:hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm transition-opacity duration-300 ${mobileMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`} onClick={toggleMobileMenu}>
         <div className={`fixed inset-y-0 right-0 max-w-xs w-full shadow-xl transform transition-transform duration-300 ease-in-out ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"}`} style={{ background: "linear-gradient(to bottom, rgb(21, 77, 113), rgb(18, 65, 96))" }} onClick={(e) => e.stopPropagation()}>
-          <div className="flex justify-end p-4">
-            <button className="text-white text-2xl focus:outline-none" onClick={toggleMobileMenu} aria-label="Close menu"><FaTimes /></button>
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">Menu</span>
+            <button className="flex h-9 w-9 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white focus:outline-none" onClick={toggleMobileMenu} aria-label="Close menu"><FaTimes /></button>
           </div>
-          <nav className="px-4 py-2">
-            <ul className="space-y-3">
-              {navItems.map((item, index) => (
-                <li key={index}>
-                  <Link href={item.path} className={`flex items-center py-2 px-4 rounded-md ${item.path === pathname ? "text-white font-medium" : "text-blue-100"} transition-colors duration-200`} style={{ backgroundColor: item.path === pathname ? "rgba(255, 255, 255, 0.2)" : "transparent" }} onMouseEnter={(e) => { if (item.path !== pathname) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)"; }} onMouseLeave={(e) => { if (item.path !== pathname) e.currentTarget.style.backgroundColor = "transparent"; }} onClick={toggleMobileMenu}>
-                    <span className="mr-3 text-lg">{item.icon}</span>
-                    <span>{item.name}</span>
-                  </Link>
-                </li>
-              ))}
+
+          <nav className="px-4 pt-1 pb-6">
+            <ul className="space-y-1">
+              {navItems.map((item, index) => {
+                const isActive = item.path === pathname;
+                return (
+                  <li key={index}>
+                    <Link
+                      href={item.path}
+                      onClick={toggleMobileMenu}
+                      className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium tracking-wide transition-colors duration-200 ${isActive ? "bg-white text-[rgb(21,77,113)] shadow-lg shadow-black/20" : "text-white hover:bg-white/10"}`}
+                    >
+                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200 ${isActive ? "bg-[rgb(28,110,164)]/10 text-[rgb(28,110,164)]" : "bg-white/10 text-blue-100 group-hover:bg-white/15 group-hover:text-white"}`}>
+                        {item.icon}
+                      </span>
+                      <span className={item.highlight && !isActive ? "font-semibold text-white" : undefined}>{item.name}</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
 
             {/* Mobile WhatsApp CTA */}
-            <div className="px-4 mt-4">
-              <a
-                href={whatsappUrl(GENERIC_WHATSAPP_MSG)}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => {
-                  trackLead('whatsapp', 'header');
-                  toggleMobileMenu();
-                }}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-white font-semibold transition-colors duration-200"
-                style={{ backgroundColor: '#25D366' }}
-              >
-                <FaWhatsapp className="text-lg" />
-                <span>WhatsApp Us</span>
-              </a>
-            </div>
+            <a
+              href={whatsappUrl(GENERIC_WHATSAPP_MSG)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                trackLead('whatsapp', 'header');
+                toggleMobileMenu();
+              }}
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-[15px] font-semibold text-white shadow-lg shadow-black/20 transition-colors duration-200"
+              style={{ backgroundColor: '#25D366' }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#1ebe5b'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#25D366'; }}
+            >
+              <FaWhatsapp size={20} />
+              <span>WhatsApp Us</span>
+            </a>
 
             {/* Mobile Wishlist and Authentication */}
-            <div className="px-4 py-4 border-t border-white/20 mt-4 space-y-3">
+            <div className="mt-6 pt-5 border-t border-white/15 space-y-3">
               <div className="flex justify-center">
                 <WishlistNavButton className="bg-white/10 text-white border-white/20 hover:bg-white/20" showText />
               </div>
@@ -243,9 +263,9 @@ const Header = () => {
                 <div className="w-full h-10 rounded-lg bg-white/10 animate-pulse" />
               ) : !isSignedIn ? (
                 <Link href="/sign-in" onClick={toggleMobileMenu}>
-                  <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors duration-200" style={{ backgroundColor: "rgb(28, 110, 164)" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgb(21, 77, 113)"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgb(28, 110, 164)"; }}>
-                    <FaUser className="text-sm" />
-                    <span className="text-sm font-medium">Sign In</span>
+                  <button className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-white transition-colors duration-200" style={{ backgroundColor: "rgb(28, 110, 164)" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgb(21, 77, 113)"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgb(28, 110, 164)"; }}>
+                    <FaUser size={14} />
+                    <span className="text-sm font-semibold">Sign In</span>
                   </button>
                 </Link>
               ) : (
@@ -263,9 +283,9 @@ const Header = () => {
                       <p className="text-blue-200 text-xs">{user?.email || ""}</p>
                     </div>
                   </div>
-                  <button onClick={() => { handleSignOut(); toggleMobileMenu(); }} className="w-full flex items-center justify-center space-x-2 px-4 py-2 text-white rounded-lg bg-white/10 hover:bg-white/20 transition-colors duration-200">
-                    <FaSignOutAlt className="text-sm" />
-                    <span className="text-sm font-medium">Sign Out</span>
+                  <button onClick={() => { handleSignOut(); toggleMobileMenu(); }} className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 py-3 text-white transition-colors duration-200 hover:bg-white/15">
+                    <FaSignOutAlt size={14} />
+                    <span className="text-sm font-semibold">Sign Out</span>
                   </button>
                 </div>
               )}
