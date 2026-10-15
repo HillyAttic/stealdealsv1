@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock, FaLock } from 'react-icons/fa';
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock, FaLock, FaWhatsapp } from 'react-icons/fa';
+import { trackLead, whatsappUrl, GENERIC_WHATSAPP_MSG } from '@/lib/meta';
 
 const Footer = () => {
   const [currentYear, setCurrentYear] = useState('');
@@ -98,6 +99,18 @@ const Footer = () => {
                 <FaPhone className="mr-3 text-[rgb(28,110,164)]" />
                 <a href="tel:+919630403080" className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors">
                   +91 96 3040 3080
+                </a>
+              </li>
+              <li className="flex items-center">
+                <FaWhatsapp className="mr-3 text-[#25D366]" />
+                <a
+                  href={whatsappUrl(GENERIC_WHATSAPP_MSG)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackLead('whatsapp', 'footer')}
+                  className="text-gray-600 hover:text-[rgb(21,77,113)] transition-colors"
+                >
+                  WhatsApp Us
                 </a>
               </li>
               <li className="flex items-center">

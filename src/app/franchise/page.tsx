@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import ClientOnly from '../../components/ClientOnly';
 import Image from 'next/image';
 import FranchisePageClient from '@/components/franchise/FranchisePageClient';
 import { getCachedFranchises, trackCachePerformance } from '@/lib/cache/server-cache';
@@ -43,9 +42,8 @@ export default async function FranchisePage() {
 
     return (
       <main className="min-h-screen flex flex-col">
-        <ClientOnly>
-          <Header />
-          
+        <Header />
+
           {/* Hero Section */}
           <section className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-blue-900/50 z-10"></div>
@@ -94,21 +92,19 @@ export default async function FranchisePage() {
           
           {/* Client Component for Interactivity */}
           <FranchisePageClient franchises={franchises} />
-          
+
           <Footer />
-        </ClientOnly>
       </main>
     );
-    
+
   } catch (error) {
     console.error('[ISR] Error generating franchise page:', error);
     
     // Fallback UI for errors
     return (
       <main className="min-h-screen flex flex-col">
-        <ClientOnly>
-          <Header />
-          
+        <Header />
+
           <section className="py-20 bg-gray-100">
             <div className="container mx-auto px-4 text-center">
               <h1 className="text-3xl font-bold text-gray-800 mb-4">Franchise Opportunities</h1>
@@ -125,8 +121,7 @@ export default async function FranchisePage() {
           </section>
           
           <Footer />
-        </ClientOnly>
       </main>
     );
   }
-} 
+}

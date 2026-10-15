@@ -1,22 +1,27 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { FaTimes, FaDownload, FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaMoneyBillWave, FaChartLine, FaBuilding, FaDollarSign, FaCalendarAlt, FaStoreAlt, FaShoppingBag, FaFileAlt, FaClock, FaGraduationCap, FaHeadset, FaBullhorn, FaCog, FaPhone, FaEnvelope, FaGlobe, FaShare, FaTrophy, FaHandshake, FaRocket, FaShieldAlt, FaRulerCombined, FaLock } from 'react-icons/fa';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { FaTimes, FaDownload, FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaMoneyBillWave, FaChartLine, FaBuilding, FaDollarSign, FaCalendarAlt, FaStoreAlt, FaShoppingBag, FaFileAlt, FaClock, FaGraduationCap, FaHeadset, FaBullhorn, FaCog, FaPhone, FaEnvelope, FaGlobe, FaShare, FaTrophy, FaHandshake, FaRocket, FaShieldAlt, FaRulerCombined, FaLock, FaWhatsapp } from 'react-icons/fa';
 import PropertyImage from '@/components/PropertyImage';
 import { useSecureGatedContent } from '@/hooks/useSecureGatedContent';
 import { GatedContentModal } from './GatedContentModal';
 import { SuccessMessage } from './SuccessMessage';
 import { Franchise, FranchiseDetails } from '@/types/franchise';
+import { trackLead, whatsappUrl } from '@/lib/meta';
 
 interface FranchiseModalProps {
   franchise: Franchise | null;
   isOpen: boolean;
   onClose: () => void;
   onOpenContactModal?: (franchise: Franchise) => void;
+  /** Bounding rect of the card that was clicked — modal expands out of it. */
+  originRect?: DOMRect | null;
 }
 
-export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal }: FranchiseModalProps) {
+export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal, originRect }: FranchiseModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   
   // Helper function to get data from franchiseDetails with fallbacks to legacy fields
   const getField = (field: keyof FranchiseDetails): string => {
@@ -143,6 +148,23 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
     };
   }, [isOpen, onClose]);
 
+  // Expand the modal out of the card that was clicked (FLIP via Web Animations API)
+  // ponytail: open only — closing just unmounts. Add a mirrored reverse() before onClose if wanted.
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!isOpen || !originRect || !panel) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const to = panel.getBoundingClientRect();
+    const from = `translate(${originRect.left + originRect.width / 2 - (to.left + to.width / 2)}px, ${
+      originRect.top + originRect.height / 2 - (to.top + to.height / 2)
+    }px) scale(${originRect.width / to.width}, ${originRect.height / to.height})`;
+    const timing = { duration: 420, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' };
+
+    panel.animate([{ transform: from, opacity: 0.5 }, { transform: 'none', opacity: 1 }], timing);
+    backdropRef.current?.animate([{ opacity: 0 }, { opacity: 1 }], timing);
+  }, [isOpen, originRect]);
+
   if (!isOpen || !franchise) return null;
 
   // Format currency using Indian format
@@ -235,12 +257,12 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[1002] md:p-4" style={{
+    <div ref={backdropRef} className="fixed inset-0 flex items-center justify-center z-[1002] md:p-4" style={{
       backdropFilter: 'blur(10px)',
       WebkitBackdropFilter: 'blur(10px)',
       background: 'rgba(0, 0, 0, 0.3)'
     }}>
-      <div className="bg-white/95 backdrop-blur-md md:rounded-lg max-w-5xl w-full h-full md:h-auto md:max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
+      <div ref={panelRef} className="bg-white/95 backdrop-blur-md md:rounded-lg max-w-5xl w-full h-full md:h-auto md:max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
         {/* Sticky Header */}
         <div className="sticky top-0 z-10 flex justify-between items-center p-6 border-b border-gray-200 bg-primary text-white">
           <div>
@@ -553,10 +575,21 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
                   </button>
                   <a
                     href="tel:+919630403080"
+                    onClick={() => trackLead('call', getField('name') || 'franchise')}
                     className="w-full bg-secondary text-white py-3 px-4 rounded-lg font-semibold hover:bg-secondary/90 transition-colors flex items-center justify-center"
                   >
                     <FaPhone className="mr-2" />
                     Call Now
+                  </a>
+                  <a
+                    href={whatsappUrl(`Hi, I am interested in the ${getField('name')} franchise. Please share investment details and next steps.`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => trackLead('whatsapp', getField('name') || 'franchise')}
+                    className="w-full bg-[#25D366] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#1ebe5b] transition-colors flex items-center justify-center"
+                  >
+                    <FaWhatsapp className="mr-2" />
+                    WhatsApp Now
                   </a>
                   {(() => {
                     const investorKitUrl = getInvestorKitUrl();
@@ -702,9 +735,10 @@ export function FranchiseModal({ franchise, isOpen, onClose, onOpenContactModal 
               </p>
             </div>
             <div className="p-4 md:p-6">
-              <form 
-                action="https://formsubmit.co/ishank@stealdeals.co.in" 
-                method="POST" 
+              <form
+                action="https://formsubmit.co/ishank@stealdeals.co.in"
+                method="POST"
+                onSubmit={() => trackLead('form', getField('name') || 'franchise')}
                 className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"
               >
                 <input type="hidden" value={`Franchise Inquiry - ${getField('name')} (Contact Modal)`} name="_subject" />

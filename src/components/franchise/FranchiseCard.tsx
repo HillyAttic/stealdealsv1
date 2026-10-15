@@ -120,6 +120,7 @@ export function FranchiseCard({
 
   // Default image if none provided
   const defaultImage = 'https://images.pexels.com/photos/3962294/pexels-photo-3962294.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
+  const imageSrc = franchise.images?.[0] || franchise.image || defaultImage;
 
   // Handle card click to open modal
   const handleCardClick = () => {
@@ -169,18 +170,21 @@ export function FranchiseCard({
     >
       <div className="relative">
         <div className="h-56 relative overflow-hidden">
-          {/* Blurred background image */}
-          <div 
-            className="absolute inset-0 bg-center bg-cover filter blur-md scale-110"
-            style={{
-              backgroundImage: `url(${franchise.image || defaultImage})`,
-              opacity: 0.3
-            }}
-          ></div>
+          {/* Blurred background image — an <img> (not a CSS background) so it can be lazy-loaded */}
+          <img
+            src={imageSrc}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 w-full h-full object-cover blur-md scale-110 opacity-30"
+          />
           {/* Main image */}
-          <img 
-            src={franchise.images?.[0] || franchise.image || defaultImage}
+          <img
+            src={imageSrc}
             alt={getField('name')}
+            loading="lazy"
+            decoding="async"
             className="relative z-10 w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
           />
           {franchise.status === 'Limited' && (

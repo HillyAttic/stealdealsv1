@@ -4,10 +4,11 @@ import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
-import { FaMapMarkerAlt, FaMoneyBillWave, FaChartLine, FaBuilding, FaDollarSign, FaCalendarAlt, FaStoreAlt, FaShoppingBag, FaFileAlt, FaClock, FaGraduationCap, FaHeadset, FaBullhorn, FaCog, FaChevronRight, FaPhone, FaEnvelope, FaGlobe, FaShare, FaTrophy, FaHandshake, FaRocket, FaShieldAlt, FaTimes } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaMoneyBillWave, FaChartLine, FaBuilding, FaDollarSign, FaCalendarAlt, FaStoreAlt, FaShoppingBag, FaFileAlt, FaClock, FaGraduationCap, FaHeadset, FaBullhorn, FaCog, FaChevronRight, FaPhone, FaEnvelope, FaGlobe, FaShare, FaTrophy, FaHandshake, FaRocket, FaShieldAlt, FaTimes, FaWhatsapp } from 'react-icons/fa';
 import ClientOnly from '../../../components/ClientOnly';
 import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
+import { trackLead, trackViewContent, whatsappUrl } from '@/lib/meta';
 
 // Define the Franchise interface that includes all fields
 interface Franchise {
@@ -156,6 +157,13 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
     }
   }, [resolvedParams.id]);
 
+  // Fire Meta Pixel ViewContent once franchise data is loaded (for retargeting)
+  useEffect(() => {
+    if (franchise?.name) {
+      trackViewContent(franchise.id || String(resolvedParams.id || ''), franchise.name);
+    }
+  }, [franchise?.id, franchise?.name, resolvedParams.id]);
+
   // Default image if none provided
   const defaultImage = 'https://images.pexels.com/photos/3962294/pexels-photo-3962294.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
 
@@ -294,8 +302,9 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
                         <FaRocket className="mr-2" />
                         Request Information
                       </button>
-                      <a 
+                      <a
                         href="tel:+919630403080"
+                        onClick={() => trackLead('call', franchise.name)}
                         className="bg-white/20 backdrop-blur-sm border-2 border-white/30 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-300 hover:bg-white/30 flex items-center justify-center"
                       >
                         <FaPhone className="mr-2" />
@@ -693,15 +702,27 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
 
                     {/* Quick Actions */}
                     <div className="space-y-3">
-                      <a 
+                      <a
                         href="tel:+919630403080"
+                        onClick={() => trackLead('call', franchise.name)}
                         className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 flex items-center justify-center"
                       >
                         <FaPhone className="mr-2" />
                         Call Now
                       </a>
-                      
-                      <button 
+
+                      <a
+                        href={whatsappUrl(`Hi, I am interested in the ${franchise.name} franchise. Please share investment details and next steps.`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => trackLead('whatsapp', franchise.name)}
+                        className="w-full bg-[#25D366] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#1ebe5b] transition-all duration-300 flex items-center justify-center"
+                      >
+                        <FaWhatsapp className="mr-2" />
+                        WhatsApp Now
+                      </a>
+
+                      <button
                         onClick={() => setShowContactModal(true)}
                         className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-4 rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-300 flex items-center justify-center"
                       >
@@ -790,9 +811,10 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
                   </div>
 
                   <div className="bg-white rounded-2xl shadow-xl p-8">
-                    <form 
-                      action="https://formsubmit.co/ishank@stealdeals.co.in" 
+                    <form
+                      action="https://formsubmit.co/ishank@stealdeals.co.in"
                       method="POST"
+                      onSubmit={() => trackLead('form', franchise.name)}
                       className="grid grid-cols-1 md:grid-cols-2 gap-6"
                     >
                       {/* Hidden fields for FormSubmit configuration */}
@@ -918,9 +940,10 @@ export default function FranchiseDetailPage({ params }: { params: Promise<{ id: 
 
                   {/* Modal Content */}
                   <div className="p-6">
-                    <form 
-                      action="https://formsubmit.co/ishank@stealdeals.co.in" 
+                    <form
+                      action="https://formsubmit.co/ishank@stealdeals.co.in"
                       method="POST"
+                      onSubmit={() => trackLead('form', franchise.name)}
                       className="space-y-4"
                     >
                       {/* Hidden fields for FormSubmit configuration */}

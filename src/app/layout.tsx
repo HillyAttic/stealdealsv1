@@ -4,6 +4,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ChatBotWrapper from "@/components/ChatBotWrapper";
+import StickyCtaBar from "@/components/StickyCtaBar";
+import { LeadMirror } from "@/components/LeadMirror";
 import { GoogleTagManager } from '@next/third-parties/google';
 import Script from 'next/script';
 
@@ -116,7 +118,9 @@ export default function RootLayout({
           {...customData}
         >
           <Providers>{children}</Providers>
+          <LeadMirror />
           <ChatBotWrapper />
+          <StickyCtaBar />
           <Script id="tawk-to" strategy="lazyOnload">
             {`
               var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();

@@ -7,6 +7,7 @@ import { FranchiseCard, FranchiseModal, FranchiseContactModal } from '@/componen
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import { SuccessMessage } from './SuccessMessage';
 import { Franchise, FranchiseDetails } from '@/types/franchise';
+import { trackLead } from '@/lib/meta';
 import { sortByNewest } from '@/lib/sort';
 
 interface FranchisePageClientProps {
@@ -19,6 +20,8 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
   const [selectedFranchise, setSelectedFranchise] = useState<Franchise | null>(null);
   const [investorKitFranchise, setInvestorKitFranchise] = useState<Franchise | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [cardRect, setCardRect] = useState<DOMRect | null>(null);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('');
@@ -26,7 +29,8 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
   const [selectedSegment, setSelectedSegment] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedInvestmentRange, setSelectedInvestmentRange] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(24);
 
   // Category to Segment mapping based on your requirements
   const categorySegmentMapping = {
@@ -150,6 +154,11 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
     return { industries, allLocations, segments, models };
   }, [franchises, selectedIndustry]);
 
+  // Reset the visible window whenever the filter set changes
+  useEffect(() => {
+    setVisibleCount(24);
+  }, [searchTerm, selectedIndustry, selectedLocation, selectedSegment, selectedModel, selectedInvestmentRange]);
+
   // Reset segment when industry changes
   useEffect(() => {
     if (selectedIndustry) {
@@ -250,6 +259,8 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
 
   // Handle franchise card click to open modal
   const handleFranchiseClick = async (franchise: Franchise) => {
+    if (loadingId) return;
+    setLoadingId(franchise.id);
     try {
       // Fetch fresh data from the API to ensure we have the latest information
       const response = await fetch(`/api/franchises/${franchise.id}`, {
@@ -274,6 +285,7 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
     }
     
     setIsModalOpen(true);
+    setLoadingId(null);
   };
 
   // Close modal
@@ -573,20 +585,35 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
                 </h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredFranchises.map((franchise) => (
+                {filteredFranchises.slice(0, visibleCount).map((franchise) => (
                   <div
                     key={franchise.id}
-                    onClick={() => handleFranchiseClick(franchise)}
-                    className="cursor-pointer"
+                    onClick={(e) => {
+                      setCardRect(e.currentTarget.getBoundingClientRect());
+                      handleFranchiseClick(franchise);
+                    }}
+                    className="relative cursor-pointer"
                   >
-                    <FranchiseCard
-                      franchise={franchise}
-                      onOpenModal={handleFranchiseClick}
-                      showWishlist={true}
-                    />
+                    <FranchiseCard franchise={franchise} showWishlist={true} />
+                    {loadingId === franchise.id && (
+                      <div className="absolute inset-0 z-40 rounded-lg bg-white/70 backdrop-blur-sm flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-full border-4 border-primary-500 border-t-transparent animate-spin" />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
+
+              {visibleCount < filteredFranchises.length && (
+                <div className="text-center mt-10">
+                  <button
+                    onClick={() => setVisibleCount((c) => c + 24)}
+                    className="px-8 py-3 bg-primary text-white rounded-md hover:bg-secondary transition-colors font-medium"
+                  >
+                    Load 24 More ({filteredFranchises.length - visibleCount} remaining)
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -600,9 +627,10 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
               List Your Franchise Opportunity
             </h2>
             
-            <form 
-              action="https://formsubmit.co/ishank@stealdeals.co.in" 
+            <form
+              action="https://formsubmit.co/ishank@stealdeals.co.in"
               method="POST"
+              onSubmit={() => trackLead('form', 'franchise-listing')}
               className="bg-gray-50 p-8 rounded-lg shadow-md"
             >
               {/* Hidden fields for FormSubmit configuration */}
@@ -681,6 +709,7 @@ export default function FranchisePageClient({ franchises }: FranchisePageClientP
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onOpenContactModal={handleOpenContactModal}
+        originRect={cardRect}
       />
       
       {/* Franchise Contact Modal */}
