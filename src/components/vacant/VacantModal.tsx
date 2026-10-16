@@ -111,7 +111,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
       <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-white/20">
         {/* Header */}
         <div
-          className="px-6 py-4 rounded-t-2xl"
+          className="sticky top-0 z-20 px-6 py-4 rounded-t-2xl"
           style={{
             background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))'
           }}
@@ -128,7 +128,8 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:text-white/70 transition-colors p-2 hover:bg-white/10 rounded-lg"
+              aria-label="Close"
+              className="flex-shrink-0 ml-3 p-2 rounded-full bg-white/20 hover:bg-white/35 text-white transition-colors"
             >
               <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 352 512" className="text-xl" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                 <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L242.72 256z"></path>
@@ -271,12 +272,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                   </div>
                   <div className="bg-white p-3 rounded-lg">
                     <h5 className="text-gray-500 text-sm uppercase mb-1">Floor</h5>
-                    <div className="flex items-center">
-                      <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="mr-2" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" style={{ color: 'rgb(28, 110, 164)' }}>
-                        <path d="M436 480h-20V24c0-13.255-10.745-24-24-24H56C42.745 0 32 10.745 32 24v456H12c-6.627 0-12 5.373-12 12v20h448v-20c0-6.627-5.373-12-12-12zM128 76c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40c0 6.627-5.373 12-12 12h-40c-6.627 0-12-5.373-12-12V76zm0 96c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40c0 6.627-5.373 12-12 12h-40c-6.627 0-12-5.373-12-12v-40zm52 148h-40c-6.627 0-12-5.373-12-12v-40c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40c0 6.627-5.373 12-12 12zm76 160h-64v-84c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v84zm64-172c0 6.627-5.373 12-12 12h-40c-6.627 0-12-5.373-12-12v-40c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40zm0-96c0 6.627-5.373 12-12 12h-40c-6.627 0-12-5.373-12-12v-40c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40zm0-96c0 6.627-5.373 12-12 12h-40c-6.627 0-12-5.373-12-12V76c0-6.627 5.373-12 12-12h40c6.627 0 12 5.373 12 12v40z"></path>
-                      </svg>
-                      <p className="font-semibold text-gray-800">{property.floor || 'Not specified'}</p>
-                    </div>
+                    <p className="font-semibold text-gray-800">{property.floor || 'Not specified'}</p>
                   </div>
                   <div className="bg-white p-3 rounded-lg">
                     <h5 className="text-gray-500 text-sm uppercase mb-1">Facing</h5>
@@ -317,11 +313,11 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                   </div>
                   <div className="bg-white p-3 rounded-lg">
                     <h5 className="text-gray-500 text-sm uppercase mb-1">District</h5>
-                    <p className="font-semibold text-gray-800">Not specified</p>
+                    <p className="font-semibold text-gray-800">{property.district || 'Not specified'}</p>
                   </div>
                   <div className="bg-white p-3 rounded-lg">
                     <h5 className="text-gray-500 text-sm uppercase mb-1">Status</h5>
-                    <p className="font-semibold text-gray-800">Available</p>
+                    <p className="font-semibold text-gray-800">{property.subDistrict || 'Not specified'}</p>
                   </div>
                 </div>
               </div>
@@ -416,9 +412,12 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                       <span className="text-white/80">Rent:</span>
                       <span className="text-white font-medium">{property.rent ? formatCurrency(property.rent) + '/mo' : 'Not specified'}</span>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
+                    {/* A property can list several floors — label above, value wraps below */}
+                    <div className="text-sm pt-1 border-t border-white/10">
                       <span className="text-white/80">Floor:</span>
-                      <span className="text-white font-medium">{property.floor || 'Not specified'}</span>
+                      <p className="text-white font-medium mt-0.5 leading-snug">
+                        {property.floor || 'Not specified'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -476,7 +475,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
         >
           <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl max-w-md md:max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/20">
             <div
-              className="px-4 md:px-6 py-3 md:py-4 rounded-t-2xl"
+              className="sticky top-0 z-10 px-4 md:px-6 py-3 md:py-4 rounded-t-2xl"
               style={{ background: 'linear-gradient(to right, rgb(21, 77, 113), rgb(28, 110, 164), rgb(51, 161, 224))' }}
             >
               <div className="flex items-center justify-between">
@@ -488,7 +487,8 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                 </div>
                 <button
                   onClick={() => setShowContactForm(false)}
-                  className="text-white hover:text-white/70 transition-colors p-1 hover:bg-white/10 rounded-lg"
+                  aria-label="Close"
+                  className="flex-shrink-0 ml-3 p-2 rounded-full bg-white/20 hover:bg-white/35 text-white transition-colors"
                 >
                   <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 352 512" className="text-lg md:text-xl" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
                     <path d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>

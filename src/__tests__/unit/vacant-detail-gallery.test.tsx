@@ -29,6 +29,8 @@ const property = {
   propertyType: 'Vacant',
   location: 'Test Location',
   category: 'Mall',
+  district: 'North',
+  subDistrict: 'Ready to Move-In',
   images: ['https://cdn.example/a.png', 'https://cdn.example/b.png'],
   image: 'https://cdn.example/a.png',
 };
@@ -73,5 +75,12 @@ describe('Vacant modal gallery', () => {
     fireEvent.click(screen.getByLabelText('Show image 2'));
 
     await waitFor(() => expect(hero().getAttribute('src')).toContain('b.png'));
+  });
+
+  it('shows the stored district and status instead of placeholders', () => {
+    render(<VacantModal vacant={property as any} isOpen onClose={() => {}} />);
+
+    expect(screen.getByText('District').nextElementSibling).toHaveTextContent('North');
+    expect(screen.getByText('Status').nextElementSibling).toHaveTextContent('Ready to Move-In');
   });
 });
