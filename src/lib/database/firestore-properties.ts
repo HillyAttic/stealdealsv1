@@ -117,6 +117,8 @@ function flattenVacant(key: string, data: any): Property {
     subDistrict: vd.subDistrict || data.subDistrict || '',
     floor: vd.floor || data.floor || '',
     facing: vd.facing || data.facing || '',
+    frontage: vd.frontage || data.frontage || '',
+    propertyCode: vd.propertyCode || data.propertyCode || '',
     carpetArea: vd.carpetArea || data.carpetArea || '',
     superArea: vd.superArea || data.superArea || '',
     length: vd.length || data.length || '',
@@ -129,7 +131,8 @@ function flattenVacant(key: string, data: any): Property {
     reference: vd.reference || data.reference || '',
     propertyType: vd.propertyType || 'Vacant',
     unitType: vd.unitType || data.unitType || '',
-    image: data.image || vd.image || '',
+    // Forms store uploads in the images[] array, so fall back to the first one
+    image: data.image || data.images?.[0] || vd.image || '',
   };
 }
 

@@ -105,7 +105,7 @@ function VacantPropertiesContent() {
       )}
 
       {isLoading ? (
-        <SkeletonLoader type="table" rows={8} columns={8} />
+        <SkeletonLoader type="table" rows={8} columns={9} />
       ) : (
         <>
           <div className="mb-3">
@@ -140,6 +140,7 @@ function VacantPropertiesContent() {
                       <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-20 hidden xl:table-cell">Type</th>
                       <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Rent</th>
                       <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 hidden lg:table-cell">Contact</th>
+                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 hidden lg:table-cell">Added By</th>
                       <th className="px-2 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 sticky right-0 bg-gray-50/80">Actions</th>
                     </tr>
                   </thead>
@@ -172,6 +173,9 @@ function VacantPropertiesContent() {
                           <div className="truncate">{property.contactName || '-'}</div>
                           {property.reference && <div className="text-xs text-gray-400 truncate">Ref: {property.reference}</div>}
                         </td>
+                        <td className="px-2 py-2 text-xs text-gray-500 hidden lg:table-cell">
+                          <div className="truncate" title={property.createdByName || ''}>{property.createdByName || '—'}</div>
+                        </td>
                         <td className="px-2 py-2 text-sm whitespace-nowrap sticky right-0 bg-white">
                           <div className="flex items-center justify-center space-x-1">
                             <button onClick={() => { setSelectedProperty(property); setIsModalOpen(true); }} className="p-1.5 rounded-lg text-primary-500 hover:bg-primary-50 transition-colors" title="View"><FaEye className="text-xs" /></button>
@@ -200,7 +204,7 @@ function VacantPropertiesContent() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between">
+            <div className="mt-4 pb-24 flex items-center justify-between">
               <span className="text-sm text-gray-500">Page {currentPage} of {totalPages}</span>
               <div className="flex gap-1">
                 <button
