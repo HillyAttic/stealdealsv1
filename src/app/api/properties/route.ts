@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch all properties from Firestore (migration complete)
-    const properties = await getFirestoreProperties();
+    let properties = await getFirestoreProperties();
 
     console.log(`[Properties API] Fetched ${properties.length} properties from Firestore`);
 
@@ -189,6 +189,20 @@ export async function GET(request: NextRequest) {
         });
         console.log(`[Properties API] Filtered to ${properties.length} properties owned by user`);
       }
+    }
+
+    // Resolve createdBy (admin UID) -> admin name, for authenticated admins only
+    if (currentUser) {
+      const uids = [...new Set(properties.map(p => p.createdBy).filter(Boolean))] as string[];
+      // The env-var admin account has no adminUsers doc — label it with its email
+      const namesByUid: Record<string, string> = { 'env-admin-superuser': process.env.ADMIN_EMAIL || 'Admin' };
+      if (uids.length > 0) {
+        const docs = await db.getAll(...uids.map(uid => db.collection('adminUsers').doc(uid)));
+        for (const doc of docs) {
+          if (doc.exists) namesByUid[doc.id] = doc.data()?.name || doc.data()?.email || 'Unknown';
+        }
+      }
+      properties = properties.map(p => ({ ...p, createdByName: namesByUid[p.createdBy || ''] }));
     }
 
     // Apply filters
@@ -244,7 +258,10 @@ export async function GET(request: NextRequest) {
       hasMore: offset + limit < total
     });
 
-    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+    // Authenticated responses carry admin names — never let a shared cache serve them anonymously
+    response.headers.set('Cache-Control', currentUser
+      ? 'private, no-store'
+      : 'public, s-maxage=300, stale-while-revalidate=600');
     response.headers.set('X-Data-Source', 'firestore');
     response.headers.set('X-API-Cache', 'HIT');
 
@@ -376,6 +393,7 @@ export async function POST(request: NextRequest) {
         reference: body.reference || '',
         channel: body.channel || '',
         propertyType: body.propertyType || 'Regular',
+        unitType: body.unitType || '',
         featured: body.featured || false,
         image: body.image || '',
         images: body.images || (body.image ? [body.image] : []),

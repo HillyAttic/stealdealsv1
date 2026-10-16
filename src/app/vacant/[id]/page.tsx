@@ -34,6 +34,7 @@ export default function VacantPropertyDetails() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [imageError, setImageError] = useState(false);
+  const [activeImage, setActiveImage] = useState('');
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [viewStartTime] = useState(Date.now());
   
@@ -170,6 +171,14 @@ export default function VacantPropertyDetails() {
     setImageError(true);
   };
 
+  // All uploaded images, in upload order, without duplicates
+  const gallery: string[] = property
+    ? [...(property.images || []), property.image].filter(
+        (src: string, i: number, arr: string[]) => !!src && arr.indexOf(src) === i
+      )
+    : [];
+  const heroImage = activeImage || property?.image;
+
   // Track page exit with duration
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -254,8 +263,8 @@ export default function VacantPropertyDetails() {
                   {/* Property header */}
                   <div className="relative h-72 md:h-96">
                     <PropertyImage
-                      src={property.image}
-                      alt={property.location || 'Property'} 
+                      src={heroImage}
+                      alt={property.location || 'Property'}
                       className="brightness-95"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -277,6 +286,29 @@ export default function VacantPropertyDetails() {
                     </div>
                   </div>
                   
+                  {/* Image gallery — every uploaded image, click to enlarge */}
+                  {gallery.length > 1 && (
+                    <div className="flex gap-2 p-3 overflow-x-auto border-b border-gray-100">
+                      {gallery.map((src, index) => (
+                        <button
+                          key={src}
+                          type="button"
+                          onClick={() => setActiveImage(src)}
+                          aria-label={`Show image ${index + 1}`}
+                          className={`flex-shrink-0 rounded overflow-hidden border-2 transition-colors ${
+                            src === heroImage ? 'border-blue-900' : 'border-transparent hover:border-gray-300'
+                          }`}
+                        >
+                          <img
+                            src={src}
+                            alt={`${property.location || 'Property'} ${index + 1}`}
+                            className="w-20 h-16 object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Property details */}
                   <div className="p-6 md:p-8">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

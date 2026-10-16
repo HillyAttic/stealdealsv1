@@ -52,6 +52,7 @@ export interface Property {
 
   // Ownership tracking fields
   createdBy?: string; // UID of the admin who created this property
+  createdByName?: string; // Resolved display name (server-annotated for admins)
   lastModifiedBy?: string; // UID of the admin who last modified this property
 
   // Additional timestamp fields
