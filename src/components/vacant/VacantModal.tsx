@@ -16,6 +16,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
   const [showContactForm, setShowContactForm] = useState(false);
   const [imageOrientation, setImageOrientation] = useState<'portrait' | 'landscape' | 'square'>('landscape');
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [activeImage, setActiveImage] = useState('');
   const { logPropertyView, logContactInquiry } = useActivity();
 
   // Function to detect image orientation
@@ -36,8 +37,17 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
     if (property) {
       setImageLoaded(false);
       setImageOrientation('landscape');
+      setActiveImage('');
     }
   }, [property]);
+
+  // All uploaded images, in upload order, without duplicates
+  const gallery: string[] = property
+    ? [...(property.images || []), property.image].filter(
+        (src: string, i: number, arr: string[]) => !!src && arr.indexOf(src) === i
+      )
+    : [];
+  const heroImage = activeImage || property?.image || gallery[0];
 
   // Log property view when modal opens
   useEffect(() => {
@@ -128,7 +138,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
         </div>
 
         {/* Property Image Section with Smart Orientation & Blur Background */}
-        {property.image ? (
+        {heroImage ? (
           <div 
             className={`relative w-full overflow-hidden transition-all duration-500 ${
               imageOrientation === 'portrait' 
@@ -142,7 +152,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
             <div className="absolute inset-0">
               <div className="w-full h-full scale-110 transform">
                 <PropertyImage
-                  src={property.image}
+                  src={heroImage}
                   alt={`${property.location} - Background`}
                   className="blur-lg scale-110 opacity-30"
                   fill={true}
@@ -166,7 +176,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={property.image}
+                  src={heroImage}
                   alt={property.location || property.title || 'Property'}
                   className={`w-full h-full transition-all duration-700 ${
                     imageOrientation === 'portrait' 
@@ -214,6 +224,30 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
             <div className="absolute top-4 left-4 bg-blue-600/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium border border-white/20">
               Vacant Property
             </div>
+          </div>
+        )}
+
+        {/* Image gallery — every uploaded image, click to enlarge */}
+        {gallery.length > 1 && (
+          <div className="flex gap-2 px-4 md:px-6 py-3 overflow-x-auto border-b border-gray-100">
+            {gallery.map((src, index) => (
+              <button
+                key={src}
+                type="button"
+                onClick={() => setActiveImage(src)}
+                aria-label={`Show image ${index + 1}`}
+                className={`flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${
+                  src === heroImage ? 'border-blue-900' : 'border-transparent hover:border-gray-300'
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt={`${property.location || 'Property'} ${index + 1}`}
+                  className="w-20 h-16 object-cover"
+                />
+              </button>
+            ))}
           </div>
         )}
 

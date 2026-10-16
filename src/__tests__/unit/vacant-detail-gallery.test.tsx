@@ -21,6 +21,7 @@ jest.mock('@/components/wishlist', () => ({ WishlistButton: () => <div /> }));
 jest.mock('@/components/auth', () => ({ AuthPrompt: () => <div /> }));
 
 import VacantPropertyDetails from '@/app/vacant/[id]/page';
+import { VacantModal } from '@/components/vacant/VacantModal';
 
 const property = {
   id: 'HkdpsW9FgHU5pzazAuzG',
@@ -57,5 +58,20 @@ describe('Vacant property detail gallery', () => {
     await waitFor(() =>
       expect(screen.getByAltText('Test Location').getAttribute('src')).toContain('b.png')
     );
+  });
+});
+
+describe('Vacant modal gallery', () => {
+  it('lists every uploaded image and switches the hero on click', async () => {
+    render(<VacantModal vacant={property as any} isOpen onClose={() => {}} />);
+
+    expect(screen.getByLabelText('Show image 1')).toBeInTheDocument();
+
+    const hero = () => screen.getByAltText('Test Location');
+    await waitFor(() => expect(hero().getAttribute('src')).toContain('a.png'));
+
+    fireEvent.click(screen.getByLabelText('Show image 2'));
+
+    await waitFor(() => expect(hero().getAttribute('src')).toContain('b.png'));
   });
 });
