@@ -326,6 +326,24 @@ export default function VacantPropertyDetails() {
                           </div>
                         </div>
                       )}
+
+                      {property.frontage && (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <h3 className="text-gray-500 text-sm uppercase mb-2">Frontage</h3>
+                          <div className="flex items-center">
+                            <span className="text-lg font-semibold">{property.frontage}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {property.propertyCode && (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <h3 className="text-gray-500 text-sm uppercase mb-2">Property Code</h3>
+                          <div className="flex items-center">
+                            <span className="text-lg font-semibold">{property.propertyCode}</span>
+                          </div>
+                        </div>
+                      )}
                       
                       {property.propertyType && (
                         <div className="bg-gray-50 p-4 rounded-lg">

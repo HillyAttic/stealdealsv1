@@ -248,6 +248,14 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                     <h5 className="text-gray-500 text-sm uppercase mb-1">Facing</h5>
                     <p className="font-semibold text-gray-800">{property.facing || 'Not specified'}</p>
                   </div>
+                  <div className="bg-white p-3 rounded-lg">
+                    <h5 className="text-gray-500 text-sm uppercase mb-1">Frontage</h5>
+                    <p className="font-semibold text-gray-800">{property.frontage || 'Not specified'}</p>
+                  </div>
+                  <div className="bg-white p-3 rounded-lg">
+                    <h5 className="text-gray-500 text-sm uppercase mb-1">Property Code</h5>
+                    <p className="font-semibold text-gray-800">{property.propertyCode || 'Not specified'}</p>
+                  </div>
                 </div>
               </div>
 

@@ -80,8 +80,13 @@ const FLOORS = [
 const FACING_OPTIONS = [
   'Main Road',
   'Atrium',
-  'General',
-  'Frontage'
+  'General'
+];
+
+// Frontage options
+const FRONTAGE_OPTIONS = [
+  'Yes',
+  'No'
 ];
 
 // Property types
@@ -94,7 +99,8 @@ const PROPERTY_TYPES = [
 // Reference options
 const REFERENCE_OPTIONS = [
   'Direct',
-  'Channel Partner'
+  'Channel Partner',
+  'Developer'
 ];
 
 export default function NewVacantProperty() {
@@ -122,14 +128,16 @@ function NewVacantPropertyContent() {
   
   // Form data state
   const [formData, setFormData] = useState({
+    propertyCode: '',
     location: '',
     state: '',
     city: '',
     district: '',
     subDistrict: '',
     category: '',
-    floor: '',
+    floors: [] as string[],
     facing: '',
+    frontage: '',
     superArea: '',
     carpetArea: '',
     propertyType: '', // Allow user to select property type
@@ -179,6 +187,24 @@ function NewVacantPropertyContent() {
     }
   };
   
+  // Toggle a floor in/out of the multi-select
+  const handleFloorToggle = (floor: string) => {
+    setFormData(prev => ({
+      ...prev,
+      floors: prev.floors.includes(floor)
+        ? prev.floors.filter(f => f !== floor)
+        : [...prev.floors, floor]
+    }));
+
+    if (errors.floor) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.floor;
+        return newErrors;
+      });
+    }
+  };
+
   // Handle image array changes
   const handleImageChange = (index: number, value: string) => {
     setFormData(prev => ({
@@ -221,12 +247,16 @@ function NewVacantPropertyContent() {
       newErrors.category = 'Category is required';
     }
     
-    if (!formData.floor) {
-      newErrors.floor = 'Floor is required';
+    if (formData.floors.length === 0) {
+      newErrors.floor = 'Select at least one floor';
     }
-    
+
     if (!formData.facing) {
       newErrors.facing = 'Facing is required';
+    }
+
+    if (!formData.frontage) {
+      newErrors.frontage = 'Frontage is required';
     }
     
     if (!formData.propertyType) {
@@ -262,6 +292,7 @@ function NewVacantPropertyContent() {
       // Prepare property data with all fields
       const propertyData = {
         // Core required fields
+        propertyCode: formData.propertyCode,
         location: formData.location,
         category: formData.category,
         propertyType: 'Vacant', // This is the key field that determines the collection
@@ -273,8 +304,9 @@ function NewVacantPropertyContent() {
         subDistrict: formData.subDistrict,
         
         // Unit details
-        floor: formData.floor,
+        floor: formData.floors.join(', '),
         facing: formData.facing,
+        frontage: formData.frontage,
         superArea: formData.superArea,
         carpetArea: formData.carpetArea,
         
@@ -365,6 +397,19 @@ function NewVacantPropertyContent() {
         )}
         
         <form id="myForm" className="needs-validation" onSubmit={handleSubmit}>
+          <div className="mb-4 grid grid-cols-1 gap-2">
+            <label htmlFor="propertyCode" className="text-gray-700 text-sm font-medium">Property Code</label>
+            <input
+              type="text"
+              id="propertyCode"
+              name="propertyCode"
+              value={formData.propertyCode}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+              placeholder="Property Code"
+            />
+          </div>
+
           <div className="mb-4 grid grid-cols-1 gap-2">
             <label htmlFor="location" className="text-gray-700 text-sm font-medium">Location</label>
             <div className="position-relative">
@@ -490,20 +535,26 @@ function NewVacantPropertyContent() {
                 </div>
                 
                 <div>
-                  <label htmlFor="floor" className="text-gray-700 text-sm font-medium block mb-1">Floor</label>
-                  <select 
-                    id="floor"
-                    name="floor"
-                    value={formData.floor}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+                  <span id="floor-label" className="text-gray-700 text-sm font-medium block mb-1">
+                    Floor <span className="text-gray-400 font-normal">(select one or more)</span>
+                  </span>
+                  <div
+                    role="group"
+                    aria-labelledby="floor-label"
+                    className="grid grid-cols-2 gap-1 px-3 py-2 border border-gray-300 rounded"
                   >
-                    <option value="" disabled>Choose...</option>
                     {FLOORS.map(floor => (
-                      <option key={floor} value={floor}>{floor}</option>
+                      <label key={floor} className="flex items-center gap-2 text-black text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.floors.includes(floor)}
+                          onChange={() => handleFloorToggle(floor)}
+                          className="accent-blue-900"
+                        />
+                        {floor}
+                      </label>
                     ))}
-                  </select>
+                  </div>
                   {errors.floor && (
                     <div className="text-red-500 text-xs mt-1">{errors.floor}</div>
                   )}
@@ -560,7 +611,7 @@ function NewVacantPropertyContent() {
                 </div>
               </div>
               
-              <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label htmlFor="propertyType" className="text-gray-700 text-sm font-medium block mb-1">Unit Type</label>
                   <select 
@@ -598,6 +649,26 @@ function NewVacantPropertyContent() {
                   </select>
                   {errors.reference && (
                     <div className="text-red-500 text-xs mt-1">{errors.reference}</div>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="frontage" className="text-gray-700 text-sm font-medium block mb-1">Frontage</label>
+                  <select
+                    id="frontage"
+                    name="frontage"
+                    value={formData.frontage}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+                  >
+                    <option value="" disabled>Choose...</option>
+                    {FRONTAGE_OPTIONS.map(option => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  {errors.frontage && (
+                    <div className="text-red-500 text-xs mt-1">{errors.frontage}</div>
                   )}
                 </div>
               </div>

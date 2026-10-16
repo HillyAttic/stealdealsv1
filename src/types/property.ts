@@ -43,7 +43,9 @@ export interface Property {
   image?: string; // Image URL for the property
 
   // Additional vacant property fields
+  propertyCode?: string;
   facing?: string;
+  frontage?: string;
   length?: string;
   width?: string;
   height?: string;

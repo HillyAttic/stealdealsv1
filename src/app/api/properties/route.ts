@@ -67,6 +67,8 @@ function flattenProperty(id: string, data: Record<string, any>): Property {
     id,
     type,
     propertyType: data.propertyType || type,
+    // Forms store uploads in the images[] array, so fall back to the first one
+    image: data.image || data.images?.[0] || '',
   };
 
   // Flatten franchise details
@@ -106,6 +108,8 @@ function flattenProperty(id: string, data: Record<string, any>): Property {
       contactNumber: vd.contactNumber || data.contactNumber || '',
       reference: vd.reference || data.reference || '',
       facing: vd.facing || data.facing || '',
+      frontage: vd.frontage || data.frontage || '',
+      propertyCode: vd.propertyCode || data.propertyCode || '',
       image: data.images?.[0] || data.image || '',
     };
   }
@@ -343,6 +347,7 @@ export async function POST(request: NextRequest) {
               `${body.category} Property`)),
         tenant: body.tenant || '',
         category: body.category,
+        propertyCode: body.propertyCode || '',
         buildingName: body.buildingName || '',
         location: body.location,
         state: body.state || '',
@@ -377,6 +382,7 @@ export async function POST(request: NextRequest) {
 
         // Additional vacant property fields
         facing: body.facing || '',
+        frontage: body.frontage || '',
         length: body.length || '',
         width: body.width || '',
         height: body.height || '',

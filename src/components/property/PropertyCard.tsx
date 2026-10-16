@@ -24,6 +24,8 @@ interface Property {
   subDistrict?: string;
   floor?: string;
   facing?: string;
+  frontage?: string;
+  propertyCode?: string;
   propertyType?: string;
   unitType?: string;
   reference?: string;
@@ -203,8 +205,16 @@ export function PropertyCard({
                 <span className="text-gray-800 truncate">{property.facing || 'N/A'}</span>
               </div>
               <div className="flex items-center text-xs">
+                <span className="text-yellow-800 font-medium mr-1">Frontage:</span>
+                <span className="text-gray-800 truncate">{property.frontage || 'N/A'}</span>
+              </div>
+              <div className="flex items-center text-xs">
                 <span className="text-yellow-800 font-medium mr-1">Property Type:</span>
                 <span className="text-gray-800 truncate">Vacant</span>
+              </div>
+              <div className="flex items-center text-xs">
+                <span className="text-yellow-800 font-medium mr-1">Property Code:</span>
+                <span className="text-gray-800 truncate">{property.propertyCode || 'N/A'}</span>
               </div>
             </div>
           </div>
