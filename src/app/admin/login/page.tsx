@@ -85,10 +85,13 @@ function AdminLoginContent() {
     setIsLoading(true);
 
     const cookieExpiry = formData.rememberMe ? 30 : 1; // 30 days or 1 day
+    // Mobile keyboards and autofill append trailing spaces; Firebase rejects those
+    // with auth/invalid-email. Passwords are never trimmed - a space can be intentional.
+    const email = formData.email.trim();
 
     try {
       // Sign in with Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, formData.password);
       const idToken = await userCredential.user.getIdToken();
 
       const response = await fetch('/api/auth/verify-firebase-token', {
@@ -130,7 +133,7 @@ function AdminLoginContent() {
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({
-              email: formData.email,
+              email,
               password: formData.password,
               rememberMe: formData.rememberMe,
             }),
@@ -163,6 +166,8 @@ function AdminLoginContent() {
         errorMessage = 'Invalid email or password';
       } else if (err.code === 'auth/user-disabled') {
         errorMessage = 'This account has been disabled';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'That email address is not valid. Check for stray spaces or missing characters.';
       } else if (err.message) {
         errorMessage = err.message;
       }
@@ -229,7 +234,7 @@ function AdminLoginContent() {
                 <input
                   id="email"
                   name="email"
-                  type="text"
+                  type="email"
                   autoComplete="email"
                   required
                   value={formData.email}
