@@ -28,3 +28,8 @@ src/components/wishlist/ImprovedWishlistButton.tsx
 # Google Cloud Service Account (sensitive credentials)
 service-account.json
 .env*
+
+# Agent skills (installed locally, not shared)
+.agents/
+.kiro/
+skills-lock.json
