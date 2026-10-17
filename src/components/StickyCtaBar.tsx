@@ -1,10 +1,14 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { FaPhone, FaWhatsapp } from 'react-icons/fa';
 import { trackLead, whatsappUrl, GENERIC_WHATSAPP_MSG } from '@/lib/meta';
 
 // Mobile-only sticky Call + WhatsApp bar for Meta ad traffic.
 export default function StickyCtaBar() {
+  const pathname = usePathname();
+  if (pathname?.startsWith('/admin')) return null;
+
   return (
     <div className="fixed bottom-0 inset-x-0 z-[9998] grid grid-cols-2 md:hidden pb-[env(safe-area-inset-bottom)]">
       <a

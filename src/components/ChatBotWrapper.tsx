@@ -1,9 +1,13 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { trackLead, whatsappUrl, GENERIC_WHATSAPP_MSG } from '@/lib/meta';
 
 // Bottom-left floating WhatsApp button (desktop only; mobile gets StickyCtaBar).
 export default function ChatBotWrapper() {
+  const pathname = usePathname();
+  if (pathname?.startsWith('/admin')) return null;
+
   return (
     <a
       href={whatsappUrl(GENERIC_WHATSAPP_MSG)}
