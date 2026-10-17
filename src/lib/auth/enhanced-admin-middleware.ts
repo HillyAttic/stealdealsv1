@@ -47,18 +47,16 @@ function cleanupPermissionCache(): void {
  * Get user permissions from cache or database
  */
 async function getUserPermissions(uid: string): Promise<AdminUser | null> {
-  // Clean up expired cache entries
-  cleanupPermissionCache();
+  // Expiry is checked on read below, so the sweep is only memory hygiene — it does
+  // not need to walk the whole map on every authenticated request.
+  if (permissionCache.size > 100) cleanupPermissionCache();
 
   // Check cache first
   const cached = permissionCache.get(uid);
   if (cached && cached.expiresAt > Date.now()) {
-    console.log('[Enhanced Admin Auth] Using cached permissions for user:', uid);
     return cached.user;
   }
 
-  // Fetch from database
-  console.log('[Enhanced Admin Auth] Fetching permissions from database for user:', uid);
   const adminUser = await AdminUserService.getAdminUser(uid);
 
   if (adminUser) {
@@ -113,14 +111,8 @@ export async function requireEnhancedAdminAuth(
   handler: (authenticatedRequest: EnhancedAuthenticatedAdminRequest) => Promise<NextResponse>
 ): Promise<NextResponse> {
   try {
-    console.log('[Enhanced Admin Auth] 🔐 Checking authentication and permissions...');
-    console.log('[Enhanced Admin Auth] Environment:', process.env.NODE_ENV);
-    console.log('[Enhanced Admin Auth] Request URL:', request.url);
-    console.log('[Enhanced Admin Auth] Request method:', request.method);
-
     // Get token from cookies
     const token = request.cookies.get('adminToken')?.value;
-    console.log('[Enhanced Admin Auth] 🎫 AdminToken present:', !!token);
 
     if (!token) {
       console.log('[Enhanced Admin Auth] No admin token found in cookies');
@@ -134,9 +126,7 @@ export async function requireEnhancedAdminAuth(
     }
 
     // Verify JWT token
-    console.log('[Enhanced Admin Auth] Verifying JWT token...');
     const decoded = jwt.verify(token, JWT_SECRET) as any;
-    console.log('[Enhanced Admin Auth] Token decoded successfully for user:', decoded.email, 'role:', decoded.role);
 
     // Check if user has admin role in JWT
     if (decoded.role !== 'admin' && decoded.role !== 'superuser' && decoded.role !== 'subuser') {
@@ -151,7 +141,6 @@ export async function requireEnhancedAdminAuth(
     }
 
     // Get detailed permissions from database
-    console.log('[Enhanced Admin Auth] Fetching detailed permissions for user:', decoded.userId);
     const adminUser = await getUserPermissions(decoded.userId.toString());
     
     let userForRequest: AdminUser;
@@ -199,10 +188,6 @@ export async function requireEnhancedAdminAuth(
     // Create authenticated request object
     const authenticatedRequest = request as EnhancedAuthenticatedAdminRequest;
     authenticatedRequest.user = enhancedAdminUser;
-
-    console.log('[Enhanced Admin Auth] Authentication and permission verification successful');
-    console.log('[Enhanced Admin Auth] User role:', enhancedAdminUser.role);
-    console.log('[Enhanced Admin Auth] Effective permissions:', effectivePermissions);
 
     // Call the handler with authenticated request
     return await handler(authenticatedRequest);

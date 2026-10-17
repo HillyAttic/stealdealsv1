@@ -145,92 +145,76 @@ function AdminLoginContent() {
     // with auth/invalid-email. Passwords are never trimmed - a space can be intentional.
     const email = formData.email.trim().toLowerCase();
 
-    try {
-      // Sign in with Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, email, formData.password);
-      const idToken = await userCredential.user.getIdToken();
-
-      const response = await fetch('/api/auth/verify-firebase-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          idToken,
-          adminLogin: true,
-          rememberMe: formData.rememberMe,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
-
-      // Set client-readable cookies
-      if (data.user) {
-        Cookies.set('adminUser', JSON.stringify(data.user), {
+    const finishLogin = (user: unknown) => {
+      if (user) {
+        Cookies.set('adminUser', JSON.stringify(user), {
           expires: cookieExpiry,
           path: '/',
           sameSite: 'lax',
           secure: process.env.NODE_ENV === 'production',
         });
       }
+      setTimeout(() => router.push('/admin/dashboard'), 400);
+    };
 
-      setTimeout(() => {
-        router.push('/admin/dashboard');
-      }, 400);
+    const postLogin = (body: Record<string, unknown>) =>
+      fetch('/api/auth/verify-firebase-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+
+    let firebaseError: any = null;
+
+    // 1. Firebase path (subusers and Firebase-backed admins).
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, formData.password);
+      const idToken = await userCredential.user.getIdToken();
+
+      const response = await postLogin({ idToken, adminLogin: true, rememberMe: formData.rememberMe });
+      const data = await response.json();
+
+      if (response.ok) {
+        finishLogin(data.user);
+        return;
+      }
+      firebaseError = new Error(data.error || 'Login failed');
     } catch (err: any) {
-      // If Firebase auth fails, try env var fallback
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        try {
-          const envResponse = await fetch('/api/auth/verify-firebase-token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-              email,
-              password: formData.password,
-              rememberMe: formData.rememberMe,
-            }),
-          });
-
-          const envData = await envResponse.json();
-
-          if (envResponse.ok && envData.success) {
-            if (envData.user) {
-              Cookies.set('adminUser', JSON.stringify(envData.user), {
-                expires: cookieExpiry,
-                path: '/',
-                sameSite: 'lax',
-                secure: process.env.NODE_ENV === 'production',
-              });
-            }
-            setTimeout(() => { router.push('/admin/dashboard'); }, 400);
-            return;
-          } else {
-            setError(envData.error || 'Invalid email or password');
-            return;
-          }
-        } catch {
-          // Fall through
-        }
-      }
-
-      let errorMessage = 'Authentication failed';
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        errorMessage = 'Invalid email or password';
-      } else if (err.code === 'auth/user-disabled') {
-        errorMessage = 'This account has been disabled';
-      } else if (err.code === 'auth/invalid-email') {
-        errorMessage = 'That email address is not valid. Check for stray spaces or missing characters.';
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
+      firebaseError = err;
     }
+
+    // 2. Env-admin fallback. Always attempted - a flaky Firebase/network error
+    // used to skip it, so the same credentials logged in only sometimes.
+    try {
+      const response = await postLogin({ email, password: formData.password, rememberMe: formData.rememberMe });
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        finishLogin(data.user);
+        return;
+      }
+      if (response.status !== 401) {
+        setError(data.error || 'Login failed');
+        return;
+      }
+    } catch {
+      // Could not reach our own API; report the Firebase error below.
+    }
+
+    const code = firebaseError?.code;
+    let errorMessage = 'Authentication failed';
+    if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+      errorMessage = 'Invalid email or password';
+    } else if (code === 'auth/user-disabled') {
+      errorMessage = 'This account has been disabled';
+    } else if (code === 'auth/invalid-email') {
+      errorMessage = 'That email address is not valid. Check for stray spaces or missing characters.';
+    } else if (firebaseError?.message) {
+      errorMessage = firebaseError.message;
+    }
+    setError(errorMessage);
+    setIsLoading(false);
   };
 
   return (

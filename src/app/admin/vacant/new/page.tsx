@@ -1,12 +1,11 @@
 "use client";
 
-import AdminLayout from '../../components/AdminLayout';
 import ClientOnly from '@/components/ClientOnly';
 import { VacantPropertyForm } from '@/components/vacant';
 
 export default function NewVacantProperty() {
   return (
-    <AdminLayout>
+    <>
       <ClientOnly
         fallback={
           <div className="flex justify-center items-center py-12">
@@ -17,7 +16,7 @@ export default function NewVacantProperty() {
       >
         <NewVacantPropertyContent />
       </ClientOnly>
-    </AdminLayout>
+    </>
   );
 }
 

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminLayout from '../components/AdminLayout';
 import {
   TbBuildingSkyscraper, TbHome, TbBuildingStore, TbChartBar,
   TbTrendingUp, TbClipboardCheck, TbBuilding, TbShoppingBag, TbMapPin,
@@ -19,13 +18,13 @@ declare global {
 
 export default function AdminDashboard() {
   return (
-    <AdminLayout>
+    <>
       <ClientOnly
         fallback={<SkeletonLoader type="stats" className="mb-6" />}
       >
         <AdminDashboardContent />
       </ClientOnly>
-    </AdminLayout>
+    </>
   );
 }
 

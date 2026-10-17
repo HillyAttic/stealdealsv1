@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AdminLayout from '../../components/AdminLayout';
 import { useParams, useRouter } from 'next/navigation';
 import { UserWishlistView } from '@/components/admin/UserWishlistView';
 import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
@@ -130,15 +129,15 @@ export default function AdminUserDetailsPage() {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <>
         <LoadingSpinner message="Loading user details..." />
-      </AdminLayout>
+      </>
     );
   }
 
   if (error || !user) {
     return (
-      <AdminLayout>
+      <>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">User Details</h1>
@@ -154,7 +153,7 @@ export default function AdminUserDetailsPage() {
             onRetry={fetchUserDetails}
           />
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
@@ -163,7 +162,7 @@ export default function AdminUserDetailsPage() {
   const StatusIcon = userStatus.icon;
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -381,6 +380,6 @@ export default function AdminUserDetailsPage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 }

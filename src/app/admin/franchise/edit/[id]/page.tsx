@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import AdminLayout from '../../../components/AdminLayout';
 import ClientOnly from '@/components/ClientOnly';
 import Link from 'next/link';
 import { BsMenuUp, BsSave } from 'react-icons/bs';
@@ -16,7 +15,7 @@ import {
 
 export default function EditFranchisePage() {
   return (
-    <AdminLayout>
+    <>
       <Toaster position="top-right" />
       <ClientOnly
         fallback={
@@ -28,7 +27,7 @@ export default function EditFranchisePage() {
       >
         <EditFranchiseContent />
       </ClientOnly>
-    </AdminLayout>
+    </>
   );
 }
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import AdminLayout from '../components/AdminLayout';
 import { AdminUserForm, AdminUserFormData } from '@/components/admin/AdminUserForm';
 import {
     FaUser, FaUserShield, FaPlus, FaTimes, FaCheck,
@@ -212,11 +211,11 @@ export default function ManageAdminsPage() {
     };
 
     if (isLoading && users.length === 0) {
-        return <AdminLayout><LoadingSpinner message="Loading admin users..." /></AdminLayout>;
+        return <><LoadingSpinner message="Loading admin users..." /></>;
     }
 
     return (
-        <AdminLayout>
+        <>
             <div className="space-y-6">
 
                 {/* ── Header ── */}
@@ -515,7 +514,7 @@ export default function ManageAdminsPage() {
                     </div>
                 </ModalShell>
             )}
-        </AdminLayout>
+        </>
     );
 }
 

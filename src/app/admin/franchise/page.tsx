@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
 import { FranchiseModal } from '@/components/franchise';
@@ -54,15 +53,7 @@ interface Franchise {
   updatedAt?: number;
 }
 
-export default function FranchisePage() {
-  return (
-    <AdminLayout>
-      <FranchiseContent />
-    </AdminLayout>
-  );
-}
-
-function FranchiseContent() {
+export default function FranchiseContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [selectedFranchise, setSelectedFranchise] = useState<Franchise | null>(null);

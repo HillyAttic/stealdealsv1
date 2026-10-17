@@ -14,6 +14,10 @@ const globalCache = new Map<string, CacheEntry>();
 const inflightRequests = new Map<string, Promise<any>>();
 const subscribers = new Map<string, Set<() => void>>();
 
+// Single source of truth for cache keys. Every read, write and invalidation goes
+// through here, so a prefix can never drift out of sync with what was stored.
+const cacheKey = (url: string) => `admin:${url}`;
+
 const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
 const STALE_TTL = 60 * 1000; // 1 minute — show stale data while revalidating
 
@@ -168,7 +172,7 @@ export function useAdminData<T = any>(
   } = options;
 
   const router = useRouter();
-  const key = url ? `admin:${url}` : null;
+  const key = url ? cacheKey(url) : null;
 
   // Subscribe to cache changes for this key
   const subscribe = useCallback(
@@ -234,7 +238,7 @@ export function useAdminData<T = any>(
     if (!key || !url || !enabled || hasFetchedRef.current) return;
     hasFetchedRef.current = true;
 
-    const cached = globalCache.get(url);
+    const cached = globalCache.get(key);
     const age = cached ? Date.now() - cached.timestamp : Infinity;
 
     if (cached && age < ttl && !revalidateOnMount) {
@@ -329,8 +333,8 @@ export function useAdminMutation(options: UseAdminMutationOptions = {}) {
         const data = await response.json().catch(() => ({}));
 
         // Invalidate related caches
-        invalidateKeys.forEach(k => invalidateCache(k));
-        invalidatePrefixes.forEach(p => invalidateCacheByPrefix(p));
+        invalidateKeys.forEach(k => invalidateCache(cacheKey(k)));
+        invalidatePrefixes.forEach(p => invalidateCacheByPrefix(cacheKey(p)));
 
         return data as T;
       } catch (err) {

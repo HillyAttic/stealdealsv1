@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import AdminLayout from '../components/AdminLayout';
 import { FaDatabase, FaPlay, FaEye, FaDownload, FaExclamationTriangle, FaCheckCircle, FaSpinner, FaImage } from 'react-icons/fa';
 
 interface MigrationStats {
@@ -368,7 +367,7 @@ export default function MigratePage() {
   }, []);
 
   return (
-    <AdminLayout>
+    <>
       <div className="px-4 py-6">
         {/* Header */}
         <div className="mb-8">
@@ -858,6 +857,6 @@ export default function MigratePage() {
           </a>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 }

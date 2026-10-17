@@ -63,9 +63,9 @@ export async function POST(request: NextRequest) {
     console.log('[Auth] Starting admin authentication');
 
     // --- ENV VAR FALLBACK: authenticate directly against ADMIN_EMAIL/ADMIN_PASSWORD ---
-    if (email && password) {
-      const adminEmail = process.env.ADMIN_EMAIL;
-      const adminPassword = process.env.ADMIN_PASSWORD;
+    if (typeof email === 'string' && typeof password === 'string' && email && password) {
+      const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+      const adminPassword = process.env.ADMIN_PASSWORD?.trim();
 
       if (!adminEmail || !adminPassword) {
         console.error('[Auth] ADMIN_EMAIL or ADMIN_PASSWORD not configured');
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (email !== adminEmail || password !== adminPassword) {
+      if (email.trim().toLowerCase() !== adminEmail || password !== adminPassword) {
         console.log('[Auth] Env var credentials mismatch');
         return NextResponse.json(
           { error: 'Invalid email or password' },

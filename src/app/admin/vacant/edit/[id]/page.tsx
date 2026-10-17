@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import AdminLayout from '../../../components/AdminLayout';
 import ClientOnly from '@/components/ClientOnly';
 import {
   VacantPropertyForm,
@@ -12,7 +11,7 @@ import {
 
 export default function EditVacantProperty() {
   return (
-    <AdminLayout>
+    <>
       <ClientOnly
         fallback={
           <div className="flex justify-center items-center py-12">
@@ -23,7 +22,7 @@ export default function EditVacantProperty() {
       >
         <EditVacantPropertyContent />
       </ClientOnly>
-    </AdminLayout>
+    </>
   );
 }
 

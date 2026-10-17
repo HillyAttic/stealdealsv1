@@ -2,26 +2,17 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
 import { Property } from '@/types/property';
-import { useAdminData, useAdminMutation, invalidateCacheByPrefix } from '@/hooks/useAdminData';
+import { useAdminData, useAdminMutation } from '@/hooks/useAdminData';
 import { sortByNewest } from '@/lib/sort';
 import { VacantModal } from '@/components/vacant';
 import { AdminCard, AdminButton, AdminModal, AdminEmptyState, SkeletonLoader } from '@/components/admin/ui';
 
 const PAGE_SIZE = 50;
 
-export default function VacantPropertiesPage() {
-  return (
-    <AdminLayout>
-      <VacantPropertiesContent />
-    </AdminLayout>
-  );
-}
-
-function VacantPropertiesContent() {
+export default function VacantPropertiesContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -36,7 +27,6 @@ function VacantPropertiesContent() {
     : [];
 
   const totalCount = allProperties.length;
-  const pagedProperties = allProperties.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   // Delete mutation with cache invalidation
   const { mutate: deleteProperty, isLoading: isDeleting } = useAdminMutation({
@@ -53,13 +43,17 @@ function VacantPropertiesContent() {
     }
   };
 
-  // Client-side search filter
-  const filteredProperties = pagedProperties.filter(property =>
-    property.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.contactName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Search spans every property, not just the visible page — otherwise a match sitting
+  // on page 3 reads as "No matching properties" while you are looking at page 1.
+  const needle = searchTerm.trim().toLowerCase();
+  const filteredProperties = needle
+    ? allProperties.filter(property =>
+        property.location?.toLowerCase().includes(needle) ||
+        property.category?.toLowerCase().includes(needle) ||
+        property.city?.toLowerCase().includes(needle) ||
+        property.contactName?.toLowerCase().includes(needle)
+      )
+    : allProperties;
 
   const formatCurrency = (amount: number | string): string => {
     const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -67,7 +61,9 @@ function VacantPropertiesContent() {
     return `₹${numAmount.toLocaleString('en-IN')}`;
   };
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(filteredProperties.length / PAGE_SIZE));
+  const page = Math.min(currentPage, totalPages);
+  const pagedProperties = filteredProperties.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <>
@@ -91,7 +87,7 @@ function VacantPropertiesContent() {
             type="text"
             placeholder="Search by location, category, city, or contact..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-200 text-sm admin-input-focus hover:border-gray-300"
           />
           <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
@@ -145,11 +141,11 @@ function VacantPropertiesContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {filteredProperties.map((property, index) => (
+                    {pagedProperties.map((property, index) => (
                       <tr key={property.id || `idx-${index}`} className="hover:bg-primary-50/30 transition-colors">
                         <td className="px-2 py-2 whitespace-nowrap">
                           <span className="font-mono text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-                            V{String(filteredProperties.length - ((currentPage - 1) * PAGE_SIZE + index)).padStart(3, '0')}
+                            V{String(filteredProperties.length - ((page - 1) * PAGE_SIZE + index)).padStart(3, '0')}
                           </span>
                         </td>
                         <td className="px-2 py-2">
@@ -205,18 +201,18 @@ function VacantPropertiesContent() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="mt-4 pb-24 flex items-center justify-between">
-              <span className="text-sm text-gray-500">Page {currentPage} of {totalPages}</span>
+              <span className="text-sm text-gray-500">Page {page} of {totalPages}</span>
               <div className="flex gap-1">
                 <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage(Math.max(1, page - 1))}
+                  disabled={page <= 1}
                   className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors"
                 >
                   Previous
                 </button>
                 <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage(Math.min(totalPages, page + 1))}
+                  disabled={page >= totalPages}
                   className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors"
                 >
                   Next

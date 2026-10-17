@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { firestoreDb } from '@/lib/firestore';
 import { collection, getDocs } from 'firebase/firestore';
-import AdminLayout from '../components/AdminLayout';
 
 export default function TestPage() {
   const [collectionInfo, setCollectionInfo] = useState({
@@ -81,7 +80,7 @@ export default function TestPage() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="p-4">
         <h1 className="text-2xl font-bold mb-4">Firestore Collection Test</h1>
 
@@ -140,6 +139,6 @@ export default function TestPage() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }

@@ -1,25 +1,40 @@
 import { NextResponse } from 'next/server';
 import { requireAdminAuth } from '@/lib/auth/admin-middleware';
-// Read from Firestore (migration complete)
-import { getAllProperties } from '@/lib/database/firestore-properties';
+import { db } from '@/lib/firebase-server-admin';
 
 // Force this route to be dynamic so it always fetches fresh data
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// GET /api/admin/dashboard-stats — returns aggregated property counts and breakdowns
-// Reads from Firestore (migration complete)
+// GET /api/admin/dashboard-stats — aggregated property counts and breakdowns
+//
+// Counts come from Firestore count aggregations and the breakdown from a
+// field-masked franchise read. The previous version read every property document
+// (347 docs / ~400KB) to tally six numbers; this reads ~13KB and never transfers
+// the image and description fields the dashboard does not display.
 export async function GET(request: Request) {
   return requireAdminAuth(request, async () => {
     try {
-      // Fetch all properties from Firestore (migration complete)
-      const allProperties = await getAllProperties();
+      const properties = db.collection('properties');
+      const countOf = (type: string) => properties.where('type', '==', type).count().get();
 
-      // Count by type
-      let preleasedCount = 0;
-      let vacantCount = 0;
-      let franchiseCount = 0;
-      let plotsCount = 0;
+      const [vacant, preleased, franchise, plots, franchiseDocs] = await Promise.all([
+        countOf('vacant'),
+        countOf('preleased'),
+        countOf('franchise'),
+        countOf('plot'),
+        properties
+          .where('type', '==', 'franchise')
+          .select('franchiseDetails.segment', 'franchiseDetails.industry', 'segment')
+          .get(),
+      ]);
+
+      const stats = {
+        vacant: vacant.data().count,
+        preleased: preleased.data().count,
+        franchise: franchise.data().count,
+        plots: plots.data().count,
+      };
 
       // Segment breakdown for franchises
       const segmentCounts: Record<string, number> = {};
@@ -34,38 +49,20 @@ export async function GET(request: Request) {
         'Sports, Fitness & Entertainments': 0
       };
 
-      for (const property of allProperties) {
-        const type = (property.propertyType || property.type || '').toLowerCase();
-        // In Firestore, pre-leased properties use 'preleased' as type
-        // (IDs start with PROP_PRLS_). Normalize all variants to 'preleased'.
-        const isPreleased = type === 'preleased' || type === 'pre-leased' || type === 'lockable' || type === 'virtual';
+      franchiseDocs.forEach(doc => {
+        const data = doc.data();
+        const details = data.franchiseDetails || {};
 
-        if (isPreleased) {
-          preleasedCount++;
-        } else if (type === 'vacant') {
-          vacantCount++;
-        } else if (type === 'franchise') {
-          franchiseCount++;
-
-          // Categorize franchise by segment
-          const segment = property.franchiseDetails?.segment || property.segment || '';
-          if (segment) {
-            segmentCounts[segment] = (segmentCounts[segment] || 0) + 1;
-          }
-
-          // Categorize franchise by industry
-          const industry = property.franchiseDetails?.industry || property.category || '';
-          if (industryCounts.hasOwnProperty(industry)) {
-            industryCounts[industry]++;
-          }
-        } else if (type === 'plot' || type === 'plots') {
-          plotsCount++;
+        const segment = details.segment || data.segment || '';
+        if (segment) {
+          segmentCounts[segment] = (segmentCounts[segment] || 0) + 1;
         }
-      }
 
-      const totalCount = preleasedCount + vacantCount + franchiseCount + plotsCount;
-
-      console.log(`[Dashboard API] Firestore stats: vacant=${vacantCount}, preleased=${preleasedCount}, franchise=${franchiseCount}, plots=${plotsCount}, total=${totalCount}`);
+        const industry = details.industry || '';
+        if (Object.prototype.hasOwnProperty.call(industryCounts, industry)) {
+          industryCounts[industry]++;
+        }
+      });
 
       // Sort segments by count (descending)
       const sortedSegments = Object.entries(segmentCounts)
@@ -78,11 +75,8 @@ export async function GET(request: Request) {
 
       return NextResponse.json({
         stats: {
-          preleased: preleasedCount,
-          vacant: vacantCount,
-          franchise: franchiseCount,
-          plots: plotsCount,
-          total: totalCount
+          ...stats,
+          total: stats.vacant + stats.preleased + stats.franchise + stats.plots
         },
         segmentData: sortedSegments,
         franchiseData: {

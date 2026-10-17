@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import AdminLayout from '../components/AdminLayout';
 import {
   FaImage,
   FaSearch,
@@ -119,7 +118,7 @@ export default function MigrateImagesPage() {
   }, {} as { [collection: string]: ImgbbImage[] });
 
   return (
-    <AdminLayout>
+    <>
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -374,6 +373,6 @@ export default function MigrateImagesPage() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }

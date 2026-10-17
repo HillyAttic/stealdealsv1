@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminLayout from '../../components/AdminLayout';
 import { FaSave } from 'react-icons/fa';
 import { BsMenuUp } from 'react-icons/bs';
 import ClientOnly from '@/components/ClientOnly';
@@ -30,7 +29,7 @@ const UNIT_OPTIONS = [
 
 export default function NewPlot() {
   return (
-    <AdminLayout>
+    <>
       <ClientOnly
         fallback={
           <div className="flex justify-center items-center py-12">
@@ -41,7 +40,7 @@ export default function NewPlot() {
       >
         <NewPlotContent />
       </ClientOnly>
-    </AdminLayout>
+    </>
   );
 }
 

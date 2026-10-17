@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminLayout from '../../../components/AdminLayout';
 import { FaSave } from 'react-icons/fa';
 import { BsMenuUp } from 'react-icons/bs';
 import ImageUploader from '@/components/ui/ImageUploader';
@@ -50,19 +49,19 @@ export default function EditPlot({ params }: { params: Promise<{ id: string }> }
   // Show loading while extracting params
   if (!mounted) {
     return (
-      <AdminLayout>
+      <>
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
           <p className="ml-2">Loading plot form...</p>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <EditPlotContent plotId={plotId} />
-    </AdminLayout>
+    </>
   );
 }
 

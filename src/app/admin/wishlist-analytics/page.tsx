@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import AdminLayout from '../components/AdminLayout';
 import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
 import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
 import { FaHeart, FaUsers, FaChartBar, FaArrowUp, FaEye, FaDownload, FaClock, FaFire, FaStar, FaBolt, FaMapMarkerAlt, FaUserClock } from 'react-icons/fa';
@@ -325,15 +324,15 @@ export default function WishlistAnalyticsPage() {
 
   if (isLoading && !stats) {
     return (
-      <AdminLayout>
+      <>
         <LoadingSpinner message="Loading wishlist analytics..." />
-      </AdminLayout>
+      </>
     );
   }
 
   if (error && !stats) {
     return (
-      <AdminLayout>
+      <>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">Wishlist Analytics</h1>
@@ -343,24 +342,24 @@ export default function WishlistAnalyticsPage() {
             onRetry={() => fetchWishlistStats()}
           />
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   if (!stats) {
     return (
-      <AdminLayout>
+      <>
         <div className="text-center py-12">
           <FaChartBar className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">No analytics data available</h3>
           <p className="mt-1 text-sm text-gray-500">Check back later when users start creating wishlists.</p>
         </div>
-      </AdminLayout>
+      </>
     );
   }
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -899,6 +898,6 @@ export default function WishlistAnalyticsPage() {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }

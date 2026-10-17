@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminLayout from '../../components/AdminLayout';
 import Link from 'next/link';
 import { FaArrowLeft, FaSave, FaList } from 'react-icons/fa';
 import { BsListUl } from 'react-icons/bs';
@@ -12,7 +11,7 @@ import { createFranchiseWithDetails } from '@/lib/admin/franchiseHelpers';
 
 export default function NewFranchisePage() {
   return (
-    <AdminLayout>
+    <>
       <ClientOnly
         fallback={
           <div className="flex justify-center items-center py-12">
@@ -23,7 +22,7 @@ export default function NewFranchisePage() {
       >
         <FranchiseForm />
       </ClientOnly>
-    </AdminLayout>
+    </>
   );
 }
 

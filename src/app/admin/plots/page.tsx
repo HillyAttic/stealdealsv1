@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
 import { Plot } from '@/types/property';
@@ -10,15 +9,7 @@ import { PlotModal } from '@/components/plots';
 import { useAdminData, useAdminMutation } from '@/hooks/useAdminData';
 import { AdminCard, AdminButton, AdminModal, AdminEmptyState, SkeletonLoader } from '@/components/admin/ui';
 
-export default function PlotsAdmin() {
-  return (
-    <AdminLayout>
-      <PlotsAdminContent />
-    </AdminLayout>
-  );
-}
-
-function PlotsAdminContent() {
+export default function PlotsAdminContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);

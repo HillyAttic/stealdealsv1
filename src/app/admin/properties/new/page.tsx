@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminLayout from '../../components/AdminLayout';
 import { FaSave, FaTimes } from 'react-icons/fa';
 
 // Property categories
@@ -218,7 +217,7 @@ export default function NewProperty() {
   };
   
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Add New Pre-Leased Inventory</h1>
         <p className="text-gray-600">Create a new pre-leased property listing</p>
@@ -772,6 +771,6 @@ export default function NewProperty() {
           </div>
         </form>
       </div>
-    </AdminLayout>
+    </>
   );
 } 

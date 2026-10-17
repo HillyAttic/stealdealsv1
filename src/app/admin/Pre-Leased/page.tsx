@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import AdminLayout from '../components/AdminLayout';
 import { FaPlus, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
 import { BsBuilding } from 'react-icons/bs';
 import { Property } from '@/types/property';
@@ -13,15 +12,7 @@ import { AdminCard, AdminButton, AdminModal, AdminEmptyState, SkeletonLoader } f
 
 const PAGE_SIZE = 50;
 
-export default function PreLeasedPropertiesPage() {
-  return (
-    <AdminLayout>
-      <PreLeasedPropertiesContent />
-    </AdminLayout>
-  );
-}
-
-function PreLeasedPropertiesContent() {
+export default function PreLeasedPropertiesContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
