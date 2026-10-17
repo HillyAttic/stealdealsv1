@@ -23,7 +23,7 @@ const STATES = [
 
 const CITIES: { [key: string]: string[] } = {
   'Delhi': ['New Delhi', 'East Delhi', 'West Delhi', 'North Delhi', 'South Delhi'],
-  'Uttar Pradesh': ['Noida', 'Ghaziabad', 'Lucknow', 'Kanpur'],
+  'Uttar Pradesh': ['Noida', 'Gr. Noida', 'Gr. Noida West', 'Noida Expressway', 'Ghaziabad', 'Lucknow', 'Kanpur'],
   'Haryana': ['Gurgaon', 'Faridabad', 'Sonipat'],
   'Maharashtra': ['Mumbai', 'Pune', 'Nagpur']
 };
