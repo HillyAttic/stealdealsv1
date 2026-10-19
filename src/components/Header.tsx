@@ -117,17 +117,39 @@ const Header = () => {
                     <li className="nav-item-animation" style={{ animationDelay: `${index * 0.05}s` }}>
                       <Link
                         href={item.path}
+                        aria-current={pathname === item.path ? "page" : undefined}
                         className={`relative font-medium text-lg px-2 py-1 flex items-center justify-center whitespace-nowrap font-['cooper black'] tracking-wide transition-all duration-300 ${item.highlight ? "rounded-full shadow-sm hover:shadow-md" : pathname === item.path ? "font-semibold after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-100 after:transition-transform after:duration-300" : "after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-blue-500 after:transform after:scale-x-0 after:transition-transform after:duration-300 hover:after:scale-x-100"}`}
                         style={item.highlight
-                          ? { color: "white", backgroundColor: "rgb(28, 110, 164)", padding: "0.35rem 1.1rem" }
+                          ? pathname === item.path
+                            ? {
+                                color: "white",
+                                backgroundColor: "rgb(28, 110, 164)",
+                                padding: "0.35rem 1.1rem",
+                                boxShadow: "inset 0 0 0 2px rgb(28, 110, 164)",
+                              }
+                            : {
+                                color: "rgb(28, 110, 164)",
+                                backgroundColor: "white",
+                                padding: "0.35rem 1.1rem",
+                                boxShadow: "inset 0 0 0 2px rgb(28, 110, 164)",
+                              }
                           : { color: pathname === item.path ? "rgb(21, 77, 113)" : "rgb(28, 110, 164)" }}
                         onMouseEnter={(e) => {
-                          if (item.highlight) e.currentTarget.style.backgroundColor = "rgb(21, 77, 113)";
-                          else if (pathname !== item.path) e.currentTarget.style.color = "rgb(21, 77, 113)";
+                          if (item.highlight) {
+                            e.currentTarget.style.backgroundColor = "rgb(21, 77, 113)";
+                            e.currentTarget.style.color = "white";
+                          } else if (pathname !== item.path) e.currentTarget.style.color = "rgb(21, 77, 113)";
                         }}
                         onMouseLeave={(e) => {
-                          if (item.highlight) e.currentTarget.style.backgroundColor = "rgb(28, 110, 164)";
-                          else if (pathname !== item.path) e.currentTarget.style.color = "rgb(28, 110, 164)";
+                          if (item.highlight) {
+                            if (item.path === pathname) {
+                              e.currentTarget.style.backgroundColor = "rgb(28, 110, 164)";
+                              e.currentTarget.style.color = "white";
+                            } else {
+                              e.currentTarget.style.backgroundColor = "white";
+                              e.currentTarget.style.color = "rgb(28, 110, 164)";
+                            }
+                          } else if (pathname !== item.path) e.currentTarget.style.color = "rgb(28, 110, 164)";
                         }}
                       >
                         {item.name}
