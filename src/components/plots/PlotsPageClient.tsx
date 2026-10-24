@@ -56,15 +56,13 @@ export default function PlotsPageClient({ plots }: PlotsPageClientProps) {
   
   // Investment range options for plots
   const investmentRanges = [
-    { label: 'Less than ₹5 Lakhs', min: 0, max: 500000 },
-    { label: '₹5 Lakhs – ₹10 Lakhs', min: 500000, max: 1000000 },
-    { label: '₹10 Lakhs – ₹20 Lakhs', min: 1000000, max: 2000000 },
-    { label: '₹20 Lakhs – ₹50 Lakhs', min: 2000000, max: 5000000 },
-    { label: '₹50 Lakhs – ₹1 Crore', min: 5000000, max: 10000000 },
-    { label: '₹1 Crore – ₹2 Crores', min: 10000000, max: 20000000 },
-    { label: '₹2 Crores – ₹5 Crores', min: 20000000, max: 50000000 },
-    { label: '₹5 Crores – ₹10 Crores', min: 50000000, max: 100000000 },
-    { label: 'Above ₹10 Crores', min: 100000000, max: Infinity }
+    { label: 'Below ₹20 lakh', min: 0, max: 2000000 },
+    { label: '₹20 lakh – ₹35 lakh', min: 2000000, max: 3500000 },
+    { label: '₹35 lakh – ₹75 lakh', min: 3500000, max: 7500000 },
+    { label: '₹75 lakh – ₹1 Crore', min: 7500000, max: 10000000 },
+    { label: '₹1 Crore – ₹3 Crore', min: 10000000, max: 30000000 },
+    { label: '₹3 Crore – ₹5 Crore', min: 30000000, max: 50000000 },
+    { label: '₹5 Crore and above', min: 50000000, max: Infinity }
   ];
 
   // Memoized filtered plots (newest-first by default)
