@@ -9,7 +9,6 @@ import {
 import ClientOnly from '@/components/ClientOnly';
 import { useAdminData } from '@/hooks/useAdminData';
 import { SkeletonLoader } from '@/components/admin/ui';
-import './cobalt.css';
 
 declare global {
   interface Window {

@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { FaUserShield, FaUserPlus, FaEdit, FaTrash, FaCheck, FaTimes, FaEye, FaEyeSlash, FaSpinner } from 'react-icons/fa';
-import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
-import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
 
 interface AdminUser {
     uid: string;
@@ -300,29 +298,60 @@ export function FirebaseAdminUserManagement() {
     };
 
     if (isLoading && users.length === 0) {
-        return <LoadingSpinner message="Loading admin users..." />;
+        return (
+            <div data-theme="cobalt" className="cobalt-page">
+                <header className="page-head">
+                    <div>
+                        <div className="admin-skeleton h-7 w-64 mb-2" />
+                        <div className="admin-skeleton h-4 w-80" />
+                    </div>
+                </header>
+                <div className="panel">
+                    <div className="admin-skeleton h-64 w-full" />
+                </div>
+            </div>
+        );
     }
 
     if (error && users.length === 0) {
-        return <ErrorMessage message={error} onRetry={fetchAdminUsers} />;
+        return (
+            <div data-theme="cobalt" className="cobalt-page">
+                <header className="page-head">
+                    <div>
+                        <h1 className="page-title">Admin users</h1>
+                        <p className="page-sub">Manage admin users with role-based permissions</p>
+                    </div>
+                </header>
+                <section className="panel">
+                    <div className="empty">
+                        <FaUserShield size={24} aria-hidden="true" />
+                        <p className="empty-title">Could not load admin users</p>
+                        <p className="empty-hint">{error}</p>
+                        <button onClick={fetchAdminUsers} className="btn btn--primary">
+                            Try again
+                        </button>
+                    </div>
+                </section>
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-6">
+        <div data-theme="cobalt" className="cobalt-page">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <header className="page-head">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Firebase Admin User Management</h1>
-                    <p className="text-gray-600">Manage admin users with role-based permissions</p>
+                    <h1 className="page-title">Admin users</h1>
+                    <p className="page-sub">Manage admin users with role-based permissions</p>
                 </div>
                 <button
                     onClick={() => setShowCreateForm(!showCreateForm)}
-                    className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className={showCreateForm ? 'btn' : 'btn btn--primary'}
                 >
-                    <FaUserPlus className="mr-2" />
-                    {showCreateForm ? 'Cancel' : 'Create New Admin'}
+                    <FaUserPlus aria-hidden="true" />
+                    {showCreateForm ? 'Cancel' : 'Create new admin'}
                 </button>
-            </div>
+            </header>
 
             {/* Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaSave } from 'react-icons/fa';
-import { BsMenuUp } from 'react-icons/bs';
+import { FaSave, FaArrowLeft } from 'react-icons/fa';
 import ClientOnly from '@/components/ClientOnly';
 import ImageUploader from '@/components/ui/ImageUploader';
 
@@ -265,23 +264,22 @@ function NewPreLeasedPropertyContent() {
   };
   
   return (
-    <div className="card border-top border-0 border-4 border-blue-900 rounded-lg shadow-md">
-      <div className="border p-3 sm:p-4 rounded">
-        <div className="card-title flex flex-col sm:flex-row sm:items-center gap-2 mb-4">
-          <div className="flex items-center">
-            <h5 className="mb-0 text-lg sm:text-xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>Pre-Leased Inventory</h5>
-          </div>
-          <div className="sm:ml-auto">
-            <button 
-              type="button" 
-              onClick={() => router.push('/admin/Pre-Leased')}
-              className="btn btn-outline-danger px-3 py-2 border border-red-500 text-red-500 rounded hover:bg-red-50 text-sm"
-            >
-              <BsMenuUp className="inline mr-1" /> List
-            </button>
-          </div>
+    <div data-theme="cobalt" className="cobalt-page">
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">Pre-Leased Inventory</h1>
+          <p className="page-sub">Create a new pre-leased property listing</p>
         </div>
-        <hr className="mb-4" />
+        <button
+          type="button"
+          onClick={() => router.push('/admin/Pre-Leased')}
+          className="btn"
+        >
+          <FaArrowLeft aria-hidden="true" />
+          Back to list
+        </button>
+      </header>
+      <section className="panel">
         
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
@@ -733,7 +731,7 @@ function NewPreLeasedPropertyContent() {
             </button>
           </div>
         </form>
-      </div>
+      </section>
     </div>
   );
 } 

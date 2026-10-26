@@ -37,19 +37,17 @@ export default function PlotsAdminContent() {
   const formatCurrency = (amount: number): string => `₹${amount.toLocaleString('en-IN')}`;
 
   return (
-    <>
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div data-theme="cobalt" className="cobalt-page">
+      <header className="page-head">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Plot Inventory</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage plot projects and listings</p>
+          <h1 className="page-title">Plot Inventory</h1>
+          <p className="page-sub">Manage plot projects and listings</p>
         </div>
-        <AdminButton icon={<FaPlus />}>
-          <Link href="/admin/plots/new" className="flex items-center gap-2">
-            <span className="hidden sm:inline">Add New Plot</span>
-            <span className="sm:hidden">Add</span>
-          </Link>
-        </AdminButton>
-      </div>
+        <Link href="/admin/plots/new" className="btn btn--primary">
+          <FaPlus aria-hidden="true" />
+          Add new plot
+        </Link>
+      </header>
 
       <AdminCard className="mb-5">
         <div className="relative">
@@ -156,6 +154,6 @@ export default function PlotsAdminContent() {
       >
         <p className="text-sm text-gray-600">Are you sure you want to delete this plot? This action cannot be undone.</p>
       </AdminModal>
-    </>
+    </div>
   );
 }

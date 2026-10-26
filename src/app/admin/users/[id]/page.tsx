@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { UserWishlistView } from '@/components/admin/UserWishlistView';
-import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
-import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
-import { FaUser, FaEnvelope, FaCalendar, FaHeart, FaEye, FaPhone, FaCheck, FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaUser, FaHeart, FaEye, FaCheck, FaTimes, FaExternalLinkAlt, FaBan } from 'react-icons/fa';
 
 interface FirebaseUser {
   id: string;
@@ -34,11 +32,20 @@ interface FirebaseUser {
   wishlistCount: number;
 }
 
+const SHELL = 'cobalt-page';
+
+const PROVIDER_NAMES: Record<string, string> = {
+  google: 'Google',
+  oauth_github: 'GitHub',
+  oauth_facebook: 'Facebook',
+  email: 'Email',
+};
+
 export default function AdminUserDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const userId = params.id as string;
-  
+
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,33 +97,20 @@ export default function AdminUserDetailsPage() {
     });
   };
 
-  // Get provider badge styling
-  const getProviderInfo = (provider: string) => {
-    switch (provider) {
-      case 'google':
-        return { color: 'bg-red-100 text-red-800', name: 'Google' };
-      case 'oauth_github':
-        return { color: 'bg-gray-100 text-gray-800', name: 'GitHub' };
-      case 'oauth_facebook':
-        return { color: 'bg-blue-100 text-blue-800', name: 'Facebook' };
-      case 'email':
-        return { color: 'bg-green-100 text-green-800', name: 'Email' };
-      default:
-        return { color: 'bg-gray-100 text-gray-800', name: provider || 'Unknown' };
-    }
-  };
+  // Get provider display name
+  const providerName = (provider: string) => PROVIDER_NAMES[provider] || provider || 'Unknown';
 
   // Get user status
   const getUserStatus = (user: FirebaseUser) => {
-    if (user.banned) return { status: 'Banned', color: 'text-red-600', bgColor: 'bg-red-100', icon: FaTimes };
-    if (user.locked) return { status: 'Locked', color: 'text-orange-600', bgColor: 'bg-orange-100', icon: FaTimes };
-    if (user.isActive) return { status: 'Active', color: 'text-green-600', bgColor: 'bg-green-100', icon: FaCheck };
-    return { status: 'Inactive', color: 'text-gray-600', bgColor: 'bg-gray-100', icon: FaTimes };
+    if (user.banned) return { status: 'Banned', tone: 'error', icon: FaTimes };
+    if (user.locked) return { status: 'Locked', tone: 'warn', icon: FaTimes };
+    if (user.isActive) return { status: 'Active', tone: 'ok', icon: FaCheck };
+    return { status: 'Inactive', tone: 'muted', icon: FaTimes };
   };
 
   useEffect(() => {
     fetchUserDetails();
-    
+
     // Check for tab parameter in URL
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
@@ -129,257 +123,257 @@ export default function AdminUserDetailsPage() {
 
   if (isLoading) {
     return (
-      <>
-        <LoadingSpinner message="Loading user details..." />
-      </>
+      <div data-theme="cobalt" className={SHELL}>
+        <header className="page-head">
+          <div>
+            <div className="admin-skeleton h-7 w-44 mb-2" />
+            <div className="admin-skeleton h-4 w-72" />
+          </div>
+        </header>
+        <div className="panel">
+          <div className="profile">
+            <div className="admin-skeleton profile-avatar" />
+            <div className="profile-main">
+              <div className="admin-skeleton h-6 w-48 mb-3" />
+              <div className="admin-skeleton h-4 w-64 mb-2" />
+              <div className="admin-skeleton h-4 w-40" />
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
   if (error || !user) {
     return (
-      <>
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">User Details</h1>
-            <button
-              onClick={handleClose}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
-            >
-              Back to Users
+      <div data-theme="cobalt" className={SHELL}>
+        <header className="page-head">
+          <div>
+            <h1 className="page-title">User Details</h1>
+            <p className="page-sub">Comprehensive view of user profile and activity</p>
+          </div>
+          <button onClick={handleClose} className="btn">
+            Back to users
+          </button>
+        </header>
+        <section className="panel">
+          <div className="empty">
+            <FaBan size={24} aria-hidden="true" />
+            <p className="empty-title">User not found</p>
+            <p className="empty-hint">{error || 'This user could not be loaded.'}</p>
+            <button className="btn btn--primary" onClick={fetchUserDetails}>
+              Try again
             </button>
           </div>
-          <ErrorMessage 
-            message={error || 'User not found'}
-            onRetry={fetchUserDetails}
-          />
-        </div>
-      </>
+        </section>
+      </div>
     );
   }
 
-  const providerInfo = getProviderInfo(user.provider);
   const userStatus = getUserStatus(user);
   const StatusIcon = userStatus.icon;
+  const statusBadge =
+    userStatus.tone === 'error' ? 'badge badge--error'
+      : userStatus.tone === 'ok' ? 'badge badge--accent'
+        : 'badge';
+
+  const daysActive = Math.floor(
+    (Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+  );
 
   return (
-    <>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">User Details</h1>
-            <p className="text-gray-600">Comprehensive view of user profile and activity</p>
+    <div data-theme="cobalt" className={SHELL}>
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">User Details</h1>
+          <p className="page-sub">Comprehensive view of user profile and activity</p>
+        </div>
+        <button onClick={handleClose} className="btn">
+          Back to users
+        </button>
+      </header>
+
+      {/* Profile */}
+      <section className="panel">
+        <div className="profile">
+          {user.imageUrl ? (
+            <img className="profile-avatar" src={user.imageUrl} alt={user.name} />
+          ) : (
+            <div className="profile-avatar profile-avatar--fallback">
+              <FaUser aria-hidden="true" />
+            </div>
+          )}
+
+          <div className="profile-main">
+            <div className="profile-top">
+              <div>
+                <h2 className="profile-name">{user.name}</h2>
+                <p className="profile-mail">{user.email}</p>
+                <p className="profile-id">ID: {user.id}</p>
+              </div>
+              <div className="profile-badges">
+                <span className={statusBadge}>
+                  <StatusIcon aria-hidden="true" />
+                  {userStatus.status}
+                </span>
+                {user.emailVerified && (
+                  <span className="badge badge--accent">
+                    <FaCheck aria-hidden="true" />
+                    Verified
+                  </span>
+                )}
+                <span className="badge">{user.role}</span>
+              </div>
+            </div>
+
+            <div className="quick-stats">
+              <div className="quick-stat">
+                <p className="quick-stat-value">{user.wishlistCount || 0}</p>
+                <p className="quick-stat-label">Wishlist items</p>
+              </div>
+              <div className="quick-stat">
+                <p className="quick-stat-value">{user.totalViews || 0}</p>
+                <p className="quick-stat-label">Property views</p>
+              </div>
+              <div className="quick-stat">
+                <p className="quick-stat-value">{daysActive}</p>
+                <p className="quick-stat-label">Days active</p>
+              </div>
+            </div>
           </div>
-          <button
-            onClick={handleClose}
-            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+        </div>
+
+        <div className="detail-grid">
+          <div className="detail-col">
+            <h3 className="detail-heading">Contact</h3>
+            <dl className="detail-list">
+              <div className="detail-row">
+                <dt>Email</dt>
+                <dd>{user.email}</dd>
+              </div>
+              {user.phoneNumber && (
+                <div className="detail-row">
+                  <dt>Phone</dt>
+                  <dd>{user.phoneNumber}</dd>
+                </div>
+              )}
+              <div className="detail-row">
+                <dt>Provider</dt>
+                <dd>{providerName(user.provider)}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="detail-col">
+            <h3 className="detail-heading">Account</h3>
+            <dl className="detail-list">
+              <div className="detail-row">
+                <dt>Role</dt>
+                <dd>{user.role}</dd>
+              </div>
+              <div className="detail-row">
+                <dt>Created</dt>
+                <dd>{formatDate(user.createdAt)}</dd>
+              </div>
+              <div className="detail-row">
+                <dt>Last login</dt>
+                <dd>{formatDate(user.lastLoginAt)}</dd>
+              </div>
+              <div className="detail-row">
+                <dt>Last active</dt>
+                <dd>{formatDate(user.lastActiveAt)}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="detail-col">
+            <h3 className="detail-heading">Security</h3>
+            <dl className="detail-list">
+              <div className="detail-row">
+                <dt>Email verified</dt>
+                <dd className={user.emailVerified ? 'val-ok' : 'val-error'}>
+                  {user.emailVerified ? 'Yes' : 'No'}
+                </dd>
+              </div>
+              <div className="detail-row">
+                <dt>2FA enabled</dt>
+                <dd className={user.twoFactorEnabled ? 'val-ok' : ''}>
+                  {user.twoFactorEnabled ? 'Yes' : 'No'}
+                </dd>
+              </div>
+              {user.externalAccounts.length > 1 && (
+                <div className="detail-row">
+                  <dt>Connected accounts</dt>
+                  <dd>{user.externalAccounts.length}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        </div>
+
+        <div className="detail-foot">
+          <a
+            href={`https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/authentication/users`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn"
           >
-            Back to Users
+            <FaExternalLinkAlt aria-hidden="true" />
+            View in Firebase Console
+          </a>
+        </div>
+      </section>
+
+      {/* Tabs */}
+      <section className="panel panel--flush detail-tabs">
+        <div className="tabs" role="tablist" aria-label="User details">
+          <button
+            id="tab-overview"
+            role="tab"
+            aria-selected={activeTab === 'overview'}
+            aria-controls="panel-overview"
+            onClick={() => setActiveTab('overview')}
+            className={`tab ${activeTab === 'overview' ? 'is-active' : ''}`}
+          >
+            <FaEye aria-hidden="true" />
+            Overview
+          </button>
+          <button
+            id="tab-wishlist"
+            role="tab"
+            aria-selected={activeTab === 'wishlist'}
+            aria-controls="panel-wishlist"
+            onClick={() => setActiveTab('wishlist')}
+            className={`tab ${activeTab === 'wishlist' ? 'is-active' : ''}`}
+          >
+            <FaHeart aria-hidden="true" />
+            Wishlist ({user.wishlistCount || 0})
           </button>
         </div>
 
-        {/* User Profile Card */}
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-          <div className="p-6">
-            <div className="flex items-start space-x-6">
-              {/* Avatar */}
-              <div className="flex-shrink-0">
-                {user.imageUrl ? (
-                  <img
-                    className="h-20 w-20 rounded-full object-cover"
-                    src={user.imageUrl}
-                    alt={user.name}
-                  />
-                ) : (
-                  <div className="h-20 w-20 rounded-full bg-gray-300 flex items-center justify-center">
-                    <FaUser className="text-gray-600 text-2xl" />
-                  </div>
-                )}
-              </div>
-
-              {/* User Info */}
-              <div className="flex-1">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">{user.name}</h2>
-                    <p className="text-gray-600">{user.email}</p>
-                    <p className="text-xs text-gray-400 font-mono">ID: {user.id}</p>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${userStatus.color} ${userStatus.bgColor}`}>
-                      <StatusIcon className="mr-1" />
-                      {userStatus.status}
-                    </span>
-                    {user.emailVerified && (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        <FaCheck className="mr-1" />
-                        Verified
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Quick Stats */}
-                <div className="mt-4 grid grid-cols-3 gap-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{user.wishlistCount || 0}</div>
-                    <div className="text-sm text-blue-800">Wishlist Items</div>
-                  </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{user.totalViews || 0}</div>
-                    <div className="text-sm text-green-800">Property Views</div>
-                  </div>
-                  <div className="text-center p-3 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">
-                      {Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24))}
-                    </div>
-                    <div className="text-sm text-purple-800">Days Active</div>
-                  </div>
-                </div>
-              </div>
+        <div
+          className="tab-panel"
+          role="tabpanel"
+          id={activeTab === 'overview' ? 'panel-overview' : 'panel-wishlist'}
+          aria-labelledby={activeTab === 'overview' ? 'tab-overview' : 'tab-wishlist'}
+        >
+          {activeTab === 'overview' ? (
+            <div className="empty">
+              <FaUser size={24} aria-hidden="true" />
+              <p className="empty-title">User overview</p>
+              <p className="empty-hint">
+                Activity analytics and engagement metrics are coming soon.
+              </p>
             </div>
-          </div>
-
-          {/* Detailed Info Grid */}
-          <div className="border-t bg-gray-50 p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Contact Information */}
-              <div className="space-y-3">
-                <h3 className="font-medium text-gray-900">Contact Information</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center">
-                    <FaEnvelope className="text-gray-400 mr-2" />
-                    <span>{user.email}</span>
-                  </div>
-                  {user.phoneNumber && (
-                    <div className="flex items-center">
-                      <FaPhone className="text-gray-400 mr-2" />
-                      <span>{user.phoneNumber}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${providerInfo.color}`}>
-                      {providerInfo.name}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Account Details */}
-              <div className="space-y-3">
-                <h3 className="font-medium text-gray-900">Account Details</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span>Role:</span>
-                    <span className="font-medium">{user.role}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Created:</span>
-                    <span>{formatDate(user.createdAt)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Last Login:</span>
-                    <span>{formatDate(user.lastLoginAt)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Last Active:</span>
-                    <span>{formatDate(user.lastActiveAt)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Security & Verification */}
-              <div className="space-y-3">
-                <h3 className="font-medium text-gray-900">Security</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span>Email Verified:</span>
-                    <span className={user.emailVerified ? 'text-green-600' : 'text-red-600'}>
-                      {user.emailVerified ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>2FA Enabled:</span>
-                    <span className={user.twoFactorEnabled ? 'text-green-600' : 'text-gray-600'}>
-                      {user.twoFactorEnabled ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-                  {user.externalAccounts.length > 1 && (
-                    <div className="flex items-center justify-between">
-                      <span>Connected Accounts:</span>
-                      <span>{user.externalAccounts.length}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* External Links */}
-            <div className="mt-6 pt-6 border-t">
-              <a
-                href={`https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/authentication/users`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center px-4 py-2 border border-orange-300 rounded-md shadow-sm text-sm font-medium text-orange-700 bg-orange-50 hover:bg-orange-100"
-              >
-                <FaExternalLinkAlt className="mr-2" />
-                View in Firebase Console
-              </a>
-            </div>
-          </div>
+          ) : (
+            <UserWishlistView
+              userId={user.id}
+              userName={user.name}
+              userEmail={user.email}
+            />
+          )}
         </div>
-
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`py-4 px-6 border-b-2 font-medium text-sm ${
-                  activeTab === 'overview'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <FaEye className="inline mr-2" />
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('wishlist')}
-                className={`py-4 px-6 border-b-2 font-medium text-sm ${
-                  activeTab === 'wishlist'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <FaHeart className="inline mr-2" />
-                Wishlist ({user.wishlistCount || 0})
-              </button>
-            </nav>
-          </div>
-
-          <div className="p-6">
-            {activeTab === 'overview' ? (
-              <div className="space-y-6">
-                <div className="text-center py-8">
-                  <FaUser className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">User Overview</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    User activity overview, analytics, and engagement metrics coming soon.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <UserWishlistView 
-                userId={user.id}
-                userName={user.name}
-                userEmail={user.email}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-    </>
+      </section>
+    </div>
   );
 }

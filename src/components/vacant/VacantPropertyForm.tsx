@@ -8,8 +8,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaSave } from 'react-icons/fa';
-import { BsMenuUp } from 'react-icons/bs';
+import { FaSave, FaArrowLeft } from 'react-icons/fa';
 import ImageUploader from '@/components/ui/ImageUploader';
 
 // ─── Option lists ────────────────────────────────────────────────────────────
@@ -37,8 +36,6 @@ const HIGH_STREET_CATEGORIES = ['High-Street', 'Mall', 'IT-ITES', 'Corporate', '
 const FLOORS = ['Ground', 'Upper Ground', 'Lower Ground', 'Basement', 'First', 'Second', 'Third'];
 
 const FACING_OPTIONS = ['Main Road', 'Atrium', 'General'];
-
-const FRONTAGE_OPTIONS = ['Yes', 'No'];
 
 const PROPERTY_TYPES = ['Independent Unit', 'Standalone Building', 'High-Street'];
 
@@ -112,7 +109,7 @@ export function propertyToVacantForm(property: Record<string, any>): VacantFormV
     category: property.category || '',
     floors: String(property.floor || '').split(',').map(f => f.trim()).filter(Boolean),
     facing: property.facing || '',
-    frontage: property.frontage || '',
+    frontage: String(property.frontage || '').replace(/\s*ft$/i, '').replace(/\D/g, ''),
     superArea: property.superArea || '',
     carpetArea: property.carpetArea || '',
     propertyType: property.unitType || '',
@@ -129,6 +126,8 @@ export function propertyToVacantForm(property: Record<string, any>): VacantFormV
 /** Form values → request body (identical for create and update) */
 export function vacantFormToPayload(values: VacantFormValues): Record<string, any> {
   const images = values.images.filter(img => img.trim() !== '');
+  // Frontage is entered as an integer; store it with the default "ft" suffix
+  const frontageFeet = String(values.frontage || '').replace(/\D/g, '');
   return {
     // `propertyType` is what routes the document to the vacant collection;
     // the Unit Type select is persisted separately as `unitType`.
@@ -146,7 +145,7 @@ export function vacantFormToPayload(values: VacantFormValues): Record<string, an
 
     floor: values.floors.join(', '),
     facing: values.facing,
-    frontage: values.frontage,
+    frontage: frontageFeet ? `${frontageFeet} ft` : '',
     superArea: values.superArea,
     carpetArea: values.carpetArea,
 
@@ -269,23 +268,22 @@ export default function VacantPropertyForm({
   };
 
   return (
-    <div className="card border-top border-0 border-4 border-blue-900 rounded-lg shadow-md">
-      <div className="border p-3 md:p-4 rounded">
-        <div className="card-title d-flex align-items-center flex flex-col sm:flex-row justify-between gap-2 mb-4">
-          <div className="flex items-center">
-            <h5 className="mb-0 text-lg md:text-xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>{title}</h5>
-          </div>
-          <div>
-            <button
-              type="button"
-              onClick={() => router.push('/admin/vacant')}
-              className="btn btn-outline-danger px-3 py-2 border border-red-500 text-red-500 rounded hover:bg-red-50 text-sm"
-            >
-              <BsMenuUp className="inline mr-1" /> List
-            </button>
-          </div>
+    <div data-theme="cobalt" className="cobalt-page">
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">{title}</h1>
+          <p className="page-sub">Property details and listing information</p>
         </div>
-        <hr className="mb-4" />
+        <button
+          type="button"
+          onClick={() => router.push('/admin/vacant')}
+          className="btn"
+        >
+          <FaArrowLeft aria-hidden="true" />
+          Back to list
+        </button>
+      </header>
+      <section className="panel">
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-3 md:p-4 mb-4 text-sm">
@@ -557,19 +555,24 @@ export default function VacantPropertyForm({
 
                 <div>
                   <label htmlFor="frontage" className="text-gray-700 text-sm font-medium block mb-1">Frontage</label>
-                  <select
-                    id="frontage"
-                    name="frontage"
-                    value={formData.frontage}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
-                  >
-                    <option value="" disabled>Choose...</option>
-                    {withCurrent(FRONTAGE_OPTIONS, formData.frontage).map(option => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      id="frontage"
+                      name="frontage"
+                      value={formData.frontage}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        setFormData(prev => ({ ...prev, frontage: digits }));
+                        clearError('frontage');
+                      }}
+                      required
+                      placeholder="Frontage"
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">ft</span>
+                  </div>
                   {errors.frontage && (
                     <div className="text-red-500 text-xs mt-1">{errors.frontage}</div>
                   )}
@@ -715,7 +718,7 @@ export default function VacantPropertyForm({
             </div>
           </div>
         </form>
-      </div>
+      </section>
     </div>
   );
 }

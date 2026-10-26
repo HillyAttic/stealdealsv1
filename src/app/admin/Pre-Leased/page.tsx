@@ -55,19 +55,17 @@ export default function PreLeasedPropertiesContent() {
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   return (
-    <>
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div data-theme="cobalt" className="cobalt-page">
+      <header className="page-head">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pre-Leased Properties</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage pre-leased property listings</p>
+          <h1 className="page-title">Pre-Leased Properties</h1>
+          <p className="page-sub">Manage pre-leased property listings</p>
         </div>
-        <AdminButton icon={<FaPlus />}>
-          <Link href="/admin/Pre-Leased/new" className="flex items-center gap-2">
-            <span className="hidden sm:inline">Add New Property</span>
-            <span className="sm:hidden">Add</span>
-          </Link>
-        </AdminButton>
-      </div>
+        <Link href="/admin/Pre-Leased/new" className="btn btn--primary">
+          <FaPlus aria-hidden="true" />
+          Add new property
+        </Link>
+      </header>
 
       <AdminCard className="mb-5">
         <div className="relative">
@@ -190,6 +188,6 @@ export default function PreLeasedPropertiesContent() {
       >
         <p className="text-sm text-gray-600">Are you sure you want to delete this property? This action cannot be undone.</p>
       </AdminModal>
-    </>
+    </div>
   );
 }

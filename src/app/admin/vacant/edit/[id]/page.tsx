@@ -14,9 +14,16 @@ export default function EditVacantProperty() {
     <>
       <ClientOnly
         fallback={
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
-            <span className="ml-2">Loading property editor...</span>
+          <div data-theme="cobalt" className="cobalt-page">
+            <header className="page-head">
+              <div>
+                <div className="admin-skeleton h-7 w-52 mb-2" />
+                <div className="admin-skeleton h-4 w-72" />
+              </div>
+            </header>
+            <div className="panel">
+              <div className="admin-skeleton h-64 w-full" />
+            </div>
           </div>
         }
       >

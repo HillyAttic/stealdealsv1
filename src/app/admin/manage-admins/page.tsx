@@ -6,8 +6,6 @@ import {
     FaUser, FaUserShield, FaPlus, FaTimes, FaCheck,
     FaEdit, FaTrash, FaKey, FaEye, FaEyeSlash, FaExclamationTriangle,
 } from 'react-icons/fa';
-import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
-import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
 
 interface AdminUser {
     uid: string;
@@ -34,6 +32,8 @@ interface AdminUser {
 }
 
 type ModalType = 'create' | 'edit' | 'delete' | 'password' | null;
+
+const SHELL = 'cobalt-page';
 
 export default function ManageAdminsPage() {
     const [users, setUsers] = useState<AdminUser[]>([]);
@@ -210,163 +210,177 @@ export default function ManageAdminsPage() {
         return enabled.length === 0 ? 'No pages' : enabled.join(', ');
     };
 
+    const enabledPages = (user: AdminUser) =>
+        Object.entries(user.permissions?.pages ?? {})
+            .filter(([, v]) => v)
+            .map(([k]) => k)
+            .join(', ') || 'None';
+
     if (isLoading && users.length === 0) {
-        return <><LoadingSpinner message="Loading admin users..." /></>;
-    }
-
-    return (
-        <>
-            <div className="space-y-6">
-
-                {/* ── Header ── */}
-                <div className="flex items-center justify-between">
+        return (
+            <div data-theme="cobalt" className={SHELL}>
+                <header className="page-head">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Admin User Management</h1>
-                        <p className="text-gray-600">Manage admin users with role-based permissions</p>
+                        <div className="admin-skeleton h-7 w-64 mb-2" />
+                        <div className="admin-skeleton h-4 w-80" />
                     </div>
-                    <button
-                        onClick={() => setActiveModal('create')}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                    >
-                        <FaPlus />
-                        Create New Admin
-                    </button>
-                </div>
-
-                {/* ── Success banner ── */}
-                {successMessage && (
-                    <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 flex items-center gap-3">
-                        <FaCheck className="text-green-500 flex-shrink-0" />
-                        <p>{successMessage}</p>
-                    </div>
-                )}
-
-                {/* ── Error banner ── */}
-                {error && !activeModal && (
-                    <ErrorMessage message={error} onRetry={fetchUsers} />
-                )}
-
-                {/* ── Stats ── */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                        { label: 'Total Admins', value: users.length, color: 'blue' },
-                        { label: 'Superusers', value: users.filter(u => u.role === 'superuser').length, color: 'purple' },
-                        { label: 'Subusers', value: users.filter(u => u.role === 'subuser').length, color: 'green' },
-                    ].map(({ label, value, color }) => (
-                        <div key={label} className="bg-white p-6 rounded-lg shadow-sm border">
-                            <div className="flex items-center gap-4">
-                                <div className={`p-2 bg-${color}-100 rounded-lg`}>
-                                    <FaUserShield className={`text-${color}-600 text-xl`} />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-600">{label}</p>
-                                    <p className="text-2xl font-bold text-gray-900">{value}</p>
-                                </div>
-                            </div>
+                </header>
+                <div className="stat-grid stat-grid--three">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="panel stat">
+                            <div className="admin-skeleton h-3 w-24 mb-4" />
+                            <div className="admin-skeleton h-8 w-16" />
                         </div>
                     ))}
                 </div>
-
-                {/* ── Users Table ── */}
-                <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin User</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permissions</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {users.map(user => (
-                                    <tr key={user.uid} className="hover:bg-gray-50 transition-colors">
-                                        {/* User info */}
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 flex-shrink-0 bg-blue-100 rounded-full flex items-center justify-center">
-                                                    <FaUserShield className="text-blue-600" />
-                                                </div>
-                                                <div>
-                                                    <div className="text-sm font-semibold text-gray-900">{user.name}</div>
-                                                    <div className="text-sm text-gray-500">{user.email}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        {/* Role badge */}
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                user.role === 'superuser'
-                                                    ? 'bg-purple-100 text-purple-800'
-                                                    : 'bg-green-100 text-green-800'
-                                            }`}>
-                                                {user.role === 'superuser' ? 'Superuser' : 'Subuser'}
-                                            </span>
-                                        </td>
-                                        {/* Permissions */}
-                                        <td className="px-6 py-4">
-                                            {user.role === 'superuser' ? (
-                                                <span className="text-sm font-medium text-purple-600">Full Access</span>
-                                            ) : (
-                                                <div className="text-sm text-gray-700">
-                                                    <div className="font-medium">{getPermissionsSummary(user)}</div>
-                                                    <div className="text-xs text-gray-400 mt-0.5">
-                                                        Pages: {Object.entries(user.permissions?.pages ?? {})
-                                                            .filter(([, v]) => v).map(([k]) => k).join(', ') || 'None'}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </td>
-                                        {/* Created at */}
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {formatDate(user.createdAt)}
-                                        </td>
-                                        {/* ── Action buttons ── */}
-                                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                {/* Reset Password */}
-                                                <button
-                                                    onClick={() => { setSelectedUser(user); setActiveModal('password'); }}
-                                                    title="Reset Password"
-                                                    className="p-2 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                                                >
-                                                    <FaKey className="text-sm" />
-                                                </button>
-                                                {/* Edit */}
-                                                <button
-                                                    onClick={() => { setSelectedUser(user); setActiveModal('edit'); }}
-                                                    title="Edit User"
-                                                    className="p-2 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                                                >
-                                                    <FaEdit className="text-sm" />
-                                                </button>
-                                                {/* Delete */}
-                                                <button
-                                                    onClick={() => { setSelectedUser(user); setActiveModal('delete'); }}
-                                                    title="Delete User"
-                                                    className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                                >
-                                                    <FaTrash className="text-sm" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {users.length === 0 && !isLoading && (
-                        <div className="text-center py-12">
-                            <FaUserShield className="mx-auto h-12 w-12 text-gray-400" />
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">No admin users</h3>
-                            <p className="mt-1 text-sm text-gray-500">Get started by creating a new admin user.</p>
-                        </div>
-                    )}
+                <div className="panel">
+                    <div className="admin-skeleton h-64 w-full" />
                 </div>
             </div>
+        );
+    }
+
+    return (
+        <div data-theme="cobalt" className={SHELL}>
+            <header className="page-head">
+                <div>
+                    <h1 className="page-title">Admin User Management</h1>
+                    <p className="page-sub">Manage admin users with role-based permissions</p>
+                </div>
+                <button
+                    onClick={() => setActiveModal('create')}
+                    className="btn btn--primary"
+                >
+                    <FaPlus aria-hidden="true" />
+                    Create new admin
+                </button>
+            </header>
+
+            {/* Success banner */}
+            {successMessage && (
+                <div className="cobalt-success">
+                    <FaCheck aria-hidden="true" />
+                    <p>{successMessage}</p>
+                </div>
+            )}
+
+            {/* Error banner */}
+            {error && !activeModal && (
+                <div className="cobalt-error cobalt-error--row">
+                    <p>{error}</p>
+                    <button onClick={fetchUsers} className="btn btn--quiet">
+                        Retry
+                    </button>
+                </div>
+            )}
+
+            {/* Stats */}
+            <div className="stat-grid stat-grid--three">
+                {[
+                    { label: 'Total admins', value: users.length, icon: FaUserShield },
+                    { label: 'Superusers', value: users.filter(u => u.role === 'superuser').length, icon: FaKey },
+                    { label: 'Subusers', value: users.filter(u => u.role === 'subuser').length, icon: FaUser },
+                ].map(({ label, value, icon: Icon }) => (
+                    <div key={label} className="panel stat">
+                        <p className="stat-label">
+                            <Icon size={14} aria-hidden="true" />
+                            {label}
+                        </p>
+                        <p className="stat-value">{value}</p>
+                        <p className="stat-foot">
+                            {label === 'Total admins'
+                                ? 'All admin accounts'
+                                : `${users.length > 0 ? Math.round((value / users.length) * 100) : 0}% of admins`}
+                        </p>
+                    </div>
+                ))}
+            </div>
+
+            {/* Users table */}
+            <section className="panel panel--flush">
+                <div className="table-scroll">
+                    <table className="data-table">
+                        <thead>
+                            <tr>
+                                <th>Admin user</th>
+                                <th>Role</th>
+                                <th className="hide-sm">Permissions</th>
+                                <th className="hide-sm">Created</th>
+                                <th className="is-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {users.map(user => (
+                                <tr key={user.uid}>
+                                    <td>
+                                        <div className="identity">
+                                            <div className="admin-avatar">
+                                                <FaUserShield aria-hidden="true" />
+                                            </div>
+                                            <div className="identity-text">
+                                                <p className="identity-name">{user.name}</p>
+                                                <p className="identity-mail">{user.email}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span className={user.role === 'superuser' ? 'badge badge--accent' : 'badge'}>
+                                            {user.role === 'superuser' ? 'Superuser' : 'Subuser'}
+                                        </span>
+                                    </td>
+                                    <td className="hide-sm">
+                                        {user.role === 'superuser' ? (
+                                            <span className="badge badge--accent">Full access</span>
+                                        ) : (
+                                            <>
+                                                <p className="identity-name">{getPermissionsSummary(user)}</p>
+                                                <p className="muted-note">Pages: {enabledPages(user)}</p>
+                                            </>
+                                        )}
+                                    </td>
+                                    <td className="hide-sm nowrap">{formatDate(user.createdAt)}</td>
+                                    <td className="is-right">
+                                        <div className="row-actions">
+                                            <button
+                                                onClick={() => { setSelectedUser(user); setActiveModal('password'); }}
+                                                title="Reset password"
+                                                aria-label={`Reset password for ${user.name}`}
+                                                className="icon-btn icon-btn--warn"
+                                            >
+                                                <FaKey />
+                                            </button>
+                                            <button
+                                                onClick={() => { setSelectedUser(user); setActiveModal('edit'); }}
+                                                title="Edit user"
+                                                aria-label={`Edit ${user.name}`}
+                                                className="icon-btn"
+                                            >
+                                                <FaEdit />
+                                            </button>
+                                            <button
+                                                onClick={() => { setSelectedUser(user); setActiveModal('delete'); }}
+                                                title="Delete user"
+                                                aria-label={`Delete ${user.name}`}
+                                                className="icon-btn icon-btn--danger"
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {users.length === 0 && !isLoading && (
+                    <div className="empty">
+                        <FaUserShield size={24} aria-hidden="true" />
+                        <p className="empty-title">No admin users</p>
+                        <p className="empty-hint">Get started by creating a new admin user.</p>
+                    </div>
+                )}
+            </section>
 
             {/* ════════════════════════════════════════════════════════════════
                 MODALS
@@ -374,8 +388,8 @@ export default function ManageAdminsPage() {
 
             {/* ── CREATE modal ── */}
             {activeModal === 'create' && (
-                <ModalShell title="Create New Admin User" onClose={closeModal}>
-                    {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>}
+                <ModalShell title="Create new admin user" onClose={closeModal}>
+                    {error && <div className="modal-error">{error}</div>}
                     <AdminUserForm
                         onSubmit={handleCreateUser}
                         onCancel={closeModal}
@@ -387,7 +401,7 @@ export default function ManageAdminsPage() {
             {/* ── EDIT modal ── */}
             {activeModal === 'edit' && selectedUser && (
                 <ModalShell title={`Edit — ${selectedUser.name}`} onClose={closeModal}>
-                    {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>}
+                    {error && <div className="modal-error">{error}</div>}
                     <AdminUserForm
                         editMode
                         initialData={{
@@ -405,36 +419,28 @@ export default function ManageAdminsPage() {
 
             {/* ── DELETE confirmation modal ── */}
             {activeModal === 'delete' && selectedUser && (
-                <ModalShell title="Delete Admin User" onClose={closeModal} maxWidth="max-w-sm">
-                    <div className="flex flex-col items-center text-center gap-4 py-2">
-                        <div className="p-4 bg-red-100 rounded-full">
-                            <FaExclamationTriangle className="text-red-600 text-3xl" />
+                <ModalShell title="Delete admin user" onClose={closeModal} size="sm">
+                    <div className="confirm">
+                        <div className="confirm-icon">
+                            <FaExclamationTriangle aria-hidden="true" />
                         </div>
                         <div>
-                            <p className="text-gray-800 font-semibold text-lg">Are you sure?</p>
-                            <p className="text-gray-500 text-sm mt-1">
-                                This will permanently delete <span className="font-semibold text-gray-700">{selectedUser.name}</span> ({selectedUser.email}).
+                            <p className="confirm-title">Are you sure?</p>
+                            <p className="confirm-text">
+                                This will permanently delete <strong>{selectedUser.name}</strong> ({selectedUser.email}).
                                 This action cannot be undone.
                             </p>
                         </div>
-                        {error && <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>}
-                        <div className="flex gap-3 w-full mt-2">
-                            <button
-                                onClick={closeModal}
-                                disabled={isDeleting}
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                            >
+                        {error && <div className="modal-error">{error}</div>}
+                        <div className="modal-actions">
+                            <button onClick={closeModal} disabled={isDeleting} className="btn">
                                 Cancel
                             </button>
-                            <button
-                                onClick={handleDeleteUser}
-                                disabled={isDeleting}
-                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
-                            >
+                            <button onClick={handleDeleteUser} disabled={isDeleting} className="btn btn--danger">
                                 {isDeleting ? (
-                                    <><div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /><span>Deleting...</span></>
+                                    <><span className="spin" aria-hidden="true" /><span>Deleting…</span></>
                                 ) : (
-                                    <><FaTrash /><span>Delete</span></>
+                                    <><FaTrash aria-hidden="true" /><span>Delete</span></>
                                 )}
                             </button>
                         </div>
@@ -444,102 +450,93 @@ export default function ManageAdminsPage() {
 
             {/* ── RESET PASSWORD modal ── */}
             {activeModal === 'password' && selectedUser && (
-                <ModalShell title={`Password — ${selectedUser.name}`} onClose={closeModal} maxWidth="max-w-sm">
-                    <div className="space-y-5">
-                        {/* Show current stored password */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                <ModalShell title={`Password — ${selectedUser.name}`} onClose={closeModal} size="sm">
+                    <div className="form-stack">
+                        {/* Current stored password */}
+                        <div className="field">
+                            <label className="field-label">Current password</label>
                             {selectedUser.plainPassword ? (
-                                <div className="relative">
-                                    <FaKey className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <div className="input-wrap input-wrap--action">
+                                    <FaKey aria-hidden="true" />
                                     <input
                                         type={showNewPassword ? 'text' : 'password'}
                                         readOnly
                                         value={selectedUser.plainPassword}
-                                        className="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-800 cursor-default select-all"
+                                        className="input is-readonly"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowNewPassword(v => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                        className="input-action"
+                                        aria-label={showNewPassword ? 'Hide password' : 'Show password'}
                                     >
                                         {showNewPassword ? <FaEyeSlash /> : <FaEye />}
                                     </button>
                                 </div>
                             ) : (
-                                <p className="text-sm text-gray-500 italic px-1">
+                                <p className="field-hint">
                                     No password on record — this user was created before password storage was enabled.
                                 </p>
                             )}
                         </div>
 
-                        <div className="border-t border-gray-100 pt-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Set New Password <span className="text-gray-400 font-normal">(optional)</span>
+                        <div className="field">
+                            <label htmlFor="new-password" className="field-label">
+                                Set new password <span className="field-label-note">(optional)</span>
                             </label>
-                            <div className="relative">
-                                <FaKey className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <div className="input-wrap">
+                                <FaKey aria-hidden="true" />
                                 <input
+                                    id="new-password"
                                     type={showNewPassword ? 'text' : 'password'}
                                     value={newPassword}
                                     onChange={e => { setNewPassword(e.target.value); setPasswordError(''); }}
-                                    className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${passwordError ? 'border-red-500' : 'border-gray-300'}`}
+                                    className={`input ${passwordError ? 'is-invalid' : ''}`}
                                     placeholder="Minimum 6 characters"
                                     disabled={isSubmitting}
                                 />
                             </div>
-                            {passwordError && <p className="mt-1 text-sm text-red-600">{passwordError}</p>}
+                            {passwordError && <p className="field-error">{passwordError}</p>}
                         </div>
 
-                        <div className="flex gap-3 pt-1">
-                            <button
-                                onClick={closeModal}
-                                disabled={isSubmitting}
-                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                            >
+                        <div className="modal-actions">
+                            <button onClick={closeModal} disabled={isSubmitting} className="btn">
                                 Close
                             </button>
                             <button
                                 onClick={handleResetPassword}
                                 disabled={isSubmitting || !newPassword}
-                                className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
+                                className="btn btn--primary"
                             >
                                 {isSubmitting ? (
-                                    <><div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /><span>Saving...</span></>
+                                    <><span className="spin" aria-hidden="true" /><span>Saving…</span></>
                                 ) : (
-                                    <><FaKey /><span>Update Password</span></>
+                                    <><FaKey aria-hidden="true" /><span>Update password</span></>
                                 )}
                             </button>
                         </div>
                     </div>
                 </ModalShell>
             )}
-        </>
+        </div>
     );
 }
 
 // ── Reusable modal shell ─────────────────────────────────────────────────────
 function ModalShell({
-    title, onClose, children, maxWidth = 'max-w-5xl',
-}: { title: string; onClose: () => void; children: React.ReactNode; maxWidth?: string }) {
+    title, onClose, children, size = 'lg',
+}: { title: string; onClose: () => void; children: React.ReactNode; size?: 'lg' | 'sm' }) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-            {/* Panel — landscape, no scroll */}
-            <div className={`relative bg-white rounded-xl shadow-2xl w-full ${maxWidth} flex flex-col`}>
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
-                    <h2 className="text-lg font-bold text-gray-900">{title}</h2>
-                    <button
-                        onClick={onClose}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
+        <div className="modal-backdrop">
+            <div className="modal-backdrop-shade" onClick={onClose} />
+            <div className={`modal ${size === 'sm' ? 'modal--sm' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
+                <div className="modal-head">
+                    <h2 className="modal-title">{title}</h2>
+                    <button onClick={onClose} className="modal-close" aria-label="Close">
                         <FaTimes />
                     </button>
                 </div>
-                {/* Body — no overflow */}
-                <div className="px-6 py-5">
+                <div className="modal-body">
                     {children}
                 </div>
             </div>

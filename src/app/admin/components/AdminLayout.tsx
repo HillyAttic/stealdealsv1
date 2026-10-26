@@ -93,11 +93,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <ClientOnly
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="p-4 text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-primary-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-500 text-sm">Loading admin panel...</p>
-          </div>
+        <div data-theme="cobalt" className={`${FONT_VARS} cobalt-shell cobalt-loading`} role="status" aria-live="polite">
+          <div className="cobalt-loading-ring" aria-hidden="true"></div>
+          <p className="cobalt-loading-label">LOADING ADMIN PANEL…</p>
         </div>
       }
     >
@@ -109,8 +107,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 function AdminLayoutContent({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const isCobalt = pathname.startsWith('/admin/dashboard');
-  const shellClass = `min-h-screen flex ${FONT_VARS}${isCobalt ? ' cobalt-shell' : ' bg-gray-50'}`;
+  const shellClass = `min-h-screen flex ${FONT_VARS} cobalt-shell`;
   const [userName, setUserName] = useState('Admin');
   const [userEmail, setUserEmail] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -291,7 +288,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   // Loading state — skeleton layout
   if (isAuthChecking) {
     return (
-      <div data-theme={isCobalt ? 'cobalt' : undefined} className={shellClass}>
+      <div data-theme="cobalt" className={shellClass}>
         {/* Sidebar skeleton */}
         <div className="cobalt-skeleton-sidebar w-[260px] bg-gradient-to-b from-primary-600 to-primary-800 p-5 hidden md:block">
           <div className="admin-skeleton h-8 w-32 mb-8 opacity-20" />
@@ -314,7 +311,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div data-theme={isCobalt ? 'cobalt' : undefined} className={shellClass}>
+    <div data-theme="cobalt" className={shellClass}>
       {/* ── SIDEBAR ── */}
       <aside
         className={`

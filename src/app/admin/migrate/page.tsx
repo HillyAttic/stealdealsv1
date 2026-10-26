@@ -368,14 +368,16 @@ export default function MigratePage() {
 
   return (
     <>
-      <div className="px-4 py-6">
+      <div data-theme="cobalt" className="cobalt-page">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Database Migration</h1>
-          <p className="text-gray-600">
-            Fix ID conflicts where property ID "1" causes wrong properties to show in wishlists
-          </p>
-        </div>
+        <header className="page-head">
+          <div>
+            <h1 className="page-title">Database migration</h1>
+            <p className="page-sub">
+              Fix ID conflicts where property ID "1" causes wrong properties to show in wishlists
+            </p>
+          </div>
+        </header>
 
         {/* Critical Issue Alert */}
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">

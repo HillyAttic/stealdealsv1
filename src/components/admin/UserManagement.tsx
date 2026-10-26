@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { FaSearch, FaUser, FaEnvelope, FaCalendar, FaEye, FaEdit, FaCheck, FaTimes, FaExternalLinkAlt, FaUserCheck, FaBan, FaLock, FaHeart, FaSort, FaSortUp, FaSortDown, FaFilter } from 'react-icons/fa';
+import { FaSearch, FaUser, FaCalendar, FaEye, FaCheck, FaTimes, FaExternalLinkAlt, FaUserCheck, FaBan, FaLock, FaHeart, FaSort, FaSortUp, FaSortDown, FaFilter } from 'react-icons/fa';
 import Link from 'next/link';
-import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
-import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
 
 interface FirebaseUser {
   id: string;
@@ -54,6 +52,15 @@ interface PaginationInfo {
   totalPages: number;
 }
 
+const SHELL = 'cobalt-page';
+
+const PROVIDER_NAMES: Record<string, string> = {
+  google: 'Google',
+  oauth_github: 'GitHub',
+  oauth_facebook: 'Facebook',
+  email: 'Email',
+};
+
 export function UserManagement() {
   const [users, setUsers] = useState<FirebaseUser[]>([]);
   const [statistics, setStatistics] = useState<UserStatistics | null>(null);
@@ -67,7 +74,7 @@ export function UserManagement() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
-  
+
   // Enhanced filtering and sorting
   const [sortBy, setSortBy] = useState<'name' | 'email' | 'createdAt' | 'wishlistCount' | 'lastLoginAt'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -98,14 +105,14 @@ export function UserManagement() {
       });
 
       const data = await response.json();
-      
-      console.log('[UserManagement] API Response:', { 
-        ok: response.ok, 
+
+      console.log('[UserManagement] API Response:', {
+        ok: response.ok,
         status: response.status,
-        success: data.success, 
+        success: data.success,
         error: data.error,
         details: data.details,
-        userCount: data.users?.length 
+        userCount: data.users?.length
       });
 
       if (!response.ok || !data.success) {
@@ -140,7 +147,7 @@ export function UserManagement() {
   const handlePageChange = (newPage: number) => {
     fetchUsers(newPage, searchTerm);
   };
-  
+
   // Handle sorting
   const handleSort = (column: 'name' | 'email' | 'createdAt' | 'wishlistCount' | 'lastLoginAt') => {
     if (sortBy === column) {
@@ -150,18 +157,18 @@ export function UserManagement() {
       setSortOrder('desc');
     }
   };
-  
+
   // Get sorted and filtered users
   const getSortedAndFilteredUsers = () => {
     let filteredUsers = [...users];
-    
+
     // Apply wishlist filter
     if (wishlistFilter === 'with_wishlist') {
       filteredUsers = filteredUsers.filter(user => user.wishlistCount > 0);
     } else if (wishlistFilter === 'without_wishlist') {
       filteredUsers = filteredUsers.filter(user => user.wishlistCount === 0);
     }
-    
+
     // Apply status filter
     if (statusFilter === 'active') {
       filteredUsers = filteredUsers.filter(user => user.isActive);
@@ -170,12 +177,12 @@ export function UserManagement() {
     } else if (statusFilter === 'banned') {
       filteredUsers = filteredUsers.filter(user => user.banned);
     }
-    
+
     // Sort users
     filteredUsers.sort((a, b) => {
       let aValue: any;
       let bValue: any;
-      
+
       switch (sortBy) {
         case 'name':
           aValue = a.name.toLowerCase();
@@ -200,20 +207,25 @@ export function UserManagement() {
         default:
           return 0;
       }
-      
+
       if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
-    
+
     return filteredUsers;
   };
-  
+
   // Get sort icon
   const getSortIcon = (column: string) => {
-    if (sortBy !== column) return <FaSort className="text-gray-400" />;
-    return sortOrder === 'asc' ? <FaSortUp className="text-blue-500" /> : <FaSortDown className="text-blue-500" />;
+    if (sortBy !== column) return <FaSort className="sort-icon" aria-hidden="true" />;
+    return sortOrder === 'asc'
+      ? <FaSortUp className="sort-icon is-on" aria-hidden="true" />
+      : <FaSortDown className="sort-icon is-on" aria-hidden="true" />;
   };
+
+  const ariaSort = (column: string) =>
+    sortBy === column ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none';
 
   // Format date
   const formatDate = (dateString: string | null) => {
@@ -227,40 +239,15 @@ export function UserManagement() {
     });
   };
 
-  // Get provider badge color and display name
-  const getProviderInfo = (provider: string) => {
-    switch (provider) {
-      case 'google':
-        return { color: 'bg-red-100 text-red-800', name: 'Google' };
-      case 'oauth_github':
-        return { color: 'bg-gray-100 text-gray-800', name: 'GitHub' };
-      case 'oauth_facebook':
-        return { color: 'bg-blue-100 text-blue-800', name: 'Facebook' };
-      case 'email':
-        return { color: 'bg-green-100 text-green-800', name: 'Email' };
-      default:
-        return { color: 'bg-gray-100 text-gray-800', name: provider || 'Unknown' };
-    }
-  };
-
-  // Get role badge color
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-purple-100 text-purple-800';
-      case 'user':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // Get provider display name
+  const providerName = (provider: string) => PROVIDER_NAMES[provider] || provider || 'Unknown';
 
   // Get user status
   const getUserStatus = (user: FirebaseUser) => {
-    if (user.banned) return { status: 'Banned', color: 'text-red-600', icon: FaBan };
-    if (user.locked) return { status: 'Locked', color: 'text-orange-600', icon: FaLock };
-    if (user.isActive) return { status: 'Active', color: 'text-green-600', icon: FaCheck };
-    return { status: 'Inactive', color: 'text-gray-600', icon: FaTimes };
+    if (user.banned) return { status: 'Banned', tone: 'error', icon: FaBan };
+    if (user.locked) return { status: 'Locked', tone: 'warn', icon: FaLock };
+    if (user.isActive) return { status: 'Active', tone: 'ok', icon: FaCheck };
+    return { status: 'Inactive', tone: 'muted', icon: FaTimes };
   };
 
   // Handle image load error - mark as broken to show fallback
@@ -272,209 +259,190 @@ export function UserManagement() {
     });
   }, []);
 
+  const pctOf = (n: number) =>
+    statistics?.totalUsers ? `${Math.round((n / statistics.totalUsers) * 100)}% of users` : 'No users yet';
+
   if (isLoading && users.length === 0) {
-    return <LoadingSpinner message="Loading Firebase users..." />;
+    return (
+      <div data-theme="cobalt" className={SHELL}>
+        <header className="page-head">
+          <div>
+            <div className="admin-skeleton h-7 w-40 mb-2" />
+            <div className="admin-skeleton h-4 w-72" />
+          </div>
+        </header>
+        <div className="stat-grid stat-grid--six">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="panel stat">
+              <div className="admin-skeleton h-3 w-24 mb-4" />
+              <div className="admin-skeleton h-8 w-16" />
+            </div>
+          ))}
+        </div>
+        <div className="panel">
+          <div className="admin-skeleton h-64 w-full" />
+        </div>
+      </div>
+    );
   }
 
   if (error && users.length === 0) {
     // Check if this is a Firebase configuration error
     const isFirebaseConfigError = error.includes('Firebase configuration') || error.includes('FIREBASE_SERVICE_ACCOUNT_KEY');
-    
+
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div data-theme="cobalt" className={SHELL}>
+        <header className="page-head">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Firebase User Management</h1>
-            <p className="text-gray-600">Manage and monitor Firebase authenticated users</p>
+            <h1 className="page-title">Users</h1>
+            <p className="page-sub">Manage and monitor Firebase authenticated users</p>
           </div>
-        </div>
-        
+        </header>
+
         {isFirebaseConfigError ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <FaBan className="h-5 w-5 text-red-400" />
+          <section className="panel panel--error">
+            <header className="panel-head">
+              <FaBan className="panel-icon" size={18} aria-hidden="true" />
+              <div>
+                <h2 className="panel-title">Firebase configuration required</h2>
+                <p className="panel-sub">{error}</p>
               </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
-                  Firebase Configuration Required
-                </h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p className="mb-3">{error}</p>
-                  <div className="bg-red-100 p-3 rounded border">
-                    <h4 className="font-medium mb-2">To Fix This Issue:</h4>
-                    <ol className="list-decimal list-inside space-y-1 text-xs">
-                      <li>Go to <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" className="text-red-800 underline font-medium">Firebase Console</a></li>
-                      <li>Navigate to Project Settings {'>'} Service Accounts</li>
-                      <li>Generate a new private key (downloads JSON file)</li>
-                      <li>Set the entire JSON content as environment variable</li>
-                      <li>Or place the file as service-account.json in project root</li>
-                    </ol>
-                    <div className="mt-2 p-2 bg-red-200 rounded font-mono text-xs">
-                      FIREBASE_SERVICE_ACCOUNT_KEY=&#123;...json content...&#125;
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4 flex space-x-3">
-                  <button
-                    onClick={() => fetchUsers()}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  >
-                    Retry Connection
-                  </button>
-                  <a
-                    href="/api/admin/health"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center px-3 py-2 border border-red-200 text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  >
-                    <FaExternalLinkAlt className="mr-1" />
-                    Check System Health
-                  </a>
-                </div>
-              </div>
+            </header>
+
+            <p className="muted-note">To fix this issue:</p>
+            <ol className="error-list">
+              <li>Open the <a className="link" href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer">Firebase Console</a></li>
+              <li>Go to Project Settings {'>'} Service Accounts</li>
+              <li>Generate a new private key (downloads a JSON file)</li>
+              <li>Set the entire JSON content as the environment variable</li>
+              <li>Or place the file as <code className="code">service-account.json</code> in the project root</li>
+            </ol>
+            <pre className="code code--block">FIREBASE_SERVICE_ACCOUNT_KEY=&#123;...json content...&#125;</pre>
+
+            <div className="panel-actions">
+              <button
+                onClick={() => fetchUsers()}
+                className="btn btn--primary"
+              >
+                Retry connection
+              </button>
+              <a
+                href="/api/admin/health"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn"
+              >
+                <FaExternalLinkAlt aria-hidden="true" />
+                System health
+              </a>
             </div>
-          </div>
+          </section>
         ) : (
-          <ErrorMessage 
-            message={error}
-            onRetry={() => fetchUsers()}
-          />
+          <section className="panel">
+            <div className="empty">
+              <FaBan size={24} aria-hidden="true" />
+              <p className="empty-title">Could not load users</p>
+              <p className="empty-hint">{error}</p>
+              <button onClick={() => fetchUsers()} className="btn btn--primary">
+                Try again
+              </button>
+            </div>
+          </section>
         )}
       </div>
     );
   }
 
+  const visibleUsers = getSortedAndFilteredUsers();
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div data-theme="cobalt" className={SHELL}>
+      <header className="page-head">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Firebase User Management</h1>
-          <p className="text-gray-600">Manage and monitor Firebase authenticated users</p>
+          <h1 className="page-title">Users</h1>
+          <p className="page-sub">Manage and monitor Firebase authenticated users</p>
         </div>
-        <div className="flex items-center space-x-2 text-sm text-gray-500">
-          <FaLock />
-          <span>Authenticated via Firebase</span>
-        </div>
-      </div>
+        <p className="page-head-meta">
+          <FaLock aria-hidden="true" />
+          Authenticated via Firebase
+        </p>
+      </header>
 
-      {/* Enhanced Statistics Cards */}
+      {/* Statistics */}
       {statistics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FaUser className="text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold text-gray-900">{statistics.totalUsers}</p>
-              </div>
-            </div>
+        <div className="stat-grid stat-grid--six">
+          <div className="panel stat">
+            <p className="stat-label"><FaUser size={14} aria-hidden="true" /> Total Users</p>
+            <p className="stat-value">{statistics.totalUsers}</p>
+            <p className="stat-foot">All accounts</p>
           </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <FaCheck className="text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Active Users</p>
-                <p className="text-2xl font-bold text-gray-900">{statistics.activeUsers}</p>
-              </div>
-            </div>
+          <div className="panel stat">
+            <p className="stat-label"><FaCheck size={14} aria-hidden="true" /> Active</p>
+            <p className="stat-value">{statistics.activeUsers}</p>
+            <p className="stat-foot">{pctOf(statistics.activeUsers)}</p>
           </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <FaUserCheck className="text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Verified</p>
-                <p className="text-2xl font-bold text-gray-900">{statistics.verifiedUsers}</p>
-              </div>
-            </div>
+          <div className="panel stat">
+            <p className="stat-label"><FaUserCheck size={14} aria-hidden="true" /> Verified</p>
+            <p className="stat-value">{statistics.verifiedUsers}</p>
+            <p className="stat-foot">{pctOf(statistics.verifiedUsers)}</p>
           </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-indigo-100 rounded-lg">
-                <FaCalendar className="text-indigo-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">New This Month</p>
-                <p className="text-2xl font-bold text-gray-900">{statistics.newUsersThisMonth}</p>
-              </div>
-            </div>
+          <div className="panel stat">
+            <p className="stat-label"><FaCalendar size={14} aria-hidden="true" /> New This Month</p>
+            <p className="stat-value">{statistics.newUsersThisMonth}</p>
+            <p className="stat-foot">Last 30 days</p>
           </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <FaLock className="text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">2FA Enabled</p>
-                <p className="text-2xl font-bold text-gray-900">{statistics.users2FAEnabled}</p>
-              </div>
-            </div>
+          <div className="panel stat">
+            <p className="stat-label"><FaLock size={14} aria-hidden="true" /> 2FA Enabled</p>
+            <p className="stat-value">{statistics.users2FAEnabled}</p>
+            <p className="stat-foot">{pctOf(statistics.users2FAEnabled)}</p>
           </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <FaBan className="text-red-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Banned</p>
-                <p className="text-2xl font-bold text-gray-900">{statistics.bannedUsers}</p>
-              </div>
-            </div>
+          <div className="panel stat">
+            <p className="stat-label"><FaBan size={14} aria-hidden="true" /> Banned</p>
+            <p className="stat-value">{statistics.bannedUsers}</p>
+            <p className="stat-foot">{pctOf(statistics.bannedUsers)}</p>
           </div>
         </div>
       )}
 
       {/* Search and Filters */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border space-y-4">
-        {/* Search Form */}
-        <form onSubmit={handleSearch} className="flex gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+      <section className="panel panel--filters">
+        <form onSubmit={handleSearch} className="filters">
+          <div className="field field--grow">
+            <label htmlFor="user-search" className="field-label">Search</label>
+            <div className="search">
+              <FaSearch className="search-icon" aria-hidden="true" />
               <input
+                id="user-search"
                 type="text"
                 placeholder="Search by name, email, or user ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input"
               />
             </div>
           </div>
           <button
             type="submit"
             disabled={isLoading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            className="btn btn--primary"
           >
-            {isLoading ? 'Searching...' : 'Search'}
+            {isLoading ? 'Searching…' : 'Search'}
           </button>
         </form>
-        
-        {/* Advanced Filters */}
-        <div className="flex flex-wrap items-center gap-4 pt-4 border-t">
-          <div className="flex items-center">
-            <FaFilter className="mr-2 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Filters:</span>
-          </div>
-          
-          {/* Status Filter */}
-          <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-600">Status:</label>
+
+        <div className="filters filters--secondary">
+          <span className="filters-label">
+            <FaFilter aria-hidden="true" />
+            Filters
+          </span>
+
+          <div className="field">
+            <label htmlFor="status-filter" className="field-label">Status</label>
             <select
+              id="status-filter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500"
+              className="select"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -482,203 +450,159 @@ export function UserManagement() {
               <option value="banned">Banned</option>
             </select>
           </div>
-          
-          {/* Wishlist Filter */}
-          <div className="flex items-center space-x-2">
-            <FaHeart className="text-red-500" />
-            <label className="text-sm text-gray-600">Wishlist:</label>
+
+          <div className="field">
+            <label htmlFor="wishlist-filter" className="field-label">Wishlist</label>
             <select
+              id="wishlist-filter"
               value={wishlistFilter}
               onChange={(e) => setWishlistFilter(e.target.value as any)}
-              className="border border-gray-300 rounded px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500"
+              className="select"
             >
               <option value="all">All Users</option>
               <option value="with_wishlist">With Wishlist</option>
               <option value="without_wishlist">No Wishlist</option>
             </select>
           </div>
-          
-          {/* Clear Filters */}
+
           {(statusFilter !== 'all' || wishlistFilter !== 'all') && (
             <button
+              type="button"
               onClick={() => {
                 setStatusFilter('all');
                 setWishlistFilter('all');
               }}
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
+              className="btn btn--quiet"
             >
-              Clear Filters
+              Clear filters
             </button>
           )}
         </div>
-      </div>
+      </section>
 
       {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
+      <section className="panel panel--flush">
+        <div className="table-scroll">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('name')}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>User</span>
+                <th aria-sort={ariaSort('name')}>
+                  <button type="button" className="sort" onClick={() => handleSort('name')}>
+                    User
                     {getSortIcon('name')}
-                  </div>
+                  </button>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('wishlistCount')}
-                >
-                  <div className="flex items-center space-x-1">
-                    <FaHeart className="text-red-500" />
-                    <span>Wishlist</span>
+                <th>Status</th>
+                <th aria-sort={ariaSort('wishlistCount')}>
+                  <button type="button" className="sort" onClick={() => handleSort('wishlistCount')}>
+                    <FaHeart className="heart" aria-hidden="true" />
+                    Wishlist
                     {getSortIcon('wishlistCount')}
-                  </div>
+                  </button>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Provider
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Security
-                </th>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('lastLoginAt')}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>Last Active</span>
+                <th>Provider</th>
+                <th>Security</th>
+                <th aria-sort={ariaSort('lastLoginAt')}>
+                  <button type="button" className="sort" onClick={() => handleSort('lastLoginAt')}>
+                    Last Active
                     {getSortIcon('lastLoginAt')}
-                  </div>
+                  </button>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th>Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {getSortedAndFilteredUsers().map((user) => {
-                const providerInfo = getProviderInfo(user.provider);
+            <tbody>
+              {visibleUsers.map((user) => {
                 const userStatus = getUserStatus(user);
                 const StatusIcon = userStatus.icon;
 
                 return (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          {user.imageUrl && !brokenImages.has(user.id) ? (
-                            <img
-                              className="h-10 w-10 rounded-full object-cover"
-                              src={user.imageUrl}
-                              alt={user.name}
-                              onError={() => handleImageError(user.id)}
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                              <FaUser className="text-gray-600" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
-                          <div className="text-xs text-gray-400">ID: {user.id.substring(0, 12)}...</div>
+                  <tr key={user.id}>
+                    <td>
+                      <div className="identity">
+                        {user.imageUrl && !brokenImages.has(user.id) ? (
+                          <img
+                            className="avatar-img"
+                            src={user.imageUrl}
+                            alt={user.name}
+                            onError={() => handleImageError(user.id)}
+                          />
+                        ) : (
+                          <div className="avatar-img avatar-img--fallback">
+                            <FaUser aria-hidden="true" />
+                          </div>
+                        )}
+                        <div className="identity-text">
+                          <p className="identity-name">{user.name}</p>
+                          <p className="identity-mail">{user.email}</p>
+                          <p className="identity-id">ID: {user.id.substring(0, 12)}…</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col space-y-1">
-                        <div className="flex items-center">
-                          <StatusIcon className={`mr-2 ${userStatus.color}`} />
-                          <span className={`text-sm ${userStatus.color}`}>
-                            {userStatus.status}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {user.emailVerified ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                              <FaCheck className="mr-1" /> Verified
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                              <FaTimes className="mr-1" /> Unverified
-                            </span>
-                          )}
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
-                            {user.role}
-                          </span>
-                        </div>
+
+                    <td>
+                      <p className={`status status--${userStatus.tone}`}>
+                        <StatusIcon aria-hidden="true" />
+                        {userStatus.status}
+                      </p>
+                      <div className="badge-row">
+                        {user.emailVerified ? (
+                          <span className="badge badge--accent"><FaCheck aria-hidden="true" /> Verified</span>
+                        ) : (
+                          <span className="badge badge--error"><FaTimes aria-hidden="true" /> Unverified</span>
+                        )}
+                        <span className="badge">{user.role}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <div className="flex items-center">
-                          <FaHeart className="text-red-500 mr-1" />
-                          <span className="text-lg font-bold text-gray-900">{user.wishlistCount}</span>
-                        </div>
+
+                    <td>
+                      <div className="wishlist-cell">
+                        <span className="num">{user.wishlistCount}</span>
                         {user.wishlistCount > 0 && (
-                          <Link
-                            href={`/admin/users/${user.id}?tab=wishlist`}
-                            className="text-xs text-blue-600 hover:text-blue-800 underline"
-                          >
+                          <Link href={`/admin/users/${user.id}?tab=wishlist`} className="link">
                             View
                           </Link>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${providerInfo.color}`}>
-                        {providerInfo.name}
-                      </span>
+
+                    <td>
+                      <span className="badge">{providerName(user.provider)}</span>
                       {user.externalAccounts.length > 1 && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          +{user.externalAccounts.length - 1} more
-                        </div>
+                        <p className="muted-note">+{user.externalAccounts.length - 1} more</p>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col space-y-1">
+
+                    <td>
+                      <div className="badge-row">
                         {user.twoFactorEnabled && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                            <FaLock className="mr-1" /> 2FA
-                          </span>
-                        )}
-                        {user.phoneNumber && (
-                          <span className="text-xs text-gray-500">
-                            Phone verified
-                          </span>
+                          <span className="badge badge--accent"><FaLock aria-hidden="true" /> 2FA</span>
                         )}
                       </div>
+                      {user.phoneNumber && <p className="muted-note">Phone verified</p>}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div>
-                        <div className="text-sm">{formatDate(user.lastActiveAt)}</div>
-                        <div className="text-xs text-gray-500">
-                          Joined: {formatDate(user.createdAt)}
-                        </div>
-                      </div>
+
+                    <td>
+                      <p className="identity-name">{formatDate(user.lastActiveAt)}</p>
+                      <p className="muted-note">Joined: {formatDate(user.createdAt)}</p>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
+
+                    <td>
+                      <div className="row-actions">
                         <Link
                           href={`/admin/users/${user.id}`}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="View Details"
+                          className="icon-link"
+                          title="View details"
+                          aria-label={`View details for ${user.name}`}
                         >
                           <FaEye />
                         </Link>
                         <a
-                          href={`https://dashboard.clerk.com`}
+                          href="https://dashboard.clerk.com"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-purple-600 hover:text-purple-900"
-                          title="View in Clerk Dashboard"
+                          className="icon-link"
+                          title="View in Clerk dashboard"
                         >
                           <FaExternalLinkAlt />
                         </a>
@@ -691,91 +615,61 @@ export function UserManagement() {
           </table>
         </div>
 
-        {getSortedAndFilteredUsers().length === 0 && !isLoading && (
-          <div className="text-center py-8">
-            <FaUser className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || statusFilter !== 'all' || wishlistFilter !== 'all' 
-                ? 'Try adjusting your search terms or filters.' 
+        {visibleUsers.length === 0 && !isLoading && (
+          <div className="empty">
+            <FaUser size={24} aria-hidden="true" />
+            <p className="empty-title">No users found</p>
+            <p className="empty-hint">
+              {searchTerm || statusFilter !== 'all' || wishlistFilter !== 'all'
+                ? 'Try adjusting your search terms or filters.'
                 : 'No users have signed up yet.'}
             </p>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 rounded-lg shadow-sm border">
-          <div className="flex-1 flex justify-between sm:hidden">
+        <nav className="pager" aria-label="Pagination">
+          <p className="pager-info">
+            Showing{' '}
+            <strong>{(pagination.page - 1) * pagination.limit + 1}</strong>
+            {' '}to{' '}
+            <strong>{Math.min(pagination.page * pagination.limit, pagination.total)}</strong>
+            {' '}of <strong>{pagination.total}</strong> users
+          </p>
+          <div className="pager-controls">
             <button
               onClick={() => handlePageChange(pagination.page - 1)}
               disabled={pagination.page <= 1 || isLoading}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              className="btn"
             >
               Previous
             </button>
+            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+              const pageNumber = i + 1;
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => handlePageChange(pageNumber)}
+                  disabled={isLoading}
+                  aria-current={pageNumber === pagination.page ? 'page' : undefined}
+                  className={`btn pager-page ${pageNumber === pagination.page ? 'is-current' : ''}`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
             <button
               onClick={() => handlePageChange(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages || isLoading}
-              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              className="btn"
             >
               Next
             </button>
           </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing{' '}
-                <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span>
-                {' '}to{' '}
-                <span className="font-medium">
-                  {Math.min(pagination.page * pagination.limit, pagination.total)}
-                </span>
-                {' '}of{' '}
-                <span className="font-medium">{pagination.total}</span>
-                {' '}results
-              </p>
-            </div>
-            <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <button
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page <= 1 || isLoading}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                  const pageNumber = i + 1;
-                  return (
-                    <button
-                      key={pageNumber}
-                      onClick={() => handlePageChange(pageNumber)}
-                      disabled={isLoading}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                        pageNumber === pagination.page
-                          ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                      } disabled:opacity-50`}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page >= pagination.totalPages || isLoading}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
+        </nav>
       )}
-
     </div>
   );
 }

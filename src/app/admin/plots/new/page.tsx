@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaSave } from 'react-icons/fa';
-import { BsMenuUp } from 'react-icons/bs';
+import { FaSave, FaArrowLeft } from 'react-icons/fa';
 import ClientOnly from '@/components/ClientOnly';
 import ImageUploader from '@/components/ui/ImageUploader';
 import dynamic from 'next/dynamic';
@@ -238,23 +237,22 @@ function NewPlotContent() {
   };
   
   return (
-    <div className="card border-top border-0 border-4 border-blue-900 rounded-lg shadow-md">
-      <div className="border p-4 rounded">
-        <div className="card-title d-flex align-items-center flex justify-between mb-4">
-          <div className="flex items-center">
-            <h5 className="mb-0 text-xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>New Plot Project</h5>
-          </div>
-          <div>
-            <button 
-              type="button" 
-              onClick={() => router.push('/admin/plots')}
-              className="btn btn-outline-danger px-3 py-2 border border-red-500 text-red-500 rounded hover:bg-red-50"
-            >
-              <BsMenuUp className="inline mr-1" /> List
-            </button>
-          </div>
+    <div data-theme="cobalt" className="cobalt-page">
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">New plot project</h1>
+          <p className="page-sub">Create a new plot listing</p>
         </div>
-        <hr className="mb-4" />
+        <button
+          type="button"
+          onClick={() => router.push('/admin/plots')}
+          className="btn"
+        >
+          <FaArrowLeft aria-hidden="true" />
+          Back to list
+        </button>
+      </header>
+      <section className="panel">
         
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
@@ -546,7 +544,7 @@ function NewPlotContent() {
             </div>
           </div>
         </form>
-      </div>
+      </section>
     </div>
   );
 }

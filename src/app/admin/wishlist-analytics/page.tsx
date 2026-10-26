@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
-import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
 import { FaHeart, FaUsers, FaChartBar, FaArrowUp, FaEye, FaDownload, FaClock, FaFire, FaStar, FaBolt, FaMapMarkerAlt, FaUserClock } from 'react-icons/fa';
 import Link from 'next/link';
 
@@ -324,48 +322,71 @@ export default function WishlistAnalyticsPage() {
 
   if (isLoading && !stats) {
     return (
-      <>
-        <LoadingSpinner message="Loading wishlist analytics..." />
-      </>
+      <div data-theme="cobalt" className="cobalt-page">
+        <header className="page-head">
+          <div>
+            <div className="admin-skeleton h-7 w-52 mb-2" />
+            <div className="admin-skeleton h-4 w-80" />
+          </div>
+        </header>
+        <div className="panel">
+          <div className="admin-skeleton h-64 w-full" />
+        </div>
+      </div>
     );
   }
 
   if (error && !stats) {
     return (
-      <>
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Wishlist Analytics</h1>
+      <div data-theme="cobalt" className="cobalt-page">
+        <header className="page-head">
+          <div>
+            <h1 className="page-title">Wishlist analytics</h1>
+            <p className="page-sub">Real-time insights into user preferences and property popularity</p>
           </div>
-          <ErrorMessage 
-            message={error}
-            onRetry={() => fetchWishlistStats()}
-          />
-        </div>
-      </>
+        </header>
+        <section className="panel">
+          <div className="empty">
+            <FaChartBar size={24} aria-hidden="true" />
+            <p className="empty-title">Could not load analytics</p>
+            <p className="empty-hint">{error}</p>
+            <button onClick={() => fetchWishlistStats()} className="btn btn--primary">
+              Try again
+            </button>
+          </div>
+        </section>
+      </div>
     );
   }
 
   if (!stats) {
     return (
-      <>
-        <div className="text-center py-12">
-          <FaChartBar className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No analytics data available</h3>
-          <p className="mt-1 text-sm text-gray-500">Check back later when users start creating wishlists.</p>
-        </div>
-      </>
+      <div data-theme="cobalt" className="cobalt-page">
+        <header className="page-head">
+          <div>
+            <h1 className="page-title">Wishlist analytics</h1>
+            <p className="page-sub">Real-time insights into user preferences and property popularity</p>
+          </div>
+        </header>
+        <section className="panel">
+          <div className="empty">
+            <FaChartBar size={24} aria-hidden="true" />
+            <p className="empty-title">No analytics data available</p>
+            <p className="empty-hint">Check back later when users start creating wishlists.</p>
+          </div>
+        </section>
+      </div>
     );
   }
 
   return (
     <>
-      <div className="space-y-6">
+      <div data-theme="cobalt" className="cobalt-page space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <header className="page-head">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Wishlist Analytics</h1>
-            <p className="text-gray-600">Real-time insights into user preferences and property popularity</p>
+            <h1 className="page-title">Wishlist analytics</h1>
+            <p className="page-sub">Real-time insights into user preferences and property popularity</p>
             {lastUpdated && (
               <div className="text-sm text-gray-500 mt-1">
                 Last updated: {formatLastUpdated(lastUpdated)}
@@ -435,7 +456,7 @@ export default function WishlistAnalyticsPage() {
               Migrate Data
             </button>
           </div>
-        </div>
+        </header>
 
         {migrationResult && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">

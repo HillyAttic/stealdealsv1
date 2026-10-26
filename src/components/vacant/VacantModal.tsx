@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Property } from '@/types/property';
 import { useActivity } from '@/hooks/useActivity';
 import PropertyImage from '@/components/PropertyImage';
+import { formatFrontage } from '@/lib/property-display';
 
 interface VacantModalProps {
   vacant: Property | null;
@@ -280,7 +281,7 @@ export function VacantModal({ vacant: property, isOpen, onClose }: VacantModalPr
                   </div>
                   <div className="bg-white p-3 rounded-lg">
                     <h5 className="text-gray-500 text-sm uppercase mb-1">Frontage</h5>
-                    <p className="font-semibold text-gray-800">{property.frontage || 'Not specified'}</p>
+                    <p className="font-semibold text-gray-800">{formatFrontage(property.frontage) || 'Not specified'}</p>
                   </div>
                   <div className="bg-white p-3 rounded-lg">
                     <h5 className="text-gray-500 text-sm uppercase mb-1">Property Code</h5>

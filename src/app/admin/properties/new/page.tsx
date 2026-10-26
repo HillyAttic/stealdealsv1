@@ -217,19 +217,21 @@ export default function NewProperty() {
   };
   
   return (
-    <>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Add New Pre-Leased Inventory</h1>
-        <p className="text-gray-600">Create a new pre-leased property listing</p>
-      </div>
-      
+    <div data-theme="cobalt" className="cobalt-page">
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">Add new pre-leased inventory</h1>
+          <p className="page-sub">Create a new pre-leased property listing</p>
+        </div>
+      </header>
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
           {error}
         </div>
       )}
       
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <section className="panel">
         <form onSubmit={handleSubmit} className="needs-validation">
           {/* Tenant */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -770,7 +772,7 @@ export default function NewProperty() {
             </button>
           </div>
         </form>
-      </div>
-    </>
+      </section>
+    </div>
   );
 } 

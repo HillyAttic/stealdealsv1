@@ -66,19 +66,17 @@ export default function VacantPropertiesContent() {
   const pagedProperties = filteredProperties.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
-    <>
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+    <div data-theme="cobalt" className="cobalt-page">
+      <header className="page-head">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vacant Properties</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage your vacant property listings</p>
+          <h1 className="page-title">Vacant Properties</h1>
+          <p className="page-sub">Manage your vacant property listings</p>
         </div>
-        <Link href="/admin/vacant/new">
-          <AdminButton icon={<FaPlus />}>
-            <span className="hidden sm:inline">Add New Property</span>
-            <span className="sm:hidden">Add</span>
-          </AdminButton>
+        <Link href="/admin/vacant/new" className="btn btn--primary">
+          <FaPlus aria-hidden="true" />
+          Add new property
         </Link>
-      </div>
+      </header>
 
       {/* Search */}
       <AdminCard className="mb-5">
@@ -247,6 +245,6 @@ export default function VacantPropertiesContent() {
           Are you sure you want to delete this property? This action cannot be undone.
         </p>
       </AdminModal>
-    </>
+    </div>
   );
 }

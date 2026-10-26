@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaSave } from 'react-icons/fa';
-import { BsMenuUp } from 'react-icons/bs';
+import { FaSave, FaArrowLeft } from 'react-icons/fa';
 import ImageUploader from '@/components/ui/ImageUploader';
 import dynamic from 'next/dynamic';
 
@@ -316,9 +315,16 @@ function EditPlotContent({ plotId }: { plotId: string }) {
   
   if (isLoadingData) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-900"></div>
-        <p className="ml-4">Loading plot data...</p>
+      <div data-theme="cobalt" className="cobalt-page">
+        <header className="page-head">
+          <div>
+            <div className="admin-skeleton h-7 w-52 mb-2" />
+            <div className="admin-skeleton h-4 w-72" />
+          </div>
+        </header>
+        <div className="panel">
+          <div className="admin-skeleton h-64 w-full" />
+        </div>
       </div>
     );
   }
@@ -326,38 +332,48 @@ function EditPlotContent({ plotId }: { plotId: string }) {
   // Show error state if data failed to load
   if (error && !isLoadingData) {
     return (
-      <div className="p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-6 text-center">
-            <h2 className="text-xl font-bold mb-2">Error Loading Plot Data</h2>
-            <p className="mb-4">{error}</p>
-            <div className="space-x-4">
-              <button
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
+      <div data-theme="cobalt" className="cobalt-page">
+        <header className="page-head">
+          <div>
+            <h1 className="page-title">Edit plot project</h1>
+            <p className="page-sub">Update plot details and listing information</p>
+          </div>
+        </header>
+        <section className="panel">
+          <div className="empty">
+            <p className="empty-title">Error loading plot data</p>
+            <p className="empty-hint">{error}</p>
+            <div className="panel-actions">
+              <button onClick={() => window.location.reload()} className="btn btn--primary">
                 Retry
               </button>
-              <button
-                onClick={() => router.push('/admin/plots')}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-              >
-                Back to Plots
+              <button onClick={() => router.push('/admin/plots')} className="btn">
+                Back to plots
               </button>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     );
   }
-  
+
   return (
-    <div className="p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6 flex items-center">
-          <BsMenuUp className="text-2xl mr-3" style={{ color: 'rgb(28, 110, 164)' }} />
-          <h1 className="text-2xl font-bold text-gray-800">Edit Plot Project</h1>
+    <div data-theme="cobalt" className="cobalt-page">
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">Edit plot project</h1>
+          <p className="page-sub">Update plot details and listing information</p>
         </div>
+        <button
+          type="button"
+          onClick={() => router.push('/admin/plots')}
+          className="btn"
+        >
+          <FaArrowLeft aria-hidden="true" />
+          Back to list
+        </button>
+      </header>
+      <section className="panel">
         
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
@@ -371,7 +387,7 @@ function EditPlotContent({ plotId }: { plotId: string }) {
           </div>
         )}
         
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+        <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             {/* Developer Name */}
@@ -635,7 +651,7 @@ function EditPlotContent({ plotId }: { plotId: string }) {
             </button>
           </div>
         </form>
-      </div>
+      </section>
     </div>
   );
 }

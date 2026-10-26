@@ -81,8 +81,13 @@ export default function TestPage() {
 
   return (
     <>
-      <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">Firestore Collection Test</h1>
+      <div data-theme="cobalt" className="cobalt-page">
+        <header className="page-head">
+          <div>
+            <h1 className="page-title">Firestore collection test</h1>
+            <p className="page-sub">Inspect collection state and seed sample records</p>
+          </div>
+        </header>
 
         {loading ? (
           <div className="bg-blue-50 p-4 rounded">Loading collection data...</div>

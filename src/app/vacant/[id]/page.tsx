@@ -13,6 +13,7 @@ import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
 import { Property } from '@/types/property';
 import { useActivity } from '@/hooks/useActivity';
+import { formatFrontage } from '@/lib/property-display';
 
 // Default fallback image
 const DEFAULT_IMAGE = 'https://images.pexels.com/photos/260931/pexels-photo-260931.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
@@ -363,7 +364,7 @@ export default function VacantPropertyDetails() {
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <h3 className="text-gray-500 text-sm uppercase mb-2">Frontage</h3>
                           <div className="flex items-center">
-                            <span className="text-lg font-semibold">{property.frontage}</span>
+                            <span className="text-lg font-semibold">{formatFrontage(property.frontage)}</span>
                           </div>
                         </div>
                       )}

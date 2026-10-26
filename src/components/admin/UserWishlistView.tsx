@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaHeart, FaMapMarkerAlt, FaRupeeSign, FaCalendarAlt, FaTrash, FaExternalLinkAlt, FaFilter, FaStar, FaEye, FaDownload } from 'react-icons/fa';
-import { LoadingSpinner } from '@/components/dashboard/LoadingSpinner';
-import { ErrorMessage } from '@/components/dashboard/ErrorMessage';
+import { FaHeart, FaMapMarkerAlt, FaRupeeSign, FaTrash, FaFilter, FaStar, FaEye, FaDownload } from 'react-icons/fa';
 
 interface WishlistProperty {
   id: string;
@@ -254,19 +252,13 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
   };
 
   // Get priority badge styling
-  const getPriorityBadge = (priority: 'low' | 'medium' | 'high') => {
-    const styles = {
-      low: 'bg-green-100 text-green-800',
-      medium: 'bg-yellow-100 text-yellow-800',
-      high: 'bg-red-100 text-red-800'
-    };
-    return styles[priority] || styles.medium;
-  };
+  const getPriorityBadge = (priority: 'low' | 'medium' | 'high') =>
+    priority === 'high' ? 'badge badge--error'
+      : priority === 'medium' ? 'badge badge--accent'
+        : 'badge';
 
-  // Get priority icon
-  const getPriorityIcon = (priority: 'low' | 'medium' | 'high') => {
-    return priority === 'high' ? '🔥' : priority === 'medium' ? '⭐' : '📍';
-  };
+  const pctOf = (n: number) =>
+    wishlistStats?.total ? `${Math.round((n / wishlistStats.total) * 100)}% of items` : 'No items yet';
 
   // Initial load
   useEffect(() => {
@@ -274,120 +266,110 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
   }, [userId]);
 
   if (isLoading && wishlistProperties.length === 0) {
-    return <LoadingSpinner message={`Loading ${userName || 'user'}'s wishlist...`} />;
+    return (
+      <div className="wishlist-grid">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="panel">
+            <div className="admin-skeleton h-40 w-full mb-4" />
+            <div className="admin-skeleton h-4 w-3/4 mb-2" />
+            <div className="admin-skeleton h-4 w-1/2" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (error && wishlistProperties.length === 0) {
     return (
-      <ErrorMessage 
-        message={error}
-        onRetry={() => fetchUserWishlist()}
-      />
+      <div className="panel">
+        <div className="empty">
+          <FaHeart size={24} aria-hidden="true" />
+          <p className="empty-title">Could not load wishlist</p>
+          <p className="empty-hint">{error}</p>
+          <button className="btn btn--primary" onClick={() => fetchUserWishlist()}>
+            Try again
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="wishlist-head">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {userName ? `${userName}'s Wishlist` : `User Wishlist`}
+          <h2 className="panel-title">
+            {userName ? `${userName}'s wishlist` : 'User wishlist'}
           </h2>
-          {userEmail && (
-            <p className="text-gray-600">{userEmail}</p>
-          )}
-          <p className="text-sm text-gray-500">User ID: {userId}</p>
+          <p className="panel-sub">{userEmail || `User ID: ${userId}`}</p>
         </div>
-        <div className="flex space-x-2">
+        <div className="wishlist-actions">
           {wishlistProperties.length > 0 && (
             <>
-              <button
-                onClick={exportWishlist}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                <FaDownload className="mr-2" />
+              <button onClick={exportWishlist} className="btn">
+                <FaDownload aria-hidden="true" />
                 Export CSV
               </button>
-              <button
-                onClick={clearWishlist}
-                className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100"
-              >
-                <FaTrash className="mr-2" />
-                Clear All
+              <button onClick={clearWishlist} className="btn btn--danger">
+                <FaTrash aria-hidden="true" />
+                Clear all
               </button>
             </>
           )}
           {onClose && (
-            <button
-              onClick={onClose}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-            >
+            <button onClick={onClose} className="btn">
               Close
             </button>
           )}
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       {wishlistStats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <FaHeart className="text-red-500 mr-2" />
-              <div>
-                <p className="text-sm text-gray-600">Total Items</p>
-                <p className="text-2xl font-bold text-gray-900">{wishlistStats.total}</p>
-              </div>
-            </div>
+        <div className="stat-grid">
+          <div className="panel stat">
+            <p className="stat-label"><FaHeart size={14} aria-hidden="true" /> Total items</p>
+            <p className="stat-value">{wishlistStats.total}</p>
+            <p className="stat-foot">Saved properties</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <FaStar className="text-yellow-500 mr-2" />
-              <div>
-                <p className="text-sm text-gray-600">High Priority</p>
-                <p className="text-2xl font-bold text-gray-900">{wishlistStats.byPriority.high || 0}</p>
-              </div>
-            </div>
+          <div className="panel stat">
+            <p className="stat-label"><FaStar size={14} aria-hidden="true" /> High priority</p>
+            <p className="stat-value">{wishlistStats.byPriority.high || 0}</p>
+            <p className="stat-foot">{pctOf(wishlistStats.byPriority.high || 0)}</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <FaCalendarAlt className="text-blue-500 mr-2" />
-              <div>
-                <p className="text-sm text-gray-600">Medium Priority</p>
-                <p className="text-2xl font-bold text-gray-900">{wishlistStats.byPriority.medium || 0}</p>
-              </div>
-            </div>
+          <div className="panel stat">
+            <p className="stat-label">
+              <span className="dot dot--soft" aria-hidden="true" />
+              Medium priority
+            </p>
+            <p className="stat-value">{wishlistStats.byPriority.medium || 0}</p>
+            <p className="stat-foot">{pctOf(wishlistStats.byPriority.medium || 0)}</p>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <div>
-                <p className="text-sm text-gray-600">Low Priority</p>
-                <p className="text-2xl font-bold text-gray-900">{wishlistStats.byPriority.low || 0}</p>
-              </div>
-            </div>
+          <div className="panel stat">
+            <p className="stat-label">
+              <span className="dot dot--quiet" aria-hidden="true" />
+              Low priority
+            </p>
+            <p className="stat-value">{wishlistStats.byPriority.low || 0}</p>
+            <p className="stat-foot">{pctOf(wishlistStats.byPriority.low || 0)}</p>
           </div>
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center">
-            <FaFilter className="mr-2 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Filter by Priority:</span>
-          </div>
-          <div className="flex space-x-2">
+      <div className="panel panel--filters">
+        <div className="filters">
+          <span className="filters-label">
+            <FaFilter aria-hidden="true" />
+            Priority
+          </span>
+          <div className="chip-row">
             {['all', 'high', 'medium', 'low'].map((priority) => (
               <button
                 key={priority}
                 onClick={() => handlePriorityFilterChange(priority as any)}
-                className={`px-3 py-1 text-sm rounded-full ${
-                  priorityFilter === priority
-                    ? 'bg-blue-100 text-blue-800 font-medium'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                className={`chip ${priorityFilter === priority ? 'is-active' : ''}`}
               >
                 {priority === 'all' ? 'All' : priority.charAt(0).toUpperCase() + priority.slice(1)}
               </button>
@@ -398,128 +380,125 @@ export function UserWishlistView({ userId, userName, userEmail, onClose }: UserW
 
       {/* Wishlist Properties */}
       {wishlistProperties.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow-sm border">
-          <FaHeart className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No wishlist items</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {priorityFilter !== 'all' 
-              ? `No properties with ${priorityFilter} priority found.`
-              : 'This user hasn\'t added any properties to their wishlist yet.'
-            }
-          </p>
+        <div className="panel">
+          <div className="empty">
+            <FaHeart size={24} aria-hidden="true" />
+            <p className="empty-title">No wishlist items</p>
+            <p className="empty-hint">
+              {priorityFilter !== 'all'
+                ? `No properties with ${priorityFilter} priority found.`
+                : 'This user hasn\'t added any properties to their wishlist yet.'
+              }
+            </p>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {wishlistProperties.map((property) => (
-            <div key={property.id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
-              {/* Property Image */}
-              <div className="relative h-48">
-                {property.images.length > 0 ? (
-                  <img
-                    src={property.images[0]}
-                    alt={property.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-4xl text-gray-400 mb-2">🏠</div>
-                      <p className="text-sm text-gray-500">No Image</p>
+        <>
+          <div className="wishlist-grid">
+            {wishlistProperties.map((property) => (
+              <article key={property.id} className="wishlist-card">
+                {/* Property Image */}
+                <div className="wishlist-media">
+                  {property.images.length > 0 ? (
+                    <img
+                      src={property.images[0]}
+                      alt={property.title}
+                      className="wishlist-img"
+                    />
+                  ) : (
+                    <div className="wishlist-media--empty">
+                      <FaMapMarkerAlt size={22} aria-hidden="true" />
+                      <p>No image</p>
                     </div>
-                  </div>
-                )}
-                
-                {/* Priority Badge */}
-                <div className="absolute top-2 left-2">
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPriorityBadge(property.priority)}`}>
-                    {getPriorityIcon(property.priority)} {property.priority}
-                  </span>
-                </div>
+                  )}
 
-                {/* Remove Button */}
-                <div className="absolute top-2 right-2">
+                  <span className={`wishlist-priority ${getPriorityBadge(property.priority)}`}>
+                    {property.priority}
+                  </span>
+
                   <button
                     onClick={() => removeFromWishlist(property.id)}
                     disabled={removeLoading === property.id}
-                    className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors disabled:opacity-50"
+                    className="media-action"
                     title="Remove from wishlist"
+                    aria-label="Remove from wishlist"
                   >
                     {removeLoading === property.id ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span className="spin" aria-hidden="true" />
                     ) : (
-                      <FaTrash className="w-3 h-3" />
+                      <FaTrash aria-hidden="true" />
                     )}
                   </button>
                 </div>
-              </div>
 
-              {/* Property Details */}
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                  {property.title}
-                </h3>
-                
-                <div className="flex items-center text-gray-600 mb-2">
-                  <FaMapMarkerAlt className="mr-1 text-sm" />
-                  <span className="text-sm">{property.location}</span>
-                </div>
-                
-                <div className="flex items-center text-green-600 font-semibold mb-2">
-                  <FaRupeeSign className="mr-1 text-sm" />
-                  <span>{formatPrice(property)}</span>
-                </div>
-                
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                  <span>{property.type}</span>
-                  <span>{property.addedAt.toLocaleDateString('en-IN')}</span>
-                </div>
-                
-                {property.notes && (
-                  <div className="bg-gray-50 p-2 rounded text-sm text-gray-700 mb-3">
-                    <strong>Notes:</strong> {property.notes}
+                {/* Property Details */}
+                <div className="wishlist-body">
+                  <h3 className="wishlist-title">{property.title}</h3>
+
+                  <p className="wishlist-meta">
+                    <FaMapMarkerAlt aria-hidden="true" />
+                    {property.location}
+                  </p>
+
+                  <p className="wishlist-price">
+                    <FaRupeeSign aria-hidden="true" />
+                    {formatPrice(property)}
+                  </p>
+
+                  <div className="wishlist-sub">
+                    <span>{property.type}</span>
+                    <span>{property.addedAt.toLocaleDateString('en-IN')}</span>
                   </div>
+
+                  {property.notes && (
+                    <p className="wishlist-notes">
+                      <strong>Notes:</strong> {property.notes}
+                    </p>
+                  )}
+
+                  {(property.developer || property.plotSize) && (
+                    <dl className="wishlist-facts">
+                      {property.developer && (
+                        <div><dt>Developer</dt><dd>{property.developer}</dd></div>
+                      )}
+                      {property.plotSize && (
+                        <div><dt>Plot size</dt><dd>{property.plotSize}</dd></div>
+                      )}
+                    </dl>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {/* Load More */}
+          {hasMore && (
+            <div className="load-more">
+              <button
+                onClick={loadMore}
+                disabled={isLoading}
+                className="btn"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="spin" aria-hidden="true" />
+                    Loading…
+                  </>
+                ) : (
+                  <>
+                    <FaEye aria-hidden="true" />
+                    Load more properties
+                  </>
                 )}
-                
-                {(property.developer || property.plotSize) && (
-                  <div className="text-xs text-gray-500 space-y-1">
-                    {property.developer && <div>Developer: {property.developer}</div>}
-                    {property.plotSize && <div>Plot Size: {property.plotSize}</div>}
-                  </div>
-                )}
-              </div>
+              </button>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Load More Button */}
-      {hasMore && (
-        <div className="text-center">
-          <button
-            onClick={loadMore}
-            disabled={isLoading}
-            className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-          >
-            {isLoading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2"></div>
-                Loading...
-              </>
-            ) : (
-              <>
-                <FaEye className="mr-2" />
-                Load More Properties
-              </>
-            )}
-          </button>
-        </div>
+          )}
+        </>
       )}
 
       {/* Error Message */}
       {error && wishlistProperties.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <p className="text-sm text-red-600">{error}</p>
-        </div>
+        <div className="cobalt-error">{error}</div>
       )}
     </div>
   );

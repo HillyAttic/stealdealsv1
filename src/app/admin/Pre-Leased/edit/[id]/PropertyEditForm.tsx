@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaSpinner, FaSave } from 'react-icons/fa';
+import { FaSpinner, FaSave, FaArrowLeft } from 'react-icons/fa';
 import ImageUploader from '@/components/ui/ImageUploader';
 import { Property } from '@/types/property';
 
@@ -145,23 +145,35 @@ export default function PropertyEditForm({ propertyId }: PropertyEditFormProps) 
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-96">
-        <FaSpinner className="animate-spin text-4xl text-blue-600" />
+      <div data-theme="cobalt" className="cobalt-page">
+        <header className="page-head">
+          <div>
+            <div className="admin-skeleton h-7 w-64 mb-2" />
+            <div className="admin-skeleton h-4 w-72" />
+          </div>
+        </header>
+        <div className="panel">
+          <div className="admin-skeleton h-64 w-full" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Edit Pre-Leased Property</h1>
+    <div data-theme="cobalt" className="cobalt-page">
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">Edit pre-leased property</h1>
+          <p className="page-sub">Update lease, pricing and listing details</p>
+        </div>
         <button
           onClick={() => router.push('/admin/Pre-Leased')}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+          className="btn"
         >
-          Back to Properties
+          <FaArrowLeft aria-hidden="true" />
+          Back to list
         </button>
-      </div>
+      </header>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
@@ -175,7 +187,8 @@ export default function PropertyEditForm({ propertyId }: PropertyEditFormProps) 
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+      <section className="panel">
+      <form onSubmit={handleSubmit}>
         {/* Hidden input for propertyType */}
         <input 
           type="hidden" 
@@ -549,6 +562,7 @@ export default function PropertyEditForm({ propertyId }: PropertyEditFormProps) 
           </button>
         </div>
       </form>
+      </section>
     </div>
   );
 } 

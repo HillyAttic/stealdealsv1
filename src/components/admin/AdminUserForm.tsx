@@ -120,147 +120,157 @@ export function AdminUserForm({ onSubmit, onCancel, isLoading, initialData, edit
 
     return (
         <form onSubmit={handleSubmit}>
-            {/* ── Two-column landscape layout ── */}
-            <div className="grid grid-cols-2 gap-x-8 gap-y-0">
+            <div className="form-grid">
+                {/* ── Left: basic info + role ── */}
+                <div className="form-stack">
+                    <h3 className="form-section-title">Basic information</h3>
 
-                {/* ── LEFT COLUMN: basic info + role ── */}
-                <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Basic Information</h3>
-
-                    {/* Name */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                        <div className="relative">
-                            <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                    <div className="field">
+                        <label htmlFor="admin-name" className="field-label">Full name *</label>
+                        <div className="input-wrap">
+                            <FaUser aria-hidden="true" />
                             <input
+                                id="admin-name"
                                 type="text"
                                 value={formData.name}
                                 onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
-                                className={`w-full pl-9 pr-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
+                                className={`input ${errors.name ? 'is-invalid' : ''}`}
                                 placeholder="Enter full name"
                                 disabled={isLoading}
                             />
                         </div>
-                        {errors.name && <p className="mt-0.5 text-xs text-red-600">{errors.name}</p>}
+                        {errors.name && <p className="field-error">{errors.name}</p>}
                     </div>
 
-                    {/* Email */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-                        <div className="relative">
-                            <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                    <div className="field">
+                        <label htmlFor="admin-email" className="field-label">Email address *</label>
+                        <div className="input-wrap">
+                            <FaEnvelope aria-hidden="true" />
                             <input
+                                id="admin-email"
                                 type="email"
                                 value={formData.email}
                                 onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
-                                className={`w-full pl-9 pr-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.email ? 'border-red-500' : 'border-gray-300'} ${editMode ? 'bg-gray-50 text-gray-500' : ''}`}
+                                className={`input ${errors.email ? 'is-invalid' : ''} ${editMode ? 'is-readonly' : ''}`}
                                 placeholder="user@example.com"
                                 disabled={isLoading || editMode}
                             />
                         </div>
-                        {editMode && <p className="mt-0.5 text-xs text-gray-400">Email cannot be changed</p>}
-                        {errors.email && <p className="mt-0.5 text-xs text-red-600">{errors.email}</p>}
+                        {editMode && <p className="field-hint">Email cannot be changed</p>}
+                        {errors.email && <p className="field-error">{errors.email}</p>}
                     </div>
 
-                    {/* Password */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {editMode ? 'New Password (leave blank to keep)' : 'Password *'}
+                    <div className="field">
+                        <label htmlFor="admin-password" className="field-label">
+                            {editMode ? 'New password (leave blank to keep)' : 'Password *'}
                         </label>
-                        <div className="relative">
-                            <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                        <div className="input-wrap input-wrap--action">
+                            <FaLock aria-hidden="true" />
                             <input
+                                id="admin-password"
                                 type={showPassword ? 'text' : 'password'}
                                 value={formData.password}
                                 onChange={e => setFormData(p => ({ ...p, password: e.target.value }))}
-                                className={`w-full pl-9 pr-9 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                                className={`input ${errors.password ? 'is-invalid' : ''}`}
                                 placeholder={editMode ? 'Leave blank to keep current' : 'Min 6 characters'}
                                 disabled={isLoading}
                             />
-                            <button type="button" onClick={() => setShowPassword(v => !v)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" tabIndex={-1}>
-                                {showPassword ? <FaEyeSlash className="text-xs" /> : <FaEye className="text-xs" />}
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(v => !v)}
+                                className="input-action"
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                tabIndex={-1}
+                            >
+                                {showPassword ? <FaEyeSlash /> : <FaEye />}
                             </button>
                         </div>
-                        {errors.password && <p className="mt-0.5 text-xs text-red-600">{errors.password}</p>}
+                        {errors.password && <p className="field-error">{errors.password}</p>}
                     </div>
 
-                    {/* Role */}
                     <div>
-                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Role</h3>
-                        <div className="grid grid-cols-2 gap-3">
+                        <h3 className="form-section-title">Role</h3>
+                        <div className="role-grid">
                             {(['superuser', 'subuser'] as const).map(r => (
-                                <button key={r} type="button" onClick={() => setRole(r)} disabled={isLoading}
-                                    className={`py-3 border-2 rounded-lg text-sm transition-all ${formData.role === r ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                                <button
+                                    key={r}
+                                    type="button"
+                                    onClick={() => setRole(r)}
+                                    disabled={isLoading}
+                                    aria-pressed={formData.role === r}
+                                    className={`role-card ${formData.role === r ? 'is-active' : ''}`}
+                                >
                                     {r === 'superuser'
-                                        ? <FaUserShield className={`mx-auto mb-1 text-lg ${formData.role === r ? 'text-blue-600' : 'text-gray-400'}`} />
-                                        : <FaUser className={`mx-auto mb-1 text-lg ${formData.role === r ? 'text-blue-600' : 'text-gray-400'}`} />
+                                        ? <FaUserShield className="role-card-icon" aria-hidden="true" />
+                                        : <FaUser className="role-card-icon" aria-hidden="true" />
                                     }
-                                    <div className={`font-medium capitalize ${formData.role === r ? 'text-blue-700' : 'text-gray-600'}`}>{r}</div>
-                                    <div className="text-xs text-gray-400 mt-0.5">
+                                    <span className="role-card-name">{r}</span>
+                                    <span className="role-card-desc">
                                         {r === 'superuser' ? 'Full access' : 'Limited access'}
-                                    </div>
+                                    </span>
                                 </button>
                             ))}
                         </div>
                     </div>
                 </div>
 
-                {/* ── RIGHT COLUMN: permissions ── */}
-                <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                {/* ── Right: permissions ── */}
+                <div className="form-stack">
+                    <h3 className="form-section-title">
                         Permissions
-                        {formData.role === 'superuser' && <span className="ml-2 text-purple-500 normal-case font-normal">(all granted)</span>}
+                        {formData.role === 'superuser' && <span className="form-section-note">All granted</span>}
                     </h3>
 
                     {formData.role === 'superuser' ? (
-                        <div className="flex items-center justify-center h-40 bg-purple-50 rounded-lg border border-purple-100">
-                            <div className="text-center">
-                                <FaUserShield className="text-purple-400 text-3xl mx-auto mb-2" />
-                                <p className="text-sm font-medium text-purple-700">Full Access</p>
-                                <p className="text-xs text-purple-400 mt-1">All pages and controls granted</p>
-                            </div>
+                        <div className="full-access">
+                            <FaUserShield className="full-access-icon" aria-hidden="true" />
+                            <p className="full-access-title">Full access</p>
+                            <p className="full-access-hint">All pages and controls granted</p>
                         </div>
                     ) : (
                         <>
-                            {/* Page checkboxes — 3 columns */}
                             <div>
-                                <p className="text-xs font-medium text-gray-500 mb-2">Page Access</p>
-                                <div className="grid grid-cols-3 gap-1.5">
+                                <p className="form-section-title">Page access</p>
+                                <div className="perm-grid">
                                     {PAGE_ITEMS.map(({ key, label }) => (
-                                        <label key={key}
-                                            className={`flex items-center gap-2 px-2.5 py-2 border rounded-lg cursor-pointer text-xs transition-colors ${formData.permissions.pages[key] ? 'bg-blue-50 border-blue-200 text-blue-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-                                            <input type="checkbox"
+                                        <label
+                                            key={key}
+                                            className={`perm-option ${formData.permissions.pages[key] ? 'is-checked' : ''}`}
+                                        >
+                                            <input
+                                                type="checkbox"
                                                 checked={formData.permissions.pages[key]}
                                                 onChange={() => togglePage(key)}
                                                 disabled={isLoading}
-                                                className="h-3 w-3 text-blue-600 border-gray-300 rounded flex-shrink-0" />
-                                            <span className="leading-tight">{label}</span>
+                                            />
+                                            <span>{label}</span>
                                         </label>
                                     ))}
                                 </div>
-                                {errors.permissions && <p className="mt-1 text-xs text-red-600">{errors.permissions}</p>}
+                                {errors.permissions && <p className="field-error">{errors.permissions}</p>}
                             </div>
 
-                            {/* Privacy */}
                             <div>
-                                <p className="text-xs font-medium text-gray-500 mb-2">Privacy Controls</p>
-                                <div className="space-y-1.5">
+                                <p className="form-section-title">Privacy controls</p>
+                                <div className="perm-stack">
                                     {[
                                         { key: 'viewOthers' as const, label: 'View others\' properties', desc: "See properties created by other admins" },
                                         { key: 'editOthers' as const, label: 'Edit others\' properties', desc: "Modify properties created by other admins" },
                                     ].map(({ key, label, desc }) => (
-                                        <label key={key}
-                                            className={`flex items-start gap-2.5 px-3 py-2.5 border rounded-lg cursor-pointer transition-colors ${formData.permissions[key] ? 'bg-blue-50 border-blue-200' : 'border-gray-200 hover:bg-gray-50'}`}>
-                                            <input type="checkbox"
+                                        <label
+                                            key={key}
+                                            className={`perm-option perm-option--row ${formData.permissions[key] ? 'is-checked' : ''}`}
+                                        >
+                                            <input
+                                                type="checkbox"
                                                 checked={formData.permissions[key]}
                                                 onChange={() => togglePrivacy(key)}
                                                 disabled={isLoading}
-                                                className="h-3.5 w-3.5 text-blue-600 border-gray-300 rounded mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <p className={`text-xs font-medium ${formData.permissions[key] ? 'text-blue-700' : 'text-gray-700'}`}>{label}</p>
-                                                <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
-                                            </div>
+                                            />
+                                            <span>
+                                                <span className="perm-option-label">{label}</span>
+                                                <span className="perm-option-desc">{desc}</span>
+                                            </span>
                                         </label>
                                     ))}
                                 </div>
@@ -270,18 +280,16 @@ export function AdminUserForm({ onSubmit, onCancel, isLoading, initialData, edit
                 </div>
             </div>
 
-            {/* ── Footer buttons ── */}
-            <div className="flex justify-end gap-3 pt-5 mt-5 border-t border-gray-100">
-                <button type="button" onClick={onCancel} disabled={isLoading}
-                    className="px-5 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors">
+            <div className="form-footer">
+                <button type="button" onClick={onCancel} disabled={isLoading} className="btn">
                     Cancel
                 </button>
-                <button type="submit" disabled={isLoading}
-                    className="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors">
-                    {isLoading
-                        ? <><div className="animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full" /><span>{editMode ? 'Saving...' : 'Creating...'}</span></>
-                        : <><FaCheck className="text-xs" /><span>{editMode ? 'Save Changes' : 'Create User'}</span></>
-                    }
+                <button type="submit" disabled={isLoading} className="btn btn--primary">
+                    {isLoading ? (
+                        <><span className="spin" aria-hidden="true" /><span>{editMode ? 'Saving…' : 'Creating…'}</span></>
+                    ) : (
+                        <><FaCheck aria-hidden="true" /><span>{editMode ? 'Save changes' : 'Create user'}</span></>
+                    )}
                 </button>
             </div>
         </form>

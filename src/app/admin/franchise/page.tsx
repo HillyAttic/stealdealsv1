@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FaPlus, FaTrash, FaEye, FaSearch, FaPencilAlt } from 'react-icons/fa';
-import { BsBuilding } from 'react-icons/bs';
+import { FaPlus, FaTrash, FaEye, FaSearch, FaPencilAlt, FaTimes, FaCheck, FaBuilding } from 'react-icons/fa';
 import { FranchiseModal } from '@/components/franchise';
 import {
   AdminFranchise,
@@ -13,7 +12,6 @@ import {
   matchesFranchiseSearch,
 } from '@/lib/admin/franchiseHelpers';
 import { useAdminData, useAdminMutation } from '@/hooks/useAdminData';
-import { AdminCard, AdminButton, AdminModal, AdminEmptyState, SkeletonLoader } from '@/components/admin/ui';
 
 interface Franchise {
   id?: string | null;
@@ -51,7 +49,10 @@ interface Franchise {
   image?: string;
   createdAt?: number;
   updatedAt?: number;
+  franchiseDetails?: AdminFranchise['franchiseDetails'];
 }
+
+const SHELL = 'cobalt-page';
 
 export default function FranchiseContent() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -133,165 +134,238 @@ export default function FranchiseContent() {
     return `₹${numAmount.toLocaleString('en-IN')}`;
   };
 
+  const closeDeleteModal = () => {
+    if (isDeleting) return;
+    setDeleteConfirm(null);
+    setDeleteSuccess(false);
+  };
+
   return (
     <>
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Franchise Inventory</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage franchise opportunities</p>
-        </div>
-        <AdminButton icon={<FaPlus />}>
-          <Link href="/admin/franchise/new" className="flex items-center gap-2">
-            <span className="hidden sm:inline">Add New Franchise</span>
-            <span className="sm:hidden">Add</span>
-          </Link>
-        </AdminButton>
-      </div>
-
-      <AdminCard className="mb-5">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search franchises by name, industry, or location..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2.5 pl-10 rounded-lg border border-gray-200 text-sm admin-input-focus hover:border-gray-300"
-          />
-          <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
-        </div>
-      </AdminCard>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-5 text-sm">{error.message}</div>
-      )}
-
-      {isLoading ? (
-        <SkeletonLoader type="table" rows={6} columns={8} />
-      ) : (
-        <>
-          <div className="mb-3">
-            <p className="text-sm text-gray-500">
-              Showing <span className="font-semibold text-gray-700">{filteredFranchises.length}</span> of <span className="font-semibold text-gray-700">{franchises.length}</span> franchises
-            </p>
+      <div data-theme="cobalt" className={SHELL}>
+        <header className="page-head">
+          <div>
+            <h1 className="page-title">Franchise Inventory</h1>
+            <p className="page-sub">Manage franchise opportunities</p>
           </div>
+          <Link href="/admin/franchise/new" className="btn btn--primary">
+            <FaPlus aria-hidden="true" />
+            Add new franchise
+          </Link>
+        </header>
 
-          {filteredFranchises.length === 0 ? (
-            <AdminCard>
-              <AdminEmptyState
-                icon={<BsBuilding className="text-3xl" />}
-                title={franchises.length === 0 ? 'No franchises found' : 'No matching franchises'}
-                description={franchises.length === 0 ? 'Create your first franchise opportunity' : 'Try adjusting your search criteria'}
+        {/* Search */}
+        <section className="panel panel--filters">
+          <div className="field">
+            <label htmlFor="franchise-search" className="field-label">Search</label>
+            <div className="search">
+              <FaSearch className="search-icon" aria-hidden="true" />
+              <input
+                id="franchise-search"
+                type="text"
+                placeholder="Search franchises by name, industry, or location..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="input"
               />
-            </AdminCard>
-          ) : (
-            <AdminCard padding="none" className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full table-fixed">
-                  <thead>
-                    <tr className="bg-gray-50/80 border-b border-gray-100">
-                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">FID</th>
-                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32 lg:w-40">Brand</th>
-                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 hidden lg:table-cell">Industry</th>
-                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32 hidden xl:table-cell">Location</th>
-                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-20 hidden md:table-cell">Status</th>
-                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32 lg:w-40">Investment</th>
-                      <th className="px-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-20 hidden xl:table-cell">Royalty</th>
-                      <th className="px-2 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 sticky right-0 bg-gray-50/80">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {filteredFranchises.map((franchise, index) => (
-                      <tr key={franchise.id} className="hover:bg-primary-50/30 transition-colors">
-                        <td className="px-2 py-2 whitespace-nowrap">
-                          <span className="font-mono text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-                            F{String(filteredFranchises.length - index).padStart(3, '0')}
-                          </span>
-                        </td>
-                        <td className="px-2 py-2">
-                          <div className="text-sm font-medium text-gray-900 truncate" title={getFranchiseDisplayName(franchise)}>
-                            {getFranchiseDisplayName(franchise)}
-                          </div>
-                          {franchise.image && (
-                            <img src={franchise.image} alt={getFranchiseDisplayName(franchise)} className="w-8 h-5 object-cover rounded mt-1" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                          )}
-                        </td>
-                        <td className="px-2 py-2 hidden lg:table-cell">
-                          <div className="text-xs text-gray-900 truncate">{getFieldFromFranchise(franchise, 'industry')}</div>
-                          {getFieldFromFranchise(franchise, 'segment') && <div className="text-xs text-gray-500 truncate">{getFieldFromFranchise(franchise, 'segment')}</div>}
-                        </td>
-                        <td className="px-2 py-2 text-xs text-gray-500 truncate hidden xl:table-cell">{getFieldFromFranchise(franchise, 'headquarter')}</td>
-                        <td className="px-2 py-2 whitespace-nowrap hidden md:table-cell">
-                          <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${franchise.status === 'Active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-                            {franchise.status === 'Active' ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className="px-2 py-2 text-xs text-gray-900 font-medium">
-                          <div className="truncate">
-                            {getInvestmentFromFranchise(franchise, 'max') && getInvestmentFromFranchise(franchise, 'max') !== getInvestmentFromFranchise(franchise, 'min')
-                              ? `${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)} - ${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'max')) || 0)}`
-                              : formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)
-                            }
-                          </div>
-                        </td>
-                        <td className="px-2 py-2 text-xs text-gray-500 whitespace-nowrap hidden xl:table-cell">{getFieldFromFranchise(franchise, 'royalty') || 'Contact'}</td>
-                        <td className="px-2 py-2 text-sm whitespace-nowrap sticky right-0 bg-white">
-                          <div className="flex items-center justify-center space-x-1">
-                            <button onClick={() => handleViewFranchise(franchise)} className="p-1.5 rounded-lg text-primary-500 hover:bg-primary-50 transition-colors" title="View"><FaEye className="text-xs" /></button>
-                            <Link href={`/admin/franchise/edit/${franchise.id}`} className="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors" title="Edit"><FaPencilAlt className="text-xs" /></Link>
-                            <button onClick={() => setDeleteConfirm(franchise.id || null)} className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Delete"><FaTrash className="text-xs" /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </AdminCard>
-          )}
-        </>
-      )}
+            </div>
+          </div>
+        </section>
 
-      <FranchiseModal franchise={selectedFranchise} isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setSelectedFranchise(null); }} />
+        {error && (
+          <div className="cobalt-error">{error.message}</div>
+        )}
 
-      <AdminModal isOpen={!!deleteConfirm} onClose={() => !isDeleting && setDeleteConfirm(null)} title="Confirm Delete" size="sm"
-        footer={deleteSuccess ? (
-          <div className="flex items-center gap-2 text-green-600 text-sm font-medium py-2">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            Franchise deleted successfully!
+        {isLoading ? (
+          <div className="panel">
+            <div className="space-y-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="admin-skeleton h-10 w-full" />
+              ))}
+            </div>
           </div>
         ) : (
           <>
-            <AdminButton variant="ghost" onClick={() => setDeleteConfirm(null)} disabled={isDeleting}>Cancel</AdminButton>
-            <AdminButton variant="danger" onClick={() => handleDelete(deleteConfirm!)} disabled={isDeleting}>
-              {isDeleting ? (
-                <>
-                  <svg className="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Deleting...
-                </>
-              ) : 'Delete'}
-            </AdminButton>
+            <p className="page-count">
+              Showing <strong>{filteredFranchises.length}</strong> of <strong>{franchises.length}</strong> franchises
+            </p>
+
+            {filteredFranchises.length === 0 ? (
+              <section className="panel">
+                <div className="empty">
+                  <FaBuilding size={24} aria-hidden="true" />
+                  <p className="empty-title">
+                    {franchises.length === 0 ? 'No franchises found' : 'No matching franchises'}
+                  </p>
+                  <p className="empty-hint">
+                    {franchises.length === 0
+                      ? 'Create your first franchise opportunity'
+                      : 'Try adjusting your search criteria'}
+                  </p>
+                </div>
+              </section>
+            ) : (
+              <section className="panel panel--flush">
+                <div className="table-scroll">
+                  <table className="data-table data-table--compact">
+                    <thead>
+                      <tr>
+                        <th className="w-16">FID</th>
+                        <th className="w-40">Brand</th>
+                        <th className="hidden lg:table-cell">Industry</th>
+                        <th className="hidden xl:table-cell">Location</th>
+                        <th className="hidden md:table-cell">Status</th>
+                        <th>Investment</th>
+                        <th className="hidden xl:table-cell">Royalty</th>
+                        <th className="is-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredFranchises.map((franchise, index) => (
+                        <tr key={franchise.id}>
+                          <td>
+                            <span className="fid">
+                              F{String(filteredFranchises.length - index).padStart(3, '0')}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="brand-cell">
+                              <span
+                                className="identity-name truncate"
+                                title={getFranchiseDisplayName(franchise)}
+                              >
+                                {getFranchiseDisplayName(franchise)}
+                              </span>
+                              {franchise.image && (
+                                <img
+                                  src={franchise.image}
+                                  alt=""
+                                  className="brand-thumb"
+                                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                              )}
+                            </div>
+                          </td>
+                          <td className="hidden lg:table-cell">
+                            <p>{getFieldFromFranchise(franchise, 'industry')}</p>
+                            {getFieldFromFranchise(franchise, 'segment') && (
+                              <p className="muted-note">{getFieldFromFranchise(franchise, 'segment')}</p>
+                            )}
+                          </td>
+                          <td className="hidden xl:table-cell muted-note">
+                            {getFieldFromFranchise(franchise, 'headquarter')}
+                          </td>
+                          <td className="hidden md:table-cell">
+                            <span className={franchise.status === 'Active' ? 'badge badge--accent' : 'badge'}>
+                              {franchise.status === 'Active' ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="cell-value">
+                              {getInvestmentFromFranchise(franchise, 'max') && getInvestmentFromFranchise(franchise, 'max') !== getInvestmentFromFranchise(franchise, 'min')
+                                ? `${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)} - ${formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'max')) || 0)}`
+                                : formatCurrency(parseFloat(getInvestmentFromFranchise(franchise, 'min')) || 0)
+                              }
+                            </span>
+                          </td>
+                          <td className="hidden xl:table-cell muted-note">
+                            {getFieldFromFranchise(franchise, 'royalty') || 'Contact'}
+                          </td>
+                          <td className="is-right">
+                            <div className="row-actions">
+                              <button
+                                onClick={() => handleViewFranchise(franchise)}
+                                className="icon-btn icon-btn--accent"
+                                title="View"
+                                aria-label={`View ${getFranchiseDisplayName(franchise)}`}
+                              >
+                                <FaEye />
+                              </button>
+                              <Link
+                                href={`/admin/franchise/edit/${franchise.id}`}
+                                className="icon-btn icon-btn--warn"
+                                title="Edit"
+                                aria-label={`Edit ${getFranchiseDisplayName(franchise)}`}
+                              >
+                                <FaPencilAlt />
+                              </Link>
+                              <button
+                                onClick={() => setDeleteConfirm(franchise.id || null)}
+                                className="icon-btn icon-btn--danger"
+                                title="Delete"
+                                aria-label={`Delete ${getFranchiseDisplayName(franchise)}`}
+                              >
+                                <FaTrash />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
           </>
         )}
-      >
-        {deleteSuccess ? (
-          <div className="py-4 text-center">
-            <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
-              <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
+
+        {/* Delete confirmation */}
+        {deleteConfirm && (
+          <div className="modal-backdrop">
+            <div className="modal-backdrop-shade" onClick={closeDeleteModal} />
+            <div className="modal modal--sm" role="dialog" aria-modal="true" aria-label="Confirm delete">
+              <div className="modal-head">
+                <h2 className="modal-title">Confirm delete</h2>
+                <button onClick={closeDeleteModal} className="modal-close" aria-label="Close">
+                  <FaTimes />
+                </button>
+              </div>
+              <div className="modal-body">
+                {deleteSuccess ? (
+                  <div className="confirm">
+                    <div className="confirm-icon confirm-icon--ok">
+                      <FaCheck aria-hidden="true" />
+                    </div>
+                    <div>
+                      <p className="confirm-title">Franchise deleted</p>
+                      <p className="confirm-text">The record has been removed successfully.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="confirm">
+                    <div className="confirm-icon">
+                      <FaTrash aria-hidden="true" />
+                    </div>
+                    <p className="confirm-text">
+                      Are you sure you want to delete this franchise? This action cannot be undone.
+                    </p>
+                    <div className="modal-actions">
+                      <button onClick={closeDeleteModal} disabled={isDeleting} className="btn">
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleDelete(deleteConfirm!)}
+                        disabled={isDeleting}
+                        className="btn btn--danger"
+                      >
+                        {isDeleting ? (
+                          <><span className="spin" aria-hidden="true" /><span>Deleting…</span></>
+                        ) : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <p className="text-sm font-medium text-gray-900">Franchise Deleted</p>
-            <p className="text-xs text-gray-500 mt-1">The record has been removed successfully.</p>
           </div>
-        ) : (
-          <p className="text-sm text-gray-600">Are you sure you want to delete this franchise? This action cannot be undone.</p>
         )}
-      </AdminModal>
+      </div>
+
+      <FranchiseModal
+        franchise={selectedFranchise}
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setSelectedFranchise(null); }}
+      />
     </>
   );
 }

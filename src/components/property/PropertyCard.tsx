@@ -7,6 +7,7 @@ import { FaMapMarkerAlt, FaBuilding, FaRulerCombined } from 'react-icons/fa';
 import { WishlistButton } from '@/components/wishlist';
 import { AuthPrompt } from '@/components/auth';
 import PropertyImage from '@/components/PropertyImage';
+import { formatFrontage } from '@/lib/property-display';
 // import { useActivity } from '@/hooks/useActivity';
 
 interface Property {
@@ -206,7 +207,7 @@ export function PropertyCard({
               </div>
               <div className="flex items-center text-xs">
                 <span className="text-yellow-800 font-medium mr-1">Frontage:</span>
-                <span className="text-gray-800 truncate">{property.frontage || 'N/A'}</span>
+                <span className="text-gray-800 truncate">{formatFrontage(property.frontage) || 'N/A'}</span>
               </div>
               <div className="flex items-center text-xs">
                 <span className="text-yellow-800 font-medium mr-1">Property Type:</span>

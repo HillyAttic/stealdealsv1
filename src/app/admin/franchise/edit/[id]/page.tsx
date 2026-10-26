@@ -3,15 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import ClientOnly from '@/components/ClientOnly';
-import Link from 'next/link';
-import { BsMenuUp, BsSave } from 'react-icons/bs';
+import { FaArrowLeft, FaSave } from 'react-icons/fa';
 import { toast, Toaster } from 'react-hot-toast';
 import ImageUploader from '@/components/ui/ImageUploader';
-import { 
-  AdminFranchise, 
-  convertToLegacyFormData, 
-  createFranchiseWithDetails 
+import {
+  AdminFranchise,
+  convertToLegacyFormData,
+  createFranchiseWithDetails
 } from '@/lib/admin/franchiseHelpers';
+
+const SHELL = 'cobalt-page';
 
 export default function EditFranchisePage() {
   return (
@@ -19,9 +20,16 @@ export default function EditFranchisePage() {
       <Toaster position="top-right" />
       <ClientOnly
         fallback={
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
-            <span className="ml-2">Loading franchise editor...</span>
+          <div data-theme="cobalt" className={SHELL}>
+            <header className="page-head">
+              <div>
+                <div className="admin-skeleton h-7 w-44 mb-2" />
+                <div className="admin-skeleton h-4 w-64" />
+              </div>
+            </header>
+            <div className="panel">
+              <div className="admin-skeleton h-64 w-full" />
+            </div>
           </div>
         }
       >
@@ -40,7 +48,7 @@ function EditFranchiseContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [franchise, setFranchise] = useState<any>({});
   const [error, setError] = useState('');
-  
+
   // Load franchise data - auth is handled by AdminLayout
   useEffect(() => {
     if (!franchiseId) {
@@ -110,7 +118,7 @@ function EditFranchiseContent() {
     e.preventDefault();
     setIsSaving(true);
     setError('');
-    
+
     try {
       // Create updated franchise data using the new franchiseDetails structure
       const updatedFranchise = createFranchiseWithDetails({
@@ -121,13 +129,13 @@ function EditFranchiseContent() {
         minArea: franchise.minArea || "",
         maxArea: franchise.maxArea || ""
       });
-      
+
       // Set the ID and update timestamp
       updatedFranchise.id = franchiseId;
       updatedFranchise.updatedAt = Date.now();
-      
+
       console.log(`Updating franchise via API: ${franchiseId}`);
-      
+
       // Use the API endpoint instead of direct Firebase operations
       const response = await fetch(`/api/franchises/${franchiseId}`, {
         method: 'PUT',
@@ -137,11 +145,11 @@ function EditFranchiseContent() {
         credentials: 'include',
         body: JSON.stringify(updatedFranchise)
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         console.log('Franchise updated successfully via API:', result);
-        
+
         // Trigger cache revalidation after successful update
         try {
           console.log('Triggering cache revalidation...');
@@ -155,7 +163,7 @@ function EditFranchiseContent() {
               secret: process.env.NEXT_PUBLIC_REVALIDATION_SECRET || 'dev-secret-key'
             })
           });
-          
+
           if (revalidateResponse.ok) {
             console.log('Cache revalidation successful');
             toast.success('Franchise updated and cache refreshed successfully');
@@ -167,7 +175,7 @@ function EditFranchiseContent() {
           console.warn('Cache revalidation error:', revalidateError);
           toast.success('Franchise updated successfully (cache refresh pending)');
         }
-        
+
         router.push('/admin/franchise');
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -188,356 +196,328 @@ function EditFranchiseContent() {
     router.push('/admin/franchise');
   };
 
-  return (
-    <div className="card border-top border-0 border-4 border-blue-900 rounded-lg shadow-md">
-      <div className="border p-4 rounded">
-        <div className="card-title d-flex align-items-center flex justify-between mb-4">
-          <div className="flex items-center">
-            <h5 className="mb-0 text-xl font-bold" style={{ color: 'rgb(28, 110, 164)' }}>Edit Franchise</h5>
-          </div>
+  // Loading state
+  if (isLoading) {
+    return (
+      <div data-theme="cobalt" className={SHELL}>
+        <header className="page-head">
           <div>
-            <button 
-              type="button" 
-              onClick={handleBack}
-              className="btn btn-outline-danger px-3 py-2 border border-red-500 text-red-500 rounded hover:bg-red-50"
-            >
-              <BsMenuUp className="inline mr-1" /> Back to List
-            </button>
+            <div className="admin-skeleton h-7 w-44 mb-2" />
+            <div className="admin-skeleton h-4 w-64" />
+          </div>
+        </header>
+        <div className="panel">
+          <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="admin-skeleton h-10 w-full" />
+            ))}
           </div>
         </div>
-        <hr className="mb-4" />
-        
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-6">
-            {error}
+      </div>
+    );
+  }
+
+  return (
+    <div data-theme="cobalt" className={SHELL}>
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">Edit franchise</h1>
+          <p className="page-sub">Franchise ID: {franchiseId}</p>
+        </div>
+        <button type="button" className="btn" onClick={handleBack}>
+          <FaArrowLeft aria-hidden="true" />
+          Back to list
+        </button>
+      </header>
+
+      {error && <div className="cobalt-error cobalt-error--banner">{error}</div>}
+
+      {!franchise.id ? (
+        <section className="panel">
+          <div className="empty">
+            <p className="empty-title">Franchise not found</p>
+            <p className="empty-hint">
+              The record could not be loaded. Please try again or contact support.
+            </p>
           </div>
-        )}
-        
-        {isLoading ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
-          </div>
-        ) : franchise.id ? (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-lg font-bold mb-4">Franchise ID: {franchise.id}</h2>
-              
-              {/* Basic Information */}
-              <div className="p-4 bg-blue-50 rounded-md mb-6">
-                <h3 className="text-md font-semibold mb-3 border-b border-blue-200 pb-2" style={{ color: 'rgb(28, 110, 164)' }}>BASIC INFORMATION</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Brand/Name *</label>
-                    <input
-                      type="text"
-                      name="brand"
-                      value={franchise.brand || franchise.name || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                      required
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-                    <div className="relative">
-                      <select
-                        name="industry"
-                        value={franchise.industry || ''}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
-                        required
-                      >
-                        <option value="">Choose...</option>
-                        <option value="Education">Education</option>
-                        <option value="F&B">F&B</option>
-                        <option value="Fashion">Fashion</option>
-                        <option value="Pharmaceutical">Pharmaceutical</option>
-                        <option value="Retail">Retail</option>
-                        <option value="Sports, Fitness & Entertainments">Sports, Fitness & Entertainments</option>
-                        <option value="Entertainment">Entertainment</option>
-                        <option value="Beauty & Personal Care">Beauty &amp; Personal Care</option>
-                      </select>
-                      <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z"></path>
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Segment</label>
-                    <div className="relative">
-                      <select
-                        name="segment"
-                        value={franchise.segment || ''}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
-                      >
-                        <option value="">All Segments</option>
-                        <option value="Play Schools">Play Schools</option>
-                        <option value="Pizzeria">Pizzeria</option>
-                        <option value="Tea & Coffee">Tea & Coffee</option>
-                        <option value="Fine Dine Restaurants">Fine Dine Restaurants</option>
-                        <option value="Quick Service Restaurants">Quick Service Restaurants</option>
-                        <option value="Hospitality Services">Hospitality Services</option>
-                        <option value="Mughlai">Mughlai</option>
-                        <option value="Bakery, Sweets & Ice Creams">Bakery, Sweets & Ice Creams</option>
-                        <option value="Express Food Joints / Drive Through">Express Food Joints / Drive Through</option>
-                        <option value="Multi Cuisine Restaurants">Multi Cuisine Restaurants</option>
-                        <option value="Bars, Pubs & Lounge">Bars, Pubs & Lounge</option>
-                        <option value="Clothing">Clothing</option>
-                        <option value="Footwear">Footwear</option>
-                        <option value="Labs">Labs</option>
-                        <option value="Chemist Shops">Chemist Shops</option>
-                        <option value="Opticals">Opticals</option>
-                        <option value="Home Decor">Home Decor</option>
-                        <option value="Grocery">Grocery</option>
-                        <option value="Supermarkets & Marts">Supermarkets & Marts</option>
-                        <option value="Gift & Toys">Gift & Toys</option>
-                        <option value="Laundary Services">Laundary Services</option>
-                        <option value="Gymnasium">Gymnasium</option>
-                        <option value="Jewellery">Jewellery</option>
-                        <option value="Multiplex">Multiplex</option>
-                        <option value="Salons">Salons</option>
-                      </select>
-                      <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z"></path>
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
-                    <div className="relative">
-                      <select
-                        name="model"
-                        value={franchise.model || ''}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 bg-white"
-                      >
-                        <option value="">Select Model</option>
-                        <option value="FOFO">FOFO</option>
-                        <option value="FOFO, COCO">FOFO, COCO</option>
-                        <option value="FOFO, FOCO">FOFO, FOCO</option>
-                        <option value="FOCO">FOCO</option>
-                        <option value="FICO">FICO</option>
-                        <option value="FOFO , FOCO">FOFO , FOCO</option>
-                        <option value="COFO">COFO</option>
-                        <option value="Master Franchise">Master Franchise</option>
-                      </select>
-                      <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 448 512" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M207.029 381.476L12.686 187.132c-9.373-9.373-9.373-24.569 0-33.941l22.667-22.667c9.357-9.357 24.522-9.375 33.901-.04L224 284.505l154.745-154.021c9.379-9.335 24.544-9.317 33.901.04l22.667 22.667c9.373 9.373 9.373 24.569 0 33.941L240.971 381.476c-9.373 9.372-24.569 9.372-33.942 0z"></path>
-                      </svg>
-                    </div>
-                  </div>
-                </div>
+        </section>
+      ) : (
+        <form onSubmit={handleSubmit} className="form-stack">
+
+          {/* ── Basic information ── */}
+          <section className="panel">
+            <header className="panel-head">
+              <div>
+                <h2 className="panel-title">Basic information</h2>
+                <p className="panel-sub">Brand, category and operating model</p>
+              </div>
+            </header>
+
+            <div className="field-grid">
+              <div className="field">
+                <label htmlFor="inputBrand" className="field-label">Brand / name *</label>
+                <input
+                  id="inputBrand"
+                  type="text"
+                  name="brand"
+                  value={franchise.brand || franchise.name || ''}
+                  onChange={handleInputChange}
+                  className="input"
+                  required
+                />
               </div>
 
-              {/* Area & Financial Information */}
-              <div className="p-4 bg-green-50 rounded-md mb-6">
-                <h3 className="text-md font-semibold mb-3 text-green-900 border-b border-green-200 pb-2">AREA & FINANCIAL DETAILS</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Min Area</label>
-                    <input
-                      type="text"
-                      name="minArea"
-                      value={franchise.minArea || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Max Area</label>
-                    <input
-                      type="text"
-                      name="maxArea"
-                      value={franchise.maxArea || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Min Investment *</label>
-                    <input
-                      type="text"
-                      name="minInvestment"
-                      value={franchise.minInvestment || franchise.investment || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                      required
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Max Investment</label>
-                    <input
-                      type="text"
-                      name="maxInvestment"
-                      value={franchise.maxInvestment || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {franchise.model === 'FICO' ? 'Revenue Share' : 'Royalty'}
-                    </label>
-                    <input
-                      type="text"
-                      name="royalty"
-                      value={franchise.royalty || franchise.roi || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                </div>
+              <div className="field">
+                <label htmlFor="inputIndustry" className="field-label">Category *</label>
+                <select
+                  id="inputIndustry"
+                  name="industry"
+                  value={franchise.industry || ''}
+                  onChange={handleInputChange}
+                  className="select"
+                  required
+                >
+                  <option value="">Choose...</option>
+                  <option value="Education">Education</option>
+                  <option value="F&B">F&B</option>
+                  <option value="Fashion">Fashion</option>
+                  <option value="Pharmaceutical">Pharmaceutical</option>
+                  <option value="Retail">Retail</option>
+                  <option value="Sports, Fitness & Entertainments">Sports, Fitness & Entertainments</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Beauty & Personal Care">Beauty &amp; Personal Care</option>
+                </select>
               </div>
 
-              {/* Business Details */}
-              <div className="p-4 bg-yellow-50 rounded-md mb-6">
-                <h3 className="text-md font-semibold mb-3 text-yellow-900 border-b border-yellow-200 pb-2">BUSINESS DETAILS</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Establishment Year</label>
-                    <input
-                      type="text"
-                      name="establishmentYear"
-                      value={franchise.establishmentYear || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Franchise Started Year</label>
-                    <input
-                      type="text"
-                      name="franchiseStartedYear"
-                      value={franchise.franchiseStartedYear || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Number of Outlets</label>
-                    <input
-                      type="text"
-                      name="numberOutlets"
-                      value={franchise.numberOutlets || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Min Payback Period</label>
-                    <input
-                      type="text"
-                      name="minPaybackPeriod"
-                      value={franchise.minPaybackPeriod || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Max Payback Period</label>
-                    <input
-                      type="text"
-                      name="maxPaybackPeriod"
-                      value={franchise.maxPaybackPeriod || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Headquarters</label>
-                    <input
-                      type="text"
-                      name="headquarter"
-                      value={franchise.headquarter || franchise.location || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                  </div>
-                </div>
+              <div className="field">
+                <label htmlFor="inputSegment" className="field-label">Segment</label>
+                <select
+                  id="inputSegment"
+                  name="segment"
+                  value={franchise.segment || ''}
+                  onChange={handleInputChange}
+                  className="select"
+                >
+                  <option value="">All Segments</option>
+                  <option value="Play Schools">Play Schools</option>
+                  <option value="Pizzeria">Pizzeria</option>
+                  <option value="Tea & Coffee">Tea & Coffee</option>
+                  <option value="Fine Dine Restaurants">Fine Dine Restaurants</option>
+                  <option value="Quick Service Restaurants">Quick Service Restaurants</option>
+                  <option value="Hospitality Services">Hospitality Services</option>
+                  <option value="Mughlai">Mughlai</option>
+                  <option value="Bakery, Sweets & Ice Creams">Bakery, Sweets & Ice Creams</option>
+                  <option value="Express Food Joints / Drive Through">Express Food Joints / Drive Through</option>
+                  <option value="Multi Cuisine Restaurants">Multi Cuisine Restaurants</option>
+                  <option value="Bars, Pubs & Lounge">Bars, Pubs & Lounge</option>
+                  <option value="Clothing">Clothing</option>
+                  <option value="Footwear">Footwear</option>
+                  <option value="Labs">Labs</option>
+                  <option value="Chemist Shops">Chemist Shops</option>
+                  <option value="Opticals">Opticals</option>
+                  <option value="Home Decor">Home Decor</option>
+                  <option value="Grocery">Grocery</option>
+                  <option value="Supermarkets & Marts">Supermarkets & Marts</option>
+                  <option value="Gift & Toys">Gift & Toys</option>
+                  <option value="Laundary Services">Laundary Services</option>
+                  <option value="Gymnasium">Gymnasium</option>
+                  <option value="Jewellery">Jewellery</option>
+                  <option value="Multiplex">Multiplex</option>
+                  <option value="Salons">Salons</option>
+                </select>
               </div>
 
-              {/* Additional Information */}
-              <div className="p-4 bg-purple-50 rounded-md mb-6">
-                <h3 className="text-md font-semibold mb-3 text-purple-900 border-b border-purple-200 pb-2">ADDITIONAL INFORMATION</h3>
-                <div className="mb-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
-                  <textarea
-                    name="remarks"
-                    value={franchise.remarks || franchise.description || ''}
+              <div className="field">
+                <label htmlFor="inputModel" className="field-label">Model</label>
+                <select
+                  id="inputModel"
+                  name="model"
+                  value={franchise.model || ''}
+                  onChange={handleInputChange}
+                  className="select"
+                >
+                  <option value="">Select model</option>
+                  <option value="FOFO">FOFO</option>
+                  <option value="FOFO, COCO">FOFO, COCO</option>
+                  <option value="FOFO, FOCO">FOFO, FOCO</option>
+                  <option value="FOCO">FOCO</option>
+                  <option value="FICO">FICO</option>
+                  <option value="FOFO , FOCO">FOFO , FOCO</option>
+                  <option value="COFO">COFO</option>
+                  <option value="Master Franchise">Master Franchise</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          {/* ── Area and financial details ── */}
+          <section className="panel">
+            <header className="panel-head">
+              <div>
+                <h2 className="panel-title">Area &amp; financial details</h2>
+                <p className="panel-sub">Space requirements, capital and returns</p>
+              </div>
+            </header>
+
+            <div className="field-grid">
+              <div className="field">
+                <label htmlFor="inputMinArea" className="field-label">Min area</label>
+                <input id="inputMinArea" type="text" name="minArea"
+                  value={franchise.minArea || ''} onChange={handleInputChange} className="input" />
+              </div>
+
+              <div className="field">
+                <label htmlFor="inputMaxArea" className="field-label">Max area</label>
+                <input id="inputMaxArea" type="text" name="maxArea"
+                  value={franchise.maxArea || ''} onChange={handleInputChange} className="input" />
+              </div>
+
+              <div className="field">
+                <label htmlFor="inputMinInvestment" className="field-label">Min investment *</label>
+                <input id="inputMinInvestment" type="text" name="minInvestment"
+                  value={franchise.minInvestment || franchise.investment || ''}
+                  onChange={handleInputChange} className="input" required />
+              </div>
+
+              <div className="field">
+                <label htmlFor="inputMaxInvestment" className="field-label">Max investment</label>
+                <input id="inputMaxInvestment" type="text" name="maxInvestment"
+                  value={franchise.maxInvestment || ''} onChange={handleInputChange} className="input" />
+              </div>
+
+              <div className="field">
+                <label htmlFor="inputRoyalty" className="field-label">
+                  {franchise.model === 'FICO' ? 'Revenue share' : 'Royalty'}
+                </label>
+                <input id="inputRoyalty" type="text" name="royalty"
+                  value={franchise.royalty || franchise.roi || ''}
+                  onChange={handleInputChange} className="input" />
+              </div>
+            </div>
+          </section>
+
+          {/* ── Business details ── */}
+          <section className="panel">
+            <header className="panel-head">
+              <div>
+                <h2 className="panel-title">Business details</h2>
+                <p className="panel-sub">Footprint, payback and head office</p>
+              </div>
+            </header>
+
+            <div className="field-grid">
+              <div className="field">
+                <label htmlFor="inputEstablishmentYear" className="field-label">Establishment year</label>
+                <input id="inputEstablishmentYear" type="text" name="establishmentYear"
+                  value={franchise.establishmentYear || ''} onChange={handleInputChange} className="input" />
+              </div>
+
+              <div className="field">
+                <label htmlFor="inputFranchiseStartedYear" className="field-label">Franchise started year</label>
+                <input id="inputFranchiseStartedYear" type="text" name="franchiseStartedYear"
+                  value={franchise.franchiseStartedYear || ''} onChange={handleInputChange} className="input" />
+              </div>
+
+              <div className="field">
+                <label htmlFor="inputNumberOutlets" className="field-label">Number of outlets</label>
+                <input id="inputNumberOutlets" type="text" name="numberOutlets"
+                  value={franchise.numberOutlets || ''} onChange={handleInputChange} className="input" />
+              </div>
+
+              <div className="field">
+                <label htmlFor="inputMinPayback" className="field-label">Min payback period</label>
+                <input id="inputMinPayback" type="text" name="minPaybackPeriod"
+                  value={franchise.minPaybackPeriod || ''} onChange={handleInputChange} className="input" />
+              </div>
+
+              <div className="field">
+                <label htmlFor="inputMaxPayback" className="field-label">Max payback period</label>
+                <input id="inputMaxPayback" type="text" name="maxPaybackPeriod"
+                  value={franchise.maxPaybackPeriod || ''} onChange={handleInputChange} className="input" />
+              </div>
+
+              <div className="field">
+                <label htmlFor="inputHeadquarter" className="field-label">Headquarters</label>
+                <input id="inputHeadquarter" type="text" name="headquarter"
+                  value={franchise.headquarter || franchise.location || ''}
+                  onChange={handleInputChange} className="input" />
+              </div>
+            </div>
+          </section>
+
+          {/* ── Additional information ── */}
+          <section className="panel">
+            <header className="panel-head">
+              <div>
+                <h2 className="panel-title">Additional information</h2>
+                <p className="panel-sub">Notes, imagery and investor resources</p>
+              </div>
+            </header>
+
+            <div className="form-stack">
+              <div className="field">
+                <label htmlFor="inputRemarks" className="field-label">Remarks</label>
+                <textarea
+                  id="inputRemarks"
+                  name="remarks"
+                  value={franchise.remarks || franchise.description || ''}
+                  onChange={handleInputChange}
+                  className="textarea"
+                  rows={3}
+                ></textarea>
+              </div>
+
+              <div className="field">
+                <label htmlFor="inputImage" className="field-label">Image URL</label>
+                <div className="image-row">
+                  <input
+                    id="inputImage"
+                    type="text"
+                    name="image"
+                    value={franchise.image || ''}
                     onChange={handleInputChange}
-                    className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    rows={3}
-                  ></textarea>
-                </div>
-                <div className="mb-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      name="image"
-                      value={franchise.image || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                    />
-                    <ImageUploader 
+                    className="input"
+                  />
+                  <div className="image-row-actions">
+                    <ImageUploader
                       onImageUrlGenerated={handleImageUrlGenerated}
                       disabled={isSaving}
                       hideUrlDisplay={true}
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Investor Discovery Kit URL</label>
-                    <input
-                      type="url"
-                      name="investorDiscoveryKitUrl"
-                      value={franchise.investorDiscoveryKitUrl || ''}
-                      onChange={handleInputChange}
-                      className="w-full p-2 border border-gray-300 rounded text-gray-800"
-                      placeholder="https://drive.google.com/file/d/your-file-id/view"
-                    />
-                    <div className="text-xs text-gray-500 mt-1">Google Drive URL for the Investor Discovery Kit download</div>
-                  </div>
-                </div>
               </div>
 
-              <div className="flex justify-between items-center mt-6">
-                <button
-                  type="button"
-                  onClick={handleBack}
-                  className="px-4 py-2 border border-gray-300 text-gray-600 rounded hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className={`px-4 py-2 bg-blue-900 text-white rounded hover:bg-blue-800 flex items-center ${
-                    isSaving ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  disabled={isSaving}
-                >
-                  {isSaving ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <BsSave className="mr-2" /> Save Changes
-                    </>
-                  )}
-                </button>
+              <div className="field">
+                <label htmlFor="inputInvestorKit" className="field-label">Investor discovery kit URL</label>
+                <input
+                  id="inputInvestorKit"
+                  type="url"
+                  name="investorDiscoveryKitUrl"
+                  value={franchise.investorDiscoveryKitUrl || ''}
+                  onChange={handleInputChange}
+                  className="input"
+                  placeholder="https://drive.google.com/file/d/your-file-id/view"
+                />
+                <p className="field-hint">Google Drive URL for the Investor Discovery Kit download</p>
               </div>
             </div>
-          </form>
-        ) : (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md p-4">
-            Franchise not found or error loading data. Please try again or contact support.
+          </section>
+
+          <div className="form-footer">
+            <button type="button" onClick={handleBack} className="btn" disabled={isSaving}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn--primary" disabled={isSaving}>
+              {isSaving ? (
+                <><span className="spin" aria-hidden="true" /><span>Saving…</span></>
+              ) : (
+                <><FaSave aria-hidden="true" /><span>Save changes</span></>
+              )}
+            </button>
           </div>
-        )}
-      </div>
+        </form>
+      )}
     </div>
   );
-} 
+}

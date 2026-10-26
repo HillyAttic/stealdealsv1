@@ -172,16 +172,29 @@ export default function EditPropertyForm({ id }: EditPropertyFormProps) {
   
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-96">
-        <FaSpinner className="animate-spin text-4xl text-blue-500" />
+      <div data-theme="cobalt" className="cobalt-page">
+        <header className="page-head">
+          <div>
+            <div className="admin-skeleton h-7 w-48 mb-2" />
+            <div className="admin-skeleton h-4 w-64" />
+          </div>
+        </header>
+        <div className="panel">
+          <div className="admin-skeleton h-64 w-full" />
+        </div>
       </div>
     );
   }
-  
+
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6">Edit Property</h1>
-      
+    <div data-theme="cobalt" className="cobalt-page">
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">Edit property</h1>
+          <p className="page-sub">Update property details and listing information</p>
+        </div>
+      </header>
+      <section className="panel">
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
@@ -399,6 +412,7 @@ export default function EditPropertyForm({ id }: EditPropertyFormProps) {
           </button>
         </div>
       </form>
+      </section>
     </div>
   );
 } 
