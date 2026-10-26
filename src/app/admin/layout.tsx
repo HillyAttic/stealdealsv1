@@ -2,7 +2,6 @@
 
 import { usePathname } from 'next/navigation';
 import AdminLayout from './components/AdminLayout';
-import './cobalt.css';
 
 // Route layout, not a page wrapper: Next preserves it across navigations inside
 // /admin, so AdminLayout mounts once per session instead of once per sidebar click.

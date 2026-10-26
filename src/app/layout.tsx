@@ -1,6 +1,9 @@
 ﻿import type { Metadata, Viewport } from "next";
 import { Jost } from "next/font/google";
 import "./globals.css";
+// Cobalt design tokens + components; every selector is scoped under
+// [data-theme="cobalt"] / .cobalt-page, so it is inert until a page opts in.
+import "./admin/cobalt.css";
 import { Providers } from "./providers";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ChatBotWrapper from "@/components/ChatBotWrapper";

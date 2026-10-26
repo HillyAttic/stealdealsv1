@@ -35,6 +35,15 @@
   --tracking-display: -0.028em;
 }
 
+/* Brand variant — public pages keep Stealdeals blue (#1C6EA4) instead of cobalt. */
+[data-theme="cobalt"].cobalt-page--brand {
+  --color-accent: rgb(28, 110, 164);
+  --color-accent-2: rgb(51, 161, 224);
+  --color-accent-deep: rgb(21, 77, 113);
+  --color-accent-wash: rgb(237, 243, 248);
+  --color-accent-ink: #ffffff;
+}
+
 .cobalt-page {
   max-width: 1400px;
   margin-inline: auto;
@@ -2481,4 +2490,11 @@
 
 .cobalt-page.space-y-6 > .page-head + * {
   margin-top: 0;
+}
+
+/* Footer keeps the site's 16px body size */
+
+.footer-cobalt .input,
+.footer-cobalt .btn {
+  font-size: 1rem;
 }
