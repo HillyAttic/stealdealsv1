@@ -1,0 +1,77 @@
+ ⚠ The config property `experimental.turbo` is deprecated. Move this setting to `config.turbopack` or run `npx @next/codemod@latest next-experimental-turbo-to-turbopack .`
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.9:3000
+   - Environments: .env.local
+   - Experiments (use with caution):
+     ✓ optimizeCss
+     ✓ scrollRestoration
+     · optimizePackageImports
+
+ ✓ Starting...
+ ✓ Ready in 4.9s
+ ✓ Compiled /middleware in 334ms (159 modules)
+ ○ Compiling /admin/dashboard ...
+Browserslist: browsers data (caniuse-lite) is 18 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled /admin/dashboard in 9.7s (1056 modules)
+ GET /admin/dashboard 200 in 11585ms
+ ○ Compiling /admin/login ...
+ ✓ Compiled /admin/login in 8.2s (1053 modules)
+[Config Validation] 🔍 Environment: development
+[Config Validation] ✅ Configuration is valid
+[Firebase] ✅ Configuration validation passed
+ GET /admin/login 200 in 8395ms
+ ○ Compiling /api/auth/check ...
+ ✓ Compiled /api/auth/verify-firebase-token in 5.5s (1222 modules)
+[Firebase Admin] Initializing Firebase Admin SDK...
+[Firebase Admin] Environment: development
+[Firebase Admin] VERCEL: false
+[Firebase Admin] Found FIREBASE_SERVICE_ACCOUNT_KEY environment variable
+[Firebase Admin] Key length: 2342
+[Firebase Admin] ✅ Service account parsed successfully
+[Firebase Admin] Project ID: stealdeals-e89ab
+[Firebase Admin] Client email: firebase-adminsdk-fbsvc@stealdeals-e89ab.iam.gserviceaccount.com
+[Firebase Admin] Private key ID: f2e670ca59e8a4995f38be1dd30c9d4daf61828f
+[Firebase Admin] Private key length: 1704
+[Firebase Admin] Private key starts with: -----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w
+[Firebase Admin] Database URL: https://stealdeals-e89ab-default-rtdb.asia-southeast1.firebasedatabase.app
+[Firebase Admin] ✅ Private key has BEGIN header
+[Firebase Admin] ✅ Private key has END header
+[Firebase Admin] Private key diagnostic: 29 lines detected (after processing)
+[Firebase Admin] ✅ Firebase Admin initialized successfully for project: stealdeals-e89ab
+[Firebase Admin] Using Key ID: f2e670ca...
+[Auth] Starting admin authentication
+[Auth] Env var authentication successful
+[Auth] Env var auth completed in 14ms
+ POST /api/auth/verify-firebase-token 200 in 3438ms
+ DELETE /api/auth/set-token 200 in 6493ms
+ GET /api/auth/check 200 in 6222ms
+ GET /admin/dashboard 200 in 474ms
+ GET /admin/dashboard 200 in 310ms
+ ○ Compiling /api/auth/verify-permissions ...
+ ✓ Compiled /api/auth/verify-permissions in 2.8s (1226 modules)
+[AdminUserService] Fetching admin user from Firestore: env-admin-superuser
+[AdminUserService] User not found in Firestore
+[Enhanced Admin Auth] Admin user not found in database: env-admin-superuser
+ GET /api/auth/verify-permissions 200 in 5079ms
+ ○ Compiling /api/admin/dashboard-stats ...
+ ✓ Compiled /api/admin/dashboard-stats in 4.2s (1229 modules)
+ GET /api/admin/dashboard-stats 200 in 5016ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 2.6s (1227 modules)
+ GET /sw.js 404 in 5826ms
+ ✓ Compiled in 4.7s (367 modules)
+ GET /admin/dashboard 200 in 2158ms
+ GET /admin/dashboard 200 in 3131ms
+ GET /admin/dashboard 200 in 179ms
+ ✓ Compiled in 2.7s (367 modules)
+ GET /api/admin/dashboard-stats 200 in 546ms
+ GET /admin/dashboard 200 in 505ms
+ ✓ Compiled in 1829ms (367 modules)
+ GET /admin/dashboard 200 in 325ms
+ ✓ Compiled in 11.8s (1061 modules)
+ GET /admin/dashboard 200 in 753ms
+ GET /admin/dashboard 200 in 2542ms

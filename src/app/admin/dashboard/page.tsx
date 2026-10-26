@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   TbBuildingSkyscraper, TbHome, TbBuildingStore, TbChartBar,
@@ -8,13 +8,22 @@ import {
 } from 'react-icons/tb';
 import ClientOnly from '@/components/ClientOnly';
 import { useAdminData } from '@/hooks/useAdminData';
-import { AdminCard, SkeletonLoader } from '@/components/admin/ui';
+import { SkeletonLoader } from '@/components/admin/ui';
+import './cobalt.css';
 
 declare global {
   interface Window {
     __cleanBitdefenderAttributes?: () => void;
   }
 }
+
+const SHELL = 'cobalt-page';
+
+// One source for the doughnut, the legend dots and the bar ramp.
+const SEGMENT_COLORS = [
+  '--color-accent-deep', '--color-accent-2', '--color-accent', '--color-glyph-3',
+  '--color-glyph-4', '--color-graphite-muted', '--color-ink-2', '--color-muted',
+];
 
 export default function AdminDashboard() {
   return (
@@ -61,30 +70,64 @@ function AdminDashboardContent() {
       Object.values(chartRefs.current).forEach((chart: any) => chart?.destroy());
       chartRefs.current = {};
 
+      const root = document.querySelector<HTMLElement>('[data-theme="cobalt"]');
+      const rootStyle = getComputedStyle(root ?? document.documentElement);
+      const tok = (name: string) => rootStyle.getPropertyValue(name).trim();
+      const colors = SEGMENT_COLORS.map(tok);
+      const paper = tok('--color-paper');
+      const ink = tok('--color-ink');
+      const ink2 = tok('--color-ink-2');
+      const graphiteInk = tok('--color-graphite-ink');
+      const graphiteMuted = tok('--color-graphite-muted');
+      const graphiteGrid = tok('--color-graphite-2');
+      const fontDisplay = tok('--font-display');
+      const fontBody = tok('--font-body');
+      const fontMono = tok('--font-outlier');
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const tooltipBase = {
+        padding: 10,
+        cornerRadius: 6,
+        displayColors: true,
+        boxPadding: 6,
+        borderWidth: 1,
+        titleFont: { family: fontDisplay, weight: 600, size: 13 },
+        bodyFont: { family: fontBody, size: 12 },
+      };
+      const lightTooltip = {
+        ...tooltipBase,
+        backgroundColor: tok('--color-graphite-2'),
+        titleColor: paper,
+        bodyColor: paper,
+        borderColor: tok('--color-rule-2'),
+      };
+      const darkTooltip = {
+        ...tooltipBase,
+        backgroundColor: paper,
+        titleColor: ink,
+        bodyColor: ink2,
+        borderColor: tok('--color-rule-2'),
+      };
+
+      const doughnutOptions = (tooltip: any, label: (ctx: any) => string) => ({
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        cutout: '64%',
+        layout: { padding: 8 },
+        plugins: {
+          legend: { display: false },
+          tooltip: { ...tooltip, callbacks: { label } },
+        },
+        animation: reduced ? false : { animateRotate: true, animateScale: true, duration: 700 },
+      });
+
       setTimeout(() => {
         if (destroyed) return;
 
         const categoryEl = document.getElementById('segmentChart') as HTMLCanvasElement;
         const summaryEl = document.getElementById('summaryChart') as HTMLCanvasElement;
         const franchiseEl = document.getElementById('franchiseChart') as HTMLCanvasElement;
-
-        // Shared tooltip config
-        const tooltipConfig = {
-          backgroundColor: 'rgba(15, 23, 42, 0.92)',
-          titleFont: { family: 'Jost', weight: 'bold' as const, size: 13 },
-          bodyFont: { family: 'Jost', size: 12 },
-          padding: { top: 10, bottom: 10, left: 14, right: 14 },
-          cornerRadius: 12,
-          displayColors: true,
-          boxPadding: 6,
-          borderColor: 'rgba(255,255,255,0.1)',
-          borderWidth: 1,
-        };
-
-        // Shared legend config
-        const legendConfig = {
-          display: false,
-        };
 
         if (categoryEl && segmentData.data.some(v => v > 0)) {
           chartRefs.current.segmentChart = new Chart(categoryEl, {
@@ -93,43 +136,18 @@ function AdminDashboardContent() {
               labels: segmentData.labels,
               datasets: [{
                 data: segmentData.data,
-                backgroundColor: [
-                  'rgba(37, 99, 235, 0.9)',
-                  'rgba(6, 182, 212, 0.9)',
-                  'rgba(139, 92, 246, 0.9)',
-                  'rgba(245, 158, 11, 0.9)',
-                  'rgba(239, 68, 68, 0.9)',
-                  'rgba(16, 185, 129, 0.9)',
-                  'rgba(236, 72, 153, 0.9)',
-                  'rgba(234, 179, 8, 0.9)',
-                ],
-                borderWidth: 3,
-                borderColor: '#ffffff',
-                hoverOffset: 12,
-                hoverBorderWidth: 0,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: paper,
+                hoverOffset: 6,
+                hoverBorderWidth: 2,
               }],
             },
-            options: {
-              responsive: true,
-              maintainAspectRatio: true,
-              aspectRatio: 1,
-              cutout: '62%',
-              layout: { padding: 12 },
-              plugins: {
-                legend: legendConfig,
-                tooltip: {
-                  ...tooltipConfig,
-                  callbacks: {
-                    label: function(ctx) {
-                      const total = (ctx.dataset.data as number[]).reduce((a: number, b: number) => a + b, 0);
-                      const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : '0';
-                      return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
-                    },
-                  },
-                },
-              },
-              animation: { animateRotate: true, animateScale: true, duration: 900 },
-            },
+            options: doughnutOptions(lightTooltip, (ctx) => {
+              const total = (ctx.dataset.data as number[]).reduce((a: number, b: number) => a + b, 0);
+              const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : '0';
+              return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+            }),
           });
         }
 
@@ -140,56 +158,21 @@ function AdminDashboardContent() {
               labels: ['Pre-leased', 'Vacant', 'Franchise', 'Plots'],
               datasets: [{
                 data: [stats.preleased, stats.vacant, stats.franchise, stats.plots],
-                backgroundColor: [
-                  'rgba(37, 99, 235, 0.9)',
-                  'rgba(16, 185, 129, 0.9)',
-                  'rgba(245, 158, 11, 0.9)',
-                  'rgba(139, 92, 246, 0.9)',
-                ],
-                borderWidth: 3,
-                borderColor: '#ffffff',
-                hoverOffset: 12,
-                hoverBorderWidth: 0,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: paper,
+                hoverOffset: 6,
+                hoverBorderWidth: 2,
               }],
             },
-            options: {
-              responsive: true,
-              maintainAspectRatio: true,
-              aspectRatio: 1,
-              cutout: '62%',
-              layout: { padding: 12 },
-              plugins: {
-                legend: legendConfig,
-                tooltip: {
-                  ...tooltipConfig,
-                  callbacks: {
-                    label: function(ctx) {
-                      const pct = stats.total > 0 ? ((ctx.parsed / stats.total) * 100).toFixed(1) : '0';
-                      return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
-                    },
-                  },
-                },
-              },
-              animation: { animateRotate: true, animateScale: true, duration: 900 },
-            },
+            options: doughnutOptions(lightTooltip, (ctx) => {
+              const pct = stats.total > 0 ? ((ctx.parsed / stats.total) * 100).toFixed(1) : '0';
+              return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+            }),
           });
         }
 
         if (franchiseEl && franchiseData.data.some(v => v > 0)) {
-          // Solid vibrant colors for bars
-          const barColors = [
-            '#2563eb', // Blue
-            '#ef4444', // Red
-            '#ec4899', // Pink
-            '#06b6d4', // Cyan
-            '#f59e0b', // Amber
-            '#8b5cf6', // Purple
-            '#10b981', // Emerald
-            '#f97316', // Orange
-            '#14b8a6', // Teal
-            '#a855f7', // Violet
-          ];
-
           // Value label plugin
           const valueLabelPlugin = {
             id: 'valueLabels',
@@ -202,9 +185,9 @@ function AdminDashboardContent() {
                   ctx.save();
                   ctx.textAlign = 'center';
                   ctx.textBaseline = 'bottom';
-                  ctx.font = '600 13px Jost, sans-serif';
-                  ctx.fillStyle = '#1e293b';
-                  ctx.fillText(String(value), bar.x, bar.y - 10);
+                  ctx.font = `500 12px ${fontMono}`;
+                  ctx.fillStyle = graphiteInk;
+                  ctx.fillText(String(value), bar.x, bar.y - 8);
                   ctx.restore();
                 }
               });
@@ -218,11 +201,12 @@ function AdminDashboardContent() {
               datasets: [{
                 label: 'Franchises by Industry',
                 data: franchiseData.data,
-                backgroundColor: franchiseData.data.map((_: any, i: number) => barColors[i % barColors.length]),
+                backgroundColor: tok('--color-accent-2'),
+                hoverBackgroundColor: tok('--color-accent'),
                 borderWidth: 0,
-                borderRadius: 12,
+                borderRadius: 4,
                 borderSkipped: false,
-                barPercentage: 0.65,
+                barPercentage: 0.62,
                 categoryPercentage: 0.8,
               }],
             },
@@ -230,11 +214,11 @@ function AdminDashboardContent() {
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              layout: { padding: { top: 35, bottom: 10, left: 10, right: 10 } },
+              layout: { padding: { top: 32, bottom: 8, left: 8, right: 8 } },
               plugins: {
                 legend: { display: false },
                 tooltip: {
-                  ...tooltipConfig,
+                  ...darkTooltip,
                   callbacks: {
                     title: (items: any) => items[0]?.label || '',
                     label: (ctx: any) => ` ${ctx.parsed.y} franchises`,
@@ -246,24 +230,24 @@ function AdminDashboardContent() {
                   beginAtZero: true,
                   ticks: {
                     stepSize: 20,
-                    font: { family: 'Jost', size: 12, weight: '500' },
-                    color: '#64748b',
-                    padding: 10,
+                    font: { family: fontMono, size: 12 },
+                    color: graphiteMuted,
+                    padding: 8,
                   },
                   border: { display: false },
-                  grid: { color: 'rgba(0,0,0,0.05)', drawTicks: false },
+                  grid: { color: graphiteGrid, drawTicks: false },
                 },
                 x: {
                   ticks: {
-                    font: { family: 'Jost', size: 12, weight: '500' },
-                    color: '#475569',
-                    padding: 10,
+                    font: { family: fontBody, size: 12 },
+                    color: graphiteMuted,
+                    padding: 8,
                   },
                   border: { display: false },
                   grid: { display: false },
                 },
               },
-              animation: { duration: 1000, easing: 'easeOutQuart' },
+              animation: reduced ? false : { duration: 600, easing: 'easeOutQuart' },
             },
           });
         }
@@ -288,10 +272,12 @@ function AdminDashboardContent() {
 
   if (isLoading) {
     return (
-      <div className="animate-fadeIn">
-        <div className="mb-6">
-          <div className="admin-skeleton h-7 w-48 mb-2" />
-          <div className="admin-skeleton h-4 w-64" />
+      <div data-theme="cobalt" className={SHELL}>
+        <div className="page-head">
+          <div>
+            <div className="admin-skeleton h-7 w-48 mb-2" />
+            <div className="admin-skeleton h-4 w-64" />
+          </div>
         </div>
         <SkeletonLoader type="stats" className="mb-6" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -306,303 +292,185 @@ function AdminDashboardContent() {
   const hasSegmentData = segmentData.data?.some((v: number) => v > 0);
   const hasFranchiseData = franchiseData.data?.some((v: number) => v > 0);
 
-  // Stat card configs with inline gradient styles and icons
+  // Stat card configs — figures are the data's own, never decorated with invented trends
   const statCards = [
     {
       label: 'Pre-Leased',
       value: stats.preleased,
-      icon: <TbBuildingSkyscraper className="text-xl" />,
-      style: { background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #06b6d4 100%)' },
-      iconBg: 'rgba(255,255,255,0.2)',
-      subtitle: stats.total > 0 ? `${((stats.preleased / stats.total) * 100).toFixed(1)}% of total` : 'No data',
+      icon: <TbBuildingSkyscraper size={16} aria-hidden="true" />,
+      share: stats.total > 0 ? (stats.preleased / stats.total) * 100 : null,
     },
     {
       label: 'Vacant',
       value: stats.vacant,
-      icon: <TbHome className="text-xl" />,
-      style: { background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #14b8a6 100%)' },
-      iconBg: 'rgba(255,255,255,0.2)',
-      subtitle: stats.total > 0 ? `${((stats.vacant / stats.total) * 100).toFixed(1)}% of total` : 'No data',
+      icon: <TbHome size={16} aria-hidden="true" />,
+      share: stats.total > 0 ? (stats.vacant / stats.total) * 100 : null,
     },
     {
       label: 'Franchise',
       value: stats.franchise,
-      icon: <TbBuildingStore className="text-xl" />,
-      style: { background: 'linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #fb7185 100%)' },
-      iconBg: 'rgba(255,255,255,0.2)',
-      subtitle: stats.total > 0 ? `${((stats.franchise / stats.total) * 100).toFixed(1)}% of total` : 'No data',
+      icon: <TbBuildingStore size={16} aria-hidden="true" />,
+      share: stats.total > 0 ? (stats.franchise / stats.total) * 100 : null,
     },
     {
       label: 'Total Properties',
       value: stats.total,
-      icon: <TbChartBar className="text-xl" />,
-      style: { background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #d946ef 100%)' },
-      iconBg: 'rgba(255,255,255,0.2)',
-      subtitle: 'All property types',
+      icon: <TbChartBar size={16} aria-hidden="true" />,
+      share: null,
     },
   ];
 
+  const summaryItems = [
+    { label: 'Pre-leased', value: stats.preleased, icon: TbClipboardCheck },
+    { label: 'Vacant', value: stats.vacant, icon: TbBuilding },
+    { label: 'Franchise', value: stats.franchise, icon: TbShoppingBag },
+    { label: 'Plots', value: stats.plots, icon: TbMapPin },
+  ];
+
   return (
-    <div className="animate-fadeIn">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Overview of property listings and analytics</p>
-      </div>
+    <div data-theme="cobalt" className={SHELL}>
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-sub">Overview of property listings and analytics</p>
+        </div>
+      </header>
 
-      {/* Gradient Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* Stat cards */}
+      <div className="stat-grid">
         {statCards.map((card) => (
-          <div
-            key={card.label}
-            className="relative overflow-hidden rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
-            style={card.style}
-          >
-            {/* Decorative pattern overlay */}
-            <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 60%)' }} />
-            <div className="absolute -bottom-6 -right-6 w-24 h-24 rounded-full bg-white/10" />
-            <div className="absolute -top-4 -left-4 w-16 h-16 rounded-full bg-white/5" />
-
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-white/80">
-                  {card.label}
-                </p>
-                <div className="w-10 h-10 rounded-xl backdrop-blur-sm flex items-center justify-center ring-4 ring-white/20" style={{ background: card.iconBg }}>
-                  {card.icon}
-                </div>
+          <div key={card.label} className="panel stat">
+            <p className="stat-label">
+              {card.icon}
+              {card.label}
+            </p>
+            <p className="stat-value">{card.value}</p>
+            <p className="stat-foot">
+              {card.share === null
+                ? 'All property types'
+                : `${card.share.toFixed(1)}% of total`}
+            </p>
+            {card.share !== null && (
+              <div className="stat-meter" aria-hidden="true">
+                <span style={{ width: `${card.share}%` }} />
               </div>
-              <p className="text-3xl font-extrabold tracking-tight">{card.value}</p>
-              <p className="text-xs text-white/70 mt-1.5">{card.subtitle}</p>
-            </div>
+            )}
           </div>
         ))}
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="chart-pair">
         {/* Segment chart */}
-        <div className="group relative rounded-3xl transition-all duration-300 bg-white border-2 border-purple-100/50 shadow-lg shadow-purple-100/20 hover:shadow-2xl hover:shadow-purple-200/30 hover:border-purple-200 p-8 overflow-hidden">
-          {/* Decorative background elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-purple-100/30 via-pink-50/20 to-transparent rounded-full blur-3xl -z-0 group-hover:scale-110 transition-transform duration-500" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-purple-50/40 to-transparent rounded-full blur-2xl -z-0" />
-          
-          <div className="relative z-10">
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
-                    <TbBuildingStore className="text-white text-xl" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">
-                      Franchise by Segment
-                    </h2>
-                    <p className="text-sm text-gray-600 mt-0.5 font-medium">Distribution by business segment</p>
-                  </div>
-                </div>
-              </div>
+        <section className="panel">
+          <header className="panel-head">
+            <TbBuildingStore className="panel-icon" size={18} aria-hidden="true" />
+            <div>
+              <h2 className="panel-title">Franchise by Segment</h2>
+              <p className="panel-sub">Distribution by business segment</p>
             </div>
-            
-            <div className="h-64 w-full max-w-[256px] mx-auto flex items-center justify-center bg-gradient-to-br from-purple-50/30 via-white to-pink-50/20 rounded-2xl border border-purple-100/50 backdrop-blur-sm mb-6">
-              {hasSegmentData ? (
-                <canvas id="segmentChart" />
-              ) : (
-                <div className="text-center text-gray-400 py-12">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center mx-auto mb-4 shadow-inner">
-                    <TbBuildingStore className="text-4xl text-gray-300" />
-                  </div>
-                  <p className="text-base font-semibold text-gray-600">No segment data available</p>
-                  <p className="text-sm mt-2 text-gray-500">Add franchises with segment info</p>
-                </div>
-              )}
-            </div>
-            
-            {hasSegmentData && (
-              <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
-                {segmentData.labels.map((label: string, i: number) => {
-                  const colors = [
-                    { bg: 'from-blue-500 to-blue-600', text: 'text-blue-700', lightBg: 'bg-blue-50', ringColor: 'ring-blue-200/60', shadowColor: 'shadow-blue-500/10' },
-                    { bg: 'from-cyan-500 to-cyan-600', text: 'text-cyan-700', lightBg: 'bg-cyan-50', ringColor: 'ring-cyan-200/60', shadowColor: 'shadow-cyan-500/10' },
-                    { bg: 'from-purple-500 to-purple-600', text: 'text-purple-700', lightBg: 'bg-purple-50', ringColor: 'ring-purple-200/60', shadowColor: 'shadow-purple-500/10' },
-                    { bg: 'from-amber-500 to-amber-600', text: 'text-amber-700', lightBg: 'bg-amber-50', ringColor: 'ring-amber-200/60', shadowColor: 'shadow-amber-500/10' },
-                    { bg: 'from-rose-500 to-rose-600', text: 'text-rose-700', lightBg: 'bg-rose-50', ringColor: 'ring-rose-200/60', shadowColor: 'shadow-rose-500/10' },
-                    { bg: 'from-emerald-500 to-emerald-600', text: 'text-emerald-700', lightBg: 'bg-emerald-50', ringColor: 'ring-emerald-200/60', shadowColor: 'shadow-emerald-500/10' },
-                    { bg: 'from-pink-500 to-pink-600', text: 'text-pink-700', lightBg: 'bg-pink-50', ringColor: 'ring-pink-200/60', shadowColor: 'shadow-pink-500/10' },
-                    { bg: 'from-yellow-500 to-yellow-600', text: 'text-yellow-700', lightBg: 'bg-yellow-50', ringColor: 'ring-yellow-200/60', shadowColor: 'shadow-yellow-500/10' },
-                  ];
-                  const colorSet = colors[i % 8];
-                  
-                  return (
-                    <div 
-                      key={label} 
-                      className={`flex items-center justify-between px-4 py-3 rounded-xl ${colorSet.lightBg} ring-1 ${colorSet.ringColor} hover:scale-[1.02] hover:shadow-md ${colorSet.shadowColor} transition-all duration-200 cursor-default group/item`}
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className={`w-2 h-2 rounded-full bg-gradient-to-br ${colorSet.bg} shadow-lg flex-shrink-0 group-hover/item:scale-125 transition-transform duration-200`} />
-                        <span className={`text-sm font-semibold ${colorSet.text} truncate`}>{label}</span>
-                      </div>
-                      <div className={`ml-3 px-3 py-1 rounded-lg bg-white/80 shadow-sm flex-shrink-0`}>
-                        <span className={`text-sm font-bold ${colorSet.text}`}>
-                          {segmentData.data[i]}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+          </header>
+
+          <div className="chart-figure">
+            {hasSegmentData ? (
+              <canvas id="segmentChart" role="img" aria-label="Franchise count by business segment" />
+            ) : (
+              <div className="empty">
+                <TbBuildingStore size={24} aria-hidden="true" />
+                <p className="empty-title">No segment data available</p>
+                <p className="empty-hint">Add franchises with segment info</p>
               </div>
             )}
           </div>
-        </div>
+
+          {hasSegmentData && (
+            <ul className="legend">
+              {segmentData.labels.map((label: string, i: number) => (
+                <li key={label} className="legend-row">
+                  <span
+                    className="legend-dot"
+                    aria-hidden="true"
+                    style={{ background: `var(${SEGMENT_COLORS[i % SEGMENT_COLORS.length]})` }}
+                  />
+                  <span className="legend-label">{label}</span>
+                  <span className="legend-value">{segmentData.data[i]}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         {/* Summary chart */}
-        <div className="group relative rounded-3xl transition-all duration-300 bg-white border-2 border-emerald-100/50 shadow-lg shadow-emerald-100/20 hover:shadow-2xl hover:shadow-emerald-200/30 hover:border-emerald-200 p-8 overflow-hidden">
-          {/* Decorative background elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-emerald-100/30 via-teal-50/20 to-transparent rounded-full blur-3xl -z-0 group-hover:scale-110 transition-transform duration-500" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-emerald-50/40 to-transparent rounded-full blur-2xl -z-0" />
-          
-          <div className="relative z-10">
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                    <TbTrendingUp className="text-white text-xl" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">
-                      Property Distribution
-                    </h2>
-                    <p className="text-sm text-gray-600 mt-0.5 font-medium">Overview of all property types</p>
-                  </div>
-                </div>
-              </div>
+        <section className="panel">
+          <header className="panel-head">
+            <TbTrendingUp className="panel-icon" size={18} aria-hidden="true" />
+            <div>
+              <h2 className="panel-title">Property Distribution</h2>
+              <p className="panel-sub">Overview of all property types</p>
             </div>
-            
-            <div className="h-64 w-full max-w-[256px] mx-auto flex items-center justify-center bg-gradient-to-br from-emerald-50/30 via-white to-teal-50/20 rounded-2xl border border-emerald-100/50 backdrop-blur-sm mb-6">
-              {stats.total > 0 ? (
-                <canvas id="summaryChart" />
-              ) : (
-                <div className="text-center text-gray-400 py-12">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center mx-auto mb-4 shadow-inner">
-                    <TbTrendingUp className="text-4xl text-gray-300" />
-                  </div>
-                  <p className="text-base font-semibold text-gray-600">No property data</p>
-                  <p className="text-sm mt-2 text-gray-500">Add properties to see distribution</p>
-                </div>
-              )}
-            </div>
-            
-            {stats.total > 0 && (
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { 
-                    label: 'Pre-leased', 
-                    value: stats.preleased, 
-                    gradient: 'from-blue-500 via-blue-600 to-indigo-600', 
-                    icon: TbClipboardCheck, 
-                    shadow: 'shadow-blue-500/20' 
-                  },
-                  { 
-                    label: 'Vacant', 
-                    value: stats.vacant, 
-                    gradient: 'from-emerald-500 via-emerald-600 to-teal-600', 
-                    icon: TbBuilding, 
-                    shadow: 'shadow-emerald-500/20' 
-                  },
-                  { 
-                    label: 'Franchise', 
-                    value: stats.franchise, 
-                    gradient: 'from-amber-500 via-amber-600 to-orange-600', 
-                    icon: TbShoppingBag, 
-                    shadow: 'shadow-amber-500/20' 
-                  },
-                  { 
-                    label: 'Plots', 
-                    value: stats.plots, 
-                    gradient: 'from-violet-500 via-violet-600 to-purple-600', 
-                    icon: TbMapPin, 
-                    shadow: 'shadow-violet-500/20' 
-                  },
-                ].map(item => {
-                  const IconComponent = item.icon;
-                  return (
-                    <div 
-                      key={item.label} 
-                      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${item.gradient} p-5 hover:scale-[1.03] transition-all duration-300 cursor-default group/card shadow-lg ${item.shadow} hover:shadow-xl`}
-                    >
-                      {/* Shine effect */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
-                      
-                      <div className="relative z-10">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <IconComponent className="text-white text-2xl" />
-                          </div>
-                          <div className="text-sm font-bold text-white/90 bg-white/20 px-2.5 py-1 rounded-lg backdrop-blur-sm">
-                            {item.value}
-                          </div>
-                        </div>
-                        <div className="text-4xl font-black text-white mb-2 tracking-tight">
-                          {stats.total > 0 ? `${((item.value / stats.total) * 100).toFixed(1)}%` : '0%'}
-                        </div>
-                        <div className="text-sm font-bold text-white/90 uppercase tracking-wider">
-                          {item.label}
-                        </div>
-                        <div className="text-xs text-white/75 mt-1.5 font-medium">
-                          {item.value} {item.value === 1 ? 'property' : 'properties'}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+          </header>
+
+          <div className="chart-figure">
+            {stats.total > 0 ? (
+              <canvas id="summaryChart" role="img" aria-label="Property count by type" />
+            ) : (
+              <div className="empty">
+                <TbTrendingUp size={24} aria-hidden="true" />
+                <p className="empty-title">No property data</p>
+                <p className="empty-hint">Add properties to see distribution</p>
               </div>
             )}
           </div>
-        </div>
+
+          {stats.total > 0 && (
+            <div className="summary-grid">
+              {summaryItems.map((item) => {
+                const IconComponent = item.icon;
+                const pct = stats.total > 0 ? (item.value / stats.total) * 100 : 0;
+                return (
+                  <div key={item.label} className="summary-cell">
+                    <p className="summary-top">
+                      <IconComponent size={16} aria-hidden="true" />
+                      {item.label}
+                    </p>
+                    <p className="summary-value">{pct.toFixed(1)}%</p>
+                    <p className="summary-foot">
+                      {item.value} {item.value === 1 ? 'property' : 'properties'}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
 
-      {/* Franchise chart */}
-      <div className="group relative rounded-3xl transition-all duration-300 bg-white border-2 border-indigo-100/50 shadow-lg shadow-indigo-100/20 hover:shadow-2xl hover:shadow-indigo-200/30 hover:border-indigo-200 p-8 mb-8 overflow-hidden">
-        {/* Decorative background elements */}
-        <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-indigo-100/30 via-purple-50/20 to-transparent rounded-full blur-3xl -z-0 group-hover:scale-110 transition-transform duration-500" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-indigo-50/40 to-transparent rounded-full blur-2xl -z-0" />
-        
-        <div className="relative z-10">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                  <TbBuildingStore className="text-white text-xl" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 tracking-tight">
-                    Franchise by Industry
-                  </h2>
-                  <p className="text-sm text-gray-600 mt-0.5 font-medium">Industry-wise franchise distribution</p>
-                </div>
-              </div>
+      {/* Franchise chart — the page's one graphite band */}
+      <section className="panel panel--graphite">
+        <header className="panel-head">
+          <TbBuildingStore className="panel-icon" size={18} aria-hidden="true" />
+          <div>
+            <h2 className="panel-title">Franchise by Industry</h2>
+            <p className="panel-sub">Industry-wise franchise distribution</p>
+          </div>
+        </header>
+
+        <div className="chart-figure chart-figure--bar">
+          {hasFranchiseData ? (
+            <canvas id="franchiseChart" role="img" aria-label="Franchise count by industry" />
+          ) : (
+            <div className="empty">
+              <TbBuildingStore size={24} aria-hidden="true" />
+              <p className="empty-title">No franchise data</p>
+              <p className="empty-hint">Add franchises to see industry breakdown</p>
             </div>
-          </div>
-          
-          <div className="h-80 relative bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/20 rounded-2xl border border-indigo-100/50 backdrop-blur-sm p-6">
-            {hasFranchiseData ? (
-              <canvas id="franchiseChart" />
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center mx-auto mb-4 shadow-inner">
-                  <TbBuildingStore className="text-4xl text-gray-300" />
-                </div>
-                <p className="text-base font-semibold text-gray-600">No franchise data</p>
-                <p className="text-sm mt-2 text-gray-500">Add franchises to see industry breakdown</p>
-              </div>
-            )}
-          </div>
+          )}
         </div>
-      </div>
+      </section>
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm">
+        <div className="cobalt-error">
           {error.message || 'Failed to load dashboard data'}
         </div>
       )}

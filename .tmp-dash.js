@@ -52,7 +52,7 @@ async function mock(page) {
     page.on('pageerror', (e) => console.log('[pageerror]', String(e).slice(0, 400)));
     await mock(page);
     await page.goto('http://localhost:3000/admin/dashboard', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForFunction(() => document.body.innerText.includes('Property inventory'), { timeout: 90000 }).catch(() => console.log('!! dashboard content never appeared'));
+    await page.waitForSelector('#segmentChart', { timeout: 90000 }).catch(() => console.log('!! dashboard content never appeared'));
     await page.waitForTimeout(2500);
     await page.screenshot({ path: `.tmp-dash/${tag}-${s.name}.png`, fullPage: true });
     if (s.name === 'desktop') {

@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { Familjen_Grotesk, IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google';
 import {
   TbLayoutDashboard, TbBuilding, TbBuildingSkyscraper, TbHome,
   TbBuildingStore, TbUsers, TbUserShield,
@@ -13,6 +14,30 @@ import Cookies from 'js-cookie';
 import ClientOnly from '@/components/ClientOnly';
 import { ScrollToBottom } from '@/components/ui/ScrollToBottom';
 import AdminBreadcrumb from '@/components/admin/ui/AdminBreadcrumb';
+
+// The cobalt theme's faces; defined here so the shell and the page share them.
+const display = Familjen_Grotesk({
+  subsets: ['latin'],
+  weight: ['500', '600'],
+  variable: '--font-familjen',
+  display: 'swap',
+});
+
+const body = IBM_Plex_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-plex',
+  display: 'swap',
+});
+
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-jetbrains',
+  display: 'swap',
+});
+
+const FONT_VARS = `${display.variable} ${body.variable} ${mono.variable}`;
 
 interface AdminUser {
   uid: string;
@@ -84,6 +109,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 function AdminLayoutContent({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const isCobalt = pathname.startsWith('/admin/dashboard');
+  const shellClass = `min-h-screen flex ${FONT_VARS}${isCobalt ? ' cobalt-shell' : ' bg-gray-50'}`;
   const [userName, setUserName] = useState('Admin');
   const [userEmail, setUserEmail] = useState('');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -264,9 +291,9 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   // Loading state — skeleton layout
   if (isAuthChecking) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div data-theme={isCobalt ? 'cobalt' : undefined} className={shellClass}>
         {/* Sidebar skeleton */}
-        <div className="w-[260px] bg-gradient-to-b from-primary-600 to-primary-800 p-5 hidden md:block">
+        <div className="cobalt-skeleton-sidebar w-[260px] bg-gradient-to-b from-primary-600 to-primary-800 p-5 hidden md:block">
           <div className="admin-skeleton h-8 w-32 mb-8 opacity-20" />
           {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="admin-skeleton h-10 w-full mb-2 opacity-15" />
@@ -287,7 +314,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div data-theme={isCobalt ? 'cobalt' : undefined} className={shellClass}>
       {/* ── SIDEBAR ── */}
       <aside
         className={`
@@ -302,13 +329,13 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         `}
       >
         {/* Brand */}
-        <div className="flex items-center gap-3 px-5 py-6 border-b border-white/10">
-          <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center">
+        <div className="cobalt-brand flex items-center gap-3 px-5 py-6 border-b border-white/10">
+          <div className="cobalt-brand-mark w-11 h-11 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center">
             <TbBuildingStore className="text-white text-xl" />
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight">StealDeals</h1>
-            <p className="text-xs text-white/50 font-medium uppercase tracking-widest">Admin Panel</p>
+            <p className="text-xs text-white/50 font-medium">Admin Panel</p>
           </div>
           {/* Mobile close */}
           <button
@@ -323,7 +350,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
         <nav className="flex-1 overflow-y-auto admin-scrollbar px-3 py-4 space-y-6">
           {navGroups.map((group) => (
             <div key={group.label}>
-              <p className="text-xs font-semibold uppercase tracking-widest text-white/50 px-3 mb-3">
+              <p className="cobalt-nav-group text-xs font-semibold text-white/50 px-3 mb-3">
                 {group.label}
               </p>
               <ul className="space-y-1">
@@ -335,15 +362,15 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
                         href={item.href}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={`
-                          group flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium uppercase tracking-wide
-                          transition-all duration-200
+                          cobalt-nav-link group flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium
+                          transition-colors duration-200
                           ${active
                             ? 'bg-white/15 text-white shadow-sm admin-nav-active'
                             : 'text-white/70 hover:text-white hover:bg-white/8'
                           }
                         `}
                       >
-                        <span className={`flex-shrink-0 text-lg ${active ? 'text-accent-400' : 'text-white/50 group-hover:text-white/80'}`}>
+                        <span className={`cobalt-nav-icon flex-shrink-0 text-lg ${active ? 'text-accent-400' : 'text-white/50 group-hover:text-white/80'}`}>
                           {item.icon}
                         </span>
                         <span className="truncate">{item.name}</span>
@@ -361,18 +388,18 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
 
         {/* User card at bottom */}
         <div className="px-3 py-4 border-t border-white/10">
-          <div className="flex items-center gap-3 px-3 py-3 rounded-lg bg-white/8">
-            <div className="w-10 h-10 rounded-full bg-accent-500 flex items-center justify-center text-sm font-bold text-white shadow-sm">
+          <div className="cobalt-user-card flex items-center gap-3 px-3 py-3 rounded-lg bg-white/8">
+            <div className="cobalt-avatar w-10 h-10 rounded-full bg-accent-500 flex items-center justify-center text-sm font-bold text-white shadow-sm">
               {userInitial}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate uppercase tracking-wide">{userName}</p>
-              <p className="text-xs text-white/40 truncate uppercase tracking-wider">{currentUser?.role || 'admin'}</p>
+              <p className="cobalt-user-name text-sm font-semibold text-white truncate">{userName}</p>
+              <p className="cobalt-user-role text-xs text-white/40 truncate">{currentUser?.role || 'admin'}</p>
             </div>
             <button
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="p-2 rounded-lg text-white/40 hover:text-red-300 hover:bg-white/10 transition-colors disabled:opacity-50"
+              className="cobalt-logout p-2 rounded-lg text-white/40 hover:text-red-300 hover:bg-white/10 transition-colors disabled:opacity-50"
               title="Logout"
             >
               <TbLogout className="text-lg" />
@@ -392,13 +419,13 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
       {/* ── MAIN CONTENT ── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header bar */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-gray-100 px-4 md:px-6 py-4">
+        <header className="cobalt-topbar sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-gray-100 px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {/* Mobile hamburger */}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                className="cobalt-menu-btn md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
               >
                 <TbMenu className="text-xl" />
               </button>
@@ -407,8 +434,8 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
 
             <div className="flex items-center gap-3">
               {/* Search indicator */}
-              <div className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 text-sm text-gray-400">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="cobalt-search hidden lg:flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 text-sm text-gray-400">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <span>Search...</span>
@@ -416,12 +443,12 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
 
               {/* User avatar (desktop) */}
               <div className="hidden md:flex items-center gap-2.5 pl-4 border-l border-gray-100">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-sm font-bold text-white shadow-sm">
+                <div className="cobalt-avatar w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-sm font-bold text-white shadow-sm">
                   {userInitial}
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-gray-800 leading-tight">{userName}</p>
-                  <p className="text-xs text-gray-400 capitalize">{currentUser?.role}</p>
+                  <p className="cobalt-user-name text-sm font-semibold text-gray-800 leading-tight">{userName}</p>
+                  <p className="cobalt-user-role text-xs text-gray-400 capitalize">{currentUser?.role}</p>
                 </div>
               </div>
             </div>

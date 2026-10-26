@@ -1,0 +1,18 @@
+npm warn Unknown project config "node-linker". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> stealdeals@0.1.0 dev
+> next dev
+
+ ⚠ The config property `experimental.turbo` is deprecated. Move this setting to `config.turbopack` or run `npx @next/codemod@latest next-experimental-turbo-to-turbopack .`
+ ⚠ Port 3000 is in use by process 16368, using available port 3001 instead.
+   ▲ Next.js 15.5.9
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.9:3001
+   - Environments: .env.local
+   - Experiments (use with caution):
+     ✓ optimizeCss
+     ✓ scrollRestoration
+     · optimizePackageImports
+
+ ✓ Starting...
+ ✓ Ready in 6.2s

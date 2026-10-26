@@ -1,0 +1,569 @@
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: Cobalt (by request)
+ * nav: the project's own shell, now graphited · signature: the property ledger, four figures over cobalt share meters
+ * states: loading, empty, error, full · posture: restrained · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E5 S4 R4 V3 · weakest: V, a theme applied to a screen that already existed; changed the register and the surfaces, kept the chart roster */
+
+[data-theme="cobalt"] {
+  --color-paper: oklch(98.6% 0.005 250);
+  --color-paper-2: oklch(96.2% 0.008 252);
+  --color-paper-3: oklch(93% 0.011 252);
+  --color-ink: oklch(21% 0.028 262);
+  --color-ink-2: oklch(36% 0.022 260);
+  --color-muted: oklch(50% 0.018 258);
+  --color-rule: oklch(90% 0.009 252);
+  --color-rule-2: oklch(83% 0.012 252);
+  --color-graphite: oklch(21% 0.024 262);
+  --color-graphite-2: oklch(26.5% 0.026 262);
+  --color-graphite-ink: oklch(93% 0.010 250);
+  --color-graphite-muted: oklch(69% 0.022 256);
+  --color-accent: oklch(52% 0.19 258);
+  --color-accent-2: oklch(76% 0.13 254);
+  --color-accent-deep: oklch(43% 0.2 262);
+  --color-accent-wash: oklch(95% 0.028 256);
+  --color-accent-ink: oklch(98.6% 0.005 250);
+  --color-glyph-3: oklch(70% 0.085 256);
+  --color-glyph-4: oklch(60% 0.13 257);
+  --color-error: oklch(45% 0.19 25);
+  --color-error-wash: oklch(96% 0.028 25);
+  --font-display: var(--font-familjen), system-ui, sans-serif;
+  --font-body: var(--font-plex), system-ui, sans-serif;
+  --font-outlier: var(--font-jetbrains), ui-monospace, monospace;
+  --radius-card: 8px;
+  --rule-hair: 1px;
+  --cut-l: 16px;
+  --shadow-card: 0 1px 2px oklch(21% 0.028 262 / 0.06);
+  --tracking-display: -0.028em;
+}
+
+.cobalt-page {
+  max-width: 1400px;
+  margin-inline: auto;
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  font-size: 16px;
+  line-height: 1.55;
+  scrollbar-color: var(--color-rule-2) var(--color-paper-2);
+}
+
+.cobalt-page ::selection {
+  background: var(--color-accent-wash);
+  color: var(--color-ink);
+}
+
+.cobalt-page h1,
+.cobalt-page h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: var(--tracking-display);
+  line-height: 1.08;
+  text-wrap: balance;
+  color: var(--color-ink);
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+.cobalt-page p {
+  margin: 0;
+}
+
+/* Header */
+
+.cobalt-page .page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.cobalt-page .page-title {
+  font-size: 28px;
+}
+
+.cobalt-page .page-sub {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+/* Surfaces */
+
+.cobalt-page .panel {
+  position: relative;
+  min-width: 0;
+  padding: 20px 20px 24px;
+  background: var(--color-paper);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+@supports (corner-shape: bevel) {
+  .cobalt-page .panel {
+    border-radius: var(--cut-l) 4px var(--cut-l) 4px;
+    corner-shape: bevel round bevel round;
+  }
+}
+
+.cobalt-page .panel-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.cobalt-page .panel-icon {
+  flex: 0 0 auto;
+  margin-top: 4px;
+  color: var(--color-muted);
+}
+
+.cobalt-page .panel-title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.cobalt-page .panel-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.cobalt-page .panel--graphite {
+  background: var(--color-graphite);
+  border-color: var(--color-graphite-2);
+  color: var(--color-graphite-ink);
+  box-shadow: none;
+}
+
+.cobalt-page .panel--graphite .panel-title {
+  color: var(--color-graphite-ink);
+}
+
+.cobalt-page .panel--graphite .panel-sub,
+.cobalt-page .panel--graphite .panel-icon {
+  color: var(--color-graphite-muted);
+}
+
+/* Stats */
+
+.cobalt-page .stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.cobalt-page .stat {
+  padding: 16px 20px 20px;
+}
+
+.cobalt-page .stat-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.cobalt-page .stat-value {
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.cobalt-page .stat-foot {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.cobalt-page .stat-meter {
+  height: 4px;
+  margin-top: 12px;
+  background: var(--color-paper-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.cobalt-page .stat-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 2px;
+}
+
+/* Charts */
+
+.cobalt-page .chart-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.cobalt-page .chart-figure {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 260px;
+  height: 240px;
+  margin: 0 auto 20px;
+}
+
+.cobalt-page .chart-figure canvas {
+  max-height: 100%;
+}
+
+.cobalt-page .chart-figure--bar {
+  max-width: none;
+  height: 300px;
+  margin-bottom: 0;
+}
+
+/* Legend */
+
+.cobalt-page .legend {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+
+.cobalt-page .legend-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.cobalt-page .legend-row:last-child {
+  border-bottom: 0;
+}
+
+.cobalt-page .legend-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.cobalt-page .legend-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--color-ink-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cobalt-page .legend-value {
+  font-family: var(--font-outlier);
+  font-size: 13px;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Summary grid */
+
+.cobalt-page .summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+
+.cobalt-page .summary-cell {
+  padding: 16px 12px;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.cobalt-page .summary-cell:nth-child(odd) {
+  border-right: var(--rule-hair) solid var(--color-rule);
+}
+
+.cobalt-page .summary-cell:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.cobalt-page .summary-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.cobalt-page .summary-value {
+  margin-top: 12px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.cobalt-page .summary-foot {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* Empty and error */
+
+.cobalt-page .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  min-height: 200px;
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.cobalt-page .empty-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-ink-2);
+}
+
+.cobalt-page .empty-hint {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.cobalt-page .cobalt-error {
+  margin-top: 24px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--color-error);
+  background: var(--color-error-wash);
+  border: var(--rule-hair) solid var(--color-error);
+  border-radius: 6px;
+}
+
+@media (max-width: 1100px) {
+  .cobalt-page .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1000px) {
+  .cobalt-page .chart-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .cobalt-page .stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cobalt-page .page-title {
+    font-size: 24px;
+  }
+}
+
+/* Shell — sidebar on graphite, top bar on paper, scoped to this route */
+
+.cobalt-shell {
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+.cobalt-shell aside {
+  background-color: var(--color-graphite);
+  background-image: none;
+  color: var(--color-graphite-ink);
+  border-right: var(--rule-hair) solid var(--color-graphite-2);
+  box-shadow: none;
+}
+
+.cobalt-shell .cobalt-skeleton-sidebar {
+  background-color: var(--color-graphite);
+  background-image: none;
+}
+
+.cobalt-shell .cobalt-brand {
+  border-bottom-color: var(--color-graphite-2);
+}
+
+.cobalt-shell .cobalt-brand-mark {
+  background: var(--color-graphite-2);
+  border-radius: var(--cut-l) 4px var(--cut-l) 4px;
+  backdrop-filter: none;
+}
+
+.cobalt-shell .cobalt-brand-mark svg {
+  color: var(--color-accent-2);
+}
+
+.cobalt-shell .cobalt-brand h1,
+.cobalt-shell .cobalt-nav-group,
+.cobalt-shell .cobalt-nav-link,
+.cobalt-shell .cobalt-user-name,
+.cobalt-shell .cobalt-user-role {
+  font-family: var(--font-display);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.cobalt-shell .cobalt-brand h1 {
+  font-weight: 600;
+}
+
+.cobalt-shell .cobalt-brand > div > p {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--color-graphite-muted);
+}
+
+.cobalt-shell .cobalt-nav-group {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-graphite-muted);
+}
+
+.cobalt-shell .cobalt-nav-link {
+  color: var(--color-graphite-muted);
+  border-radius: 6px;
+}
+
+.cobalt-shell .cobalt-nav-link:hover,
+.cobalt-shell .cobalt-nav-link.admin-nav-active {
+  color: var(--color-graphite-ink);
+  background: var(--color-graphite-2);
+}
+
+.cobalt-shell .cobalt-nav-icon {
+  color: var(--color-graphite-muted);
+}
+
+.cobalt-shell .cobalt-nav-link:hover .cobalt-nav-icon,
+.cobalt-shell .cobalt-nav-link.admin-nav-active .cobalt-nav-icon {
+  color: var(--color-accent-2);
+}
+
+.cobalt-shell .admin-nav-active::before {
+  width: 2px;
+  border-radius: 0;
+  background: var(--color-accent);
+}
+
+.cobalt-shell .admin-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-graphite-2);
+}
+
+.cobalt-shell .admin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-graphite-muted);
+}
+
+.cobalt-shell .cobalt-user-card {
+  background: var(--color-graphite-2);
+}
+
+.cobalt-shell .cobalt-user-card .cobalt-user-name {
+  color: var(--color-graphite-ink);
+}
+
+.cobalt-shell .cobalt-user-card .cobalt-user-role {
+  color: var(--color-graphite-muted);
+}
+
+.cobalt-shell .cobalt-avatar {
+  background: var(--color-accent);
+  background-image: none;
+  color: var(--color-accent-ink);
+}
+
+.cobalt-shell .cobalt-logout {
+  color: var(--color-graphite-muted);
+}
+
+.cobalt-shell .cobalt-logout:hover {
+  color: var(--color-graphite-ink);
+  background: var(--color-graphite);
+}
+
+.cobalt-shell .cobalt-topbar {
+  background: var(--color-paper);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  backdrop-filter: none;
+}
+
+.cobalt-shell nav[aria-label="Breadcrumb"] a {
+  color: var(--color-muted);
+}
+
+.cobalt-shell nav[aria-label="Breadcrumb"] a:hover {
+  color: var(--color-accent);
+}
+
+.cobalt-shell nav[aria-label="Breadcrumb"] span.text-gray-800 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.cobalt-shell nav[aria-label="Breadcrumb"] svg {
+  color: var(--color-rule-2);
+}
+
+.cobalt-shell .cobalt-search {
+  background: var(--color-paper-2);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: 6px;
+  color: var(--color-muted);
+}
+
+.cobalt-shell .cobalt-topbar .cobalt-user-name {
+  color: var(--color-ink);
+}
+
+.cobalt-shell .cobalt-topbar .cobalt-user-role {
+  color: var(--color-muted);
+}
+
+.cobalt-shell .cobalt-menu-btn {
+  color: var(--color-muted);
+}
+
+.cobalt-shell .cobalt-menu-btn:hover {
+  background: var(--color-accent-wash);
+  color: var(--color-accent-deep);
+}
+
+.cobalt-shell a:focus-visible,
+.cobalt-shell button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cobalt-shell a,
+  .cobalt-shell button,
+  .cobalt-shell aside {
+    transition: none;
+  }
+}
