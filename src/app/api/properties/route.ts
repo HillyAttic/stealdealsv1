@@ -235,7 +235,9 @@ export async function GET(request: NextRequest) {
     if (propertyType) {
       const normalizedType = typeAliasMap[propertyType.toLowerCase()] || propertyType.toLowerCase();
       filteredProperties = filteredProperties.filter(p => {
-        const itemType = (p.propertyType || p.type || '').toLowerCase();
+        // Doc `type` is the collection type; `propertyType` can be a unit kind
+        // (e.g. "Lockable"/"Virtual" on pre-leased docs), so prefer `type`.
+        const itemType = (p.type || p.propertyType || '').toLowerCase();
         if (normalizedType === 'preleased') {
           return itemType === 'preleased' || itemType === 'pre-leased';
         }
