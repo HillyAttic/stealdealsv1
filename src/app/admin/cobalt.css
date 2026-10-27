@@ -437,8 +437,18 @@
 .cobalt-shell .cobalt-user-name,
 .cobalt-shell .cobalt-user-role {
   font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.cobalt-shell .cobalt-brand h1 {
   text-transform: none;
-  letter-spacing: 0;
+}
+
+.cobalt-shell .cobalt-nav-group,
+.cobalt-shell .cobalt-nav-link,
+.cobalt-shell .cobalt-user-name,
+.cobalt-shell .cobalt-user-role {
+  text-transform: uppercase;
 }
 
 .cobalt-shell .cobalt-brand h1 {
@@ -449,8 +459,8 @@
   font-family: var(--font-display);
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--color-graphite-muted);
 }
 
@@ -2159,6 +2169,7 @@
   font-size: 13px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .cobalt-page .icon-btn--accent:hover {

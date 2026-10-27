@@ -126,15 +126,17 @@ export default function RootLayout({
           <StickyCtaBar />
           <Script id="tawk-to" strategy="lazyOnload">
             {`
-              var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-              (function(){
-                var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-                s1.async=true;
-                s1.src='https://embed.tawk.to/6abcc9063b7d273440456c12/1k3on2h5d';
-                s1.charset='UTF-8';
-                s1.setAttribute('crossorigin','*');
-                s0.parentNode.insertBefore(s1,s0);
-              })();
+              if (!location.pathname.startsWith('/admin')) {
+                var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+                (function(){
+                  var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+                  s1.async=true;
+                  s1.src='https://embed.tawk.to/6abcc9063b7d273440456c12/1k3on2h5d';
+                  s1.charset='UTF-8';
+                  s1.setAttribute('crossorigin','*');
+                  s0.parentNode.insertBefore(s1,s0);
+                })();
+              }
             `}
           </Script>
         </body>
